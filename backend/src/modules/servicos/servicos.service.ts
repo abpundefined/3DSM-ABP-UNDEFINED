@@ -84,7 +84,8 @@ export class ServicosService {
           nome: service.nome,
           regiaoCodigo: regiaoCodigo,
           caminhoMetricas: `/metrics/${service.idExterno}`,
-          estadoAtual: 'DISPONIVEL',
+          // A descoberta só confirma que o serviço existe; quem confirma disponibilidade é a coleta de métricas.
+          // Preservamos o estado atual para a sincronização não apagar uma falha antes da próxima coleta.
           ultimaVezListadoEm: new Date(),
           atualizadoEm: new Date(),
         },

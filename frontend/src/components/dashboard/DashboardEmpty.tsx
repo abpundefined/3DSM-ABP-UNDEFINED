@@ -1,5 +1,118 @@
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
+import { useEffect, useState } from 'react';
+import { apiRequest } from '../../services/api';
+import type { ServiceStatus } from '../../types/dashboard';
+import { serviceStatusPresentation } from './demoPresentation';
+
+// Contrato de GET /servicos; os estados correspondem ao enum persistido pelo backend.
+type MonitoredService = {
+  id: number;
+  nome: string;
+  regiaoCodigo: string;
+  estadoAtual:
+    | 'DISPONIVEL'
+    | 'INDISPONIVEL'
+    | 'SEM_METRICAS'
+    | 'REMOVIDO'
+    | 'DESCONHECIDO';
+};
+
+// Adapta os estados do backend aos identificadores visuais usados pelo dashboard.
+function toStatus(status: MonitoredService['estadoAtual']): ServiceStatus {
+  if (status === 'INDISPONIVEL') return 'unavailable';
+  if (status === 'SEM_METRICAS') return 'noMetrics';
+  return 'active';
+}
+
+function ServiceStatusList() {
+  const [services, setServices] = useState<MonitoredService[] | null>(null);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    // Busca os estados atuais e repete a consulta para refletir as coletas seguintes.
+    const load = async () => {
+      try {
+        const result = await apiRequest<MonitoredService[]>('/servicos');
+        if (mounted) {
+          // Registros removidos ficam no banco para histórico, mas não são serviços monitorados atuais.
+          setServices(
+            (result ?? []).filter((service) => service.estadoAtual !== 'REMOVIDO'),
+          );
+          setHasError(false);
+        }
+      } catch {
+        if (mounted) setHasError(true);
+      }
+    };
+
+    void load();
+    // Atualiza a interface periodicamente sem exigir recarregamento da página.
+    const timer = window.setInterval(() => void load(), 30000);
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  // Informa ao operador quando a lista carrega, falha ou ainda não tem serviços.
+  if (hasError) {
+    return (
+      <FeedbackPanel
+        kind="error"
+        title="Não foi possível carregar os serviços"
+        description="Verifique a conexão com o servidor. Tentaremos novamente em instantes."
+      />
+    );
+  }
+  if (services === null) {
+    return (
+      <FeedbackPanel
+        kind="loading"
+        title="Carregando serviços"
+        description="Consultando o status do monitoramento."
+      />
+    );
+  }
+  if (!services.length) {
+    return (
+      <FeedbackPanel
+        kind="empty"
+        title="Nenhum serviço monitorado"
+        description="Os serviços descobertos pelo monitoramento aparecerão aqui."
+      />
+    );
+  }
+
+  return (
+    <ul
+      className="monitored-service-list"
+      aria-label="Status dos serviços monitorados"
+    >
+      {services.map((service) => {
+        const status = toStatus(service.estadoAtual);
+        // Um serviço ainda sem coleta não deve ser apresentado como ativo.
+        const presentation =
+          service.estadoAtual === 'DESCONHECIDO'
+            ? { label: 'Aguardando coleta', icon: 'info' as const }
+            : serviceStatusPresentation[status];
+        return (
+          <li key={service.id}>
+            <span>
+              <strong>{service.nome}</strong>
+              <small>{service.regiaoCodigo}</small>
+            </span>
+            <span className={`service-badge service-badge--${status}`}>
+              <Icon name={presentation.icon} />
+              {presentation.label}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export default function DashboardEmpty() {
   return (
@@ -10,18 +123,9 @@ export default function DashboardEmpty() {
             <p className="eyebrow">INFRAESTRUTURA</p>
             <h2 id="services-heading">Serviços monitorados</h2>
           </div>
-          <span className="quiet-label">Sem dados</span>
+          <span className="quiet-label">Atualização automática</span>
         </div>
-        <FeedbackPanel
-          kind="empty"
-          title="Seu monitoramento começa aqui"
-          description="Os serviços e suas métricas aparecerão neste painel quando a integração de monitoramento estiver disponível."
-        >
-          <p className="empty-caption">
-            Você poderá acompanhar disponibilidade, energia e emissões em um só
-            lugar.
-          </p>
-        </FeedbackPanel>
+        <ServiceStatusList />
         <details className="monitoring-help">
           <summary>
             Como funciona o monitoramento <Icon name="chevron" />
