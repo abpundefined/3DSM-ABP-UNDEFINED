@@ -1,112 +1,76 @@
-# 🏃 Sprint 1 — Fundação Arquitetural, Coleta e Interface Base
+# Sprint 1 — Fundação, descoberta, coleta e interface base
 
-> **Período:** Início do Semestre até 20/10/2026  
-> **Tag da Entrega:** `sprint-1`  
-> **Responsáveis pelo Registro:** Thales Cambraia (Scrum Master) e Rainan Reis (Product Owner)  
+**Término previsto:** 20/10/2026. **Início real:** aguardando confirmação do PO/SM. **Tag planejada:** `sprint-1`, ainda não publicada na conferência de 19/10. **Registro:** Rainan (PO) e Thales (SM).
 
----
+## Objetivo e escopo
 
-## 🎯 1. Objetivo da Sprint 1
+Entregar infraestrutura Docker/React/NestJS/PostgreSQL, descoberta e coleta periódica das métricas brutas, histórico persistido e interface base/protótipos verificáveis. Energia, CO₂e e autenticação pertencem ao plano posterior.
 
-Construir a infraestrutura básica do projeto utilizando contêineres Docker, estruturar o backend em NestJS com banco relacional PostgreSQL e ORM, criar a integração inicial para descoberta e coleta periódica de métricas computacionais brutas via API do Agregador, projetar as interfaces de usuário e componentes React no frontend, e documentar os requisitos e planos de entrega para validação docente.
+A baseline identificada nos documentos e issues é **13 itens e 60 SP**. A reconciliação de 19/10 corrige a documentação e os vínculos sem alterar esses pontos. A capacidade de trabalho considerada no planejamento ainda precisa de registro: disponibilidade dos integrantes, restrições e justificativa de seleção. Não há comprovação que permita preencher horas/capacidade retroativamente.
 
----
+| Issue | Item | SP | Responsável atual no GitHub | Situação técnica recomendada em 19/10 |
+| --- | --- | ---: | --- | --- |
+| [#1](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/1) | [PBI-01] Descoberta automática de serviços | 5 | PedrinhoDBR | In progress |
+| [#2](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/2) | [PBI-02] Monitoramento dinâmico de serviços | 8 | PedrinhoDBR | In review |
+| [#3](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/3) | [PBI-03] Coleta periódica de métricas | 5 | PedrinhoDBR | In progress |
+| [#4](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/4) | [PBI-04] Detecção de serviço indisponível | 3 | NadlaFernandes | In review |
+| [#5](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/5) | [PBI-05] Detecção de ausência de métricas | 3 | Israelisl | In progress |
+| [#9](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/9) | [PBI-09] Histórico de coletas | 5 | Israelisl | In review |
+| [#18](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/18) | [PBI-18] Tolerância a falhas | 5 | Israelisl | In progress |
+| [#22](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/22) | [PBI-22] Setup Docker Compose | 5 | PedrinhoDBR, MarcusVRDN | In review |
+| [#23](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/23) | [PBI-23] Protótipos e avaliação de usabilidade (IHC) | 8 | thalestcd | In progress |
+| [#24](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/24) | Setup da estrutura base do backend NestJS com TypeScript | 3 | MarcusVRDN | In review |
+| [#25](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/25) | Setup da estrutura base do frontend React com TypeScript e Vite | 3 | RainanKaneka | In review |
+| [#26](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/26) | Configuração de variáveis de ambiente e segurança (.env.example) | 2 | PedrinhoDBR | In review |
+| [#27](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/27) | Modelagem relacional e migrações PostgreSQL via ORM | 5 | MarcusVRDN | In review |
 
-## 📋 2. Itens Selecionados (Sprint Backlog)
+A recomendação resulta em **8 In review, 5 In progress e nenhum Done com aceite comprovado**. O quadro observado ainda tem 12 In review e #4 In progress; a credencial disponível não permitiu mudar as colunas. A [revisão por item](revisao-sprint-1.md) explica pendências e a sincronização necessária.
 
-Os itens abaixo foram extraídos do Product Backlog com base nas prioridades MoSCoW acordadas com o PO:
+## Evidências e verificação
 
-### 🔧 Tarefas Técnicas de Infraestrutura (devem ser feitas primeiro)
+- [Execução Docker/nativa](../execucao.md).
+- [API implementada](../api.md).
+- [Resultados e limitações dos checks de 19/10](revisao-sprint-1.md).
+- [Teste de retorno com PostgreSQL, registro de 18/10](../teste-integracao-problema1.md).
+- [Base e regras do burndown](../burndown-sprint-1.md).
+- [DoD e registro de aceite](../definicao-de-pronto.md).
 
-| Issue | Tipo | Descrição Resumida | Estimativa (SP) | Responsáveis | Status |
-| :---: | :---: | :--- | :---: | :--- | :---: |
-| **#22** | Tarefa Técnica | [PBI-22] Setup Docker Compose (NestJS, React, PostgreSQL) | 5 | Thales Cambraia, Pedro Gomes | Em andamento |
-| **#24** | Tarefa Técnica | [TASK] Setup da estrutura base do backend NestJS com TypeScript | 3 | Israel Lemes, Thales Cambraia | Em andamento |
-| **#25** | Tarefa Técnica | [TASK] Setup da estrutura base do frontend React com Vite + TS | 3 | Rainan Reis, Nadla Ferreira | Em andamento |
-| **#26** | Tarefa Técnica | [TASK] Configuração de variáveis de ambiente (.env.example) | 2 | Thales Cambraia, Pedro Gomes | Em andamento |
-| **#27** | Tarefa Técnica | [TASK] Modelagem relacional e migrações PostgreSQL via ORM | 5 | Israel Lemes, Marcus Nascimento | Em andamento |
+Uma tag só deve ser criada após finalizar a versão revisada. O roteiro antigo `git checkout sprint-1` não deve ser usado antes de a tag existir. A inspeção da versão atual pode usar o commit `0adb1e040c078f9c69cedbcc7038cdb7e0bd4175`; isso não o transforma em entrega aceita.
 
-### 📖 User Stories Funcionais
+## Participação verificada na develop
 
-| Issue | Tipo | Descrição Resumida | Estimativa (SP) | Responsáveis | Status |
-| :---: | :---: | :--- | :---: | :--- | :---: |
-| **#1** | User Story | [PBI-01] Descoberta automática de serviços ativos via `/services` | 5 | Marcus Nascimento, Israel Lemes | Em andamento |
-| **#2** | User Story | [PBI-02] Monitoramento dinâmico de inclusão, remoção e retorno de serviços | 8 | Marcus Nascimento | Em andamento |
-| **#3** | User Story | [PBI-03] Coleta periódica de métricas computacionais brutas (`/metrics/{id}`) | 5 | Marcus Nascimento, Israel Lemes | Em andamento |
-| **#4** | User Story | [PBI-04] Detecção de serviço indisponível | 3 | Marcus Nascimento | Em andamento |
-| **#5** | User Story | [PBI-05] Detecção de ausência de métricas | 3 | Israel Lemes | Em andamento |
-| **#9** | User Story | [PBI-09] Histórico de coletas persistido no PostgreSQL | 5 | Israel Lemes | Em andamento |
-| **#18** | User Story | [PBI-18] Tolerância a falhas e indisponibilidade de APIs externas | 5 | Thales Cambraia, Marcus Nascimento | Em andamento |
-| **#23** | User Story | [PBI-23] IHC — Personas, fluxos e prototipação de alta fidelidade no Figma | 8 | Nadla Ferreira, Rainan Reis | Em andamento |
+| Integrante | Evidência concreta do histórico | Limite/atualização necessária |
+| --- | --- | --- |
+| Rainan Reis | [32e9a68](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/32e9a68) base React; [7879935](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/7879935) interface e demonstração; [c76255e](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/c76255e) planejamento. | Registrar aceite e links das entregas de frontend/PO. Alguns commits usam alias `unknown`; associar a autoria sem reescrever o histórico compartilhado. |
+| Thales Cambraia | [2b1eba7](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/2b1eba7) registro heurístico; [91e034d](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/91e034d) referência Figma. | Consolidar resultados, registro ágil e atualização do quadro. |
+| Pedro Gomes | [7b08532](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/7b08532) descoberta/coleta; [36b35c2](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/36b35c2) intervalo; [40bc99b](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/40bc99b) integração. | Relacionar correções e homologação às issues #1/#2/#3/#26. |
+| Israel Lemes | [e389efd](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/e389efd) módulo de coletas; [59a755b](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/59a755b) falhas; [8e52522](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/8e52522) SEM_METRICAS. | Corrigir/validar regra de ausência e resiliência; registrar revisão das entregas. |
+| Marcus Nascimento | [6494ccd](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/6494ccd) esquema/migração; [fac0876](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/fac0876) Docker backend; [9e963a6](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/9e963a6) Docker frontend; [2aa7dc5](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/2aa7dc5) retorno. | Vincular homologação e revisões às issues de infraestrutura/banco. |
+| Nadla Ferreira | [8ed5ecb](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/8ed5ecb) detecção de indisponibilidade, integrado no PR #40. | Registrar revisão/homologação e demais evidências de interface efetivamente realizadas. |
 
+Esses links demonstram contribuições; não substituem análise de relevância pelos professores nem comprovam todas as atribuições antigas das tabelas. Responsável atual da issue e autor de uma contribuição podem ser diferentes.
 
+## Sprint Review — registro a concluir com fatos
 
----
+**Situação:** não há ata/resultados da cerimônia na versão analisada. A revisão técnica de 19/10 não deve ser registrada como se fosse a Sprint Review com docentes.
 
-## 🔍 3. Como Verificar as Entregas desta Sprint
+| Campo | Registro necessário |
+| --- | --- |
+| Data, participantes e versão demonstrada | Informar após a cerimônia, com tag/commit. |
+| Entregas demonstradas | Relacionar issues e evidências de execução. |
+| Feedback recebido | Registrar o retorno real de docentes/cliente/PO. |
+| Aceites e pendências | Informar decisão por issue, responsável e previsão acordada. |
 
-Para auditar e testar as entregas da Sprint 1 em uma máquina local:
+## Retrospectiva e adaptação
 
-1. **Clonar o repositório e acessar a tag da sprint:**
-   ```bash
-   git clone https://github.com/abpundefined/3DSM-ABP-UNDEFINED.git
-   cd 3DSM-ABP-UNDEFINED
-   git checkout sprint-1
-   ```
+O registro inicial anterior apontava curva de aprendizado em Docker/ORM, necessidade de revisões em pares e distribuição dos commits. Preserva-se esse histórico como observação inicial, sem atribuir uma data/cerimônia que não foi documentada.
 
-2. **Configurar as variáveis de ambiente:**
-   ```bash
-   cp .env.example .env
-   ```
+Na retrospectiva, confirmar os achados com o time, registrar participantes/data e escolher ações com responsáveis/prazo. Propostas derivadas da revisão técnica: revisar PR antes do aceite; compartilhar contratos de coleta; manter testes de regressão; atualizar evidências e burndown diariamente. Essas propostas ainda não são decisões tomadas pela equipe.
 
-3. **Subir os serviços via Docker:**
-   ```bash
-   docker compose up --build
-   ```
+## Fechamento
 
-4. **Verificar os serviços em execução:**
-   - **Frontend:** Abra `http://localhost:5173` no navegador e confira a tela inicial com layout base e listagem de serviços.
-   - **Backend:** Acesse `http://localhost:3000/api/services` para conferir a rota de descoberta de serviços consumindo a API externa.
-   - **Banco de Dados:** Inspecione os logs do backend para verificar a execução automática das migrações do PostgreSQL.
-
----
-
-## 👥 4. Registro de Participação Individual — Sprint 1
-
-| Integrante | Papel | Tarefas Assumidas | Contribuições Efetivas e Evidências |
-| :--- | :--- | :--- | :--- |
-| **Rainan Reis** | PO & Dev Fullstack | Backlog, Personas e telas base React | Definição dos 23 PBIs, redação do DoD, personas em `docs/interface.md` e telas iniciais. |
-| **Thales Cambraia** | Scrum Master & Dev Frontend | Gestão do quadro Kanban, Dockerização, DTOs e filtros de erro | Configuração do GitHub Projects, mediação ágil, compose.yaml, validação de payloads com class-validator e filtros globais de exceção. |
-| **Pedro Gomes** | Dev Backend & DevOps | Suporte à infraestrutura Docker e configuração do repositório | Configuração de variáveis de ambiente, auxílio no compose.yaml e documentação técnica. |
-| **Israel Lemes** | Dev Backend | Modelagem do banco e entidades ORM | Configuração do TypeORM/Prisma, entidades de serviços e coletas, arquivos de migração. |
-| **Marcus Nascimento** | Dev Backend | Clientes HTTP das APIs de métricas | Implementação da integração com `/services` e `/metrics/{id}` e tratamento de conexões. |
-| **Nadla Ferreira** | Dev Frontend & UI/UX | Design System, prototipação Figma e componentes | Criação dos fluxos no Figma, seleção da paleta de cores e componentes acessíveis em React. |
-
----
-
-## 📊 5. Sprint Review (Revisão da Sprint)
-
-> *Esta seção será preenchida durante a cerimônia formal de Sprint Review ao final da Sprint 1.*
-
-- **O que foi demonstrado:**
-- **Feedback recebido dos professores / cliente:**
-- **Itens aceitos pelo PO:**
-- **Itens que não foram concluídos (se houver) e redirecionamento:**
-
----
-
-## 🔄 6. Retrospectiva da Sprint e Ações de Melhoria
-
-> *Esta seção registra as reflexões internas da equipe para cumprir o critério **GA06**.*
-
-### 🟢 Pontos Positivos (O que funcionou bem):
-- Divisão inicial clara de papéis e criação estruturada do backlog no GitHub.
-- Adoção imediata da Definição de Pronto (DoD) para alinhamento de qualidade.
-
-### 🟡 Dificuldades Encontradas (O que pode melhorar):
-- Curva de aprendizado inicial na integração entre contêineres e configuração do ORM.
-- Necessidade de coordenar o ritmo de commits ao longo dos dias úteis para atender a GA05.
-
-### 🚀 Plano de Ação para a Sprint 2:
-1. Estabelecer revisões de PR em pares obrigatórias em até 24h da abertura.
-2. Adicionar rotina de verificação contínua dos testes unitários antes do merge.
+- Corrigir os itens In progress e registrar a homologação dos itens em revisão.
+- Completar os dados reais de período/capacidade, IHC, review e retrospectiva.
+- Aplicar a situação correta no Projects e registrar aceites no ledger do burndown.
+- Integrar documentação/código revisados e criar a tag `sprint-1` apontando para a versão efetivamente aceita.
+- Informar o link da tag ao professor e registrar pendências com a nova previsão, sem marcar como entregues.

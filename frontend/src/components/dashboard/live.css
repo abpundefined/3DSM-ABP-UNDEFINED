@@ -1,0 +1,61 @@
+.live-dashboard-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 17px 21px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.live-dashboard-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.live-dashboard-toolbar strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+.live-dashboard-toolbar p {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.live-dashboard-toolbar .button {
+  min-height: 42px;
+  padding: 10px 15px;
+  font-size: 12px;
+}
+.live-dashboard-toolbar .button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.live-services-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.live-service-table {
+  min-width: 1020px;
+}
+.live-refresh-error {
+  margin: 16px 26px;
+  color: #77550b;
+  font-size: 12px;
+}
+.live-services-panel > .chart-footnote {
+  padding: 16px 26px;
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .live-dashboard-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .live-dashboard-toolbar .button {
+    align-self: flex-start;
+  }
+}

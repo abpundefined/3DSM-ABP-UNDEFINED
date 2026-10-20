@@ -6,6 +6,12 @@
 
 ---
 
+## Situação e limites — 19/10/2026
+
+**Modelo proposto, ainda não implementado ou validado.** O backend atual não calcula energia/CO₂e nem consulta carbono. Os indicadores reais permanecem indisponíveis. Fórmulas, constantes e fallback descritos abaixo são propostas da documentação inicial e não evidência de comportamento existente.
+
+A API atual fornece `cpu_percent`, GB e `collection_interval_seconds`; a proposta abaixo usa millicores/núcleos em alguns trechos. Antes da Sprint 2, reconciliar as unidades e hipóteses de capacidade, documentar a origem dos fatores e validar com o professor. Não converter percentual em millicores sem definir capacidade, nem assumir que o intervalo do agendador é o intervalo medido. O fallback de 85 gCO₂e/kWh também não está implementado/validado e não deve ser apresentado como estimativa real atual.
+
 ## 🎯 1. Objetivo deste Documento
 
 Este documento formaliza as **fórmulas matemáticas**, **unidades de medida**, **fatores de emissão** e **constantes de referência** utilizadas pelo backend do GreenER para converter métricas de telemetria computacional (CPU, memória e tráfego) em estimativas de **consumo energético (kWh)** e **emissões de dióxido de carbono equivalente (gCO₂e e kgCO₂e)**.

@@ -1,47 +1,28 @@
-# 🏃 Sprint 3 — Recursos Avançados, IHC Final e Prontidão de Portfólio
+# Sprint 3 — Análises, usabilidade e consolidação
 
-> **Período Previsto:** 11/11/2026 até 23/11/2026  
-> **Tag da Entrega:** `sprint-3`  
-> **Responsáveis pelo Registro:** Thales Cambraia (Scrum Master) e Rainan Reis (Product Owner)  
+**Previsão:** 11/11/2026 a 23/11/2026. **Tag planejada:** `sprint-3`. PO: Rainan; SM: Thales.
 
----
+## Objetivo previsto
 
-## 🎯 1. Objetivo da Sprint 3
+Concluir ranking, comparação entre serviços no mesmo período e mapa quando houver coordenadas; executar avaliação com usuários representativos, relacionar melhorias aos achados e consolidar documentação/execução da entrega final. Preservar funcionalidades aceitas nas sprints anteriores.
 
-Finalizar as funcionalidades avançadas de análise e tomada de decisão da plataforma GreenER (ranking de impacto de serviços, comparação analítica de múltiplos serviços e visualização geográfica interativa em mapa), conduzir a avaliação formal de usabilidade com usuários representativos aplicando as correções identificadas, e consolidar toda a documentação técnica (Swagger/OpenAPI) e repositório para padrão profissional de portfólio.
+## Candidatos do backlog existente
 
----
+IDs e pontos conferidos em 19/10; seleção/capacidade ainda precisam de planejamento. Os quatro itens somam 26 SP existentes:
 
-## 📋 2. Itens Selecionados (Sprint Backlog Previsto)
+| Issue | Título atual | SP existentes | Responsáveis |
+| --- | --- | ---: | --- |
+| [#12](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/12) | [PBI-12] Mapa interativo | 8 | A definir no planejamento |
+| [#13](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/13) | [PBI-13] Ranking de impacto ambiental | 5 | A definir no planejamento |
+| [#14](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/14) | [PBI-14] Comparação entre serviços | 8 | A definir no planejamento |
+| [#21](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/21) | [PBI-21] Documentação técnica | 5 | A definir no planejamento |
 
-| Issue | Tipo | Descrição Resumida | Estimativa (SP) | Responsáveis | Status |
-| :---: | :---: | :--- | :---: | :--- | :---: |
-| **#12** | User Story | [PBI-09] Localização geográfica e mapa interativo de serviços | 5 | Nadla Ferreira, Pedro Gomes | Previsto |
-| **#13** | User Story | [PBI-10] Ranking de serviços por consumo energético e emissão | 5 | Israel Lemes, Pedro Gomes | Previsto |
-| **#14** | User Story | [PBI-11] Comparação multidimensional entre serviços no mesmo período | 8 | Rainan Reis, Pedro Gomes | Previsto |
-| **#21** | Tarefa Técnica | [PBI-21] Documentação técnica completa e Swagger interativo | 5 | Thales Cambraia, Israel Lemes | Previsto |
-| **#23** | User Story | [PBI-23] IHC — Avaliação formal de usabilidade e implementação de melhorias | 5 | Rainan Reis, Nadla Ferreira | Previsto |
+As evoluções de acessibilidade (#16), testes (#20) e avaliação de usabilidade/IHC precisam ser refinadas com tarefas, responsáveis e critérios verificáveis. A #23 já tem 8 SP na baseline da Sprint 1 e seus critérios mencionam avaliação heurística ou com usuários; não lhe atribuir outros 5 SP, como fazia a tabela antiga, nem contá-la duas vezes. O teste com usuários exigido por IHC05 e melhorias IHC06 devem ter escopo/evidência específicos no planejamento final.
 
----
+## Critérios e verificação
 
-## 🔍 3. Como Verificar as Entregas desta Sprint
+Manter GA01–GA09/DW01 e os itens aceitos anteriormente; consolidar DW05/DW07, TP04 e IHC03–IHC06 conforme [plano](../plano-de-entregas.md). A documentação da API deve permitir verificar rotas reais; Swagger pode ser uma ferramenta escolhida pelo time, sem substituir funcionamento e instruções.
 
-*(Será preenchido detalhando comandos e rotas ao final da Sprint 3)*
+Antes do ciclo, registrar capacidade/seleção/responsáveis e o roteiro de avaliação com usuários. Ao final, apresentar versão/tag, resultados dos testes e tarefas de usabilidade, problemas encontrados, melhorias com antes/depois, pendências justificadas, feedback da review, retrospectiva e balanço de participação.
 
----
-
-## 👥 4. Registro de Participação Individual — Sprint 3
-
-*(Acompanhamento contínuo ao longo do ciclo da Sprint 3)*
-
----
-
-## 📊 5. Sprint Review
-
-*(Ata de apresentação final do projeto)*
-
----
-
-## 🔄 6. Retrospectiva da Sprint e Conclusão do Projeto
-
-*(Balanço do semestre e lições aprendidas pelo time Undefined)*
+Este documento descreve preparação futura, não cerimônias, avaliações ou aceites já realizados.

@@ -1,0 +1,49 @@
+name: greener-problem1-integration
+
+services:
+  postgres-problem1:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: greener_problem1_test
+      POSTGRES_PASSWORD: greener_problem1_only
+      POSTGRES_DB: greener_problem1_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U greener_problem1_test -d greener_problem1_test',
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks:
+      - integration
+
+  backend-test:
+    image: greener-problem1-integration-backend
+    build:
+      context: ./backend
+    environment:
+      NODE_ENV: test
+      GREENER_PROBLEM1_INTEGRATION: '1'
+      DATABASE_URL: postgresql://greener_problem1_test:greener_problem1_only@postgres-problem1:5432/greener_problem1_test?schema=public
+      METRICS_API_URL: https://metrics.example.test
+      METRICS_POLL_INTERVAL_MS: '30000'
+    command:
+      - sh
+      - -c
+      - >-
+        node node_modules/prisma/build/index.js generate --config ./prisma7.config.ts
+        && npm run build
+        && node --test --test-concurrency=1 test/integration/servicos-retorno.integration.test.cjs
+    depends_on:
+      postgres-problem1:
+        condition: service_healthy
+    networks:
+      - integration
+
+networks:
+  integration:
+    internal: true

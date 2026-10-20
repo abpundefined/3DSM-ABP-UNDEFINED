@@ -1,148 +1,58 @@
-# 🏗️ Arquitetura do Sistema — GreenER
+# Arquitetura atual — GreenER
 
-> **Critérios da Rubrica:** DW01, DW03, DW04, DW05, DW07, TP01, TP02  
-> **Repositório:** [abpundefined/3DSM-ABP-UNDEFINED](https://github.com/abpundefined/3DSM-ABP-UNDEFINED)  
-> **Equipe:** Undefined  
-
----
-
-## 🧭 1. Visão Geral da Arquitetura
-
-O **GreenER** foi concebido sob uma arquitetura desacoplada e conteinerizada, orientada a microsserviços lógicos e camadas bem definidas, garantindo manutenibilidade, testabilidade e escalabilidade.
-
-A solução é composta por:
-1. **Frontend SPA (Single Page Application):** Desenvolvido em **React** com **TypeScript** e build tool **Vite**, focado em visualização de dados, métricas em tempo real e experiência de usuário acessível.
-2. **Backend RESTful:** Desenvolvido em **NestJS** com **TypeScript**, estruturado no padrão modular de injeção de dependências, concentrando regras de negócio, agendamento de coletas e cálculos ambientais.
-3. **Camada de Persistência:** Banco relacional **PostgreSQL**, operado através de um **ORM** (TypeORM/Prisma) com versionamento de esquema via **migrações automatizadas**.
-4. **Ambiente Multi-Container:** Orquestrado via **Docker Compose** (`compose.yaml`), garantindo reprodutibilidade em qualquer ambiente de execução.
+Referência: `0adb1e0`, conferida em 19/10/2026. A aplicação é um frontend SPA, um backend NestJS modular e um PostgreSQL. Não há múltiplos microsserviços de negócio implementados.
 
 ```mermaid
-flowchart TB
-    subgraph Client["🖥️ Camada de Apresentação (Frontend)"]
-        UI["React SPA (TypeScript)"]
-        Hooks["Custom Hooks & Contexts"]
-        ApiServices["Axios / Fetch Services"]
-        UI --> Hooks --> ApiServices
-    end
-
-    subgraph Server["⚙️ Camada de Aplicação (Backend NestJS)"]
-        Controllers["Controllers (Rotas HTTP & DTOs)"]
-        Services["Services (Regras de Negócio & Cálculos)"]
-        Repositories["Repositories (ORM Persistence)"]
-        Scheduler["Tasks / Cron (Coleta Periódica)"]
-        
-        Controllers --> Services
-        Scheduler --> Services
-        Services --> Repositories
-    end
-
-    subgraph External["🌐 Serviços Externos"]
-        MetricsAPI["API Agregador de Métricas (/services, /metrics)"]
-        CarbonAPI["API Carbon Intensity (/carbon/intensity)"]
-    end
-
-    subgraph Data["💾 Camada de Dados"]
-        Postgres[(PostgreSQL Relacional)]
-    end
-
-    ApiServices -- "HTTP REST (JSON / Bearer JWT)" --> Controllers
-    Services -- "HTTP Clients" --> External
-    Repositories -- "ORM Queries / Migrations" --> Postgres
+flowchart LR
+    React[React e TypeScript] -->|/api/servicos e /api/coletas| Vite[Proxy Vite]
+    Vite -->|remove /api| Nest[API NestJS]
+    Nest --> Prisma[Prisma ORM]
+    Prisma --> PG[(PostgreSQL)]
+    Timer[Monitoramento periódico] --> Descoberta[ServicosService]
+    Timer --> Coletor[MonitoramentoService]
+    Descoberta --> Metrics[API externa de métricas]
+    Coletor --> Metrics
+    Descoberta --> Prisma
+    Coletor --> Prisma
 ```
 
----
+## Componentes implementados
 
-## 🔙 2. Arquitetura do Backend (NestJS)
+| Componente | Responsabilidade e limite atual |
+| --- | --- |
+| `frontend/src/pages` | Dashboard público, login indisponível e página 404, com React Router. |
+| `frontend/src/components` | Layout, feedback, gráficos demonstrativos e painel conectado `LiveDashboard`. |
+| `frontend/src/services/api.ts` | Cliente JSON por caminhos relativos, erros HTTP e cancelamento por signal fornecido. Não valida o JSON em runtime. |
+| `frontend/src/hooks/usePageTitle.ts` | Título da página. A lógica de consultas periódicas ainda está no componente LiveDashboard. |
+| `backend/src/modules/servicos` | Descobre, normaliza e sincroniza serviços; lista registros persistidos. Acessa Prisma diretamente. |
+| `backend/src/modules/monitoramento` | Inicia ciclo ao subir o módulo, sincroniza descoberta e coleta sequencialmente os serviços não removidos. Persiste diretamente no Prisma. |
+| `backend/src/modules/coletas` | API de registro/histórico/última coleta válida, DTOs e repository próprio. O coletor automático não passa por esse service. |
+| `backend/src/database` | PrismaService e verificação das tabelas necessárias. |
+| `backend/prisma` | Esquema e migrações versionadas. Regiao, Servico, Coleta e modelos reservados de usuário/configuração. |
 
-O backend segue rigorosamente a estrutura recomendada pelo framework NestJS e pela rubrica de avaliação (**DW03**, **TP01**, **TP02**):
+## Fluxo de dados
 
-### 📂 2.1 Estrutura de Diretórios
-```
-backend/
-├── migrations/             # Migrações versionadas do banco de dados (DW04)
-├── src/
-│   ├── main.ts             # Ponto de entrada, configuração de pipes, cors e swagger
-│   ├── app.module.ts       # Módulo raiz da aplicação
-│   ├── database/           # Configuração do ORM e conexão com PostgreSQL
-│   ├── common/             # Interceptors, Exception Filters e decorators globais
-│   ├── integrations/       # Clientes HTTP isolados para APIs externas
-│   │   ├── metrics/        # Cliente do Agregador de Métricas
-│   │   └── carbon/         # Cliente da API de Intensidade de Carbono
-│   └── modules/            # Módulos de domínio
-│       ├── services/       # Descoberta e metadados dos serviços monitorados
-│       ├── coletas/        # Rotina de coleta, persistência e histórico
-│       ├── calculos/       # Motor matemático de energia e emissões de CO₂e
-│       └── auth/           # Autenticação JWT e guardas de rota (DW06)
-```
+1. O backend verifica conexão/schema e inicia monitoramento, por padrão a cada 30 segundos.
+2. A descoberta recebe `/services`, valida a lista e sincroniza os registros. Novos/retornados aguardam coleta como `DESCONHECIDO`; ausentes de uma lista válida tornam-se `REMOVIDO`.
+3. O coletor consulta `/metrics/{idExterno}`, grava resultado e atualiza estado. O histórico anterior é preservado.
+4. O frontend consulta `/servicos` e a última coleta `SUCESSO` de cada serviço, atualizando a cada 30 segundos. Essa coleta pode ser antiga.
+5. O modo `?demo=1` usa fixtures locais e não alimenta o banco ou os indicadores reais.
 
-### 🧱 2.2 Papéis e Responsabilidades das Camadas
-- **Controllers:** Responsáveis unicamente por receber a requisição HTTP, validar parâmetros através de DTOs tipados (`class-validator`) e retornar a resposta adequada com o status HTTP correto.
-- **DTOs (Data Transfer Objects):** Definem a forma e os tipos dos dados trafegados, garantindo validação estrita na fronteira da API (**TP05**).
-- **Services:** Concentram 100% da lógica de negócio. Não interagem diretamente com o protocolo HTTP nem manipulam dados do banco via SQL puro. Isolam as regras de cálculo e as transformações matemáticas.
-- **Repositories:** Encapsulam as operações de banco de dados por meio do ORM. Os services consomem os repositórios através de interfaces/injeção de dependência (**TP02**).
-- **Integrations / External Clients:** Módulos isolados responsáveis por consumir as APIs externas de métricas e carbono, implementando políticas de timeout, retry e tolerância a falhas (**RF05**, **RNF05**).
+No Compose, os nomes de rede são `postgres`, `backend` e `frontend`. O navegador usa a porta publicada 5173; Vite encaminha para `http://backend:3000`. O backend usa PostgreSQL interno em `postgres:5432`.
 
----
+## Decisões e melhorias necessárias
 
-## 🎨 3. Arquitetura do Frontend (React + TypeScript)
+- A base modular e a injeção permitem substituir persistência/agendador em testes isolados.
+- A separação em repositories é parcial: existe em coletas, mas descoberta e monitoramento concentram persistência e integração.
+- A regra de ausência de métricas está duplicada e diverge entre registro manual e automático; deve ter uma implementação compartilhada.
+- A leitura de localização não corresponde ao objeto `location` oficial. É necessário preservar a região original antes da integração de carbono.
+- Coleta não tem timeout explícito nem trava de ciclo; o intervalo gravado não usa o intervalo real recebido.
+- A carga do dashboard depende do sucesso de todas as consultas individuais. Extrair a coordenação para service/hook e isolar as falhas facilita teste e manutenção.
 
-O frontend foi desenhado para manter alta coesão e separação de responsabilidades (**DW05**):
+Não criar contexts/providers ou padrões de projeto sem uma necessidade de estado compartilhado/regra que os justifique. As mudanças recomendadas organizam responsabilidades já existentes.
 
-### 📂 3.1 Estrutura de Diretórios
-```
-frontend/
-├── src/
-│   ├── assets/             # Imagens, logotipos e ícones
-│   ├── components/         # Componentes reutilizáveis
-│   │   ├── common/         # Botões, Cards, Loading Spinners, Modais
-│   │   ├── layout/         # Header, Sidebar, Footer
-│   │   └── charts/         # Gráficos de histórico e dispersão
-│   ├── contexts/           # Context API para gerenciamento de estado global
-│   ├── hooks/              # Custom Hooks (ex: useMetrics, useAuth, usePolling)
-│   ├── pages/              # Páginas da aplicação correspondentes às rotas
-│   │   ├── Dashboard/      # Visão geral e métricas consolidadas
-│   │   ├── Ranking/        # Tabela e classificação de impacto ambiental
-│   │   ├── Comparison/     # Comparação lado a lado entre serviços
-│   │   ├── Map/            # Visualização geográfica em mapa
-│   │   └── Login/          # Acesso restrito para administradores
-│   ├── services/           # Camada de comunicação HTTP (instância Axios centralizada)
-│   ├── types/              # Interfaces e declarações de tipos TypeScript compartilhados
-│   └── App.tsx             # Roteamento e injeção de providers
-```
+## Planejado para as próximas entregas
 
----
+Integração de carbono, cálculos ambientais, agregados, autenticação JWT/configuração protegida, ranking, comparação e mapa. O desenho completo de produto e as personas incluem esses fluxos futuros; eles ainda não são rotas disponíveis.
 
-## 🗄️ 4. Modelo de Dados e Persistência (PostgreSQL + ORM)
-
-O banco de dados armazena o cadastro dos serviços monitorados e o histórico cronológico de todas as coletas realizadas, permitindo análises evolutivas e comparações temporais (**RF10**, **DW04**).
-
-### 📊 4.1 Entidades Principais
-1. **`Service` (Serviço):**
-   - `id`: Identificador único do serviço
-   - `name`: Nome do serviço informado pelo agregador
-   - `service_type`: Tipo de aplicação/carga
-   - `region`: Região / país de hospedagem
-   - `latitude` / `longitude`: Coordenadas geográficas
-   - `status`: Situação atual (`ACTIVE`, `UNAVAILABLE`, `NO_METRICS`)
-   - `created_at` / `updated_at`: Timestamps de controle
-
-2. **`MetricCollection` (Coleta de Métrica):**
-   - `id`: Identificador único da coleta
-   - `service_id`: Chave estrangeira referenciando `Service`
-   - `collected_at`: Data e hora exata da coleta
-   - `cpu_usage_mcores`: Uso de processamento em millicores
-   - `memory_usage_bytes`: Uso de memória em bytes
-   - `requests_per_second`: Volume de requisições por segundo
-   - `network_io_bytes`: Volume de tráfego de rede
-   - `estimated_energy_kwh`: Consumo energético calculado (kWh)
-   - `carbon_intensity_factor`: Fator de emissão aplicado (gCO₂e/kWh)
-   - `estimated_carbon_emission_g`: Emissão de carbono calculada (gCO₂e)
-
----
-
-## 🐳 5. Orquestração em Contêineres (Docker Compose)
-
-O projeto é 100% executável através do `compose.yaml` (**DW07**, **RP05**), composto por 3 serviços conectados em uma rede interna isolada:
-- **`postgres`:** Banco de dados relacional com volume persistente mapeado para preservar os dados entre reinicializações.
-- **`backend`:** Aplicação NestJS executando na porta 3000, com variáveis de ambiente injetadas e healthcheck de dependência do banco de dados.
-- **`frontend`:** Aplicação React servida via servidor estático (Nginx ou Vite preview) na porta 5173.
+Consulte [plano de entregas](plano-de-entregas.md), [API implementada](api.md), [execução](execucao.md) e [revisão da Sprint 1](sprints/revisao-sprint-1.md).

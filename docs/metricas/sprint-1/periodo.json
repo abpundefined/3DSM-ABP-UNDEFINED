@@ -1,0 +1,12 @@
+{
+  "sprint": 1,
+  "baseline_sp": 60,
+  "inicio_confirmado": null,
+  "fim_previsto": "2026-10-20",
+  "horario_corte_confirmado": null,
+  "fuso": "America/Sao_Paulo",
+  "calendario_confirmado": null,
+  "snapshot": "2026-10-19",
+  "commit_referencia": "0adb1e040c078f9c69cedbcc7038cdb7e0bd4175",
+  "observacao": "Aguardando dados reais do planejamento e dos aceites. Nao inferir inicio pelo primeiro commit."
+}

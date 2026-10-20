@@ -1,52 +1,36 @@
-# 🏃 Sprint 2 — Cálculos Ambientais, Dashboard e Autenticação
+# Sprint 2 — Cálculos ambientais, dashboard e autenticação
 
-> **Período Previsto:** 21/10/2026 até 10/11/2026  
-> **Tag da Entrega:** `sprint-2`  
-> **Responsáveis pelo Registro:** Thales Cambraia (Scrum Master) e Rainan Reis (Product Owner)  
+**Previsão:** 21/10/2026 a 10/11/2026. **Tag planejada:** `sprint-2`. PO: Rainan; SM: Thales.
 
----
+## Objetivo previsto
 
-## 🎯 1. Objetivo da Sprint 2
+Evoluir a coleta da Sprint 1 para cálculo de energia e CO₂e com a API de carbono, indicadores agregados, dashboard real e autenticação/configuração protegida. As fórmulas, fatores, unidades, períodos e testes devem ser definidos a partir do contrato real e validados antes do aceite.
 
-Implementar o motor central de cálculo de consumo de energia (kWh) e estimativa de emissões de CO₂e, integrando a aplicação à API de Intensidade de Carbono, estruturar o dashboard com indicadores agregados e filtros temporais, proteger as rotas de configuração através de autenticação JWT, e assegurar ampla cobertura de testes unitários nas regras de cálculo ambiental.
+## Candidatos do backlog existente
 
----
+Tabela reconciliada com as issues em 19/10; **não é uma seleção/capacidade já aprovada para a Sprint 2**. Há 63 SP nos dez candidatos abaixo, cujas estimativas foram preservadas. Antes do início, o PO/time devem selecionar conforme capacidade e registrar responsáveis; não assumir que todo esse volume cabe no ciclo.
 
-## 📋 2. Itens Selecionados (Sprint Backlog Previsto)
+| Issue | Título atual | SP existentes | Responsáveis |
+| --- | --- | ---: | --- |
+| [#6](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/6) | [PBI-06] Cálculo individual de consumo e emissão | 8 | A definir no planejamento |
+| [#7](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/7) | [PBI-07] Indicadores agregados | 5 | A definir no planejamento |
+| [#8](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/8) | [PBI-08] Dashboard operacional | 13 | A definir no planejamento |
+| [#10](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/10) | [PBI-10] Atualização automática do dashboard | 5 | A definir no planejamento |
+| [#11](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/11) | [PBI-11] Localização dos serviços | 3 | A definir no planejamento |
+| [#15](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/15) | [PBI-15] Autenticação JWT | 8 | A definir no planejamento |
+| [#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16) | [PBI-16] Interface responsiva e acessível | 5 | A definir no planejamento |
+| [#17](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/17) | [PBI-17] Exibição de intervalos e timestamps | 3 | A definir no planejamento |
+| [#19](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/19) | [PBI-19] Segurança | 5 | A definir no planejamento |
+| [#20](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/20) | [PBI-20] Testes unitários | 8 | A definir no planejamento |
 
-| Issue | Tipo | Descrição Resumida | Estimativa (SP) | Responsáveis | Status |
-| :---: | :---: | :--- | :---: | :--- | :---: |
-| **#6** | User Story | [PBI-04] Detecção de indisponibilidade e ausência de métricas | 3 | Marcus Nascimento | Previsto |
-| **#7** | User Story | [PBI-05] Tolerância a variações e normalização de dados dinâmicos | 3 | Israel Lemes | Previsto |
-| **#8** | User Story | [PBI-06] Integração com API de Intensidade de Carbono | 5 | Marcus Nascimento | Previsto |
-| **#10** | User Story | [PBI-07] Cálculo de consumo energético e emissões individuais de CO₂e | 8 | Israel Lemes, Marcus Nascimento | Previsto |
-| **#11** | User Story | [PBI-08] Cálculo de métricas e indicadores consolidados agregados | 5 | Israel Lemes | Previsto |
-| **#15** | User Story | [PBI-12] Dashboard operacional com atualização contínua | 5 | Rainan Reis, Nadla Ferreira | Previsto |
-| **#16** | User Story | [PBI-13] Histórico temporal e persistência contínua de coletas | 5 | Israel Lemes | Previsto |
-| **#17** | User Story | [PBI-14] Indicadores claros, unidades explícitas e alertas acessíveis | 3 | Nadla Ferreira, Rainan Reis | Previsto |
-| **#19** | User Story | [PBI-19] Autenticação de usuários via JWT e proteção de rotas restritas | 5 | Thales Cambraia | Previsto |
-| **#20** | Tarefa Técnica | [PBI-20] Suíte de testes unitários para o motor de cálculos (mín. 70%) | 5 | Thales Cambraia, Marcus Nascimento | Previsto |
+As issues #18 e #23 também mencionam continuidade entre fases. Pendências da Sprint 1 precisam de decisão explícita; não repetir seus pontos em outra baseline nem tratá-las como concluídas por previsão de continuidade. #16 e #20 também abrangem evolução posterior.
 
----
+## Critérios da rubrica previstos
 
-## 🔍 3. Como Verificar as Entregas desta Sprint
+GA01–GA09/DW01 continuam obrigatórios; evoluem DW02–DW07, TP01–TP05 e IHC01–IHC04 conforme [plano de entregas](../plano-de-entregas.md). IHC05/IHC06 permanecem previstos para a Sprint 3.
 
-*(Será preenchido detalhando comandos e rotas ao final da Sprint 2)*
+## Registro a produzir no planejamento
 
----
+Objetivo final, data real, capacidade, itens selecionados, responsáveis, dependências da coleta, critérios e roteiro de verificação. Durante a execução: contribuições com links, impedimentos, revisão/aceite e dados do acompanhamento. Ao terminar: versão/tag, demonstrações, feedback, pendências, retrospectiva e ações com responsáveis.
 
-## 👥 4. Registro de Participação Individual — Sprint 2
-
-*(Acompanhamento contínuo ao longo do ciclo da Sprint 2)*
-
----
-
-## 📊 5. Sprint Review
-
-*(Ata de apresentação e feedback da entrega da Sprint 2)*
-
----
-
-## 🔄 6. Retrospectiva da Sprint e Ações de Melhoria
-
-*(Análise de melhoria contínua aplicada para a Sprint 3)*
+Nenhuma reunião, aceite ou teste futuro é declarado realizado por este documento. A numeração/titulação da tabela antiga estava divergente das issues e foi corrigida, preservando a identidade dos PBIs.

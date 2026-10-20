@@ -1,182 +1,124 @@
-# 🔌 Especificação da API REST — GreenER
+# API REST implementada — GreenER
 
-> **Critérios da Rubrica:** DW03, DW06, DW07, TP05  
-> **Repositório:** [abpundefined/3DSM-ABP-UNDEFINED](https://github.com/abpundefined/3DSM-ABP-UNDEFINED)  
-> **Backend:** NestJS (Porta padrão: `3000`)  
-> **Base URL:** `http://localhost:3000/api`  
-> **Documentação Swagger Interativa:** `http://localhost:3000/api/docs`  
+Versão de referência: `0adb1e0`, conferida em 19/10/2026. Esta página descreve o comportamento atual, inclusive suas limitações. Os exemplos são ilustrativos e não representam uma medição real.
 
----
+## Endereços
 
-## 🔒 1. Autenticação e Segurança (DW06)
+- Backend direto: `http://localhost:3000`, sem prefixo global `/api`.
+- Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
+- Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-A API utiliza autenticação baseada em **JSON Web Token (JWT)** no padrão `Bearer Token` para endpoints administrativos e alteração de parâmetros de monitoramento (**RF16**, **RF17**).
+Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, endpoints ambientais ou Swagger. As rotas implementadas são públicas; o acesso publicado pelo Compose está ligado a `127.0.0.1`.
 
-Rotas públicas de consulta de métricas e status não exigem token. Rotas protegidas exigem o cabeçalho HTTP:
-```http
-Authorization: Bearer <seu_token_jwt>
+## Endpoints
+
+| Método | Caminho no backend | Sucesso | Função |
+| --- | --- | --- | --- |
+| GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
+| GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
+| POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo. |
+| POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO. |
+| GET | `/coletas` | 200, array | Consulta histórico. |
+| GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
+| GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
+
+O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
+
+## Serviços e estados
+
+`GET /servicos` retorna campos do modelo `Servico`: `id`, `idExterno`, `nome`, `regiaoCodigo`, `caminhoMetricas`, `estadoAtual`, `descobertoEm`, `ultimaVezListadoEm` e `atualizadoEm`. Não inclui automaticamente a relação `regiao` nem as coletas.
+
+| Estado | Significado esperado |
+| --- | --- |
+| `DESCONHECIDO` | Serviço novo ou retornado, aguardando confirmação por coleta. |
+| `DISPONIVEL` | Coleta encontrou métricas consideradas válidas. |
+| `INDISPONIVEL` | Falha de acesso/coleta. |
+| `SEM_METRICAS` | Serviço acessível sem medições válidas. |
+| `REMOVIDO` | Não consta na última descoberta válida; histórico permanece armazenado. |
+
+O coletor ainda confunde alguns erros de ausência de métricas com indisponibilidade. Além disso, o normalizador não lê corretamente `location` do contrato oficial; a localização pode ser desconhecida mesmo quando existe na origem. Ver #1 e #5.
+
+## Registrar coleta
+
+Exemplo de `POST /coletas`, usando um `servicoId` existente:
+
+```json
+{
+  "servicoId": 1,
+  "estadoColeta": "SUCESSO",
+  "iniciadaEm": "2026-10-19T12:00:00.000Z",
+  "intervaloColetaSegundos": 30,
+  "cpuPercent": 47.5,
+  "memoryGb": 2.75,
+  "diskGb": 18.2,
+  "networkGb": 0.4
+}
 ```
 
----
+`servicoId` e `estadoColeta` são obrigatórios. O enum de coleta aceita `SUCESSO`, `SEM_METRICAS` e `FALHA`. Campos adicionais permitidos pelo DTO:
 
-## 📑 2. Sumário dos Endpoints
+- `regiaoCodigoNaColeta`: código da região, opcional.
+- `iniciadaEm`, `finalizadaEm`: datas ISO convertidas pelo DTO; a primeira recebe a data atual se omitida.
+- `intervaloColetaSegundos`: intervalo da medição, em segundos.
+- `codigoErro`, `mensagemErro`: detalhes de falha.
+- `cpuPercent`: percentual; memória, disco e rede em GB, conforme a fonte.
+- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh`, `emissaoGCo2e`: campos ambientais opcionais; não são calculados automaticamente nesta versão.
 
-| Método | Endpoint | Protegido? | Descrição |
-| :---: | :--- | :---: | :--- |
-| `POST` | `/auth/login` | Não | Realiza login do administrador e devolve token JWT |
-| `GET` | `/services` | Não | Lista todos os serviços descobertos com status atual |
-| `GET` | `/services/:id` | Não | Detalhes de um serviço específico e última métrica |
-| `GET` | `/services/:id/history` | Não | Histórico cronológico de coletas para gráficos |
-| `GET` | `/services/ranking` | Não | Ranking de serviços ordenados por consumo ou CO₂e |
-| `GET` | `/services/compare` | Não | Comparação lado a lado entre múltiplos serviços |
-| `GET` | `/metrics/aggregate` | Não | Indicadores consolidados da infraestrutura (totais ESG) |
-| `POST` | `/admin/config` | **Sim (JWT)** | Atualiza intervalos de coleta e parâmetros do sistema |
-| `GET` | `/health` | Não | Health check da aplicação e conectividade com o banco |
+Há validação de tipos/enum/datas e rejeição de propriedades desconhecidas nas rotas de coletas. Ainda faltam limites de faixa, IDs inteiros positivos e validação de coerência temporal. Não considerar validado um valor apenas porque o endpoint o aceitou.
 
----
+O service manual pode reclassificar um payload com zeros ou sem CPU como `SEM_METRICAS`, mesmo havendo outros valores. Essa é uma pendência da #5. A coleta automática usa outro caminho de persistência e não herda essa regra.
 
-## 📡 3. Detalhamento dos Endpoints
+## Histórico e última coleta válida
 
-### 3.1 `POST /auth/login`
-Autentica o usuário administrador.
+Filtros opcionais de `GET /coletas`:
 
-* **Corpo da Requisição (JSON):**
-  ```json
-  {
-    "username": "admin",
-    "password": "senha_segura"
+| Query | Formato |
+| --- | --- |
+| `servicoId` | Número do ID interno. |
+| `dataInicio` | Data ISO; limite inferior inclusivo de `iniciadaEm`. |
+| `dataFim` | Data ISO; limite superior inclusivo de `iniciadaEm`. |
+
+O retorno é ordenado por `iniciadaEm` decrescente e inclui nome/identificador externo do serviço. O detalhe por ID também inclui relações disponíveis de serviço e região.
+
+`GET /coletas/servico/1/ultima-valida` retorna:
+
+```json
+{
+  "fonte": "CACHE_FALLBACK",
+  "mensagem": "Dados recuperados da última coleta válida preservada",
+  "dados": {
+    "id": 10,
+    "servicoId": 1,
+    "estadoColeta": "SUCESSO",
+    "iniciadaEm": "2026-10-19T12:00:00.000Z",
+    "cpuPercent": 47.5,
+    "memoryGb": 2.75,
+    "energiaKwh": null,
+    "emissaoGCo2e": null
   }
-  ```
-* **Resposta de Sucesso (`200 OK`):**
-  ```json
-  {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "expires_in": 3600,
-    "token_type": "Bearer"
-  }
-  ```
-* **Resposta de Erro (`401 Unauthorized`):**
-  ```json
-  {
-    "statusCode": 401,
-    "message": "Credenciais inválidas",
-    "error": "Unauthorized"
-  }
-  ```
+}
+```
 
----
+O objeto `dados` contém os demais campos do modelo `Coleta`, omitidos no exemplo por brevidade. `CACHE_FALLBACK` é sempre devolvido por esse endpoint, inclusive quando o serviço está disponível. Portanto, esse rótulo sozinho não comprova falha atual; verificar estado do serviço e timestamp da coleta. Valores podem ser antigos. Campos nulos não significam zero.
 
-### 3.2 `GET /services`
-Retorna a listagem de todos os serviços descobertos no Agregador de Métricas.
+## Erros
 
-* **Parâmetros de Consulta (Query Params - Opcionais):**
-  - `status`: Filtra por `ACTIVE`, `UNAVAILABLE` ou `NO_METRICS`
-  - `region`: Filtra por região (ex: `sa-east-1`)
-* **Resposta de Sucesso (`200 OK`):**
-  ```json
-  [
-    {
-      "id": "srv-auth-01",
-      "name": "Auth Service",
-      "service_type": "Microservice",
-      "region": "Brazil (sa-east-1)",
-      "latitude": -23.5505,
-      "longitude": -46.6333,
-      "status": "ACTIVE",
-      "last_collection": {
-        "collected_at": "2026-10-01T03:00:00.000Z",
-        "cpu_usage_mcores": 450,
-        "memory_usage_bytes": 1073741824,
-        "estimated_energy_kwh": 0.000045,
-        "estimated_carbon_emission_g": 0.0038
-      }
-    }
-  ]
-  ```
+Nas rotas de coletas, o filtro retorna:
 
----
+```json
+{
+  "sucesso": false,
+  "statusCode": 404,
+  "timestamp": "2026-10-19T12:00:00.000Z",
+  "rota": "/coletas/servico/1/ultima-valida",
+  "mensagem": "Nenhuma coleta válida anterior encontrada para o serviço ID 1"
+}
+```
 
-### 3.3 `GET /metrics/aggregate`
-Retorna os indicadores consolidados de toda a infraestrutura para o dashboard principal.
+`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados de coletas retornam 500 com mensagem genérica. O filtro não está registrado globalmente: outras rotas usam a resposta padrão do NestJS. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
 
-* **Parâmetros de Consulta:**
-  - `period`: `today`, `last_7_days`, `month` (Padrão: `today`)
-* **Resposta de Sucesso (`200 OK`):**
-  ```json
-  {
-    "period": "today",
-    "services_count": {
-      "total": 12,
-      "active": 10,
-      "unavailable": 1,
-      "no_metrics": 1
-    },
-    "totals": {
-      "energy_kwh": 14.85,
-      "carbon_emission_kg": 1.26,
-      "requests_processed": 1420500
-    },
-    "updated_at": "2026-10-01T03:30:00.000Z"
-  }
-  ```
+## Integrações e endpoints futuros
 
----
+A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
 
-### 3.4 `GET /services/ranking`
-Ordena os serviços pelo impacto ambiental em determinado período (**RF14**).
-
-* **Parâmetros de Consulta:**
-  - `by`: `energy` ou `carbon` (Padrão: `carbon`)
-  - `order`: `desc` ou `asc` (Padrão: `desc`)
-* **Resposta de Sucesso (`200 OK`):**
-  ```json
-  [
-    {
-      "rank": 1,
-      "service_id": "srv-video-transcoder",
-      "name": "Video Transcoding Engine",
-      "total_carbon_g": 354.2,
-      "total_energy_kwh": 4.12
-    },
-    {
-      "rank": 2,
-      "service_id": "srv-search-api",
-      "name": "Search & Indexer API",
-      "total_carbon_g": 182.7,
-      "total_energy_kwh": 2.15
-    }
-  ]
-  ```
-
----
-
-### 3.5 `GET /services/compare`
-Compara múltiplos serviços simultaneamente (**RF15**).
-
-* **Parâmetros de Consulta:**
-  - `ids`: Lista de IDs separados por vírgula (ex: `ids=srv-auth-01,srv-catalog-02`)
-  - `from`: Data inicial ISO 8601
-  - `to`: Data final ISO 8601
-* **Resposta de Sucesso (`200 OK`):** Array comparativo com curvas temporais e médias de consumo de cada serviço.
-
----
-
-### 3.6 `POST /admin/config` (Protegido)
-Altera os parâmetros de coleta da aplicação.
-
-* **Cabeçalho:** `Authorization: Bearer <token>`
-* **Corpo da Requisição (JSON):**
-  ```json
-  {
-    "polling_interval_seconds": 60,
-    "pue_default": 1.25,
-    "fallback_carbon_intensity": 85.0
-  }
-  ```
-* **Resposta de Sucesso (`200 OK`):**
-  ```json
-  {
-    "message": "Configurações atualizadas com sucesso",
-    "updated_at": "2026-10-01T03:35:00.000Z"
-  }
-  ```
+Autenticação/configuração protegida, API de carbono, cálculos/agregados, ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.

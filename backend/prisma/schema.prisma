@@ -1,0 +1,103 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EstadoMonitoramento {
+  DISPONIVEL
+  INDISPONIVEL
+  SEM_METRICAS
+  REMOVIDO
+  DESCONHECIDO
+}
+
+enum EstadoColeta {
+  SUCESSO
+  SEM_METRICAS
+  FALHA
+}
+
+enum EstadoCalculo {
+  PENDENTE
+  CONCLUIDO
+  FALHA
+}
+
+model Regiao {
+  codigo       String   @id
+  pais         String
+  regiao       String
+  cidade       String?
+  latitude     Float?
+  longitude    Float?
+  atualizadaEm DateTime @updatedAt @db.Timestamptz(3)
+
+  servicos Servico[]
+  coletas  Coleta[]
+}
+
+model Servico {
+  id                 Int                 @id @default(autoincrement())
+  idExterno          String              @unique
+  nome               String
+  regiaoCodigo       String
+  caminhoMetricas    String
+  estadoAtual        EstadoMonitoramento @default(DESCONHECIDO)
+  descobertoEm       DateTime            @default(now()) @db.Timestamptz(3)
+  ultimaVezListadoEm DateTime            @default(now()) @db.Timestamptz(3)
+  atualizadoEm       DateTime            @updatedAt @db.Timestamptz(3)
+
+  regiao  Regiao   @relation(fields: [regiaoCodigo], references: [codigo], onDelete: Restrict)
+  coletas Coleta[]
+
+  @@index([regiaoCodigo])
+}
+
+model Coleta {
+  id                            Int           @id @default(autoincrement())
+  servicoId                     Int
+  regiaoCodigoNaColeta          String?
+  iniciadaEm                    DateTime      @default(now()) @db.Timestamptz(3)
+  finalizadaEm                  DateTime?     @db.Timestamptz(3)
+  intervaloColetaSegundos       Int?
+  estadoColeta                  EstadoColeta
+  codigoErro                    String?
+  mensagemErro                  String?
+  cpuPercent                    Float?
+  memoryGb                      Float?
+  diskGb                        Float?
+  networkGb                     Float?
+  intensidadeCarbonoGCo2ePorKwh Float?
+  consultadaCarbonoEm           DateTime?     @db.Timestamptz(3)
+  inicioPeriodo                 DateTime?     @db.Timestamptz(3)
+  fimPeriodo                    DateTime?     @db.Timestamptz(3)
+  energiaKwh                    Float?
+  emissaoGCo2e                  Float?
+  estadoCalculo                 EstadoCalculo @default(PENDENTE)
+  versaoCalculo                 String?
+
+  servico Servico @relation(fields: [servicoId], references: [id], onDelete: Restrict)
+  regiao  Regiao? @relation(fields: [regiaoCodigoNaColeta], references: [codigo], onDelete: Restrict)
+
+  @@index([servicoId, iniciadaEm])
+  @@index([regiaoCodigoNaColeta])
+}
+
+model Usuario {
+  id        Int    @id @default(autoincrement())
+  nome      String
+  email     String @unique
+  senhaHash String
+}
+
+model ConfiguracaoMonitoramento {
+  id                          Int      @id @default(autoincrement())
+  intervaloDescobertaSegundos Int
+  intervaloColetaSegundos     Int
+  atualizadaEm                DateTime @updatedAt @db.Timestamptz(3)
+}
