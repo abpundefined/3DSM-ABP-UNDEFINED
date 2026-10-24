@@ -37,6 +37,8 @@ services:
   frontend:
     build:
       context: ./frontend
+    environment:
+      API_PROXY_TARGET: http://backend:3000
     ports:
       - "127.0.0.1:5173:5173"
     volumes:
