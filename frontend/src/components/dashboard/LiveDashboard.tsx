@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api';
+import { formatRegionName } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 
@@ -271,9 +272,7 @@ export default function LiveDashboard() {
                         <th scope="row">
                           <span className="service-name">{service.nome}</span>
                           <span className="service-region">
-                            {service.regiaoCodigo === 'desconhecida'
-                              ? 'Localização não informada'
-                              : service.regiaoCodigo}
+                            {formatRegionName(service.regiaoCodigo)}
                           </span>
                         </th>
                         <td>

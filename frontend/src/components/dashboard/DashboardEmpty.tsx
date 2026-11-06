@@ -3,6 +3,7 @@ import Icon from '../common/Icon';
 import { useEffect, useState } from 'react';
 import { apiRequest } from '../../services/api';
 import type { ServiceStatus } from '../../types/dashboard';
+import { formatRegionName } from '../../utils/formatters';
 import { serviceStatusPresentation } from './demoPresentation';
 
 // Contrato de GET /servicos; os estados correspondem ao enum persistido pelo backend.
@@ -101,7 +102,7 @@ function ServiceStatusList() {
           <li key={service.id}>
             <span>
               <strong>{service.nome}</strong>
-              <small>{service.regiaoCodigo}</small>
+              <small>{formatRegionName(service.regiaoCodigo)}</small>
             </span>
             <span className={`service-badge service-badge--${status}`}>
               <Icon name={presentation.icon} />
