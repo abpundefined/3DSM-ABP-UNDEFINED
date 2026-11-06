@@ -59,6 +59,10 @@ $$Emissão_{CO_2e} (\text{kgCO}_2\text{e}) = \frac{Emissão_{CO_2e} (\text{gCO}_
 
 > **Fallback de Falha de API:** Se a API de Carbono estiver inacessível ou a região não mapeada, o sistema adotará o fator de emissão base de **85.0 gCO₂e/kWh**.
 
+### 3.3 Integração com a API de intensidade de carbono
+
+O backend consulta `GET {CARBON_API_URL}/regions/{region_code}/carbon-intensity`. A resposta fornece o fator em `carbon_intensity_gco2e_per_kwh`; esse fator e a emissão calculada são persistidos na coleta. Se a consulta falhar ou retornar um fator inválido, aplica-se o fallback de 85.0 gCO₂e/kWh.
+
 ---
 
 ## 🧪 4. Exemplo Numérico de Referência (Validação de Testes)

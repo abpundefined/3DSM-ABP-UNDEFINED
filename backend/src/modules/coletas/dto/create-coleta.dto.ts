@@ -17,6 +17,12 @@ export enum EstadoColetaEnum {
   FALHA = "FALHA",
 }
 
+export enum EstadoCalculoEnum {
+  PENDENTE = "PENDENTE",
+  CONCLUIDO = "CONCLUIDO",
+  FALHA = "FALHA",
+}
+
 export class CreateColetaDto {
   @IsInt({
     message: "O ID do serviço deve ser um número inteiro (sem decimais).",
@@ -92,4 +98,8 @@ export class CreateColetaDto {
   @Min(0)
   @IsOptional()
   emissaoGCo2e?: number;
+
+  @IsEnum(EstadoCalculoEnum)
+  @IsOptional()
+  estadoCalculo?: EstadoCalculoEnum;
 }

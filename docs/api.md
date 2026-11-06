@@ -62,7 +62,7 @@ Exemplo de `POST /coletas`, usando um `servicoId` existente:
 - `intervaloColetaSegundos`: intervalo da medição, em segundos.
 - `codigoErro`, `mensagemErro`: detalhes de falha.
 - `cpuPercent`: percentual; memória, disco e rede em GB, conforme a fonte.
-- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh`, `emissaoGCo2e`: campos ambientais opcionais; não são calculados automaticamente nesta versão.
+- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh` e `emissaoGCo2e` são calculados e persistidos quando a coleta contém medições. Nessa situação, `estadoCalculo` é salvo como `CONCLUIDO`; sem medições, permanece `PENDENTE`.
 
 Há validação de tipos/enum/datas e rejeição de propriedades desconhecidas nas rotas de coletas. Ainda faltam limites de faixa, IDs inteiros positivos e validação de coerência temporal. Não considerar validado um valor apenas porque o endpoint o aceitou.
 

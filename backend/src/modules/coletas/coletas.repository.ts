@@ -29,6 +29,7 @@ export class ColetasRepository implements IColetasRepository {
                 diskGb: data.diskGb,
                 networkGb: data.networkGb,
                 intensidadeCarbonoGCo2ePorKwh: data.intensidadeCarbonoGCo2ePorKwh,
+                estadoCalculo: data.estadoCalculo ?? 'PENDENTE',
                 energiaKwh: data.energiaKwh,
                 emissaoGCo2e: data.emissaoGCo2e,
             },
@@ -80,4 +81,3 @@ export class ColetasRepository implements IColetasRepository {
         });
     }
 }
-

@@ -1,17 +1,25 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { ColetasRepository } from "./coletas.repository";
-import { CreateColetaDto, EstadoColetaEnum } from "./dto/create-coleta.dto";
+import {
+  CreateColetaDto,
+  EstadoCalculoEnum,
+  EstadoColetaEnum,
+} from "./dto/create-coleta.dto";
 import { FilterColetasDto } from "./dto/filter-coleta.dto";
 import { CalculosService } from "../calculos/calculos.service";
+import { ServicosService } from "../servicos/servicos.service";
 
 @Injectable()
 export class ColetasService {
   constructor(
     private readonly coletasRepository: ColetasRepository,
     private readonly calculosService: CalculosService,
+    private readonly servicosService: ServicosService,
   ) {}
 
   async registrarColeta(dto: CreateColetaDto) {
+    dto.estadoCalculo = EstadoCalculoEnum.PENDENTE;
+
     const temMedicao =
       (dto.cpuPercent != null &&
         Number.isFinite(dto.cpuPercent) &&
@@ -33,22 +41,31 @@ export class ColetasService {
         "Serviço acessível, porém sem medições de consumo disponíveis no payload retornado.";
     }
 
-    // Calcula os valores ambientais limpos, sem violar as regras do ESLint
-    // Calcula os valores ambientais limpos
     if (temMedicao) {
-      const impacto = this.calculosService.processarImpactoAmbiental({
-        cpuPercent: dto.cpuPercent ?? 0,
-        cpuMaxWatts: 45,
-        memoriaGb: dto.memoryGb ?? 0,
-        discoGb: dto.diskGb ?? 0,
-        redeGb: dto.networkGb ?? 0,
-        // CORREÇÃO 1: Usa a propriedade que existe no seu DTO
-        intervaloSegundos: dto.intervaloColetaSegundos ?? 60,
-      });
+      const energiaKwh = this.calculosService.calcularEnergia(
+        dto.cpuPercent ?? 0,
+        dto.memoryGb ?? 0,
+        dto.diskGb ?? 0,
+        dto.networkGb ?? 0,
+        dto.intervaloColetaSegundos ?? 60,
+      );
 
-      // CORREÇÃO 2: Usa o nome exato (com C maiúsculo) definido no seu DTO
-      dto.energiaKwh = impacto.energiaKwh;
-      dto.emissaoGCo2e = impacto.emissaoGco2e;
+      const servico = await this.servicosService.findById(dto.servicoId);
+
+      if (!servico) {
+        throw new NotFoundException("Serviço não encontrado");
+      }
+
+      const resultadoEmissao = await this.calculosService.calcularEmissao(
+        energiaKwh,
+        servico.regiaoCodigo,
+      );
+
+      dto.energiaKwh = energiaKwh;
+      dto.intensidadeCarbonoGCo2ePorKwh =
+        resultadoEmissao.intensidadeCarbonoGCo2ePorKwh;
+      dto.emissaoGCo2e = resultadoEmissao.emissaoGCo2e;
+      dto.estadoCalculo = EstadoCalculoEnum.CONCLUIDO;
     }
 
     return this.coletasRepository.create(dto);

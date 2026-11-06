@@ -167,6 +167,12 @@ export class ServicosService {
     });
   }
 
+  async findById(id: number) {
+    return this.prisma.servico.findUnique({
+      where: { id },
+    });
+  }
+
   private buildRegiaoCodigo(service: {
     localizacao: string;
     cidade?: string | null;
