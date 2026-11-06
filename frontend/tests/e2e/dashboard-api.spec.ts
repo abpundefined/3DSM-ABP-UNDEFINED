@@ -30,8 +30,8 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
           memoryGb: 2.75,
           diskGb: 15,
           networkGb: 0.5,
-          energiaKwh: null,
-          emissaoGCo2e: null,
+          energiaKwh: '1.234567',
+          emissaoGCo2e: '1234.567',
         },
       }),
     }),
@@ -46,9 +46,8 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(table).toContainText('Ativo');
   await expect(table).toContainText('47,5 %');
   await expect(table).toContainText('2,75 GB');
-  await expect(table).toContainText('br-sudeste');
+  await expect(table).toContainText('Brasil (Sudeste)');
   await expect(page.getByLabel('Indicadores gerais')).toContainText('1');
-  await expect(page.getByLabel('Indicadores gerais')).toContainText(
-    'O backend ainda não calcula consumo energético.',
-  );
+  await expect(table).toContainText('1,2346 kWh');
+  await expect(table).toContainText('1,2346 kgCO₂e');
 });

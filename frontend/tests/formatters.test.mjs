@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { formatRegionName } from '../src/utils/formatters.ts';
+import {
+  formatRegionName,
+  toFiniteNumber,
+} from '../src/utils/formatters.ts';
 
 test('formats known carbon API region codes', () => {
   assert.equal(formatRegionName('br-sudeste'), 'Brasil (Sudeste)');
@@ -19,4 +22,12 @@ test('provides a readable fallback for unknown and missing region codes', () => 
   assert.equal(formatRegionName('sa-east-1'), 'SA East 1');
   assert.equal(formatRegionName('desconhecida'), 'Localização não informada');
   assert.equal(formatRegionName(undefined), 'Localização não informada');
+});
+
+test('normalizes numeric API values without treating empty values as zero', () => {
+  assert.equal(toFiniteNumber('1.234567'), 1.234567);
+  assert.equal(toFiniteNumber(0), 0);
+  assert.equal(toFiniteNumber(''), null);
+  assert.equal(toFiniteNumber('not-a-number'), null);
+  assert.equal(toFiniteNumber(null), null);
 });

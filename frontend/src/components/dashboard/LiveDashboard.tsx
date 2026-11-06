@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api';
-import { formatRegionName } from '../../utils/formatters';
+import { formatRegionName, toFiniteNumber } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 
@@ -10,6 +10,8 @@ type BackendService = {
   nome: string;
   regiaoCodigo: string;
   estadoAtual: 'DISPONIVEL' | 'INDISPONIVEL' | 'SEM_METRICAS' | 'REMOVIDO' | 'DESCONHECIDO';
+  energiaKwh?: number | string | null;
+  emissaoGCo2e?: number | string | null;
 };
 
 type BackendCollection = {
@@ -18,8 +20,8 @@ type BackendCollection = {
   memoryGb: number | null;
   diskGb: number | null;
   networkGb: number | null;
-  energiaKwh: number | null;
-  emissaoGCo2e: number | null;
+  energiaKwh: number | string | null;
+  emissaoGCo2e: number | string | null;
 };
 
 type LatestCollectionResponse = {
@@ -32,14 +34,41 @@ type LiveService = BackendService & {
 
 const REFRESH_INTERVAL_MS = 30_000;
 
-function formatMetric(value: number | null | undefined, suffix: string, digits = 2) {
-  if (value == null || !Number.isFinite(value)) {
+function formatMetric(
+  value: number | string | null | undefined,
+  suffix: string,
+  digits = 2,
+) {
+  const numericValue = toFiniteNumber(value);
+  if (numericValue == null) {
     return '—';
   }
 
   return `${new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  }).format(value)} ${suffix}`;
+  }).format(numericValue)} ${suffix}`;
+}
+
+function formatTotal(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  }).format(value);
+}
+
+function normalizeCollection(
+  collection: BackendCollection | null,
+): BackendCollection | null {
+  if (!collection) {
+    return null;
+  }
+
+  return {
+    ...collection,
+    energiaKwh: toFiniteNumber(collection.energiaKwh),
+    emissaoGCo2e: toFiniteNumber(collection.emissaoGCo2e),
+  };
 }
 
 function statusFor(service: BackendService) {
@@ -113,7 +142,11 @@ export default function LiveDashboard() {
       setServices(
         response.map((service) => ({
           ...service,
-          latestCollection: collectionByService.get(service.id) ?? null,
+          energiaKwh: toFiniteNumber(service.energiaKwh),
+          emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
+          latestCollection: normalizeCollection(
+            collectionByService.get(service.id) ?? null,
+          ),
         })),
       );
       setLastUpdated(new Date());
@@ -153,6 +186,22 @@ export default function LiveDashboard() {
   const unavailable = services.filter((service) => service.estadoAtual === 'INDISPONIVEL').length;
   const noMetrics = services.filter((service) => service.estadoAtual === 'SEM_METRICAS').length;
   const removed = services.filter((service) => service.estadoAtual === 'REMOVIDO').length;
+  const totalEnergyKwh = services.reduce(
+    (total, service) =>
+      total +
+      (toFiniteNumber(service.latestCollection?.energiaKwh) ??
+        toFiniteNumber(service.energiaKwh) ??
+        0),
+    0,
+  );
+  const totalEmissionsKg = services.reduce(
+    (total, service) =>
+      total +
+      (toFiniteNumber(service.latestCollection?.emissaoGCo2e) ??
+        toFiniteNumber(service.emissaoGCo2e) ??
+        0),
+    0,
+  ) / 1000;
   const latestCollectionDate = services
     .map((service) => service.latestCollection?.iniciadaEm)
     .filter((date): date is string => Boolean(date))
@@ -191,15 +240,15 @@ export default function LiveDashboard() {
         />
         <MetricSummary
           label="Energia estimada"
-          value="—"
-          description="kWh · O backend ainda não calcula consumo energético."
+          value={formatTotal(totalEnergyKwh)}
+          description="Total das coletas válidas mais recentes · kWh"
           icon="bolt"
           tone="leaf"
         />
         <MetricSummary
           label="Emissões estimadas"
-          value="—"
-          description="kgCO₂e · O backend ainda não calcula emissões de carbono."
+          value={formatTotal(totalEmissionsKg)}
+          description="Total das coletas válidas mais recentes · kgCO₂e"
           icon="cloud"
           tone="olive"
         />
@@ -267,6 +316,12 @@ export default function LiveDashboard() {
                   {services.map((service) => {
                     const status = statusFor(service);
                     const metrics = service.latestCollection;
+                    const energyKwh =
+                      toFiniteNumber(metrics?.energiaKwh) ??
+                      toFiniteNumber(service.energiaKwh);
+                    const emissionsGCo2e =
+                      toFiniteNumber(metrics?.emissaoGCo2e) ??
+                      toFiniteNumber(service.emissaoGCo2e);
                     return (
                       <tr key={service.id}>
                         <th scope="row">
@@ -285,8 +340,18 @@ export default function LiveDashboard() {
                         <td>{formatMetric(metrics?.memoryGb, 'GB')}</td>
                         <td>{formatMetric(metrics?.diskGb, 'GB')}</td>
                         <td>{formatMetric(metrics?.networkGb, 'GB')}</td>
-                        <td>{formatMetric(metrics?.energiaKwh, 'kWh')}</td>
-                        <td>{formatMetric(metrics?.emissaoGCo2e == null ? null : metrics.emissaoGCo2e / 1000, 'kgCO₂e')}</td>
+                        <td>
+                          {formatMetric(energyKwh, 'kWh', 4)}
+                        </td>
+                        <td>
+                          {formatMetric(
+                            emissionsGCo2e === null
+                              ? null
+                              : emissionsGCo2e / 1000,
+                            'kgCO₂e',
+                            4,
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -297,7 +362,6 @@ export default function LiveDashboard() {
               {latestCollectionDate
                 ? `Coleta válida mais recente: ${latestCollectionDate.toLocaleString('pt-BR')}.`
                 : 'Ainda não há coletas válidas.'}
-              {' '}Energia e emissões aparecem como indisponíveis até serem calculadas pelo backend.
             </p>
           </>
         )}
