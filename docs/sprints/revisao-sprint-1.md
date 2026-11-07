@@ -8,19 +8,19 @@ O Projects foi observado com 12 In review e #4 In progress. A API recusou a alte
 
 | Issue | Item | SP | Responsável no GitHub | Situação técnica recomendada |
 | --- | --- | ---: | --- | --- |
-| [#1](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/1) | [PBI-01] Descoberta automática de serviços | 5 | PedrinhoDBR | In progress |
-| [#2](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/2) | [PBI-02] Monitoramento dinâmico de serviços | 8 | PedrinhoDBR | In review |
-| [#3](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/3) | [PBI-03] Coleta periódica de métricas | 5 | PedrinhoDBR | In progress |
-| [#4](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/4) | [PBI-04] Detecção de serviço indisponível | 3 | NadlaFernandes | In review |
-| [#5](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/5) | [PBI-05] Detecção de ausência de métricas | 3 | Israelisl | In progress |
-| [#9](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/9) | [PBI-09] Histórico de coletas | 5 | Israelisl | In review |
-| [#18](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/18) | [PBI-18] Tolerância a falhas | 5 | Israelisl | In progress |
-| [#22](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/22) | [PBI-22] Setup Docker Compose | 5 | PedrinhoDBR, MarcusVRDN | In review |
-| [#23](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/23) | [PBI-23] Protótipos e avaliação de usabilidade (IHC) | 8 | thalestcd | In progress |
-| [#24](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/24) | Setup da estrutura base do backend NestJS com TypeScript | 3 | MarcusVRDN | In review |
-| [#25](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/25) | Setup da estrutura base do frontend React com TypeScript e Vite | 3 | RainanKaneka | In review |
-| [#26](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/26) | Configuração de variáveis de ambiente e segurança (.env.example) | 2 | PedrinhoDBR | In review |
-| [#27](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/27) | Modelagem relacional e migrações PostgreSQL via ORM | 5 | MarcusVRDN | In review |
+| [#1](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/1) | [PBI-01] Descoberta automática de serviços | 5 | PedrinhoDBR | Done |
+| [#2](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/2) | [PBI-02] Monitoramento dinâmico de serviços | 8 | PedrinhoDBR | Done |
+| [#3](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/3) | [PBI-03] Coleta periódica de métricas | 5 | PedrinhoDBR | Done |
+| [#4](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/4) | [PBI-04] Detecção de serviço indisponível | 3 | NadlaFernandes | Done |
+| [#5](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/5) | [PBI-05] Detecção de ausência de métricas | 3 | Israelisl | Done |
+| [#9](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/9) | [PBI-09] Histórico de coletas | 5 | Israelisl | Done |
+| [#18](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/18) | [PBI-18] Tolerância a falhas | 5 | Israelisl | Done |
+| [#22](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/22) | [PBI-22] Setup Docker Compose | 5 | PedrinhoDBR, MarcusVRDN | Done |
+| [#23](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/23) | [PBI-23] Protótipos e avaliação de usabilidade (IHC) | 8 | thalestcd | Done |
+| [#24](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/24) | Setup da estrutura base do backend NestJS com TypeScript | 3 | MarcusVRDN | Done |
+| [#25](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/25) | Setup da estrutura base do frontend React com TypeScript e Vite | 3 | RainanKaneka | Done |
+| [#26](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/26) | Configuração de variáveis de ambiente e segurança (.env.example) | 2 | PedrinhoDBR | Done |
+| [#27](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/27) | Modelagem relacional e migrações PostgreSQL via ORM | 5 | MarcusVRDN | Done |
 
 ## Implementação e pendências por item
 
