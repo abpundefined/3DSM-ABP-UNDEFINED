@@ -304,6 +304,54 @@ describe('Descoberta e retomada do monitoramento de serviços', () => {
     });
   });
 
+  it('ignora um ciclo iniciado enquanto outro ainda está em execução', async () => {
+    let finishCycle: () => void = () => undefined;
+    const pendingCycle = new Promise<
+      Awaited<ReturnType<ServicosService['syncServices']>>
+    >((resolve) => {
+      finishCycle = () => resolve([]);
+    });
+    const syncServices = jest
+      .spyOn(servicosService, 'syncServices')
+      .mockReturnValueOnce(pendingCycle)
+      .mockResolvedValue([]);
+    const collectMetrics = jest
+      .spyOn(monitoramentoService, 'collectMetricsForAllServices')
+      .mockResolvedValue();
+
+    const firstCycle = monitoramentoService.pollOnce();
+    await monitoramentoService.pollOnce();
+
+    expect(syncServices).toHaveBeenCalledTimes(1);
+    expect(collectMetrics).not.toHaveBeenCalled();
+
+    finishCycle();
+    await firstCycle;
+
+    expect(collectMetrics).toHaveBeenCalledTimes(1);
+
+    await monitoramentoService.pollOnce();
+
+    expect(syncServices).toHaveBeenCalledTimes(2);
+    expect(collectMetrics).toHaveBeenCalledTimes(2);
+  });
+
+  it('libera a trava após erro para permitir o próximo ciclo', async () => {
+    const syncServices = jest
+      .spyOn(servicosService, 'syncServices')
+      .mockRejectedValueOnce(new Error('Falha de rede'))
+      .mockResolvedValue([]);
+    const collectMetrics = jest
+      .spyOn(monitoramentoService, 'collectMetricsForAllServices')
+      .mockResolvedValue();
+
+    await monitoramentoService.pollOnce();
+    await monitoramentoService.pollOnce();
+
+    expect(syncServices).toHaveBeenCalledTimes(2);
+    expect(collectMetrics).toHaveBeenCalledTimes(1);
+  });
+
   it.each([
     ['INDISPONIVEL', 'FALHA', () => new Response(null, { status: 503 })],
     ['SEM_METRICAS', 'SEM_METRICAS', () => Response.json({ metrics: {} })],

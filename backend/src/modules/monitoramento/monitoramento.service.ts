@@ -8,6 +8,7 @@ import { normalizeMetricPayload } from '../../common/utils/external-api.util';
 export class MonitoramentoService implements OnModuleInit {
   private readonly logger = new Logger(MonitoramentoService.name);
   private pollingInterval?: NodeJS.Timeout;
+  private isCollecting = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -36,11 +37,19 @@ export class MonitoramentoService implements OnModuleInit {
   }
 
   async pollOnce() {
+    if (this.isCollecting) {
+      this.logger.debug('Ciclo de monitoramento ignorado: já existe um ciclo em execução.');
+      return;
+    }
+
+    this.isCollecting = true;
     try {
       await this.servicosService.syncServices();
       await this.collectMetricsForAllServices();
     } catch (error) {
       this.logger.error('Erro ao executar monitoramento de serviços', error instanceof Error ? error.stack : error);
+    } finally {
+      this.isCollecting = false;
     }
   }
 
