@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import { PrismaService } from "../../database/prisma.service";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
 
@@ -159,6 +160,34 @@ export class ServicosService {
     }
 
     return services;
+  }
+
+  async verificarSchema() {
+    return this.prisma.verifySchema();
+  }
+
+  async listarServicosParaMonitoramento() {
+    return this.prisma.servico.findMany({
+      where: {
+        estadoAtual: {
+          not: "REMOVIDO",
+        },
+      },
+      orderBy: { atualizadoEm: "desc" },
+    });
+  }
+
+  async atualizarEstadoMonitoramento(
+    id: number,
+    estadoAtual: EstadoMonitoramento,
+  ) {
+    return this.prisma.servico.update({
+      where: { id },
+      data: {
+        estadoAtual,
+        atualizadoEm: new Date(),
+      },
+    });
   }
 
   async listarServicos() {

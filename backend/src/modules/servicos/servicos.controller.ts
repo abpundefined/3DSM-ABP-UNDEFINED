@@ -1,7 +1,7 @@
-import { Controller, Get, Post } from '@nestjs/common';
-import { ServicosService } from './servicos.service';
+import { Controller, Get, Post } from "@nestjs/common";
+import { ServicosService } from "./servicos.service";
 
-@Controller('servicos')
+@Controller("servicos")
 export class ServicosController {
   constructor(private readonly servicosService: ServicosService) {}
 
@@ -10,7 +10,7 @@ export class ServicosController {
     return this.servicosService.listarServicos();
   }
 
-  @Post('sync')
+  @Post("sync")
   async sincronizar() {
     return this.servicosService.syncServices();
   }

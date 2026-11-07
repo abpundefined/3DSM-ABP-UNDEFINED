@@ -10,5 +10,6 @@ import { PrismaService } from "../../database/prisma.service";
   imports: [CalculosModule, ServicosModule],
   controllers: [ColetasController],
   providers: [ColetasService, ColetasRepository, PrismaService],
+  exports: [ColetasService],
 })
 export class ColetasModule {}

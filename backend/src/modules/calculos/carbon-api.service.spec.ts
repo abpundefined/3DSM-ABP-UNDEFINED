@@ -8,7 +8,7 @@ describe("CarbonApiService", () => {
     process.env.CARBON_API_URL = "https://carbon.unilaunch.org/";
     fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
-      json: async () => ({ carbon_intensity_gco2e_per_kwh: 85 }),
+      json: () => Promise.resolve({ carbon_intensity_gco2e_per_kwh: 85 }),
     } as Response);
   });
 
@@ -24,9 +24,9 @@ describe("CarbonApiService", () => {
   it("requests the documented region intensity endpoint", async () => {
     const service = new CarbonApiService();
 
-    await expect(
-      service.obterIntensidadeCarbono("br-sudeste"),
-    ).resolves.toBe(85);
+    await expect(service.obterIntensidadeCarbono("br-sudeste")).resolves.toBe(
+      85,
+    );
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://carbon.unilaunch.org/regions/br-sudeste/carbon-intensity",
