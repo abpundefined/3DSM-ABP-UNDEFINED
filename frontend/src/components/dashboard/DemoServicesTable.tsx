@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import type { DashboardService } from '../../types/dashboard';
+import { formatRegionName } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 import { formatNumber, serviceStatusPresentation } from './demoPresentation';
@@ -114,7 +115,9 @@ export default function DemoServicesTable({
                   <tr key={service.id}>
                     <th scope="row">
                       <span className="service-name">{service.name}</span>
-                      <span className="service-region">{service.region}</span>
+                      <span className="service-region">
+                        {formatRegionName(service.region)}
+                      </span>
                     </th>
                     <td>
                       <span
