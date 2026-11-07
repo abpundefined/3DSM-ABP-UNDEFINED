@@ -23,14 +23,14 @@ export class ColetasService {
     const temMedicao =
       (dto.cpuPercent != null &&
         Number.isFinite(dto.cpuPercent) &&
-        dto.cpuPercent !== 0) ||
+        dto.cpuPercent >= 0) ||
       (dto.memoryGb != null &&
         Number.isFinite(dto.memoryGb) &&
-        dto.memoryGb !== 0) ||
-      (dto.diskGb != null && Number.isFinite(dto.diskGb) && dto.diskGb !== 0) ||
+        dto.memoryGb >= 0) ||
+      (dto.diskGb != null && Number.isFinite(dto.diskGb) && dto.diskGb >= 0) ||
       (dto.networkGb != null &&
         Number.isFinite(dto.networkGb) &&
-        dto.networkGb !== 0);
+        dto.networkGb >= 0);
 
     const semMedicoes = !temMedicao;
 
@@ -41,13 +41,13 @@ export class ColetasService {
         "Serviço acessível, porém sem medições de consumo disponíveis no payload retornado.";
     }
 
-    if (temMedicao) {
+    if (temMedicao && dto.intervaloColetaSegundos != null) {
       const energiaKwh = this.calculosService.calcularEnergia(
         dto.cpuPercent ?? 0,
         dto.memoryGb ?? 0,
         dto.diskGb ?? 0,
         dto.networkGb ?? 0,
-        dto.intervaloColetaSegundos ?? 60,
+        dto.intervaloColetaSegundos,
       );
 
       const servico = await this.servicosService.findById(dto.servicoId);

@@ -33,10 +33,12 @@ describe("ColetasService", () => {
       Promise.resolve(dto),
     );
     calculosService.calcularEnergia.mockReturnValue(0.002);
-    calculosService.calcularEmissao.mockResolvedValue({
-      intensidadeCarbonoGCo2ePorKwh: 85,
-      emissaoGCo2e: 0.17,
-    });
+    calculosService.calcularEmissao.mockImplementation((energiaKwh: number) =>
+      Promise.resolve({
+        intensidadeCarbonoGCo2ePorKwh: 85,
+        emissaoGCo2e: energiaKwh * 85,
+      }),
+    );
     servicosService.findById.mockResolvedValue({
       regiaoCodigo: "br-sudeste",
     });
@@ -58,6 +60,7 @@ describe("ColetasService", () => {
       servicoId: 7,
       estadoColeta: EstadoColetaEnum.SUCESSO,
       cpuPercent: 12,
+      intervaloColetaSegundos: 27,
     };
 
     await service.registrarColeta(dto);
@@ -68,6 +71,65 @@ describe("ColetasService", () => {
         intensidadeCarbonoGCo2ePorKwh: 85,
         emissaoGCo2e: 0.17,
         estadoCalculo: EstadoCalculoEnum.CONCLUIDO,
+      }),
+    );
+    expect(calculosService.calcularEnergia).toHaveBeenCalledWith(
+      12,
+      0,
+      0,
+      0,
+      27,
+    );
+  });
+
+  it("não inventa um intervalo quando não foi recebido", async () => {
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 12,
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(calculosService.calcularEnergia).not.toHaveBeenCalled();
+    expect(calculosService.calcularEmissao).not.toHaveBeenCalled();
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.SUCESSO,
+        estadoCalculo: EstadoCalculoEnum.PENDENTE,
+      }),
+    );
+    expect(dto).not.toHaveProperty("energiaKwh");
+    expect(dto).not.toHaveProperty("emissaoGCo2e");
+  });
+
+  it("calcula energia zero quando todas as métricas recebidas são zero", async () => {
+    calculosService.calcularEnergia.mockReturnValue(0);
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 0,
+      memoryGb: 0,
+      diskGb: 0,
+      networkGb: 0,
+      intervaloColetaSegundos: 27,
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(calculosService.calcularEnergia).toHaveBeenCalledWith(
+      0,
+      0,
+      0,
+      0,
+      27,
+    );
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        energiaKwh: 0,
+        emissaoGCo2e: 0,
+        estadoCalculo: EstadoCalculoEnum.CONCLUIDO,
+        estadoColeta: EstadoColetaEnum.SUCESSO,
       }),
     );
   });

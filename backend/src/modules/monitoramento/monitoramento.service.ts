@@ -7,6 +7,23 @@ import { normalizeMetricPayload } from "../../common/utils/external-api.util";
 
 const METRICS_FETCH_TIMEOUT_MS = 8000;
 
+const getCollectionIntervalSeconds = (payload: unknown): number | undefined => {
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("collection_interval_seconds" in payload)
+  ) {
+    return undefined;
+  }
+
+  const interval = payload.collection_interval_seconds;
+  return typeof interval === "number" &&
+    Number.isSafeInteger(interval) &&
+    interval > 0
+    ? interval
+    : undefined;
+};
+
 @Injectable()
 export class MonitoramentoService implements OnModuleInit {
   private readonly logger = new Logger(MonitoramentoService.name);
@@ -35,7 +52,7 @@ export class MonitoramentoService implements OnModuleInit {
       intervalMs = 30000;
     }
 
-    this.pollOnce();
+    void this.pollOnce();
     this.pollingInterval = setInterval(() => {
       void this.pollOnce();
     }, intervalMs);
@@ -124,11 +141,18 @@ export class MonitoramentoService implements OnModuleInit {
       }
 
       const metrics = normalizeMetricPayload(payload);
+      const intervaloColetaSegundos = getCollectionIntervalSeconds(payload);
       const hasMetrics =
         metrics &&
         Object.values(metrics).some(
-          (value) => value != null && Number.isFinite(value) && value !== 0,
+          (value) => value != null && Number.isFinite(value),
         );
+
+      if (hasMetrics && intervaloColetaSegundos === undefined) {
+        this.logger.warn(
+          `A API de métricas não retornou um collection_interval_seconds válido para ${serviceIdExterno}; o cálculo ficará pendente.`,
+        );
+      }
 
       if (!hasMetrics) {
         await this.servicosService.atualizarEstadoMonitoramento(
@@ -161,10 +185,7 @@ export class MonitoramentoService implements OnModuleInit {
         memoryGb: metrics.memoryGb,
         diskGb: metrics.diskGb,
         networkGb: metrics.networkGb,
-        intervaloColetaSegundos:
-          Number(
-            this.configService.get<number>("METRICS_POLL_INTERVAL_MS") ?? 30000,
-          ) / 1000,
+        intervaloColetaSegundos,
       });
     } catch (error) {
       const isTimeout =

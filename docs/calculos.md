@@ -6,9 +6,9 @@
 
 ---
 
-## Situação e limites — Início da Sprint 2
+## Situação e limites
 
-**Atenção:** O modelo descrito abaixo define a regra de negócio oficial do desafio a ser implementada na Sprint 2. Atualmente, o módulo `CalculosService` está em fase de desenvolvimento. A conversão de telemetria para kWh e gCO₂e será conectada aos dados reais do banco e à API de carbono durante esta sprint, assegurando a precisão exigida no cálculo de horas ($\Delta t / 3600$) sem arredondamentos prematuros.
+O `CalculosService` aplica as fórmulas abaixo às métricas recebidas e persiste os resultados junto à coleta. O período usado no cálculo é `collection_interval_seconds`, retornado pela API de métricas; a frequência configurada no scheduler apenas agenda consultas e não substitui esse período. Se a API não fornecer um intervalo positivo válido, os dados brutos podem ser salvos, mas o cálculo permanece pendente em vez de assumir uma duração.
 
 ## 🎯 1. Objetivo deste Documento
 
@@ -23,7 +23,7 @@ O consumo total de um serviço computacional considera a soma da potência de to
 - **Memória RAM:** `0.375 W/GB`
 - **Disco (Armazenamento):** `0.01 W/GB`
 - **Rede (Tráfego):** `0.02 W/GB`
-- **Processamento (CPU):** Proporcional à utilização com base na potência máxima da CPU (`CPU_MAX`).
+- **Processamento (CPU):** A implementação atual usa `0.375 W` como potência máxima e multiplica esse fator pelo percentual de utilização. A documentação original não define numericamente `CPU_MAX`; esse valor deve ser confirmado como premissa do modelo.
 
 ---
 
@@ -71,7 +71,7 @@ Este exemplo será utilizado como *mock* e validação nos testes unitários do 
 
 **Dados de Entrada:**
 - **Potência Total dos Recursos ($P_{total}$):** 50.87 W
-- **Duração do intervalo ($\Delta t$):** 60 segundos (intervalo explícito do *scheduler*)
+- **Duração do intervalo ($\Delta t$):** 60 segundos (`collection_interval_seconds` retornado pela API)
 - **Intensidade de Carbono local:** 85.0 gCO₂e/kWh
 
 **Passo a passo (sem arredondamento prematuro de tempo):**

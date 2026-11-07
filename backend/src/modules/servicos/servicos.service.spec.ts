@@ -308,6 +308,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
       .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
       .mockResolvedValueOnce(
         Response.json({
+          collection_interval_seconds: 27,
           metrics: {
             cpu_percent: 25,
             memory_gb: 2,
@@ -339,7 +340,66 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
         memoryGb: 2,
         diskGb: 3,
         networkGb: 4,
+        intervaloColetaSegundos: 27,
       }),
+    );
+  });
+
+  it("trata métricas válidas iguais a zero como uma coleta real", async () => {
+    const service = seedService("DESCONHECIDO");
+    fetchMock
+      .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
+      .mockResolvedValueOnce(
+        Response.json({
+          collection_interval_seconds: 30,
+          metrics: {
+            cpu_percent: 0,
+            memory_gb: 0,
+            disk_gb: 0,
+            network_gb: 0,
+          },
+        }),
+      );
+
+    await monitoramentoService.pollOnce();
+
+    expect(service.estadoAtual).toBe("DISPONIVEL");
+    expect(registrarColeta).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.SUCESSO,
+        cpuPercent: 0,
+        memoryGb: 0,
+        diskGb: 0,
+        networkGb: 0,
+        intervaloColetaSegundos: 30,
+      }),
+    );
+  });
+
+  it("não usa a frequência do scheduler como duração da medição", async () => {
+    seedService("DESCONHECIDO");
+    const warnSpy = jest
+      .spyOn(Logger.prototype, "warn")
+      .mockImplementation(() => undefined);
+    fetchMock
+      .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
+      .mockResolvedValueOnce(
+        Response.json({
+          metrics: { cpu_percent: 25 },
+        }),
+      );
+
+    await monitoramentoService.pollOnce();
+
+    expect(registrarColeta).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.SUCESSO,
+        cpuPercent: 25,
+        intervaloColetaSegundos: undefined,
+      }),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      "A API de métricas não retornou um collection_interval_seconds válido para billing-api; o cálculo ficará pendente.",
     );
   });
 

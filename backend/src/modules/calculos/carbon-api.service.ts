@@ -1,5 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 
+export const DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH: number = 85;
+
 interface CarbonApiResponse {
   carbon_intensity_gco2e_per_kwh: number;
 }
@@ -40,7 +42,7 @@ export class CarbonApiService {
         `Falha ao buscar carbono para ${regionCode}. Usando fallback.`,
         errorMessage,
       );
-      return 85.0;
+      return DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH;
     }
   }
 }
