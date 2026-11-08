@@ -9,7 +9,12 @@ type BackendService = {
   idExterno: string;
   nome: string;
   regiaoCodigo: string;
-  estadoAtual: 'DISPONIVEL' | 'INDISPONIVEL' | 'SEM_METRICAS' | 'REMOVIDO' | 'DESCONHECIDO';
+  estadoAtual:
+    | 'DISPONIVEL'
+    | 'INDISPONIVEL'
+    | 'SEM_METRICAS'
+    | 'REMOVIDO'
+    | 'DESCONHECIDO';
   energiaKwh?: number | string | null;
   emissaoGCo2e?: number | string | null;
 };
@@ -26,6 +31,15 @@ type BackendCollection = {
 
 type LatestCollectionResponse = {
   dados: BackendCollection;
+};
+
+type BackendIndicators = {
+  energiaTotalKwh: number;
+  emissaoTotalGCo2e: number;
+  servicos: {
+    disponiveis: number;
+    indisponiveis: number;
+  };
 };
 
 type LiveService = BackendService & {
@@ -50,11 +64,50 @@ function formatMetric(
   }).format(numericValue)} ${suffix}`;
 }
 
-function formatTotal(value: number) {
+function formatTotal(value: number | undefined) {
+  if (value === undefined) {
+    return '—';
+  }
+
   return new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
   }).format(value);
+}
+
+function formatCount(value: number | undefined) {
+  return value === undefined
+    ? '—'
+    : new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(
+        value,
+      );
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isBackendIndicators(value: unknown): value is BackendIndicators {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('servicos' in value) ||
+    typeof value.servicos !== 'object' ||
+    value.servicos === null ||
+    !('disponiveis' in value.servicos) ||
+    !('indisponiveis' in value.servicos)
+  ) {
+    return false;
+  }
+
+  return (
+    'energiaTotalKwh' in value &&
+    isFiniteNumber(value.energiaTotalKwh) &&
+    'emissaoTotalGCo2e' in value &&
+    isFiniteNumber(value.emissaoTotalGCo2e) &&
+    isFiniteNumber(value.servicos.disponiveis) &&
+    isFiniteNumber(value.servicos.indisponiveis)
+  );
 }
 
 function normalizeCollection(
@@ -76,13 +129,29 @@ function statusFor(service: BackendService) {
     case 'DISPONIVEL':
       return { className: 'active', label: 'Ativo', icon: 'check' as const };
     case 'SEM_METRICAS':
-      return { className: 'noMetrics', label: 'Sem métricas', icon: 'info' as const };
+      return {
+        className: 'noMetrics',
+        label: 'Sem métricas',
+        icon: 'info' as const,
+      };
     case 'REMOVIDO':
-      return { className: 'unavailable', label: 'Removido', icon: 'alert' as const };
+      return {
+        className: 'unavailable',
+        label: 'Removido',
+        icon: 'alert' as const,
+      };
     case 'INDISPONIVEL':
-      return { className: 'unavailable', label: 'Indisponível', icon: 'alert' as const };
+      return {
+        className: 'unavailable',
+        label: 'Indisponível',
+        icon: 'alert' as const,
+      };
     default:
-      return { className: 'unavailable', label: 'Desconhecido', icon: 'info' as const };
+      return {
+        className: 'unavailable',
+        label: 'Desconhecido',
+        icon: 'info' as const,
+      };
   }
 }
 
@@ -100,6 +169,7 @@ function getErrorMessage(error: unknown) {
 
 export default function LiveDashboard() {
   const [services, setServices] = useState<LiveService[]>([]);
+  const [indicators, setIndicators] = useState<BackendIndicators>();
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -116,9 +186,15 @@ export default function LiveDashboard() {
     setErrorMessage(null);
 
     try {
-      const response = await apiRequest<BackendService[]>('/servicos', { signal });
+      const [response, indicatorResponse] = await Promise.all([
+        apiRequest<BackendService[]>('/servicos', { signal }),
+        apiRequest<unknown>('/indicadores', { signal }),
+      ]);
       if (!Array.isArray(response)) {
         throw new Error('Formato de serviços inválido.');
+      }
+      if (!isBackendIndicators(indicatorResponse)) {
+        throw new Error('Formato de indicadores inválido.');
       }
 
       const latestCollections = await Promise.all(
@@ -149,6 +225,7 @@ export default function LiveDashboard() {
           ),
         })),
       );
+      setIndicators(indicatorResponse);
       setLastUpdated(new Date());
     } catch (error) {
       if (signal?.aborted) {
@@ -182,26 +259,6 @@ export default function LiveDashboard() {
     };
   }, [refresh]);
 
-  const available = services.filter((service) => service.estadoAtual === 'DISPONIVEL').length;
-  const unavailable = services.filter((service) => service.estadoAtual === 'INDISPONIVEL').length;
-  const noMetrics = services.filter((service) => service.estadoAtual === 'SEM_METRICAS').length;
-  const removed = services.filter((service) => service.estadoAtual === 'REMOVIDO').length;
-  const totalEnergyKwh = services.reduce(
-    (total, service) =>
-      total +
-      (toFiniteNumber(service.latestCollection?.energiaKwh) ??
-        toFiniteNumber(service.energiaKwh) ??
-        0),
-    0,
-  );
-  const totalEmissionsKg = services.reduce(
-    (total, service) =>
-      total +
-      (toFiniteNumber(service.latestCollection?.emissaoGCo2e) ??
-        toFiniteNumber(service.emissaoGCo2e) ??
-        0),
-    0,
-  ) / 1000;
   const latestCollectionDate = services
     .map((service) => service.latestCollection?.iniciadaEm)
     .filter((date): date is string => Boolean(date))
@@ -213,7 +270,9 @@ export default function LiveDashboard() {
     <>
       <div className="live-dashboard-toolbar">
         <div>
-          <span className="demo-toolbar-icon"><Icon name="info" /></span>
+          <span className="demo-toolbar-icon">
+            <Icon name="info" />
+          </span>
           <div>
             <strong>Dados conectados ao backend</strong>
             <p>Atualização automática a cada 30 segundos.</p>
@@ -232,29 +291,43 @@ export default function LiveDashboard() {
 
       <section aria-label="Indicadores gerais" className="metrics-grid">
         <MetricSummary
-          label="Serviços monitorados"
-          value={services.length}
-          description={`${available} ativos · ${unavailable} indisponíveis · ${noMetrics} sem métricas · ${removed} removidos`}
-          icon="server"
-          tone="forest"
-        />
-        <MetricSummary
-          label="Energia estimada"
-          value={formatTotal(totalEnergyKwh)}
-          description="Total das coletas válidas mais recentes · kWh"
+          label="Consumo energético total"
+          value={formatTotal(indicators?.energiaTotalKwh)}
+          description="Coletas calculadas nas últimas 24 horas · kWh"
           icon="bolt"
           tone="leaf"
         />
         <MetricSummary
-          label="Emissões estimadas"
-          value={formatTotal(totalEmissionsKg)}
-          description="Total das coletas válidas mais recentes · kgCO₂e"
+          label="Emissão total de CO₂e"
+          value={formatTotal(
+            indicators === undefined
+              ? undefined
+              : indicators.emissaoTotalGCo2e / 1000,
+          )}
+          description="Coletas calculadas nas últimas 24 horas · kgCO₂e"
           icon="cloud"
+          tone="olive"
+        />
+        <MetricSummary
+          label="Serviços ativos"
+          value={formatCount(indicators?.servicos.disponiveis)}
+          description="Serviços com status disponível"
+          icon="server"
+          tone="forest"
+        />
+        <MetricSummary
+          label="Serviços indisponíveis"
+          value={formatCount(indicators?.servicos.indisponiveis)}
+          description="Serviços com falha de acesso/coleta"
+          icon="alert"
           tone="olive"
         />
       </section>
 
-      <section className="live-services-panel" aria-labelledby="live-services-heading">
+      <section
+        className="live-services-panel"
+        aria-labelledby="live-services-heading"
+      >
         <div className="panel-heading">
           <div>
             <p className="eyebrow">INFRAESTRUTURA</p>
@@ -279,7 +352,11 @@ export default function LiveDashboard() {
             title="Não foi possível carregar os dados"
             description={errorMessage}
           >
-            <button className="button button--primary" type="button" onClick={() => void refresh()}>
+            <button
+              className="button button--primary"
+              type="button"
+              onClick={() => void refresh()}
+            >
               Tentar novamente
             </button>
           </FeedbackPanel>
@@ -293,13 +370,23 @@ export default function LiveDashboard() {
           <>
             {errorMessage && (
               <p className="live-refresh-error" role="alert">
-                {errorMessage} Os dados exibidos são da última atualização bem-sucedida.
+                {errorMessage} Os dados exibidos são da última atualização
+                bem-sucedida.
               </p>
             )}
-            <p className="table-scroll-hint">Em telas pequenas, deslize a tabela para ver todos os indicadores.</p>
-            <div className="service-table-scroll" role="region" aria-label="Tabela de serviços reais e métricas" tabIndex={0}>
+            <p className="table-scroll-hint">
+              Em telas pequenas, deslize a tabela para ver todos os indicadores.
+            </p>
+            <div
+              className="service-table-scroll"
+              role="region"
+              aria-label="Tabela de serviços reais e métricas"
+              tabIndex={0}
+            >
               <table className="service-table live-service-table">
-                <caption className="sr-only">Serviços e sua coleta válida mais recente.</caption>
+                <caption className="sr-only">
+                  Serviços e sua coleta válida mais recente.
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Serviço</th>
@@ -331,7 +418,9 @@ export default function LiveDashboard() {
                           </span>
                         </th>
                         <td>
-                          <span className={`service-badge service-badge--${status.className}`}>
+                          <span
+                            className={`service-badge service-badge--${status.className}`}
+                          >
                             <Icon name={status.icon} />
                             {status.label}
                           </span>
@@ -340,9 +429,7 @@ export default function LiveDashboard() {
                         <td>{formatMetric(metrics?.memoryGb, 'GB')}</td>
                         <td>{formatMetric(metrics?.diskGb, 'GB')}</td>
                         <td>{formatMetric(metrics?.networkGb, 'GB')}</td>
-                        <td>
-                          {formatMetric(energyKwh, 'kWh', 4)}
-                        </td>
+                        <td>{formatMetric(energyKwh, 'kWh', 4)}</td>
                         <td>
                           {formatMetric(
                             emissionsGCo2e === null
@@ -380,14 +467,16 @@ function MetricSummary({
   label: string;
   value: number | string;
   description: string;
-  icon: 'server' | 'bolt' | 'cloud';
+  icon: 'server' | 'bolt' | 'cloud' | 'alert';
   tone: 'forest' | 'leaf' | 'olive';
 }) {
   return (
     <div className={`metric-card metric-card--${tone}`}>
       <div className="metric-heading">
         <span>{label}</span>
-        <span className="metric-icon"><Icon name={icon} /></span>
+        <span className="metric-icon">
+          <Icon name={icon} />
+        </span>
       </div>
       <p className="metric-value">{value}</p>
       <p className="metric-description">{description}</p>

@@ -23,13 +23,15 @@ export default function Dashboard() {
             Uma visão clara dos seus serviços e do impacto que eles geram.
           </p>
         </div>
-        {isDemo && <div className="collection-status">
-          <Icon name="clock" />
-          <div>
-            <strong>Exemplo de 07 de outubro de 2026</strong>
-            <span>Atualização simulada às 14:32</span>
+        {isDemo && (
+          <div className="collection-status">
+            <Icon name="clock" />
+            <div>
+              <strong>Exemplo de 07 de outubro de 2026</strong>
+              <span>Atualização simulada às 14:32</span>
+            </div>
           </div>
-        </div>}
+        )}
       </div>
       <section
         className={`demo-toolbar${isDemo ? ' demo-toolbar--active' : ''}`}
@@ -64,14 +66,7 @@ export default function Dashboard() {
         <>
           <section aria-label="Indicadores gerais" className="metrics-grid">
             <MetricCard
-              label="Serviços monitorados"
-              value={demoTotals.services}
-              description={`${demoTotals.active} ativos · ${demoTotals.unavailable} indisponível · ${demoTotals.noMetrics} sem métricas`}
-              icon="server"
-              tone="forest"
-            />
-            <MetricCard
-              label="Energia estimada"
+              label="Consumo energético total"
               value={demoTotals.energyKwh}
               unit="kWh"
               description="Total ilustrativo de 07/10/2026"
@@ -79,11 +74,25 @@ export default function Dashboard() {
               tone="leaf"
             />
             <MetricCard
-              label="Emissões estimadas"
+              label="Emissão total de CO₂e"
               value={demoTotals.carbonKg}
               unit="kgCO₂e"
               description="Total ilustrativo de 07/10/2026"
               icon="cloud"
+              tone="olive"
+            />
+            <MetricCard
+              label="Serviços ativos"
+              value={demoTotals.active}
+              description="Serviços com status disponível"
+              icon="server"
+              tone="forest"
+            />
+            <MetricCard
+              label="Serviços indisponíveis"
+              value={demoTotals.unavailable}
+              description="Serviços fictícios sem acesso"
+              icon="alert"
               tone="olive"
             />
           </section>

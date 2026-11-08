@@ -9,6 +9,17 @@ test('rotas, histórico, foco e painel conectado funcionam sem backend', async (
   await page.route('**/api/servicos', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
   );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        energiaTotalKwh: 0,
+        emissaoTotalGCo2e: 0,
+        servicos: { disponiveis: 0, indisponiveis: 0 },
+      }),
+    }),
+  );
   await page.goto('/');
   await expect(page).toHaveTitle('Dashboard | GreenER');
   await expect(
@@ -84,6 +95,17 @@ test('alternância de tema usa claro por padrão e mantém a escolha salva', asy
 }) => {
   await page.route('**/api/servicos', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        energiaTotalKwh: 0,
+        emissaoTotalGCo2e: 0,
+        servicos: { disponiveis: 0, indisponiveis: 0 },
+      }),
+    }),
   );
   await page.goto('/');
 

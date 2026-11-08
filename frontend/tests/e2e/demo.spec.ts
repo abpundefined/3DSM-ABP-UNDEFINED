@@ -11,6 +11,17 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
   await page.route('**/api/servicos', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
   );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        energiaTotalKwh: 0,
+        emissaoTotalGCo2e: 0,
+        servicos: { disponiveis: 0, indisponiveis: 0 },
+      }),
+    }),
+  );
   await page.goto('/');
   await expect(
     page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
@@ -25,9 +36,10 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
   const metrics = page.getByLabel('Indicadores gerais');
   await expect(metrics).toContainText('14,85');
   await expect(metrics).toContainText('1,26');
-  await expect(metrics).toContainText(
-    '10 ativos · 1 indisponível · 1 sem métricas',
-  );
+  await expect(metrics).toContainText('Serviços ativos');
+  await expect(metrics).toContainText('Serviços indisponíveis');
+  await expect(metrics.getByText('10', { exact: true })).toBeVisible();
+  await expect(metrics.getByText('1', { exact: true })).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Status dos serviços' }),
   ).toBeVisible();
