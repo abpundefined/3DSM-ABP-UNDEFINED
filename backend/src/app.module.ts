@@ -6,6 +6,7 @@ import { DatabaseModule } from "./database/database.module";
 import { ColetasModule } from "./modules/coletas/coletas.module";
 import { ServicosModule } from "./modules/servicos/servicos.module";
 import { MonitoramentoModule } from "./modules/monitoramento/monitoramento.module";
+import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MonitoramentoModule } from "./modules/monitoramento/monitoramento.modul
     ColetasModule,
     ServicosModule,
     MonitoramentoModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
