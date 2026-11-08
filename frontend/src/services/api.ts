@@ -3,11 +3,27 @@ const API_BASE_PATH = '/api';
 export class ApiError extends Error {
   readonly status: number;
 
-  constructor(status: number) {
-    super('A requisição ao servidor falhou (HTTP ' + status + ').');
+  constructor(status: number, message?: string) {
+    super(message ?? 'A requisição ao servidor falhou (HTTP ' + status + ').');
     this.name = 'ApiError';
     this.status = status;
   }
+}
+
+function getErrorMessage(body: unknown): string | undefined {
+  if (typeof body !== 'object' || body === null || !('message' in body)) {
+    return undefined;
+  }
+
+  const { message } = body;
+  if (typeof message === 'string') {
+    return message;
+  }
+  if (Array.isArray(message) && message.every((item) => typeof item === 'string')) {
+    return message.join(' ');
+  }
+
+  return undefined;
 }
 
 /**
@@ -35,7 +51,15 @@ export async function apiRequest<T = unknown>(
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status);
+    let message: string | undefined;
+    if (response.status < 500) {
+      try {
+        message = getErrorMessage(await response.json());
+      } catch {
+        // Keep the generic HTTP message for empty or non-JSON error responses.
+      }
+    }
+    throw new ApiError(response.status, message);
   }
 
   if (response.status === 204 || response.status === 205) {

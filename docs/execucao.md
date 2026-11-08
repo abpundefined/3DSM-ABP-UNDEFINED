@@ -1,6 +1,6 @@
 # Executar e verificar o GreenER
 
-Este guia corresponde à base de código `0adb1e0`, conferida em 19/10/2026. As instruções foram reconciliadas com os arquivos de configuração. A auditoria validou builds, testes e o contrato HTTP em ambiente isolado; a subida completa dos três containers ainda precisa de homologação registrada.
+Este guia descreve a execução local do frontend, backend e PostgreSQL, incluindo o login administrativo e a criação inicial do administrador.
 
 ## Escolha o modo
 
@@ -31,6 +31,9 @@ CARBON_API_URL=https://carbon.unilaunch.org
 METRICS_POLL_INTERVAL_MS=30000
 JWT_SECRET=defina_um_valor_local
 JWT_EXPIRES_IN=3600
+ADMIN_NOME=Administrador
+ADMIN_EMAIL=admin@greener.local
+ADMIN_PASSWORD=troque-esta-senha
 ```
 
 | Variável | Uso atual |
@@ -41,10 +44,31 @@ JWT_EXPIRES_IN=3600
 | `DB_HOST` | Registro do ambiente; no backend containerizado o Compose fixa `postgres`. |
 | `METRICS_API_URL` | Agregador consumido por descoberta e coleta. |
 | `METRICS_POLL_INTERVAL_MS` | Frequência do ciclo de monitoramento, em milissegundos. O padrão é 30000. Não confundir com o intervalo da medição retornado pela API. |
-| `CARBON_API_URL` | Reservada para a integração da Sprint 2; ainda não consumida. |
-| `JWT_SECRET`, `JWT_EXPIRES_IN` | Reservadas para autenticação; login/JWT ainda não implementados. |
+| `CARBON_API_URL` | URL base da API de intensidade de carbono. |
+| `JWT_SECRET`, `JWT_EXPIRES_IN` | Segredo de assinatura e duração do JWT. Configure um segredo local forte; não use o placeholder em produção. |
+| `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Dados usados para criar o administrador inicial se o e-mail ainda não existir. Os valores do exemplo são somente para desenvolvimento local. |
 
 No Compose, o backend usa `postgres:5432` e o proxy do frontend usa `http://backend:3000`. A URL com `127.0.0.1:5433` é para processos que rodam no host. Caracteres reservados nas credenciais de uma URL precisam de codificação adequada.
+
+### Testar o login administrativo
+
+No boot, o `AdminSeedService` cria o administrador configurado quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão definidos e o e-mail ainda não existe. Alterar o `.env` depois que a conta foi criada não redefine sua senha; use um e-mail de teste novo ou atualize a conta pelo mecanismo administrativo do banco.
+
+Com os valores **locais de exemplo** acima, abra `http://localhost:5173/login` e informe:
+
+- E-mail: `admin@greener.local`
+- Senha: `troque-esta-senha`
+
+Troque esses placeholders por credenciais próprias antes de iniciar o ambiente. O endpoint do backend é `POST /auth/login` e recebe `{ "email": "...", "senha": "..." }`. A tela encaminha a requisição pelo proxy do frontend, salva o `accessToken` retornado e redireciona para `/dashboard`. O dashboard continua público. A API de configuração está disponível em `/configuracao`; ainda não há uma tela administrativa para editar esses valores.
+
+Para validar o endpoint diretamente, com o backend ativo:
+
+```powershell
+$body = @{ email = "admin@greener.local"; senha = "troque-esta-senha" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri http://localhost:3000/auth/login -ContentType "application/json" -Body $body
+```
+
+Uma resposta bem-sucedida contém `accessToken`. Credenciais inválidas retornam HTTP 401.
 
 ```powershell
 docker compose config --quiet
@@ -106,6 +130,8 @@ npm.cmd run dev
 
 O frontend nativo encaminha `/api/...` para `http://localhost:3000`, removendo `/api`. As opções `API_PROXY_TARGET` e `API_PROXY_REWRITE` são descritas em [frontend/README.md](../frontend/README.md).
 
+Para a execução nativa, configure também `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_NOME`, `ADMIN_EMAIL` e `ADMIN_PASSWORD` em `backend/.env`. O backend não lê o `.env` da raiz nesse modo. O seed cria a conta no primeiro boot se o e-mail ainda não existir; alterar as variáveis não redefine a senha de uma conta já criada.
+
 ## Verificações
 
 No frontend:
@@ -147,7 +173,7 @@ Esse comando mantém o volume nomeado do PostgreSQL. Remoção de volumes não f
 
 - `/`: serviços e última coleta válida do backend, com atualização a cada 30 segundos.
 - `/?demo=1`: gráficos e indicadores com dados fictícios identificados.
-- `/login`: tela sem autenticação disponível; não envia credenciais.
-- Energia/CO₂e reais: indisponíveis até a implementação dos cálculos da Sprint 2.
+- `/login`: autentica no backend com as credenciais configuradas para o administrador.
+- `/configuracao`: consulta os intervalos atuais; alterações exigem JWT Bearer.
 
 As limitações conhecidas e os critérios de homologação estão na [revisão da Sprint 1](sprints/revisao-sprint-1.md).

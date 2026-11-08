@@ -1,3 +1,6 @@
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
 :root {
   font-family: 'Figtree Variable', 'Segoe UI', sans-serif;
   color: #1e2d25;
@@ -17,6 +20,17 @@
   --border: #dfe5da;
   --surface: #fff;
   --soft-green: #eef4e8;
+  --login-panel-background: #f7f9f5;
+  --login-text: #1e2d25;
+  --login-muted: #647067;
+  --login-input-background: #fff;
+  --login-input-border: #cdd6c8;
+  --login-lock-background: #e7f2e7;
+  --login-accent: #176b30;
+  --login-button-background: #2f7b45;
+  --login-button-hover: #256638;
+  --login-button-text: #fff;
+  --login-divider: #dfe5da;
   --radius: 16px;
 }
 
@@ -186,6 +200,11 @@ summary {
 .main-content {
   flex: 1;
   padding-block: 46px 54px;
+}
+.main-content--login {
+  width: 100%;
+  max-width: none;
+  padding: 0;
 }
 .main-content:focus {
   outline: none;
@@ -624,6 +643,61 @@ h1 {
 .login-page {
   max-width: 1030px;
   margin: 0 auto;
+}
+.login-screen {
+  min-height: max(100%, calc(100dvh - 161px));
+}
+.login-story-panel {
+  background: #1a3822;
+}
+.login-split-form {
+  background: var(--login-panel-background);
+  color: var(--login-text);
+}
+.login-split-form h2 {
+  color: var(--login-text) !important;
+}
+.login-panel-lock {
+  background: var(--login-lock-background);
+  color: var(--login-accent);
+}
+.login-muted {
+  color: var(--login-muted);
+}
+.login-field-label {
+  color: var(--login-text);
+}
+.login-input {
+  border-color: var(--login-input-border);
+  background: var(--login-input-background);
+  color: var(--login-text);
+}
+.login-input::placeholder {
+  color: var(--login-muted);
+}
+.login-password-toggle {
+  color: var(--login-muted);
+}
+.login-password-toggle:hover {
+  color: var(--login-text);
+}
+.login-submit {
+  min-height: 48px;
+  border: 0;
+  background: var(--login-button-background);
+  color: var(--login-button-text);
+}
+.login-submit:hover:not(:disabled) {
+  background: var(--login-button-hover);
+}
+.login-submit:disabled {
+  opacity: 0.6;
+}
+.login-dashboard-link {
+  color: var(--login-accent);
+}
+.login-form-divider {
+  border-color: var(--login-divider);
 }
 .login-layout {
   display: grid;
@@ -1187,6 +1261,24 @@ h1 {
   }
   .login-form-panel h1 {
     font-size: 27px;
+  }
+
+  @media (max-width: 1000px) {
+    .main-content.main-content--login {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .main-content.main-content--login {
+      padding: 0;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .main-content.main-content--login {
+      width: 100%;
+    }
   }
   .availability-notice {
     margin-block: 22px;

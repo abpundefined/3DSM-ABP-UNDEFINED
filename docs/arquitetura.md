@@ -1,6 +1,6 @@
 # Arquitetura atual — GreenER
 
-Referência: `0adb1e0`, conferida em 19/10/2026. A aplicação é um frontend SPA, um backend NestJS modular e um PostgreSQL. Não há múltiplos microsserviços de negócio implementados.
+A aplicação é um frontend SPA, um backend NestJS modular e um PostgreSQL. Não há múltiplos microsserviços de negócio implementados.
 
 ```mermaid
 flowchart LR
@@ -20,7 +20,7 @@ flowchart LR
 
 | Componente | Responsabilidade e limite atual |
 | --- | --- |
-| `frontend/src/pages` | Dashboard público, login indisponível e página 404, com React Router. |
+| `frontend/src/pages` | Dashboard público, formulário de login e página 404, com React Router. O login chama o backend; não há ainda uma tela para editar a configuração administrativa. |
 | `frontend/src/components` | Layout, feedback, gráficos demonstrativos e painel conectado `LiveDashboard`. |
 | `frontend/src/services/api.ts` | Cliente JSON por caminhos relativos, erros HTTP e cancelamento por signal fornecido. Não valida o JSON em runtime. |
 | `frontend/src/hooks/usePageTitle.ts` | Título da página. A lógica de consultas periódicas ainda está no componente LiveDashboard. |
@@ -28,7 +28,7 @@ flowchart LR
 | `backend/src/modules/monitoramento` | Inicia ciclo ao subir o módulo, sincroniza descoberta e coleta sequencialmente os serviços não removidos. Persiste diretamente no Prisma. |
 | `backend/src/modules/coletas` | API de registro/histórico/última coleta válida, DTOs e repository próprio. O coletor automático não passa por esse service. |
 | `backend/src/database` | PrismaService e verificação das tabelas necessárias. |
-| `backend/prisma` | Esquema e migrações versionadas. Regiao, Servico, Coleta e modelos reservados de usuário/configuração. |
+| `backend/prisma` | Esquema e migrações versionadas, incluindo Região, Serviço, Coleta, Usuário e Configuração. |
 
 ## Fluxo de dados
 
@@ -51,8 +51,8 @@ No Compose, os nomes de rede são `postgres`, `backend` e `frontend`. O navegado
 
 Não criar contexts/providers ou padrões de projeto sem uma necessidade de estado compartilhado/regra que os justifique. As mudanças recomendadas organizam responsabilidades já existentes.
 
-## Planejado para as próximas entregas
+## Autenticação e configuração
 
-Integração de carbono, cálculos ambientais, agregados, autenticação JWT/configuração protegida, ranking, comparação e mapa. O desenho completo de produto e as personas incluem esses fluxos futuros; eles ainda não são rotas disponíveis.
+`POST /auth/login` valida o e-mail e a senha do administrador inicial criado a partir das variáveis de ambiente e retorna um JWT. `GET /configuracao` é público; `PUT /configuracao` exige esse JWT. A interface de login já está integrada, mas o fluxo ainda redireciona para o dashboard público e não existe uma tela de administração. Ranking, comparação e mapa permanecem planejados.
 
 Consulte [plano de entregas](plano-de-entregas.md), [API implementada](api.md), [execução](execucao.md) e [revisão da Sprint 1](sprints/revisao-sprint-1.md).
