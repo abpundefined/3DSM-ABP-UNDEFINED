@@ -46,7 +46,7 @@ export default function AppLayout() {
         <div className="header-inner">
           <Brand />
           <nav aria-label="Navegação principal">
-            <NavLink to="/dashboard" className="nav-dashboard">
+            <NavLink to="/" className="nav-dashboard">
               <Icon name="grid" />
               Dashboard
             </NavLink>
@@ -54,7 +54,11 @@ export default function AppLayout() {
               <Icon name="lock" />
               <span>Entrar</span>
             </NavLink>
-            <div className="theme-toggle" role="group" aria-label="Tema da interface">
+            <div
+              className="theme-toggle"
+              role="group"
+              aria-label="Tema da interface"
+            >
               <button
                 type="button"
                 aria-label="Modo escuro"

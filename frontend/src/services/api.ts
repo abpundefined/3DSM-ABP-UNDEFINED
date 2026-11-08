@@ -11,16 +11,25 @@ export class ApiError extends Error {
 }
 
 function getErrorMessage(body: unknown): string | undefined {
-  if (typeof body !== 'object' || body === null || !('message' in body)) {
+  if (typeof body !== 'object' || body === null) {
     return undefined;
   }
 
-  const { message } = body;
-  if (typeof message === 'string') {
-    return message;
-  }
-  if (Array.isArray(message) && message.every((item) => typeof item === 'string')) {
-    return message.join(' ');
+  for (const key of ['message', 'mensagem']) {
+    if (!(key in body)) {
+      continue;
+    }
+
+    const message = (body as Record<string, unknown>)[key];
+    if (typeof message === 'string') {
+      return message;
+    }
+    if (
+      Array.isArray(message) &&
+      message.every((item) => typeof item === 'string')
+    ) {
+      return message.join(' ');
+    }
   }
 
   return undefined;

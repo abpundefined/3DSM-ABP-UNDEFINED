@@ -60,6 +60,9 @@
   --login-button-hover: #317641;
   --login-button-text: #fff;
   --login-divider: rgb(255 255 255 / 10%);
+  --login-alert-background: #302b1d;
+  --login-alert-border: #81703d;
+  --login-alert-text: #f0d98f;
 }
 
 :root[data-theme='dark'] body {
@@ -105,11 +108,6 @@
 }
 :root[data-theme='dark'] .login-form-panel {
   background: var(--surface);
-}
-:root[data-theme='dark'] .availability-notice {
-  border-color: #625638;
-  background: #302b1d;
-  color: #e3d5a9;
 }
 :root[data-theme='dark'] .field input {
   border-color: var(--border);

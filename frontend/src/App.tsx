@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Outlet, Route, Routes } from 'react-router';
+import { Navigate, Outlet, Route, Routes } from 'react-router';
 import AppLayout from './components/layout/AppLayout';
 import FeedbackPanel from './components/common/FeedbackPanel';
 
@@ -27,7 +27,7 @@ export default function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<Navigate to="/" replace />} />
           <Route path="login" element={<Login />} />
           <Route path="*" element={<NotFound />} />
         </Route>
