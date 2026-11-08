@@ -82,7 +82,7 @@ docker compose up --build
   <li>API pelo proxy: <a href="http://localhost:5173/api/servicos">http://localhost:5173/api/servicos</a>.</li>
   <li>Demonstração com dados fictícios: <a href="http://localhost:5173/?demo=1">http://localhost:5173/?demo=1</a>.</li>
 </ul>
-<p>A lista e as últimas coletas já são consumidas do backend. Energia/CO₂e reais, autenticação e análises avançadas ainda não estão implementados. O teste completo dos três containers permanece pendente de homologação registrada. Consulte a <a href="./docs/sprints/revisao-sprint-1.md">revisão técnica e seus limites</a>.</p>
+<p>A lista, as últimas coletas e os indicadores agregados já são consumidos do backend. Energia e CO₂e são consolidados a partir das coletas calculadas nas últimas 24 horas; autenticação e análises avançadas ainda não estão implementadas. O teste completo dos três containers permanece pendente de homologação registrada. Consulte a <a href="./docs/sprints/revisao-sprint-1.md">revisão técnica e seus limites</a>.</p>
 <p>Execução nativa exige Node 24.x/npm 11.x e ambiente configurado na pasta do backend; instruções em <a href="./backend/README.md">backend/README.md</a> e <a href="./frontend/README.md">frontend/README.md</a>. As rotas implementadas estão na <a href="./docs/api.md">documentação da API</a>.</p>
 
 <hr>

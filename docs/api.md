@@ -8,7 +8,7 @@ Versão de referência: `0adb1e0`, conferida em 19/10/2026. Esta página descrev
 - Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
 - Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, endpoints ambientais ou Swagger. As rotas implementadas são públicas; o acesso publicado pelo Compose está ligado a `127.0.0.1`.
+Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, integração com API de carbono ou Swagger. As rotas implementadas são públicas; o acesso publicado pelo Compose está ligado a `127.0.0.1`.
 
 ## Endpoints
 
@@ -21,6 +21,7 @@ Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, endpoints 
 | GET | `/coletas` | 200, array | Consulta histórico. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
+| GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
 
@@ -101,6 +102,36 @@ O retorno é ordenado por `iniciadaEm` decrescente e inclui nome/identificador e
 
 O objeto `dados` contém os demais campos do modelo `Coleta`, omitidos no exemplo por brevidade. `CACHE_FALLBACK` é sempre devolvido por esse endpoint, inclusive quando o serviço está disponível. Portanto, esse rótulo sozinho não comprova falha atual; verificar estado do serviço e timestamp da coleta. Valores podem ser antigos. Campos nulos não significam zero.
 
+## Indicadores consolidados
+
+`GET /indicadores` retorna o consumo energético e a emissão total das coletas com `estadoCalculo = CONCLUIDO` no intervalo informado. Sem datas, considera as últimas 24 horas. `dataInicio` e `dataFim` são opcionais, aceitam datas ISO 8601 e delimitam `iniciadaEm` de forma inclusiva; início posterior ao fim retorna 400.
+
+Exemplo de resposta:
+
+```json
+{
+  "periodo": {
+    "inicio": "2026-11-07T12:00:00.000Z",
+    "fim": "2026-11-08T12:00:00.000Z"
+  },
+  "energiaTotalKwh": 2.5,
+  "emissaoTotalGCo2e": 100,
+  "coletasCalculadas": 2,
+  "servicos": {
+    "monitorados": 6,
+    "disponiveis": 2,
+    "indisponiveis": 1,
+    "semMetricas": 1,
+    "desconhecidos": 2,
+    "removidos": 0
+  },
+  "ultimaColetaEm": "2026-11-08T11:59:30.000Z",
+  "geradoEm": "2026-11-08T12:00:00.000Z"
+}
+```
+
+`energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
+
 ## Erros
 
 Nas rotas de coletas, o filtro retorna:
@@ -121,4 +152,4 @@ Nas rotas de coletas, o filtro retorna:
 
 A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
 
-Autenticação/configuração protegida, API de carbono, cálculos/agregados, ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.
+Autenticação/configuração protegida, ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.

@@ -15,6 +15,7 @@ src/
   modules/servicos/          descoberta e sincronização
   modules/monitoramento/     agendador e coleta automática
   modules/coletas/           controller, service, repository e DTOs
+  modules/indicadores/       agregados ambientais e contagem por estado
 prisma/
   schema.prisma
   migrations/
@@ -47,6 +48,7 @@ npm.cmd run start:dev
 - `GET /coletas`: histórico com filtros opcionais.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
+- `GET /indicadores`: totais de coletas calculadas (24 horas por padrão) e serviços por estado; aceita `dataInicio` e `dataFim`.
 
 Não há prefixo global `/api`; esse prefixo é do proxy do frontend. As rotas atuais não implementam JWT. `GET /` ainda é a resposta inicial do Nest, e não um health check de banco.
 
