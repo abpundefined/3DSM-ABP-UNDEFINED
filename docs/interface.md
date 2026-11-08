@@ -101,11 +101,11 @@ A proposta contempla a seguinte experiência:
 
 A existência e o comportamento das transições do Figma devem ser verificados no modo de apresentação. As telas, isoladamente, não comprovam uma animação funcional.
 
-### 🧩 Referência independente da interação
+### 🧩 Escopo da prototipação geográfica
 
-O arquivo **GreenER-Animacao-v4.html** foi desenvolvido como demonstração independente da interação proposta.
+O globo e o mapa local fazem parte exclusivamente do protótipo no Figma.
 
-Esse HTML serviu como referência para explorar o comportamento do globo e a transição até o mapa local. Ele não faz parte da implementação integrada do frontend e seus testes não são apresentados como testes funcionais da aplicação GreenER.
+Essas telas representam uma proposta de evolução da interface. O globo, a animação de transição e a integração com o mapa ainda não foram implementados no frontend do projeto.
 
 ---
 
@@ -277,7 +277,6 @@ Uma nova tela ou funcionalidade não deve ser apresentada automaticamente como c
 | Evolução | Origem ou finalidade | Situação |
 | --- | --- | --- |
 | Inclusão do globo e do mapa local no Figma. | Evolução da exploração geográfica, incorporando sugestão do Israel. | Prototipada. |
-| Definição da experiência de giro e aproximação. | Explorar a transição entre visão global e local. | Proposta de interação, com HTML independente de referência. |
 | Organização das telas selecionadas em GreenER — Interfaces. | Reunir o material de apresentação. | Concluída. |
 | Manutenção da página de estudos geográficos. | Preservar versões adicionais e estudos. | Mantida no Figma. |
 | Padronização do endereço oficial do Figma. | Corrigir referências divergentes apontadas na documentação. | Concluída neste documento. |
@@ -310,7 +309,6 @@ As correções realizadas no HTML independente, incluindo carregamento do mapa e
 | Globo e mapa local no Figma | Prototipados. |
 | Globo, animação e mapa local no frontend | Ainda não implementados. |
 | Testes funcionais do globo e mapa na aplicação | Não realizados, pois não há implementação no frontend. |
-| HTML demonstrativo da interação geográfica | Referência independente, sem integração ao frontend. |
 | Endereço oficial do Figma | Padronizado neste documento. |
 | Apresentação da Sprint 2 | Agendada para 10/11/2026. |
 | Aceite formal da entrega | A registrar conforme o processo da equipe. |
@@ -328,7 +326,6 @@ O encerramento da atividade #23 deve considerar os critérios de aceitação, o 
 
 - **Protótipo oficial:** endereço informado no início deste documento.
 - **Página das telas selecionadas:** GreenER — Interfaces.
-- **Referência independente da interação:** GreenER-Animacao-v4.html.
 - [Repositório GreenER](https://github.com/abpundefined/3DSM-ABP-UNDEFINED).
 - [PBI-23 — Protótipos e avaliação de usabilidade](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/23).
 - [Documentação da Sprint 2](sprints/sprint-2.md).
