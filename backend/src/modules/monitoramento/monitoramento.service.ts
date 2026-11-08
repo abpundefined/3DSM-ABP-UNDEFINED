@@ -2,8 +2,12 @@ import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ServicosService } from "../servicos/servicos.service";
 import { ColetasService } from "../coletas/coletas.service";
-import { EstadoColetaEnum } from "../coletas/dto/create-coleta.dto";
 import { normalizeMetricPayload } from "../../common/utils/external-api.util";
+import {
+  classificarFalhaDeConexao,
+  classificarMedicoes,
+  classificarRespostaHttp,
+} from "../../common/regras/classificacao-estado";
 
 const METRICS_FETCH_TIMEOUT_MS = 8000;
 
@@ -85,13 +89,18 @@ export class MonitoramentoService implements OnModuleInit {
       await this.servicosService.listarServicosParaMonitoramento();
 
     for (const service of services) {
-      await this.collectMetricsForService(service.idExterno, service.id);
+      await this.collectMetricsForService(
+        service.idExterno,
+        service.id,
+        service.regiaoCodigo,
+      );
     }
   }
 
   private async collectMetricsForService(
     serviceIdExterno: string,
     servicoId: number,
+    regiaoCodigo: string,
   ) {
     const baseUrl = this.configService.get<string>("METRICS_API_URL");
     if (!baseUrl) {
@@ -123,16 +132,22 @@ export class MonitoramentoService implements OnModuleInit {
       }
 
       if (!response.ok) {
+        const classificacao = classificarRespostaHttp(response.status);
+
         await this.servicosService.atualizarEstadoMonitoramento(
           servicoId,
-          "INDISPONIVEL",
+          classificacao.estadoServico,
         );
 
         await this.coletasService.registrarColeta({
           servicoId,
-          estadoColeta: EstadoColetaEnum.FALHA,
-          codigoErro: String(response.status),
-          mensagemErro: `Falha ao consultar métricas do serviço ${serviceIdExterno}`,
+          regiaoCodigoNaColeta: regiaoCodigo,
+          estadoColeta: classificacao.estadoColeta,
+          codigoErro: classificacao.codigoErro,
+          mensagemErro:
+            classificacao.estadoServico === "SEM_METRICAS"
+              ? `O serviço ${serviceIdExterno} está listado, mas não expõe métricas (HTTP ${response.status}).`
+              : `Falha ao consultar métricas do serviço ${serviceIdExterno} (HTTP ${response.status}).`,
           iniciadaEm: new Date(),
           finalizadaEm: new Date(),
         });
@@ -142,27 +157,27 @@ export class MonitoramentoService implements OnModuleInit {
 
       const metrics = normalizeMetricPayload(payload);
       const intervaloColetaSegundos = getCollectionIntervalSeconds(payload);
-      const hasMetrics =
-        metrics &&
-        Object.values(metrics).some(
-          (value) => value != null && Number.isFinite(value),
-        );
+      const classificacao = classificarMedicoes(metrics ?? {});
 
-      if (hasMetrics && intervaloColetaSegundos === undefined) {
+      if (
+        classificacao.estadoServico === "DISPONIVEL" &&
+        intervaloColetaSegundos === undefined
+      ) {
         this.logger.warn(
           `A API de métricas não retornou um collection_interval_seconds válido para ${serviceIdExterno}; o cálculo ficará pendente.`,
         );
       }
 
-      if (!hasMetrics) {
-        await this.servicosService.atualizarEstadoMonitoramento(
-          servicoId,
-          "SEM_METRICAS",
-        );
+      await this.servicosService.atualizarEstadoMonitoramento(
+        servicoId,
+        classificacao.estadoServico,
+      );
 
+      if (!metrics || classificacao.estadoServico === "SEM_METRICAS") {
         await this.coletasService.registrarColeta({
           servicoId,
-          estadoColeta: EstadoColetaEnum.SEM_METRICAS,
+          regiaoCodigoNaColeta: regiaoCodigo,
+          estadoColeta: classificacao.estadoColeta,
           mensagemErro: "Serviço respondeu, mas não retornou métricas válidas.",
           iniciadaEm: new Date(),
           finalizadaEm: new Date(),
@@ -171,14 +186,10 @@ export class MonitoramentoService implements OnModuleInit {
         return;
       }
 
-      await this.servicosService.atualizarEstadoMonitoramento(
-        servicoId,
-        "DISPONIVEL",
-      );
-
       await this.coletasService.registrarColeta({
         servicoId,
-        estadoColeta: EstadoColetaEnum.SUCESSO,
+        regiaoCodigoNaColeta: regiaoCodigo,
+        estadoColeta: classificacao.estadoColeta,
         iniciadaEm: new Date(),
         finalizadaEm: new Date(),
         cpuPercent: metrics.cpuPercent,
@@ -208,15 +219,18 @@ export class MonitoramentoService implements OnModuleInit {
         );
       }
 
+      const classificacao = classificarFalhaDeConexao(isTimeout);
+
       await this.servicosService.atualizarEstadoMonitoramento(
         servicoId,
-        "INDISPONIVEL",
+        classificacao.estadoServico,
       );
 
       await this.coletasService.registrarColeta({
         servicoId,
-        estadoColeta: EstadoColetaEnum.FALHA,
-        codigoErro: isTimeout ? "TIMEOUT" : "FETCH_ERROR",
+        regiaoCodigoNaColeta: regiaoCodigo,
+        estadoColeta: classificacao.estadoColeta,
+        codigoErro: classificacao.codigoErro,
         mensagemErro: errorMessage,
         iniciadaEm: new Date(),
         finalizadaEm: new Date(),

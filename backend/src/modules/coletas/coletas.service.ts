@@ -8,6 +8,7 @@ import {
 import { FilterColetasDto } from "./dto/filter-coleta.dto";
 import { CalculosService } from "../calculos/calculos.service";
 import { ServicosService } from "../servicos/servicos.service";
+import { possuiMedicoes } from "../../common/regras/classificacao-estado";
 
 @Injectable()
 export class ColetasService {
@@ -22,17 +23,7 @@ export class ColetasService {
   async registrarColeta(dto: CreateColetaDto) {
     dto.estadoCalculo = EstadoCalculoEnum.PENDENTE;
 
-    const temMedicao =
-      (dto.cpuPercent != null &&
-        Number.isFinite(dto.cpuPercent) &&
-        dto.cpuPercent > 0) ||
-      (dto.memoryGb != null &&
-        Number.isFinite(dto.memoryGb) &&
-        dto.memoryGb > 0) ||
-      (dto.diskGb != null && Number.isFinite(dto.diskGb) && dto.diskGb > 0) ||
-      (dto.networkGb != null &&
-        Number.isFinite(dto.networkGb) &&
-        dto.networkGb > 0);
+    const temMedicao = possuiMedicoes(dto);
 
     const semMedicoes = !temMedicao;
 
