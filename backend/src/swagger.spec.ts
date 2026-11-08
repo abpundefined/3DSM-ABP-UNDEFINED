@@ -88,7 +88,17 @@ describe("Swagger", () => {
     const document = response.body as {
       paths: Record<
         string,
-        Record<string, { parameters?: { name: string }[]; security?: unknown }>
+        Record<
+          string,
+          {
+            parameters?: { name: string }[];
+            security?: unknown;
+            responses: Record<
+              string,
+              { content?: Record<string, { schema: unknown }> }
+            >;
+          }
+        >
       >;
       components: {
         schemas: Record<
@@ -143,5 +153,72 @@ describe("Swagger", () => {
       { bearer: [] },
     ]);
     expect(document.paths["/configuracao"].get.security).toBeUndefined();
+    for (const [path, method] of [
+      ["/coletas", "post"],
+      ["/servicos/sync", "post"],
+    ]) {
+      expect(document.paths[path][method].security).toEqual([{ bearer: [] }]);
+      expect(document.paths[path][method].responses["401"]).toBeDefined();
+    }
+    for (const [path, method, status, contentType] of [
+      ["/", "get", "200", "text/html"],
+      ["/auth/login", "post", "200", "application/json"],
+      ["/servicos", "get", "200", "application/json"],
+      ["/servicos/sync", "post", "201", "application/json"],
+      ["/coletas", "get", "200", "application/json"],
+      ["/coletas", "post", "201", "application/json"],
+      ["/coletas/{id}", "get", "200", "application/json"],
+      [
+        "/coletas/servico/{servicoId}/ultima-valida",
+        "get",
+        "200",
+        "application/json",
+      ],
+      ["/indicadores", "get", "200", "application/json"],
+      ["/configuracao", "get", "200", "application/json"],
+      ["/configuracao", "put", "200", "application/json"],
+    ]) {
+      expect(
+        document.paths[path][method].responses[status].content?.[contentType]
+          ?.schema,
+      ).toBeDefined();
+    }
+    expect(
+      document.paths["/coletas"].get.responses["200"].content?.[
+        "application/json"
+      ].schema,
+    ).toEqual({
+      type: "array",
+      items: { $ref: "#/components/schemas/HistoricoColetaRespostaDto" },
+    });
+    expect(
+      document.paths["/servicos/sync"].post.responses["201"].content?.[
+        "application/json"
+      ].schema,
+    ).toEqual({
+      type: "array",
+      items: { $ref: "#/components/schemas/ServicoDescobertoRespostaDto" },
+    });
+    expect(
+      document.components.schemas.ColetaRespostaDto.properties.energiaKwh,
+    ).toEqual(expect.objectContaining({ type: "number", nullable: true }));
+    expect(
+      document.components.schemas.ConfiguracaoRespostaDto.properties
+        .atualizadaEm,
+    ).toEqual(
+      expect.objectContaining({
+        type: "string",
+        format: "date-time",
+        nullable: true,
+      }),
+    );
+    expect(document.components.schemas.IndicadoresRespostaDto.required).toEqual(
+      expect.arrayContaining([
+        "periodo",
+        "energiaTotalKwh",
+        "emissaoTotalGCo2e",
+        "servicos",
+      ]),
+    );
   });
 });
