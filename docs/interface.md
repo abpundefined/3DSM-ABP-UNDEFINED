@@ -3,7 +3,7 @@
 > **Critérios da Rubrica:** IHC01, IHC02, IHC03, IHC04, IHC05, IHC06  
 > **Repositório:** [abpundefined/3DSM-ABP-UNDEFINED](https://github.com/abpundefined/3DSM-ABP-UNDEFINED)  
 > **Equipe:** Undefined  
-> **Link do Protótipo no Figma:** [Acessar Projeto no Figma](https://www.figma.com/design/CzTTbJAFqZrm2eUIBTSCNl/Undefined-FatecABP-GreenER?node-id=0-1) *(referência atual do README; versão/aprovação a confirmar)*
+> **Link do Protótipo no Figma:** [Acessar Projeto no Figma](https://www.figma.com/design/CzTTbJAFqZrm2eUIBTSCNl/Undefined-FatecABP-GreenER?node-id=0-1) 
 
 ---
 
@@ -89,7 +89,7 @@ A falha de um serviço ainda pode bloquear toda a primeira carga; após sucesso,
 **Responsável:** Thales Cambraia Dias.  
 **Situação:** avaliação heurística realizada; documentação em consolidação.  
 **Data da avaliação:** a registrar pelo responsável.  
-**Referência histórica informada no registro inicial:** [GreenER no Figma](https://www.figma.com/design/rnEO8oYXAzDEnUbBt2NWwu/GreenER-Figma). O README passou a apontar para outro arquivo em 16/10; confirmar com o responsável qual arquivo/versão foi efetivamente avaliado, preservando esse histórico. Não foi presumido que a avaliação antiga ocorreu no arquivo novo.
+**Referência histórica informada no registro inicial:** [GreenER no Figma](https://www.figma.com/design/CzTTbJAFqZrm2eUIBTSCNl/Undefined-FatecABP-GreenER?node-id=0-1). O README passou a apontar para outro arquivo em 16/10; confirmar com o responsável qual arquivo/versão foi efetivamente avaliado, preservando esse histórico. Não foi presumido que a avaliação antiga ocorreu no arquivo novo.
 
 #### Objetivo e método
 
