@@ -1,6 +1,6 @@
 # API REST implementada — GreenER
 
-Versão de referência: `0adb1e0`, conferida em 19/10/2026. Esta página descreve o comportamento atual, inclusive suas limitações. Os exemplos são ilustrativos e não representam uma medição real.
+Esta página descreve as rotas implementadas e suas limitações. Os exemplos são ilustrativos e não representam uma medição real.
 
 ## Endereços
 
@@ -8,7 +8,7 @@ Versão de referência: `0adb1e0`, conferida em 19/10/2026. Esta página descrev
 - Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
 - Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, endpoints ambientais ou Swagger. As rotas implementadas são públicas; o acesso publicado pelo Compose está ligado a `127.0.0.1`.
+O backend não usa prefixo global `/api`. Pelo frontend, o proxy remove `/api` antes de encaminhar as chamadas. Login/JWT e configuração protegida estão implementados; as rotas que não indicam autenticação permanecem públicas. O acesso publicado pelo Compose está ligado a `127.0.0.1`.
 
 ## Endpoints
 
@@ -17,12 +17,52 @@ Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, endpoints 
 | GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
 | GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
 | POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo. |
+| POST | `/auth/login` | 200, objeto | Valida credenciais e retorna JWT. |
+| GET | `/configuracao` | 200, objeto | Consulta intervalos atuais ou os valores padrão; público. |
+| PUT | `/configuracao` | 200, objeto | Atualiza intervalos; exige JWT Bearer. |
 | POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO. |
 | GET | `/coletas` | 200, array | Consulta histórico. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
+
+## Login e configuração administrativa
+
+`POST /auth/login` recebe o e-mail e a senha do administrador:
+
+```json
+{
+  "email": "admin@greener.local",
+  "senha": "troque-esta-senha"
+}
+```
+
+Resposta de sucesso:
+
+```json
+{
+  "accessToken": "<JWT>"
+}
+```
+
+O administrador inicial é criado no boot quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão definidos e o e-mail ainda não existe. Configure essas variáveis no `.env` lido pelo backend. Alterar as variáveis depois da criação não troca a senha armazenada. Use os valores de exemplo apenas em desenvolvimento local e defina um `JWT_SECRET` forte.
+
+`GET /configuracao` retorna `intervaloDescobertaSegundos`, `intervaloColetaSegundos`, `atualizadaEm` e `padrao`. Para atualizar, envie `PUT /configuracao` com os dois campos inteiros; o intervalo de descoberta aceita de 10 a 86400 segundos e o de coleta de 10 a 3600 segundos:
+
+```http
+Authorization: Bearer <JWT>
+Content-Type: application/json
+```
+
+```json
+{
+  "intervaloDescobertaSegundos": 120,
+  "intervaloColetaSegundos": 60
+}
+```
+
+O JWT é emitido em `accessToken`; credenciais inválidas ou token ausente/inválido resultam em HTTP 401. Pelo frontend, use `/api/auth/login` e `/api/configuracao`; o proxy remove `/api` ao chamar o NestJS.
 
 ## Serviços e estados
 
@@ -121,4 +161,4 @@ Nas rotas de coletas, o filtro retorna:
 
 A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
 
-Autenticação/configuração protegida, API de carbono, cálculos/agregados, ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.
+Ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência no planejamento não representa implementação atual.
