@@ -9,7 +9,7 @@ Evoluir a coleta da Sprint 1 para cálculo de energia e CO₂e com a API de carb
 ## Candidatos do backlog existente
 
 Tabela reconciliada com as issues em 19/10; **não é uma seleção/capacidade já aprovada para a Sprint 2**. Há 63 SP nos dez candidatos abaixo, cujas estimativas foram preservadas. Antes do início, o PO/time devem selecionar conforme capacidade e registrar responsáveis; não assumir que todo esse volume cabe no ciclo.
-
+ 
 | Issue | Título atual | SP existentes | Responsáveis |
 | --- | --- | ---: | --- |
 | [#6](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/6) | [PBI-06] Cálculo individual de consumo e emissão | 8 | A definir no planejamento |
