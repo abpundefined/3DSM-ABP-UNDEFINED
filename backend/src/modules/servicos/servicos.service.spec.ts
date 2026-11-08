@@ -23,6 +23,7 @@ type StoredService = {
   idExterno: string;
   nome: string;
   estadoAtual: ServiceState;
+  regiaoCodigo?: string;
 };
 
 type StoredCollection = {
@@ -149,6 +150,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
       idExterno,
       nome: `Serviço ${idExterno}`,
       estadoAtual,
+      regiaoCodigo: "br-sudeste",
     };
     services.push(service);
     return service;
@@ -345,7 +347,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     );
   });
 
-  it("trata métricas válidas iguais a zero como uma coleta real", async () => {
+  it("classifica métricas todas zeradas como SEM_METRICAS no serviço e na coleta", async () => {
     const service = seedService("DESCONHECIDO");
     fetchMock
       .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
@@ -363,15 +365,47 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
 
     await monitoramentoService.pollOnce();
 
-    expect(service.estadoAtual).toBe("DISPONIVEL");
+    expect(service.estadoAtual).toBe("SEM_METRICAS");
     expect(registrarColeta).toHaveBeenCalledWith(
       expect.objectContaining({
-        estadoColeta: EstadoColetaEnum.SUCESSO,
-        cpuPercent: 0,
-        memoryGb: 0,
-        diskGb: 0,
-        networkGb: 0,
-        intervaloColetaSegundos: 30,
+        estadoColeta: EstadoColetaEnum.SEM_METRICAS,
+        regiaoCodigoNaColeta: "br-sudeste",
+      }),
+    );
+  });
+
+  it("classifica HTTP 404 nas métricas como SEM_METRICAS e registra a região", async () => {
+    const service = seedService("DISPONIVEL");
+    fetchMock
+      .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+    await monitoramentoService.pollOnce();
+
+    expect(service.estadoAtual).toBe("SEM_METRICAS");
+    expect(registrarColeta).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.SEM_METRICAS,
+        codigoErro: "404",
+        regiaoCodigoNaColeta: "br-sudeste",
+      }),
+    );
+  });
+
+  it("classifica HTTP 500 nas métricas como INDISPONIVEL", async () => {
+    const service = seedService("DISPONIVEL");
+    fetchMock
+      .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
+      .mockResolvedValueOnce(new Response(null, { status: 500 }));
+
+    await monitoramentoService.pollOnce();
+
+    expect(service.estadoAtual).toBe("INDISPONIVEL");
+    expect(registrarColeta).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.FALHA,
+        codigoErro: "500",
+        regiaoCodigoNaColeta: "br-sudeste",
       }),
     );
   });
