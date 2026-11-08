@@ -5,6 +5,7 @@ import { DatabaseModule } from "../../database/database.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { UsuariosRepository } from "./usuarios.repository";
+import { AdminSeedService } from "./admin-seed.service";
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { UsuariosRepository } from "./usuarios.repository";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UsuariosRepository],
+  providers: [AuthService, UsuariosRepository, AdminSeedService],
 })
 export class AuthModule {}
