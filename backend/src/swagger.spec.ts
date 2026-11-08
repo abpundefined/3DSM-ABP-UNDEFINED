@@ -1,0 +1,147 @@
+jest.mock("@nestjs/jwt", () => ({ JwtService: class JwtService {} }));
+jest.mock("./modules/auth/auth.service", () => ({
+  AuthService: class AuthService {},
+}));
+jest.mock("./modules/coletas/coletas.service", () => ({
+  ColetasService: class ColetasService {},
+}));
+jest.mock("./modules/configuracao/configuracao.service", () => ({
+  ConfiguracaoService: class ConfiguracaoService {},
+}));
+jest.mock("./modules/indicadores/indicadores.service", () => ({
+  IndicadoresService: class IndicadoresService {},
+}));
+jest.mock("./modules/servicos/servicos.service", () => ({
+  ServicosService: class ServicosService {},
+}));
+
+import { INestApplication } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { Test } from "@nestjs/testing";
+import { Server } from "node:http";
+import * as request from "supertest";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { AuthController } from "./modules/auth/auth.controller";
+import { AuthService } from "./modules/auth/auth.service";
+import { ColetasController } from "./modules/coletas/coletas.controller";
+import { ColetasService } from "./modules/coletas/coletas.service";
+import { ConfiguracaoController } from "./modules/configuracao/configuracao.controller";
+import { ConfiguracaoService } from "./modules/configuracao/configuracao.service";
+import { IndicadoresController } from "./modules/indicadores/indicadores.controller";
+import { IndicadoresService } from "./modules/indicadores/indicadores.service";
+import { ServicosController } from "./modules/servicos/servicos.controller";
+import { ServicosService } from "./modules/servicos/servicos.service";
+import { configurarSwagger } from "./swagger";
+
+describe("Swagger", () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const module = await Test.createTestingModule({
+      controllers: [
+        AppController,
+        AuthController,
+        ColetasController,
+        ConfiguracaoController,
+        IndicadoresController,
+        ServicosController,
+      ],
+      providers: [
+        AppService,
+        { provide: AuthService, useValue: {} },
+        { provide: ColetasService, useValue: {} },
+        { provide: ConfiguracaoService, useValue: {} },
+        { provide: IndicadoresService, useValue: {} },
+        { provide: ServicosService, useValue: {} },
+        { provide: JwtService, useValue: {} },
+      ],
+    }).compile();
+    app = module.createNestApplication();
+    configurarSwagger(app);
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it("disponibiliza a interface e o contrato OpenAPI com rotas, DTOs e autenticação", async () => {
+    const server = app.getHttpServer() as Server;
+    await request(server)
+      .get("/docs")
+      .expect(200)
+      .expect("Content-Type", /html/)
+      .expect(/swagger-ui/i);
+
+    await request(server)
+      .get("/docs/swagger-ui-init.js")
+      .expect(200)
+      .expect("Content-Type", /javascript/);
+
+    await request(server)
+      .get("/docs/swagger-ui-bundle.js")
+      .expect(200)
+      .expect("Content-Type", /javascript/);
+
+    const response = await request(server).get("/docs-json").expect(200);
+    const document = response.body as {
+      paths: Record<
+        string,
+        Record<string, { parameters?: { name: string }[]; security?: unknown }>
+      >;
+      components: {
+        schemas: Record<
+          string,
+          { required?: string[]; properties: Record<string, { type?: string }> }
+        >;
+        securitySchemes: Record<string, { scheme: string }>;
+      };
+    };
+
+    for (const [path, method] of [
+      ["/", "get"],
+      ["/auth/login", "post"],
+      ["/servicos", "get"],
+      ["/servicos/sync", "post"],
+      ["/coletas", "get"],
+      ["/coletas", "post"],
+      ["/coletas/{id}", "get"],
+      ["/coletas/servico/{servicoId}/ultima-valida", "get"],
+      ["/indicadores", "get"],
+      ["/configuracao", "get"],
+      ["/configuracao", "put"],
+    ]) {
+      expect(document.paths[path]?.[method]).toBeDefined();
+    }
+    expect(document.paths["/indicadores"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "dataInicio" }),
+        expect.objectContaining({ name: "dataFim" }),
+      ]),
+    );
+    expect(document.components.schemas.LoginDto.required).toEqual(
+      expect.arrayContaining(["email", "senha"]),
+    );
+    expect(document.components.schemas.CreateColetaDto.required).toEqual(
+      expect.arrayContaining(["servicoId", "estadoColeta"]),
+    );
+    expect(
+      document.components.schemas.CreateColetaDto.properties
+        .regiaoCodigoNaColeta.type,
+    ).toBe("string");
+    expect(
+      document.components.schemas.AtualizarConfiguracaoDto.required,
+    ).toEqual(
+      expect.arrayContaining([
+        "intervaloDescobertaSegundos",
+        "intervaloColetaSegundos",
+      ]),
+    );
+    expect(document.components.securitySchemes.bearer.scheme).toBe("bearer");
+    expect(document.paths["/configuracao"].put.security).toEqual([
+      { bearer: [] },
+    ]);
+    expect(document.paths["/configuracao"].get.security).toBeUndefined();
+  });
+});

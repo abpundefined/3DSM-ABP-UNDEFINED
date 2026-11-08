@@ -16,7 +16,12 @@ test('rotas, histórico, foco e painel conectado funcionam sem backend', async (
       body: JSON.stringify({
         energiaTotalKwh: 0,
         emissaoTotalGCo2e: 0,
-        servicos: { disponiveis: 0, indisponiveis: 0 },
+        servicos: {
+          disponiveis: 0,
+          indisponiveis: 0,
+          semMetricas: 0,
+          removidos: 0,
+        },
       }),
     }),
   );
@@ -156,7 +161,12 @@ test('alternância de tema usa claro por padrão e mantém a escolha salva', asy
       body: JSON.stringify({
         energiaTotalKwh: 0,
         emissaoTotalGCo2e: 0,
-        servicos: { disponiveis: 0, indisponiveis: 0 },
+        servicos: {
+          disponiveis: 0,
+          indisponiveis: 0,
+          semMetricas: 0,
+          removidos: 0,
+        },
       }),
     }),
   );

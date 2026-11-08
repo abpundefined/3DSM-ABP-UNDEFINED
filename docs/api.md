@@ -8,13 +8,16 @@ Esta página descreve as rotas implementadas e suas limitações. Os exemplos s�
 - Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
 - Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-Não existem, nesta versão, `/api/services`, `/api/docs`, login/JWT, integração com API de carbono ou Swagger. As rotas implementadas são públicas; o acesso publicado pelo Compose está ligado a `127.0.0.1`.
+O Swagger está disponível no backend em [http://localhost:3000/docs](http://localhost:3000/docs), com o documento OpenAPI em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). Acesse `POST /auth/login` para obter um JWT e informe-o em **Authorize** para testar `PUT /configuracao`. As operações de escrita alteram dados reais. O Compose publica o backend em `127.0.0.1`.
 
 ## Endpoints
 
 | Método | Caminho no backend | Sucesso | Função |
 | --- | --- | --- | --- |
 | GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
+| POST | `/auth/login` | 200, objeto | Autentica com e-mail e senha e retorna `accessToken`. |
+| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais de monitoramento. |
+| PUT | `/configuracao` | 200, objeto | Atualiza os intervalos; requer JWT Bearer. |
 | GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
 | POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo. |
 | POST | `/auth/login` | 200, objeto | Valida credenciais e retorna JWT. |
@@ -186,10 +189,10 @@ Nas rotas de coletas, o filtro retorna:
 }
 ```
 
-`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados de coletas retornam 500 com mensagem genérica. O filtro não está registrado globalmente: outras rotas usam a resposta padrão do NestJS. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
+`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados retornam 500 com mensagem genérica. O filtro é registrado globalmente na aplicação. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
 
 ## Integrações e endpoints futuros
 
 A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
 
-Autenticação/configuração protegida, ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.
+Ranking e comparação permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.

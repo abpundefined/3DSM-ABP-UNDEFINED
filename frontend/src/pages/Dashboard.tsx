@@ -84,7 +84,7 @@ export default function Dashboard() {
             <MetricCard
               label="Serviços ativos"
               value={demoTotals.active}
-              description="Serviços com status disponível"
+              description={`${demoTotals.noMetrics} sem métricas`}
               icon="server"
               tone="forest"
             />

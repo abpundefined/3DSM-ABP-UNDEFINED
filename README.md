@@ -79,6 +79,7 @@ docker compose up --build
 <ul>
   <li>Frontend: <a href="http://localhost:5173">http://localhost:5173</a>.</li>
   <li>API direta: <a href="http://localhost:3000/servicos">http://localhost:3000/servicos</a>.</li>
+  <li>Swagger da API: <a href="http://localhost:3000/docs">http://localhost:3000/docs</a>.</li>
   <li>API pelo proxy: <a href="http://localhost:5173/api/servicos">http://localhost:5173/api/servicos</a>.</li>
   <li>Demonstração com dados fictícios: <a href="http://localhost:5173/?demo=1">http://localhost:5173/?demo=1</a>.</li>
 </ul>

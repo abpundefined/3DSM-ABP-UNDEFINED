@@ -39,6 +39,8 @@ type BackendIndicators = {
   servicos: {
     disponiveis: number;
     indisponiveis: number;
+    semMetricas: number;
+    removidos: number;
   };
 };
 
@@ -95,7 +97,9 @@ function isBackendIndicators(value: unknown): value is BackendIndicators {
     typeof value.servicos !== 'object' ||
     value.servicos === null ||
     !('disponiveis' in value.servicos) ||
-    !('indisponiveis' in value.servicos)
+    !('indisponiveis' in value.servicos) ||
+    !('semMetricas' in value.servicos) ||
+    !('removidos' in value.servicos)
   ) {
     return false;
   }
@@ -106,7 +110,9 @@ function isBackendIndicators(value: unknown): value is BackendIndicators {
     'emissaoTotalGCo2e' in value &&
     isFiniteNumber(value.emissaoTotalGCo2e) &&
     isFiniteNumber(value.servicos.disponiveis) &&
-    isFiniteNumber(value.servicos.indisponiveis)
+    isFiniteNumber(value.servicos.indisponiveis) &&
+    isFiniteNumber(value.servicos.semMetricas) &&
+    isFiniteNumber(value.servicos.removidos)
   );
 }
 
@@ -171,7 +177,9 @@ export default function LiveDashboard() {
   const [services, setServices] = useState<LiveService[]>([]);
   const [indicators, setIndicators] = useState<BackendIndicators>();
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [indicatorError, setIndicatorError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const activeRequest = useRef<object | null>(null);
 
@@ -183,55 +191,81 @@ export default function LiveDashboard() {
     const requestId = {};
     activeRequest.current = requestId;
     setIsLoading(true);
+    setIsLoadingServices(true);
     setErrorMessage(null);
+    setIndicatorError(null);
+
+    const loadServices = async () => {
+      try {
+        const response = await apiRequest<BackendService[]>('/servicos', {
+          signal,
+        });
+        if (!Array.isArray(response)) {
+          throw new Error('Formato de serviços inválido.');
+        }
+
+        const latestCollections = await Promise.all(
+          response.map(async (service) => {
+            try {
+              const result = await apiRequest<LatestCollectionResponse>(
+                `/coletas/servico/${service.id}/ultima-valida`,
+                { signal },
+              );
+              return [service.id, result?.dados ?? null] as const;
+            } catch (error) {
+              if (error instanceof ApiError && error.status === 404) {
+                return [service.id, null] as const;
+              }
+              throw error;
+            }
+          }),
+        );
+
+        if (signal?.aborted) {
+          return;
+        }
+        const collectionByService = new Map(latestCollections);
+        setServices(
+          response.map((service) => ({
+            ...service,
+            energiaKwh: toFiniteNumber(service.energiaKwh),
+            emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
+            latestCollection: normalizeCollection(
+              collectionByService.get(service.id) ?? null,
+            ),
+          })),
+        );
+        setLastUpdated(new Date());
+      } catch (error) {
+        if (!signal?.aborted) {
+          setErrorMessage(getErrorMessage(error));
+        }
+      } finally {
+        if (!signal?.aborted) {
+          setIsLoadingServices(false);
+        }
+      }
+    };
+
+    const loadIndicators = async () => {
+      try {
+        const response = await apiRequest<unknown>('/indicadores', { signal });
+        if (!isBackendIndicators(response)) {
+          throw new Error('Formato de indicadores inválido.');
+        }
+        if (!signal?.aborted) {
+          setIndicators(response);
+        }
+      } catch (error) {
+        if (!signal?.aborted) {
+          setIndicators(undefined);
+          setIndicatorError(getErrorMessage(error));
+        }
+      }
+    };
 
     try {
-      const [response, indicatorResponse] = await Promise.all([
-        apiRequest<BackendService[]>('/servicos', { signal }),
-        apiRequest<unknown>('/indicadores', { signal }),
-      ]);
-      if (!Array.isArray(response)) {
-        throw new Error('Formato de serviços inválido.');
-      }
-      if (!isBackendIndicators(indicatorResponse)) {
-        throw new Error('Formato de indicadores inválido.');
-      }
-
-      const latestCollections = await Promise.all(
-        response.map(async (service) => {
-          try {
-            const result = await apiRequest<LatestCollectionResponse>(
-              `/coletas/servico/${service.id}/ultima-valida`,
-              { signal },
-            );
-            return [service.id, result?.dados ?? null] as const;
-          } catch (error) {
-            if (error instanceof ApiError && error.status === 404) {
-              return [service.id, null] as const;
-            }
-            throw error;
-          }
-        }),
-      );
-
-      const collectionByService = new Map(latestCollections);
-      setServices(
-        response.map((service) => ({
-          ...service,
-          energiaKwh: toFiniteNumber(service.energiaKwh),
-          emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
-          latestCollection: normalizeCollection(
-            collectionByService.get(service.id) ?? null,
-          ),
-        })),
-      );
-      setIndicators(indicatorResponse);
-      setLastUpdated(new Date());
-    } catch (error) {
-      if (signal?.aborted) {
-        return;
-      }
-      setErrorMessage(getErrorMessage(error));
+      await Promise.all([loadServices(), loadIndicators()]);
     } finally {
       if (activeRequest.current === requestId) {
         activeRequest.current = null;
@@ -311,7 +345,11 @@ export default function LiveDashboard() {
         <MetricSummary
           label="Serviços ativos"
           value={formatCount(indicators?.servicos.disponiveis)}
-          description="Serviços com status disponível"
+          description={
+            indicators
+              ? `${formatCount(indicators.servicos.semMetricas)} sem métricas · ${formatCount(indicators.servicos.removidos)} removidos`
+              : 'Serviços com status disponível'
+          }
           icon="server"
           tone="forest"
         />
@@ -323,6 +361,12 @@ export default function LiveDashboard() {
           tone="olive"
         />
       </section>
+
+      {indicatorError && (
+        <p className="live-refresh-error" role="alert">
+          Não foi possível carregar os indicadores. {indicatorError}
+        </p>
+      )}
 
       <section
         className="live-services-panel"
@@ -340,7 +384,7 @@ export default function LiveDashboard() {
           </span>
         </div>
 
-        {isLoading && services.length === 0 ? (
+        {isLoadingServices && services.length === 0 ? (
           <FeedbackPanel
             kind="loading"
             title="Conectando ao backend"

@@ -60,6 +60,9 @@ O serviço `src/services/api.ts` chama caminhos relativos em `/api`.
 O Vite encaminha essas chamadas para `http://localhost:3000`, removendo o
 prefixo `/api` por padrão. O dashboard consulta `/servicos`, `/indicadores` e a coleta válida mais recente
 de cada serviço em `/coletas/servico/:id/ultima-valida`.
+Os indicadores e a lista são carregados independentemente: se os indicadores
+falharem, os cartões exibem `—` com aviso e a lista continua disponível. O
+resumo também informa quantos serviços estão sem métricas ou foram removidos.
 O mesmo proxy está configurado para desenvolvimento e preview.
 
 Os padrões funcionam sem criar `.env`. Para personalizar:
