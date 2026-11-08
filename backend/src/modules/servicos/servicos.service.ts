@@ -204,7 +204,7 @@ export class ServicosService {
     });
   }
 
-    async listarServicos(): Promise<ServicoComLocalizacao[]> {
+  async listarServicos(): Promise<ServicoComLocalizacao[]> {
     const servicos = await this.prisma.servico.findMany({
       orderBy: { atualizadoEm: "desc" },
       include: { regiao: true },
