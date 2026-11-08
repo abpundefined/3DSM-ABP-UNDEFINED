@@ -37,10 +37,12 @@ export class CarbonApiService {
         error instanceof Error ? error.message : "Erro desconhecido";
 
       this.logger.error(
-        `Falha ao buscar carbono para ${regionCode}. Usando fallback.`,
+        `Falha ao buscar intensidade de carbono para ${regionCode}.`,
         errorMessage,
       );
-      return 85.0;
+      throw new Error(
+        `Falha ao buscar intensidade de carbono para ${regionCode}: ${errorMessage}`,
+      );
     }
   }
 }

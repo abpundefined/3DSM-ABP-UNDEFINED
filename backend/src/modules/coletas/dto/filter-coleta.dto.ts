@@ -1,5 +1,5 @@
-import { IsOptional, IsNumber, IsDate } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsNumber, IsDate } from "class-validator";
+import { Type } from "class-transformer";
 
 export class FilterColetasDto {
   @IsNumber()

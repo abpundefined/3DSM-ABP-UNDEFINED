@@ -11,13 +11,13 @@ import {
   UsePipes,
   UseFilters,
   ValidationPipe,
-} from '@nestjs/common';
-import { ColetasService } from './coletas.service';
-import { CreateColetaDto } from './dto/create-coleta.dto';
-import { FilterColetasDto } from './dto/filter-coleta.dto';
-import { HttpExceptionFilter } from '../../common/filters/http-exception.filter';
+} from "@nestjs/common";
+import { ColetasService } from "./coletas.service";
+import { CreateColetaDto } from "./dto/create-coleta.dto";
+import { FilterColetasDto } from "./dto/filter-coleta.dto";
+import { HttpExceptionFilter } from "../../common/filters/http-exception.filter";
 
-@Controller('coletas')
+@Controller("coletas")
 @UseFilters(HttpExceptionFilter)
 @UsePipes(
   new ValidationPipe({
@@ -40,13 +40,13 @@ export class ColetasController {
     return this.coletasService.listarHistorico(filtros);
   }
 
-  @Get('servico/:servicoId/ultima-valida')
-  async obterUltimaValida(@Param('servicoId', ParseIntPipe) servicoId: number) {
+  @Get("servico/:servicoId/ultima-valida")
+  async obterUltimaValida(@Param("servicoId", ParseIntPipe) servicoId: number) {
     return this.coletasService.obterUltimaColetaValida(servicoId);
   }
 
-  @Get(':id')
-  async buscarPorId(@Param('id', ParseIntPipe) id: number) {
+  @Get(":id")
+  async buscarPorId(@Param("id", ParseIntPipe) id: number) {
     return this.coletasService.buscarPorId(id);
   }
 }

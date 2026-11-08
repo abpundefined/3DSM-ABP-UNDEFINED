@@ -15,6 +15,19 @@ const unknownRegionCodes = new Set([
   'unknown-region',
 ]);
 
+export function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+  }
+
+  return null;
+}
+
 export function formatRegionName(regionCode: string | null | undefined) {
   const normalizedCode = regionCode?.trim().toLowerCase();
 

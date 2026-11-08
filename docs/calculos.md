@@ -6,9 +6,9 @@
 
 ---
 
-## Situação e limites — Início da Sprint 2
+## Situação e limites
 
-**Atenção:** O modelo descrito abaixo define a regra de negócio oficial do desafio a ser implementada na Sprint 2. Atualmente, o módulo `CalculosService` está em fase de desenvolvimento. A conversão de telemetria para kWh e gCO₂e será conectada aos dados reais do banco e à API de carbono durante esta sprint, assegurando a precisão exigida no cálculo de horas ($\Delta t / 3600$) sem arredondamentos prematuros.
+O `CalculosService` aplica as fórmulas abaixo às métricas recebidas e persiste os resultados junto à coleta. O período usado no cálculo é `collection_interval_seconds`, retornado pela API de métricas; a frequência configurada no scheduler apenas agenda consultas e não substitui esse período. Se a API não fornecer um intervalo positivo válido, os dados brutos podem ser salvos, mas o cálculo permanece pendente em vez de assumir uma duração.
 
 ## 🎯 1. Objetivo deste Documento
 
@@ -23,7 +23,7 @@ O consumo total de um serviço computacional considera a soma da potência de to
 - **Memória RAM:** `0.375 W/GB`
 - **Disco (Armazenamento):** `0.01 W/GB`
 - **Rede (Tráfego):** `0.02 W/GB`
-- **Processamento (CPU):** Proporcional à utilização com base na potência máxima da CPU (`CPU_MAX`).
+- **Processamento (CPU):** A implementação usa `CPU_MAX = 0.5 W` como premissa explícita de potência máxima e multiplica esse fator pelo percentual de utilização. Esse valor é distinto do fator de RAM e deve ser validado contra a rubrica oficial, que não especifica numericamente `CPU_MAX`.
 
 ---
 
@@ -57,11 +57,11 @@ $$Emissão_{CO_2e} (\text{gCO}_2\text{e}) = E (\text{kWh}) \times I_{carbon} (\t
 Para exibição em quilogramas (kgCO₂e):
 $$Emissão_{CO_2e} (\text{kgCO}_2\text{e}) = \frac{Emissão_{CO_2e} (\text{gCO}_2\text{e})}{1000}$$
 
-> **Fallback de Falha de API:** Se a API de Carbono estiver inacessível ou a região não mapeada, o sistema adotará o fator de emissão base de **85.0 gCO₂e/kWh**.
+> **Falha da API:** Se a API de carbono estiver inacessível, a região não mapeada ou a resposta for inválida, a consulta falha explicitamente. O backend não grava a emissão com um fator substituto; a coleta é classificada como falha.
 
 ### 3.3 Integração com a API de intensidade de carbono
 
-O backend consulta `GET {CARBON_API_URL}/regions/{region_code}/carbon-intensity`. A resposta fornece o fator em `carbon_intensity_gco2e_per_kwh`; esse fator e a emissão calculada são persistidos na coleta. Se a consulta falhar ou retornar um fator inválido, aplica-se o fallback de 85.0 gCO₂e/kWh.
+O backend consulta `GET {CARBON_API_URL}/regions/{region_code}/carbon-intensity`. A resposta fornece o fator em `carbon_intensity_gco2e_per_kwh`; esse fator e a emissão calculada são persistidos na coleta. Se a consulta falhar ou retornar um fator inválido, o erro propaga-se para o monitoramento e a coleta é registrada como falha, sem persistir um resultado ambiental substituto.
 
 ---
 
@@ -71,7 +71,7 @@ Este exemplo será utilizado como *mock* e validação nos testes unitários do 
 
 **Dados de Entrada:**
 - **Potência Total dos Recursos ($P_{total}$):** 50.87 W
-- **Duração do intervalo ($\Delta t$):** 60 segundos (intervalo explícito do *scheduler*)
+- **Duração do intervalo ($\Delta t$):** 60 segundos (`collection_interval_seconds` retornado pela API)
 - **Intensidade de Carbono local:** 85.0 gCO₂e/kWh
 
 **Passo a passo (sem arredondamento prematuro de tempo):**
