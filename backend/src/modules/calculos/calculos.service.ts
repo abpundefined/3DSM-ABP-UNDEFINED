@@ -1,8 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
-import {
-  CarbonApiService,
-  DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH,
-} from "./carbon-api.service";
+import { Injectable } from "@nestjs/common";
+import { CarbonApiService } from "./carbon-api.service";
+
+const CPU_MAX_WATTS = 0.5;
 
 export interface ResultadoCalculoEmissao {
   intensidadeCarbonoGCo2ePorKwh: number;
@@ -11,8 +10,6 @@ export interface ResultadoCalculoEmissao {
 
 @Injectable()
 export class CalculosService {
-  private readonly logger = new Logger(CalculosService.name);
-
   constructor(private readonly carbonApi: CarbonApiService) {}
 
   async calcularEmissao(
@@ -23,22 +20,13 @@ export class CalculosService {
       throw new RangeError("A energia deve ser um valor finito não negativo.");
     }
 
-    let intensidadeCarbonoGCo2ePorKwh: number = Number(
-      DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH,
-    );
-    try {
-      const intensity =
-        await this.carbonApi.obterIntensidadeCarbono(regionCode);
-      if (!Number.isFinite(intensity) || intensity < 0) {
-        throw new RangeError("A intensidade de carbono retornada é inválida.");
-      }
-      intensidadeCarbonoGCo2ePorKwh = intensity;
-    } catch (error) {
-      this.logger.warn(
-        `Usando intensidade de carbono padrão para ${regionCode}: ${
-          error instanceof Error ? error.message : "resposta inválida"
-        }`,
-      );
+    const intensidadeCarbonoGCo2ePorKwh =
+      await this.carbonApi.obterIntensidadeCarbono(regionCode);
+    if (
+      !Number.isFinite(intensidadeCarbonoGCo2ePorKwh) ||
+      intensidadeCarbonoGCo2ePorKwh < 0
+    ) {
+      throw new RangeError("A intensidade de carbono retornada é inválida.");
     }
 
     const emissaoGCo2e = energiaKwh * intensidadeCarbonoGCo2ePorKwh;
@@ -69,7 +57,7 @@ export class CalculosService {
       throw new RangeError("O intervalo de coleta deve ser finito e positivo.");
     }
 
-    const consumoCpu = (cpuPercent / 100) * 0.375;
+    const consumoCpu = (cpuPercent / 100) * CPU_MAX_WATTS;
     const consumoMemoria = memoryGb * 0.375;
     const consumoDisco = diskGb * 0.01;
     const consumoRede = networkGb * 0.02;

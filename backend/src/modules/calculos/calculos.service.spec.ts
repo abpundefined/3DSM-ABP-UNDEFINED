@@ -1,9 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { CalculosService } from "./calculos.service";
-import {
-  CarbonApiService,
-  DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH,
-} from "./carbon-api.service";
+import { CarbonApiService } from "./carbon-api.service";
 
 describe("CalculosService", () => {
   let service: CalculosService;
@@ -28,11 +25,11 @@ describe("CalculosService", () => {
   });
 
   it("calculates energy using the documented resource factors and kWh conversion", () => {
-    expect(service.calcularEnergia(50, 2, 10, 5, 3600)).toBeCloseTo(0.0011375);
+    expect(service.calcularEnergia(50, 2, 10, 5, 3600)).toBeCloseTo(0.0012);
   });
 
   it.each([
-    ["CPU", 100, 0, 0, 0, 0.000375],
+    ["CPU", 100, 0, 0, 0, 0.0005],
     ["RAM", 0, 1, 0, 0, 0.000375],
     ["disco", 0, 0, 1, 0, 0.00001],
     ["rede", 0, 0, 0, 1, 0.00002],
@@ -50,7 +47,7 @@ describe("CalculosService", () => {
     const energyFor90Seconds = service.calcularEnergia(50, 2, 10, 5, 90);
 
     expect(energyFor90Seconds).toBeCloseTo(energyFor30Seconds * 3);
-    expect(energyFor30Seconds).toBeCloseTo(0.0011375 / 120);
+    expect(energyFor30Seconds).toBeCloseTo(0.0012 / 120);
   });
 
   it.each([
@@ -85,30 +82,27 @@ describe("CalculosService", () => {
     );
   });
 
-  it("usa o fallback de carbono se a consulta da API rejeitar", async () => {
+  it("propaga a falha da API de carbono sem aplicar fallback", async () => {
     carbonApi.obterIntensidadeCarbono.mockRejectedValue(
       new Error("API indisponível"),
     );
 
-    await expect(service.calcularEmissao(0.002, "br-sudeste")).resolves.toEqual(
-      {
-        intensidadeCarbonoGCo2ePorKwh: DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH,
-        emissaoGCo2e: 0.17,
-      },
+    await expect(service.calcularEmissao(0.002, "br-sudeste")).rejects.toThrow(
+      "API indisponível",
+    );
+    expect(carbonApi.obterIntensidadeCarbono).toHaveBeenCalledWith(
+      "br-sudeste",
     );
   });
 
   it.each([Number.NaN, Number.POSITIVE_INFINITY, -1])(
-    "usa o fallback quando a API retorna intensidade inválida (%s)",
+    "rejeita intensidade de carbono inválida (%s)",
     async (intensity) => {
       carbonApi.obterIntensidadeCarbono.mockResolvedValue(intensity);
 
       await expect(
         service.calcularEmissao(0.002, "br-sudeste"),
-      ).resolves.toEqual({
-        intensidadeCarbonoGCo2ePorKwh: DEFAULT_CARBON_INTENSITY_GCO2E_PER_KWH,
-        emissaoGCo2e: 0.17,
-      });
+      ).rejects.toThrow(RangeError);
     },
   );
 

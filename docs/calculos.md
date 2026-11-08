@@ -23,7 +23,7 @@ O consumo total de um serviço computacional considera a soma da potência de to
 - **Memória RAM:** `0.375 W/GB`
 - **Disco (Armazenamento):** `0.01 W/GB`
 - **Rede (Tráfego):** `0.02 W/GB`
-- **Processamento (CPU):** A implementação atual usa `0.375 W` como potência máxima e multiplica esse fator pelo percentual de utilização. A documentação original não define numericamente `CPU_MAX`; esse valor deve ser confirmado como premissa do modelo.
+- **Processamento (CPU):** A implementação usa `CPU_MAX = 0.5 W` como premissa explícita de potência máxima e multiplica esse fator pelo percentual de utilização. Esse valor é distinto do fator de RAM e deve ser validado contra a rubrica oficial, que não especifica numericamente `CPU_MAX`.
 
 ---
 
@@ -57,11 +57,11 @@ $$Emissão_{CO_2e} (\text{gCO}_2\text{e}) = E (\text{kWh}) \times I_{carbon} (\t
 Para exibição em quilogramas (kgCO₂e):
 $$Emissão_{CO_2e} (\text{kgCO}_2\text{e}) = \frac{Emissão_{CO_2e} (\text{gCO}_2\text{e})}{1000}$$
 
-> **Fallback de Falha de API:** Se a API de Carbono estiver inacessível ou a região não mapeada, o sistema adotará o fator de emissão base de **85.0 gCO₂e/kWh**.
+> **Falha da API:** Se a API de carbono estiver inacessível, a região não mapeada ou a resposta for inválida, a consulta falha explicitamente. O backend não grava a emissão com um fator substituto; a coleta é classificada como falha.
 
 ### 3.3 Integração com a API de intensidade de carbono
 
-O backend consulta `GET {CARBON_API_URL}/regions/{region_code}/carbon-intensity`. A resposta fornece o fator em `carbon_intensity_gco2e_per_kwh`; esse fator e a emissão calculada são persistidos na coleta. Se a consulta falhar ou retornar um fator inválido, aplica-se o fallback de 85.0 gCO₂e/kWh.
+O backend consulta `GET {CARBON_API_URL}/regions/{region_code}/carbon-intensity`. A resposta fornece o fator em `carbon_intensity_gco2e_per_kwh`; esse fator e a emissão calculada são persistidos na coleta. Se a consulta falhar ou retornar um fator inválido, o erro propaga-se para o monitoramento e a coleta é registrada como falha, sem persistir um resultado ambiental substituto.
 
 ---
 
