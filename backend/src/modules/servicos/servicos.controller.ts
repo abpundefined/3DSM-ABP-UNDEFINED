@@ -1,4 +1,5 @@
-import { Controller, Get, Post } from "@nestjs/common";
+import { Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ServicosService } from "./servicos.service";
 
 @Controller("servicos")
@@ -11,6 +12,7 @@ export class ServicosController {
   }
 
   @Post("sync")
+  @UseGuards(JwtAuthGuard)
   async sincronizar() {
     return this.servicosService.syncServices();
   }

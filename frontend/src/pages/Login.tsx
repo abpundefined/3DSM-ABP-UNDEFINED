@@ -1,88 +1,140 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import Icon from '../components/common/Icon';
 import usePageTitle from '../hooks/usePageTitle';
+import { ApiError, apiRequest } from '../services/api';
+
+interface LoginResponse {
+  accessToken: string;
+}
+
+const TOKEN_STORAGE_KEY = '@greener-abp:token';
 
 export default function Login() {
   usePageTitle('Entrar');
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [accessMessage, setAccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setAccessMessage(
-      'O acesso administrativo ainda não está disponível. Você pode continuar consultando o dashboard público.',
-    );
+    setErrorMessage('');
+    setIsLoading(true);
+
+    try {
+      const response = await apiRequest<LoginResponse>('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha: password }),
+      });
+
+      if (!response || typeof response.accessToken !== 'string') {
+        throw new Error(
+          'A resposta de autenticação não contém um token válido.',
+        );
+      }
+
+      window.localStorage.setItem(TOKEN_STORAGE_KEY, response.accessToken);
+      navigate('/');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage(
+          'Não foi possível conectar ao servidor. Tente novamente.',
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
-    <div className="login-page">
-      <Link className="text-link back-link" to="/">
-        <Icon name="back" />
-        Voltar ao dashboard
-      </Link>
-      <div className="login-layout">
-        <section className="login-story" aria-labelledby="login-story-heading">
-          <p className="eyebrow">GREEN COMPUTING, NA PRÁTICA</p>
-          <h2 id="login-story-heading">
+    <div className="login-screen">
+      <section
+        aria-labelledby="login-story-heading"
+        className="login-story-panel"
+      >
+        <div className="login-story-copy">
+          <p className="login-story-eyebrow">GREEN COMPUTING, NA PRÁTICA</p>
+          <h1 id="login-story-heading" className="login-story-title">
             Mais clareza. <br />
             Menos impacto.
-          </h2>
-          <p>
+          </h1>
+          <p className="login-story-description">
             Entenda o consumo dos seus serviços e transforme dados em decisões
             mais sustentáveis.
           </p>
-          <div className="story-visual" aria-hidden="true">
-            <div className="story-orbit story-orbit--outer" />
-            <div className="story-orbit story-orbit--inner" />
-            <div className="story-leaf">
-              <Icon name="leaf" />
-            </div>
-            <span className="story-node story-node--server">
-              <Icon name="server" />
-            </span>
-            <span className="story-node story-node--energy">
-              <Icon name="bolt" />
-            </span>
-            <span className="story-node story-node--carbon">
-              <Icon name="cloud" />
-            </span>
+        </div>
+
+        <div aria-hidden="true" className="login-illustration">
+          <div className="login-orbit login-orbit--outer" />
+          <div className="login-orbit login-orbit--inner" />
+          <div className="login-illustration-leaf">
+            <Icon name="leaf" />
           </div>
-          <div className="story-bottom">
-            <Icon name="check" />
-            <span>O dashboard é público e pode ser consultado sem login.</span>
-          </div>
-        </section>
-        <section className="login-form-panel" aria-labelledby="login-heading">
-          <span className="login-lock">
-            <Icon name="lock" />
+          <span className="login-illustration-node login-illustration-node--server">
+            <Icon name="server" />
           </span>
-          <p className="eyebrow">ÁREA ADMINISTRATIVA</p>
-          <h1 id="login-heading">Bem-vindo de volta</h1>
-          <p className="login-intro">Acesse a configuração do monitoramento.</p>
-          <div className="availability-notice" id="login-availability">
-            <Icon name="info" />
-            <p>
-              O acesso administrativo está em preparação e ainda não permite
-              entrar.
-            </p>
+          <span className="login-illustration-node login-illustration-node--energy">
+            <Icon name="bolt" />
+          </span>
+          <span className="login-illustration-node login-illustration-node--cloud">
+            <Icon name="cloud" />
+          </span>
+        </div>
+
+        <div className="login-story-footer">
+          <Icon name="check" />
+          <span>O dashboard é público e pode ser consultado sem login.</span>
+        </div>
+      </section>
+
+      <section className="login-split-form">
+        <div className="login-form-content">
+          <div className="login-panel-lock">
+            <Icon name="lock" />
           </div>
-          <form onSubmit={handleSubmit} aria-describedby="login-availability">
-            <div className="field">
-              <label htmlFor="username">Usuário</label>
+          <p className="login-admin-label">ÁREA ADMINISTRATIVA</p>
+          <h2 className="login-title">Bem-vindo de volta</h2>
+          <p className="login-muted">Acesse a configuração do monitoramento.</p>
+
+          {errorMessage && (
+            <div className="login-alert" role="alert" aria-live="assertive">
+              <Icon name="alert" />
+              <p>{errorMessage}</p>
+            </div>
+          )}
+
+          <form className="login-form" onSubmit={handleLogin}>
+            <div className="login-field">
+              <label className="login-field-label" htmlFor="email">
+                E-mail
+              </label>
               <input
-                id="username"
-                name="username"
-                autoComplete="username"
-                placeholder="Seu nome de usuário"
+                className="login-input"
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="Seu e-mail de acesso"
                 required
                 maxLength={120}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               />
             </div>
-            <div className="field">
-              <label htmlFor="password">Senha</label>
-              <div className="password-field">
+
+            <div className="login-field">
+              <label className="login-field-label" htmlFor="password">
+                Senha
+              </label>
+              <div className="login-password-field">
                 <input
+                  className="login-input"
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
@@ -90,39 +142,35 @@ export default function Login() {
                   placeholder="Sua senha"
                   required
                   maxLength={128}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                 />
                 <button
+                  className="login-password-toggle"
                   type="button"
-                  className="password-toggle"
                   aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                   aria-controls="password"
                   aria-pressed={showPassword}
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((visible) => !visible)}
                 >
                   <Icon name={showPassword ? 'eyeOff' : 'eye'} />
                 </button>
               </div>
             </div>
-            <button
-              className="button button--primary login-submit"
-              type="submit"
-            >
-              Entrar
-              <Icon name="arrow" />
+
+            <button className="login-submit" type="submit" disabled={isLoading}>
+              {isLoading ? 'Entrando...' : 'Entrar'}
+              {!isLoading && <Icon name="arrow" />}
             </button>
-            <div className="login-feedback" role="status" aria-live="polite">
-              {accessMessage && <p>{accessMessage}</p>}
-            </div>
           </form>
-          <div className="login-public">
-            <p>Quer acompanhar os indicadores?</p>
-            <Link to="/" className="text-link">
-              Consultar o dashboard
-              <Icon name="arrow" />
+
+          <div className="login-form-divider">
+            <Link className="login-dashboard-link" to="/">
+              Voltar ao dashboard
             </Link>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import AppErrorBoundary from '../common/AppErrorBoundary';
 
 export default function AppLayout() {
   const { pathname } = useLocation();
+  const isLoginPage = pathname === '/login';
   const previousPath = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -45,7 +46,7 @@ export default function AppLayout() {
         <div className="header-inner">
           <Brand />
           <nav aria-label="Navegação principal">
-            <NavLink to="/" end className="nav-dashboard">
+            <NavLink to="/" className="nav-dashboard">
               <Icon name="grid" />
               Dashboard
             </NavLink>
@@ -53,7 +54,11 @@ export default function AppLayout() {
               <Icon name="lock" />
               <span>Entrar</span>
             </NavLink>
-            <div className="theme-toggle" role="group" aria-label="Tema da interface">
+            <div
+              className="theme-toggle"
+              role="group"
+              aria-label="Tema da interface"
+            >
               <button
                 type="button"
                 aria-label="Modo escuro"
@@ -76,7 +81,12 @@ export default function AppLayout() {
           </nav>
         </div>
       </header>
-      <main id="conteudo" ref={mainRef} tabIndex={-1} className="main-content">
+      <main
+        id="conteudo"
+        ref={mainRef}
+        tabIndex={-1}
+        className={`main-content${isLoginPage ? ' main-content--login' : ''}`}
+      >
         <AppErrorBoundary key={pathname}>
           <Outlet />
         </AppErrorBoundary>

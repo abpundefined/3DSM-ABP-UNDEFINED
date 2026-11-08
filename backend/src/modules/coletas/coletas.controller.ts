@@ -10,12 +10,14 @@ import {
   HttpStatus,
   UsePipes,
   UseFilters,
+  UseGuards,
   ValidationPipe,
 } from "@nestjs/common";
 import { ColetasService } from "./coletas.service";
 import { CreateColetaDto } from "./dto/create-coleta.dto";
 import { FilterColetasDto } from "./dto/filter-coleta.dto";
 import { HttpExceptionFilter } from "../../common/filters/http-exception.filter";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("coletas")
 @UseFilters(HttpExceptionFilter)
@@ -30,6 +32,7 @@ export class ColetasController {
   constructor(private readonly coletasService: ColetasService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   async criar(@Body() dto: CreateColetaDto) {
     return this.coletasService.registrarColeta(dto);
