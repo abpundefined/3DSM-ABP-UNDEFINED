@@ -103,8 +103,7 @@ describe("ColetasService", () => {
     expect(dto).not.toHaveProperty("emissaoGCo2e");
   });
 
-  it("calcula energia zero quando todas as métricas recebidas são zero", async () => {
-    calculosService.calcularEnergia.mockReturnValue(0);
+  it("classifica métricas todas zero como SEM_METRICAS", async () => {
     const dto: CreateColetaDto = {
       servicoId: 7,
       estadoColeta: EstadoColetaEnum.SUCESSO,
@@ -117,20 +116,44 @@ describe("ColetasService", () => {
 
     await service.registrarColeta(dto);
 
-    expect(calculosService.calcularEnergia).toHaveBeenCalledWith(
-      0,
-      0,
-      0,
-      0,
-      27,
-    );
+    expect(calculosService.calcularEnergia).not.toHaveBeenCalled();
     expect(repository.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        energiaKwh: 0,
-        emissaoGCo2e: 0,
-        estadoCalculo: EstadoCalculoEnum.CONCLUIDO,
-        estadoColeta: EstadoColetaEnum.SUCESSO,
+        estadoCalculo: EstadoCalculoEnum.PENDENTE,
+        estadoColeta: EstadoColetaEnum.SEM_METRICAS,
       }),
     );
+  });
+
+  it("persiste métricas como SUCESSO quando o cálculo de carbono falha", async () => {
+    calculosService.calcularEmissao.mockRejectedValue(
+      new Error("API de carbono indisponível"),
+    );
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 12,
+      memoryGb: 2,
+      diskGb: 3,
+      networkGb: 4,
+      intervaloColetaSegundos: 27,
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        servicoId: 7,
+        cpuPercent: 12,
+        memoryGb: 2,
+        diskGb: 3,
+        networkGb: 4,
+        energiaKwh: 0.002,
+        estadoColeta: EstadoColetaEnum.SUCESSO,
+        estadoCalculo: EstadoCalculoEnum.FALHA,
+        mensagemErro: "Falha no cálculo ambiental: API de carbono indisponível",
+      }),
+    );
+    expect(calculosService.calcularEnergia).toHaveBeenCalled();
   });
 });

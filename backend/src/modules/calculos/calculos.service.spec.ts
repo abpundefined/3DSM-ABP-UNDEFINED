@@ -25,7 +25,7 @@ describe("CalculosService", () => {
   });
 
   it("calculates energy using the documented resource factors and kWh conversion", () => {
-    expect(service.calcularEnergia(50, 2, 10, 5, 3600)).toBeCloseTo(0.0012);
+    expect(service.calcularEnergia(50, 2, 10, 5, 3600)).toBeCloseTo(0.0012, 10);
   });
 
   it.each([
@@ -38,7 +38,7 @@ describe("CalculosService", () => {
     (_resource, cpu, memory, disk, network, expectedKwh) => {
       expect(
         service.calcularEnergia(cpu, memory, disk, network, 3600),
-      ).toBeCloseTo(expectedKwh);
+      ).toBeCloseTo(expectedKwh, 10);
     },
   );
 
@@ -46,8 +46,21 @@ describe("CalculosService", () => {
     const energyFor30Seconds = service.calcularEnergia(50, 2, 10, 5, 30);
     const energyFor90Seconds = service.calcularEnergia(50, 2, 10, 5, 90);
 
-    expect(energyFor90Seconds).toBeCloseTo(energyFor30Seconds * 3);
-    expect(energyFor30Seconds).toBeCloseTo(0.0012 / 120);
+    expect(energyFor90Seconds).toBeCloseTo(energyFor30Seconds * 3, 10);
+    expect(energyFor30Seconds).toBeCloseTo(0.0012 / 120, 10);
+  });
+
+  it("valida o exemplo de referência de 50.87 W, energia e emissão", async () => {
+    carbonApi.obterIntensidadeCarbono.mockResolvedValue(85);
+
+    const energiaKwh = service.calcularEnergia(100, 100, 1000, 143.5, 60);
+    const potenciaWatts = (energiaKwh * 1000 * 3600) / 60;
+    const emissao = await service.calcularEmissao(energiaKwh, "br-sudeste");
+
+    expect(potenciaWatts).toBeCloseTo(50.87, 10);
+    expect(energiaKwh).toBeCloseTo(0.0008478333, 10);
+    expect(emissao.emissaoGCo2e).toBeCloseTo(0.0720658333, 10);
+    expect(Number(emissao.emissaoGCo2e.toFixed(7))).toBe(0.0720658);
   });
 
   it.each([
