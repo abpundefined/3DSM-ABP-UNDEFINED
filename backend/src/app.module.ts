@@ -8,6 +8,7 @@ import { ServicosModule } from "./modules/servicos/servicos.module";
 import { MonitoramentoModule } from "./modules/monitoramento/monitoramento.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ConfiguracaoModule } from "./modules/configuracao/configuracao.module";
+import { IndicadoresModule } from "./modules/indicadores/indicadores.module";
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ConfiguracaoModule } from "./modules/configuracao/configuracao.module";
     MonitoramentoModule,
     AuthModule,
     ConfiguracaoModule,
+    IndicadoresModule,
   ],
   controllers: [AppController],
   providers: [AppService],
