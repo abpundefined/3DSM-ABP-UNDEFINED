@@ -10,18 +10,9 @@ import {
   IsDate,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { EstadoCalculoEnum, EstadoColetaEnum } from "../estados-coleta.enum";
 
-export enum EstadoColetaEnum {
-  SUCESSO = "SUCESSO",
-  SEM_METRICAS = "SEM_METRICAS",
-  FALHA = "FALHA",
-}
-
-export enum EstadoCalculoEnum {
-  PENDENTE = "PENDENTE",
-  CONCLUIDO = "CONCLUIDO",
-  FALHA = "FALHA",
-}
+export { EstadoCalculoEnum, EstadoColetaEnum };
 
 export class CreateColetaDto {
   @IsInt({
