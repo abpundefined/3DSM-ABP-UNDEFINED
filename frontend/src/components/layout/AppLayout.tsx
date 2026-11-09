@@ -3,10 +3,12 @@ import { NavLink, Outlet, useLocation } from 'react-router';
 import Brand from '../common/Brand';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
+import useAuth from '../../hooks/useAuth';
 
 export default function AppLayout() {
   const { pathname } = useLocation();
   const isLoginPage = pathname === '/login';
+  const { isAuthenticated, logout } = useAuth();
   const previousPath = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -50,10 +52,17 @@ export default function AppLayout() {
               <Icon name="grid" />
               Dashboard
             </NavLink>
-            <NavLink to="/login" className="nav-login">
-              <Icon name="lock" />
-              <span>Entrar</span>
-            </NavLink>
+          {isAuthenticated ? (
+              <button type="button" className="nav-login" onClick={logout}>
+                <Icon name="lock" />
+                <span>Sair</span>
+              </button>
+            ) : (
+              <NavLink to="/login" className="nav-login">
+                <Icon name="lock" />
+                <span>Entrar</span>
+              </NavLink>
+            )}
             <div
               className="theme-toggle"
               role="group"

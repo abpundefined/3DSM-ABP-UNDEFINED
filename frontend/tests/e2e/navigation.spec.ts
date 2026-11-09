@@ -130,9 +130,43 @@ test('login salva token e retorna ao dashboard após sucesso', async ({
   await expect(
     page.getByRole('heading', { name: 'Dashboard', exact: true }),
   ).toBeVisible();
-  await expect
+ await expect
     .poll(() => page.evaluate(() => localStorage.getItem('@greener-abp:token')))
     .toBe('token-de-teste');
+
+  const navegacao = page.getByRole('navigation', {
+    name: 'Navegação principal',
+  });
+  await expect(
+    navegacao.getByRole('button', { name: 'Sair', exact: true }),
+  ).toBeVisible();
+  await expect(
+    navegacao.getByRole('link', { name: 'Entrar', exact: true }),
+  ).toHaveCount(0);
+
+  await navegacao.getByRole('button', { name: 'Sair', exact: true }).click();
+  await expect(
+    navegacao.getByRole('link', { name: 'Entrar', exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('@greener-abp:token')))
+    .toBeNull();
+});
+
+test('sessão salva continua ativa ao recarregar a página', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('@greener-abp:token', 'token-salvo');
+  });
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  );
+  await page.goto('/');
+
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Navegação principal' })
+      .getByRole('button', { name: 'Sair', exact: true }),
+  ).toBeVisible();
 });
 
 test('login distingue falha de conexão de credenciais inválidas', async ({

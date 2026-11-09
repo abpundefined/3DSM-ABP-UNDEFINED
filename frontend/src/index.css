@@ -191,6 +191,17 @@ summary {
   border: 1px solid var(--border);
   border-radius: 9px;
 }
+button.nav-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
 .nav-login:hover,
 .nav-login[aria-current='page'] {
   background: var(--soft-green);
@@ -1408,6 +1419,10 @@ h1 {
   }
   .nav-login {
     padding: 9px 11px;
+  }
+    button.nav-login {
+    font-size: 12px;
+    gap: 5px;
   }
   .nav-login .icon {
     height: 14px;
