@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { ConfiguracaoRepository } from "./configuracao.repository";
-import { AtualizarConfiguracaoDto } from "./dto/atualizar-configuracao.dto";
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ConfiguracaoRepository } from './configuracao.repository';
+import { AtualizarConfiguracaoDto } from './dto/atualizar-configuracao.dto';
 
 export interface ConfiguracaoAtual {
   intervaloDescobertaSegundos: number;
@@ -30,7 +30,7 @@ export class ConfiguracaoService {
     }
 
     const intervaloPadraoSegundos = Math.round(
-      Number(this.config.get<string>("METRICS_POLL_INTERVAL_MS") ?? 30000) /
+      Number(this.config.get<string>('METRICS_POLL_INTERVAL_MS') ?? 30000) /
         1000,
     );
 

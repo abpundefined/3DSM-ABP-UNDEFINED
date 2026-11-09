@@ -1,20 +1,20 @@
-jest.mock("@nestjs/config", () => ({ ConfigService: jest.fn() }));
-jest.mock("../../database/prisma.service", () => ({
+jest.mock('@nestjs/config', () => ({ ConfigService: jest.fn() }));
+jest.mock('../../database/prisma.service', () => ({
   PrismaService: jest.fn(),
 }));
 
-import { Test, TestingModule } from "@nestjs/testing";
-import { CalculosService } from "../calculos/calculos.service";
-import { ServicosService } from "../servicos/servicos.service";
-import { ColetasRepository } from "./coletas.repository";
-import { ColetasService } from "./coletas.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { CalculosService } from '../calculos/calculos.service';
+import { ServicosService } from '../servicos/servicos.service';
+import { ColetasRepository } from './coletas.repository';
+import { ColetasService } from './coletas.service';
 import {
   CreateColetaDto,
   EstadoCalculoEnum,
   EstadoColetaEnum,
-} from "./dto/create-coleta.dto";
+} from './dto/create-coleta.dto';
 
-describe("ColetasService", () => {
+describe('ColetasService', () => {
   let service: ColetasService;
   const repository = {
     create: jest.fn(),
@@ -40,7 +40,7 @@ describe("ColetasService", () => {
       }),
     );
     servicosService.findById.mockResolvedValue({
-      regiaoCodigo: "br-sudeste",
+      regiaoCodigo: 'br-sudeste',
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -55,7 +55,7 @@ describe("ColetasService", () => {
     service = module.get<ColetasService>(ColetasService);
   });
 
-  it("persists the factor, emissions, and completed calculation state", async () => {
+  it('persists the factor, emissions, and completed calculation state', async () => {
     const dto: CreateColetaDto = {
       servicoId: 7,
       estadoColeta: EstadoColetaEnum.SUCESSO,
@@ -82,7 +82,7 @@ describe("ColetasService", () => {
     );
   });
 
-  it("não inventa um intervalo quando não foi recebido", async () => {
+  it('não inventa um intervalo quando não foi recebido', async () => {
     const dto: CreateColetaDto = {
       servicoId: 7,
       estadoColeta: EstadoColetaEnum.SUCESSO,
@@ -99,11 +99,11 @@ describe("ColetasService", () => {
         estadoCalculo: EstadoCalculoEnum.PENDENTE,
       }),
     );
-    expect(dto).not.toHaveProperty("energiaKwh");
-    expect(dto).not.toHaveProperty("emissaoGCo2e");
+    expect(dto).not.toHaveProperty('energiaKwh');
+    expect(dto).not.toHaveProperty('emissaoGCo2e');
   });
 
-  it("classifica métricas todas zero como SEM_METRICAS", async () => {
+  it('classifica métricas todas zero como SEM_METRICAS', async () => {
     const dto: CreateColetaDto = {
       servicoId: 7,
       estadoColeta: EstadoColetaEnum.SUCESSO,
@@ -125,9 +125,9 @@ describe("ColetasService", () => {
     );
   });
 
-  it("persiste métricas como SUCESSO quando o cálculo de carbono falha", async () => {
+  it('persiste métricas como SUCESSO quando o cálculo de carbono falha', async () => {
     calculosService.calcularEmissao.mockRejectedValue(
-      new Error("API de carbono indisponível"),
+      new Error('API de carbono indisponível'),
     );
     const dto: CreateColetaDto = {
       servicoId: 7,
@@ -151,7 +151,7 @@ describe("ColetasService", () => {
         energiaKwh: 0.002,
         estadoColeta: EstadoColetaEnum.SUCESSO,
         estadoCalculo: EstadoCalculoEnum.FALHA,
-        mensagemErro: "Falha no cálculo ambiental: API de carbono indisponível",
+        mensagemErro: 'Falha no cálculo ambiental: API de carbono indisponível',
       }),
     );
     expect(calculosService.calcularEnergia).toHaveBeenCalled();

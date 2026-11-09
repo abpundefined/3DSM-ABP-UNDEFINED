@@ -3,10 +3,10 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
-} from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import type { Request } from "express";
-import type { TokenPayload } from "../auth.service";
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import type { Request } from 'express';
+import type { TokenPayload } from '../auth.service';
 
 export type RequisicaoAutenticada = Request & { usuario?: TokenPayload };
 
@@ -16,16 +16,16 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequisicaoAutenticada>();
-    const [tipo, token] = request.headers.authorization?.split(" ") ?? [];
+    const [tipo, token] = request.headers.authorization?.split(' ') ?? [];
 
-    if (tipo !== "Bearer" || !token) {
-      throw new UnauthorizedException("Token de acesso ausente.");
+    if (tipo !== 'Bearer' || !token) {
+      throw new UnauthorizedException('Token de acesso ausente.');
     }
 
     try {
       request.usuario = await this.jwtService.verifyAsync<TokenPayload>(token);
     } catch {
-      throw new UnauthorizedException("Token inválido ou expirado.");
+      throw new UnauthorizedException('Token inválido ou expirado.');
     }
 
     return true;

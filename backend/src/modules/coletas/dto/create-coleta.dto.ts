@@ -8,15 +8,15 @@ import {
   IsString,
   IsEnum,
   IsDate,
-} from "class-validator";
-import { Type } from "class-transformer";
-import { EstadoCalculoEnum, EstadoColetaEnum } from "../estados-coleta.enum";
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { EstadoCalculoEnum, EstadoColetaEnum } from '../estados-coleta.enum';
 
 export { EstadoCalculoEnum, EstadoColetaEnum };
 
 export class CreateColetaDto {
   @IsInt({
-    message: "O ID do serviço deve ser um número inteiro (sem decimais).",
+    message: 'O ID do serviço deve ser um número inteiro (sem decimais).',
   })
   @IsNotEmpty()
   servicoId!: number;
@@ -40,9 +40,9 @@ export class CreateColetaDto {
   finalizadaEm?: Date;
 
   @IsInt({
-    message: "O intervalo de coleta deve ser um número inteiro em segundos.",
+    message: 'O intervalo de coleta deve ser um número inteiro em segundos.',
   })
-  @Min(1, { message: "O intervalo de coleta deve ser de no mínimo 1 segundo." })
+  @Min(1, { message: 'O intervalo de coleta deve ser de no mínimo 1 segundo.' })
   @IsOptional()
   intervaloColetaSegundos?: number;
 
@@ -55,23 +55,23 @@ export class CreateColetaDto {
   mensagemErro?: string;
 
   @IsNumber()
-  @Min(0, { message: "O uso de CPU não pode ser negativo." })
-  @Max(100, { message: "O uso de CPU não pode ultrapassar 100%." })
+  @Min(0, { message: 'O uso de CPU não pode ser negativo.' })
+  @Max(100, { message: 'O uso de CPU não pode ultrapassar 100%.' })
   @IsOptional()
   cpuPercent?: number;
 
   @IsNumber()
-  @Min(0, { message: "A memória não pode ter valor negativo." })
+  @Min(0, { message: 'A memória não pode ter valor negativo.' })
   @IsOptional()
   memoryGb?: number;
 
   @IsNumber()
-  @Min(0, { message: "O disco não pode ter valor negativo." })
+  @Min(0, { message: 'O disco não pode ter valor negativo.' })
   @IsOptional()
   diskGb?: number;
 
   @IsNumber()
-  @Min(0, { message: "A rede não pode ter valor negativo." })
+  @Min(0, { message: 'A rede não pode ter valor negativo.' })
   @IsOptional()
   networkGb?: number;
 

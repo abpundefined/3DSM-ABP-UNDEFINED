@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import type { EstadoMonitoramento } from "../../generated/prisma/enums";
-import { PrismaService } from "../../database/prisma.service";
+import { Injectable } from '@nestjs/common';
+import type { EstadoMonitoramento } from '../../generated/prisma/enums';
+import { PrismaService } from '../../database/prisma.service';
 
 export interface TotaisAmbientais {
   energiaKwh: number | null;
@@ -23,7 +23,7 @@ export class IndicadoresRepository {
   ): Promise<TotaisAmbientais> {
     const resultado = await this.prisma.coleta.aggregate({
       where: {
-        estadoCalculo: "CONCLUIDO",
+        estadoCalculo: 'CONCLUIDO',
         iniciadaEm: { gte: inicio, lte: fim },
       },
       _sum: { energiaKwh: true, emissaoGCo2e: true },
@@ -39,7 +39,7 @@ export class IndicadoresRepository {
 
   async contarServicosPorEstado(): Promise<ContagemPorEstado[]> {
     const grupos = await this.prisma.servico.groupBy({
-      by: ["estadoAtual"],
+      by: ['estadoAtual'],
       _count: { _all: true },
     });
 

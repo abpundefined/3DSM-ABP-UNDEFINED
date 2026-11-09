@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import type { Servico } from "../../generated/prisma/client";
-import type { EstadoMonitoramento } from "../../generated/prisma/enums";
-import { PrismaService } from "../../database/prisma.service";
-import { normalizeServicePayload } from "../../common/utils/external-api.util";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Servico } from '../../generated/prisma/client';
+import type { EstadoMonitoramento } from '../../generated/prisma/enums';
+import { PrismaService } from '../../database/prisma.service';
+import { normalizeServicePayload } from '../../common/utils/external-api.util';
 
 export interface LocalizacaoServico {
   codigo: string;
@@ -28,15 +28,15 @@ export class ServicosService {
   ) {}
 
   async discoverServices() {
-    const baseUrl = this.configService.get<string>("METRICS_API_URL");
+    const baseUrl = this.configService.get<string>('METRICS_API_URL');
     if (!baseUrl) {
-      throw new Error("METRICS_API_URL não configurada.");
+      throw new Error('METRICS_API_URL não configurada.');
     }
 
-    const url = `${baseUrl.replace(/\/+$/, "")}/services`;
+    const url = `${baseUrl.replace(/\/+$/, '')}/services`;
     const response = await fetch(url, {
       headers: {
-        Accept: "application/json",
+        Accept: 'application/json',
       },
     });
 
@@ -48,12 +48,12 @@ export class ServicosService {
 
     const payload: unknown = await response.json();
     const container =
-      payload && typeof payload === "object"
+      payload && typeof payload === 'object'
         ? (payload as Record<string, unknown>)
         : null;
     const servicePayloads: unknown = Array.isArray(payload)
       ? payload
-      : ["items", "data", "services", "results", "value", "records"]
+      : ['items', 'data', 'services', 'results', 'value', 'records']
           .map((key) => container?.[key])
           .find(Array.isArray);
 
@@ -62,14 +62,14 @@ export class ServicosService {
       container?.error ||
       container?.success === false
     ) {
-      throw new Error("Resposta inválida da descoberta de serviços.");
+      throw new Error('Resposta inválida da descoberta de serviços.');
     }
 
     // Valida toda a descoberta antes de alterar estados no banco.
     const records = servicePayloads.map((item: unknown) => {
       const service = normalizeServicePayload(item);
       if (!service) {
-        throw new Error("Serviço inválido na resposta de descoberta.");
+        throw new Error('Serviço inválido na resposta de descoberta.');
       }
       return service;
     });
@@ -88,8 +88,8 @@ export class ServicosService {
       const regiaoCodigo =
         service.regiaoCodigo || this.buildRegiaoCodigo(service);
 
-      const country = service.pais || "Desconhecida";
-      const region = service.regiao || service.localizacao || "Desconhecida";
+      const country = service.pais || 'Desconhecida';
+      const region = service.regiao || service.localizacao || 'Desconhecida';
       const city = service.cidade || null;
 
       const latitude = service.latitude;
@@ -132,7 +132,7 @@ export class ServicosService {
           nome: service.nome,
           regiaoCodigo: regiaoCodigo,
           caminhoMetricas: service.caminhoMetricas,
-          estadoAtual: "DESCONHECIDO",
+          estadoAtual: 'DESCONHECIDO',
           descobertoEm: new Date(),
           ultimaVezListadoEm: new Date(),
           atualizadoEm: new Date(),
@@ -146,10 +146,10 @@ export class ServicosService {
       await this.prisma.servico.updateMany({
         where: {
           idExterno: { in: [...discoveredIds] },
-          estadoAtual: "REMOVIDO",
+          estadoAtual: 'REMOVIDO',
         },
         data: {
-          estadoAtual: "DESCONHECIDO",
+          estadoAtual: 'DESCONHECIDO',
           atualizadoEm: new Date(),
         },
       });
@@ -167,7 +167,7 @@ export class ServicosService {
       await this.prisma.servico.updateMany({
         where: { idExterno: { in: removedServices } },
         data: {
-          estadoAtual: "REMOVIDO",
+          estadoAtual: 'REMOVIDO',
           atualizadoEm: new Date(),
         },
       });
@@ -184,10 +184,10 @@ export class ServicosService {
     return this.prisma.servico.findMany({
       where: {
         estadoAtual: {
-          not: "REMOVIDO",
+          not: 'REMOVIDO',
         },
       },
-      orderBy: { atualizadoEm: "desc" },
+      orderBy: { atualizadoEm: 'desc' },
     });
   }
 
@@ -206,7 +206,7 @@ export class ServicosService {
 
   async listarServicos(): Promise<ServicoComLocalizacao[]> {
     const servicos = await this.prisma.servico.findMany({
-      orderBy: { atualizadoEm: "desc" },
+      orderBy: { atualizadoEm: 'desc' },
       include: { regiao: true },
     });
 
@@ -242,14 +242,14 @@ export class ServicosService {
       service.localizacao,
     ]
       .filter(Boolean)
-      .join("-")
-      .replace(/[^a-zA-Z0-9-]/g, "-")
-      .replace(/-+/g, "-")
+      .join('-')
+      .replace(/[^a-zA-Z0-9-]/g, '-')
+      .replace(/-+/g, '-')
       .toLowerCase();
 
     return (
       source ||
-      `regiao-${service.localizacao.slice(0, 24) || "desconhecida"}`.toLowerCase()
+      `regiao-${service.localizacao.slice(0, 24) || 'desconhecida'}`.toLowerCase()
     );
   }
 }

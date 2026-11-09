@@ -1,5 +1,5 @@
-import type { EstadoMonitoramento } from "../../generated/prisma/enums";
-import { EstadoColetaEnum } from "../../modules/coletas/estados-coleta.enum";
+import type { EstadoMonitoramento } from '../../generated/prisma/enums';
+import { EstadoColetaEnum } from '../../modules/coletas/estados-coleta.enum';
 
 export interface MedicoesColeta {
   cpuPercent?: number | null;
@@ -17,7 +17,7 @@ export interface ClassificacaoEstado {
 const HTTP_NAO_ENCONTRADO = 404;
 
 const ehMedicaoUtil = (valor: number | null | undefined): boolean =>
-  typeof valor === "number" && Number.isFinite(valor) && valor > 0;
+  typeof valor === 'number' && Number.isFinite(valor) && valor > 0;
 
 export const possuiMedicoes = (medicoes: MedicoesColeta): boolean =>
   [
@@ -32,23 +32,23 @@ export const classificarMedicoes = (
 ): ClassificacaoEstado =>
   possuiMedicoes(medicoes)
     ? {
-        estadoServico: "DISPONIVEL",
+        estadoServico: 'DISPONIVEL',
         estadoColeta: EstadoColetaEnum.SUCESSO,
       }
     : {
-        estadoServico: "SEM_METRICAS",
+        estadoServico: 'SEM_METRICAS',
         estadoColeta: EstadoColetaEnum.SEM_METRICAS,
       };
 
 export const classificarRespostaHttp = (status: number): ClassificacaoEstado =>
   status === HTTP_NAO_ENCONTRADO
     ? {
-        estadoServico: "SEM_METRICAS",
+        estadoServico: 'SEM_METRICAS',
         estadoColeta: EstadoColetaEnum.SEM_METRICAS,
         codigoErro: String(status),
       }
     : {
-        estadoServico: "INDISPONIVEL",
+        estadoServico: 'INDISPONIVEL',
         estadoColeta: EstadoColetaEnum.FALHA,
         codigoErro: String(status),
       };
@@ -56,7 +56,7 @@ export const classificarRespostaHttp = (status: number): ClassificacaoEstado =>
 export const classificarFalhaDeConexao = (
   tempoEsgotado: boolean,
 ): ClassificacaoEstado => ({
-  estadoServico: "INDISPONIVEL",
+  estadoServico: 'INDISPONIVEL',
   estadoColeta: EstadoColetaEnum.FALHA,
-  codigoErro: tempoEsgotado ? "TIMEOUT" : "FETCH_ERROR",
+  codigoErro: tempoEsgotado ? 'TIMEOUT' : 'FETCH_ERROR',
 });

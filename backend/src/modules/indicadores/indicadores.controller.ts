@@ -1,8 +1,8 @@
-import { Controller, Get, Query } from "@nestjs/common";
-import { FiltroIndicadoresDto } from "./dto/filtro-indicadores.dto";
-import { IndicadoresService } from "./indicadores.service";
+import { Controller, Get, Query } from '@nestjs/common';
+import { FiltroIndicadoresDto } from './dto/filtro-indicadores.dto';
+import { IndicadoresService } from './indicadores.service';
 
-@Controller("indicadores")
+@Controller('indicadores')
 export class IndicadoresController {
   constructor(private readonly indicadoresService: IndicadoresService) {}
 

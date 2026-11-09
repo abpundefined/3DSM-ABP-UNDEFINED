@@ -28,8 +28,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : 'Serviço temporariamente indisponível. A última medição válida foi preservada.';
 
     const mensagem =
-      typeof exceptionResponse === 'object'
-        ? (exceptionResponse as any).message || exceptionResponse
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse !== null &&
+      'message' in exceptionResponse
+        ? exceptionResponse.message || exceptionResponse
         : exceptionResponse;
 
     this.logger.error(

@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Put, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { ConfiguracaoService } from "./configuracao.service";
-import { AtualizarConfiguracaoDto } from "./dto/atualizar-configuracao.dto";
+import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ConfiguracaoService } from './configuracao.service';
+import { AtualizarConfiguracaoDto } from './dto/atualizar-configuracao.dto';
 
-@Controller("configuracao")
+@Controller('configuracao')
 export class ConfiguracaoController {
   constructor(private readonly configuracaoService: ConfiguracaoService) {}
 

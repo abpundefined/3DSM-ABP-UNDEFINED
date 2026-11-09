@@ -1,8 +1,6 @@
-
 import { normalizeServicePayload } from './external-api.util';
 
 describe('normalizeServicePayload', () => {
-
   it('deve extrair corretamente a localização aninhada', () => {
     const payload = {
       id: 'billing-api',
@@ -93,5 +91,4 @@ describe('normalizeServicePayload', () => {
       caminhoMetricas: '/metrics/billing-api',
     });
   });
-
 });

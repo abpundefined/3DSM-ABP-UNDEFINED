@@ -1,13 +1,13 @@
-jest.mock("../../database/prisma.service", () => ({
+jest.mock('../../database/prisma.service', () => ({
   PrismaService: class PrismaService {},
 }));
 
-import { BadRequestException } from "@nestjs/common";
-import { IndicadoresRepository } from "./indicadores.repository";
-import { IndicadoresService } from "./indicadores.service";
+import { BadRequestException } from '@nestjs/common';
+import { IndicadoresRepository } from './indicadores.repository';
+import { IndicadoresService } from './indicadores.service';
 
-describe("IndicadoresService", () => {
-  const agora = new Date("2026-11-08T12:00:00.000Z");
+describe('IndicadoresService', () => {
+  const agora = new Date('2026-11-08T12:00:00.000Z');
   const repository = {
     somarImpactoNoPeriodo: jest.fn(),
     contarServicosPorEstado: jest.fn(),
@@ -25,26 +25,26 @@ describe("IndicadoresService", () => {
       coletasCalculadas: 3,
     });
     repository.contarServicosPorEstado.mockReset().mockResolvedValue([
-      { estado: "DISPONIVEL", quantidade: 5 },
-      { estado: "INDISPONIVEL", quantidade: 1 },
-      { estado: "SEM_METRICAS", quantidade: 2 },
-      { estado: "REMOVIDO", quantidade: 4 },
+      { estado: 'DISPONIVEL', quantidade: 5 },
+      { estado: 'INDISPONIVEL', quantidade: 1 },
+      { estado: 'SEM_METRICAS', quantidade: 2 },
+      { estado: 'REMOVIDO', quantidade: 4 },
     ]);
     repository.buscarUltimaColetaEm
       .mockReset()
-      .mockResolvedValue(new Date("2026-11-08T11:59:30.000Z"));
+      .mockResolvedValue(new Date('2026-11-08T11:59:30.000Z'));
   });
 
   afterEach(() => {
     jest.useRealTimers();
   });
 
-  it("consolida consumo, emissão e estados dos serviços", async () => {
+  it('consolida consumo, emissão e estados dos serviços', async () => {
     const indicadores = await service.obter({});
 
     expect(indicadores).toEqual({
       periodo: {
-        inicio: new Date("2026-11-07T12:00:00.000Z"),
+        inicio: new Date('2026-11-07T12:00:00.000Z'),
         fim: agora,
       },
       energiaTotalKwh: 0.0012,
@@ -58,23 +58,23 @@ describe("IndicadoresService", () => {
         desconhecidos: 0,
         removidos: 4,
       },
-      ultimaColetaEm: new Date("2026-11-08T11:59:30.000Z"),
+      ultimaColetaEm: new Date('2026-11-08T11:59:30.000Z'),
       geradoEm: agora,
     });
   });
 
-  it("usa as últimas 24 horas quando o período não é informado", async () => {
+  it('usa as últimas 24 horas quando o período não é informado', async () => {
     await service.obter({});
 
     expect(repository.somarImpactoNoPeriodo).toHaveBeenCalledWith(
-      new Date("2026-11-07T12:00:00.000Z"),
+      new Date('2026-11-07T12:00:00.000Z'),
       agora,
     );
   });
 
-  it("respeita o período informado", async () => {
-    const dataInicio = new Date("2026-11-01T00:00:00.000Z");
-    const dataFim = new Date("2026-11-02T00:00:00.000Z");
+  it('respeita o período informado', async () => {
+    const dataInicio = new Date('2026-11-01T00:00:00.000Z');
+    const dataFim = new Date('2026-11-02T00:00:00.000Z');
 
     const indicadores = await service.obter({ dataInicio, dataFim });
 
@@ -85,18 +85,18 @@ describe("IndicadoresService", () => {
     expect(indicadores.periodo).toEqual({ inicio: dataInicio, fim: dataFim });
   });
 
-  it("calcula o início a partir do fim quando só dataFim é informada", async () => {
-    const dataFim = new Date("2026-11-05T06:00:00.000Z");
+  it('calcula o início a partir do fim quando só dataFim é informada', async () => {
+    const dataFim = new Date('2026-11-05T06:00:00.000Z');
 
     await service.obter({ dataFim });
 
     expect(repository.somarImpactoNoPeriodo).toHaveBeenCalledWith(
-      new Date("2026-11-04T06:00:00.000Z"),
+      new Date('2026-11-04T06:00:00.000Z'),
       dataFim,
     );
   });
 
-  it("retorna zero quando não há coletas calculadas no período", async () => {
+  it('retorna zero quando não há coletas calculadas no período', async () => {
     repository.somarImpactoNoPeriodo.mockResolvedValue({
       energiaKwh: null,
       emissaoGCo2e: null,
@@ -114,22 +114,22 @@ describe("IndicadoresService", () => {
     expect(indicadores.ultimaColetaEm).toBeNull();
   });
 
-  it("rejeita período com início posterior ao fim", async () => {
+  it('rejeita período com início posterior ao fim', async () => {
     await expect(
       service.obter({
-        dataInicio: new Date("2026-11-03T00:00:00.000Z"),
-        dataFim: new Date("2026-11-02T00:00:00.000Z"),
+        dataInicio: new Date('2026-11-03T00:00:00.000Z'),
+        dataFim: new Date('2026-11-02T00:00:00.000Z'),
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(repository.somarImpactoNoPeriodo).not.toHaveBeenCalled();
   });
 
-  it("propaga a falha do banco sem devolver indicadores incorretos", async () => {
+  it('propaga a falha do banco sem devolver indicadores incorretos', async () => {
     repository.somarImpactoNoPeriodo.mockRejectedValue(
-      new Error("conexão perdida"),
+      new Error('conexão perdida'),
     );
 
-    await expect(service.obter({})).rejects.toThrow("conexão perdida");
+    await expect(service.obter({})).rejects.toThrow('conexão perdida');
   });
 });

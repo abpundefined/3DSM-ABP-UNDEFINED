@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
-import type { Coleta, Prisma } from "../../generated/prisma/client";
-import { PrismaService } from "../../database/prisma.service";
-import { CreateColetaDto } from "./dto/create-coleta.dto";
-import { FilterColetasDto } from "./dto/filter-coleta.dto";
+import { Injectable } from '@nestjs/common';
+import type { Coleta, Prisma } from '../../generated/prisma/client';
+import { PrismaService } from '../../database/prisma.service';
+import { CreateColetaDto } from './dto/create-coleta.dto';
+import { FilterColetasDto } from './dto/filter-coleta.dto';
 
 export interface IColetasRepository {
   create(data: CreateColetaDto): Promise<Coleta>;
@@ -31,7 +31,7 @@ export class ColetasRepository implements IColetasRepository {
         diskGb: data.diskGb,
         networkGb: data.networkGb,
         intensidadeCarbonoGCo2ePorKwh: data.intensidadeCarbonoGCo2ePorKwh,
-        estadoCalculo: data.estadoCalculo ?? "PENDENTE",
+        estadoCalculo: data.estadoCalculo ?? 'PENDENTE',
         energiaKwh: data.energiaKwh,
         emissaoGCo2e: data.emissaoGCo2e,
       },
@@ -59,7 +59,7 @@ export class ColetasRepository implements IColetasRepository {
 
     return this.prisma.coleta.findMany({
       where,
-      orderBy: { iniciadaEm: "desc" },
+      orderBy: { iniciadaEm: 'desc' },
       include: {
         servico: {
           select: { idExterno: true, nome: true },
@@ -81,10 +81,10 @@ export class ColetasRepository implements IColetasRepository {
     return this.prisma.coleta.findFirst({
       where: {
         servicoId,
-        estadoColeta: "SUCESSO",
+        estadoColeta: 'SUCESSO',
       },
       orderBy: {
-        iniciadaEm: "desc",
+        iniciadaEm: 'desc',
       },
     });
   }
