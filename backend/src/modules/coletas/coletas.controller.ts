@@ -18,7 +18,20 @@ import { CreateColetaDto } from "./dto/create-coleta.dto";
 import { FilterColetasDto } from "./dto/filter-coleta.dto";
 import { HttpExceptionFilter } from "../../common/filters/http-exception.filter";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
+import {
+  ColetaRespostaDto,
+  DetalheColetaRespostaDto,
+  HistoricoColetaRespostaDto,
+  UltimaColetaRespostaDto,
+} from "../../common/swagger/respostas.dto";
 
+@ApiTags("Coletas")
 @Controller("coletas")
 @UseFilters(HttpExceptionFilter)
 @UsePipes(
@@ -34,21 +47,40 @@ export class ColetasController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Registrar uma coleta" })
+  @ApiResponse({ status: 201, type: ColetaRespostaDto })
+  @ApiResponse({ status: 400, description: "Dados de coleta inválidos." })
+  @ApiResponse({ status: 401, description: "Token ausente ou inválido." })
   async criar(@Body() dto: CreateColetaDto) {
     return this.coletasService.registrarColeta(dto);
   }
 
   @Get()
+  @ApiOperation({ summary: "Consultar histórico de coletas" })
+  @ApiResponse({ status: 200, type: HistoricoColetaRespostaDto, isArray: true })
+  @ApiResponse({ status: 400, description: "Filtros inválidos." })
   async listar(@Query() filtros: FilterColetasDto) {
     return this.coletasService.listarHistorico(filtros);
   }
 
   @Get("servico/:servicoId/ultima-valida")
+  @ApiOperation({ summary: "Consultar última coleta válida de um serviço" })
+  @ApiResponse({ status: 200, type: UltimaColetaRespostaDto })
+  @ApiResponse({ status: 400, description: "ID de serviço inválido." })
+  @ApiResponse({
+    status: 404,
+    description: "Nenhuma coleta válida encontrada.",
+  })
   async obterUltimaValida(@Param("servicoId", ParseIntPipe) servicoId: number) {
     return this.coletasService.obterUltimaColetaValida(servicoId);
   }
 
   @Get(":id")
+  @ApiOperation({ summary: "Consultar coleta pelo ID" })
+  @ApiResponse({ status: 200, type: DetalheColetaRespostaDto })
+  @ApiResponse({ status: 400, description: "ID de coleta inválido." })
+  @ApiResponse({ status: 404, description: "Coleta não encontrada." })
   async buscarPorId(@Param("id", ParseIntPipe) id: number) {
     return this.coletasService.buscarPorId(id);
   }
