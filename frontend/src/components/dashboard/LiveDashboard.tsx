@@ -28,11 +28,30 @@ type LatestCollectionResponse = {
   dados: BackendCollection;
 };
 
+type BackendConfiguration = {
+  intervaloColetaSegundos: number;
+};
+
 type LiveService = BackendService & {
   latestCollection: BackendCollection | null;
 };
 
 const REFRESH_INTERVAL_MS = 30_000;
+
+// Apresenta o tempo decorrido em português sem depender de biblioteca extra.
+function formatRelativeTime(date: Date, now: number) {
+  const seconds = Math.max(0, Math.floor((now - date.getTime()) / 1000));
+  const units: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['day', 86_400],
+    ['hour', 3_600],
+    ['minute', 60],
+    ['second', 1],
+  ];
+  const formatter = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
+  const [unit, divisor] = units.find(([, size]) => seconds >= size) ?? units[3];
+
+  return formatter.format(-Math.floor(seconds / divisor), unit);
+}
 
 function formatMetric(
   value: number | string | null | undefined,
@@ -103,6 +122,8 @@ export default function LiveDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [collectionIntervalSeconds, setCollectionIntervalSeconds] = useState(30);
   const activeRequest = useRef<object | null>(null);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
@@ -137,6 +158,17 @@ export default function LiveDashboard() {
           }
         }),
       );
+
+      // Lê o intervalo configurado no backend; mantém o padrão documentado caso a configuração não esteja acessível.
+      try {
+        const configuration = await apiRequest<BackendConfiguration>('/configuracao', { signal });
+        const configuredInterval = configuration?.intervaloColetaSegundos;
+        if (typeof configuredInterval === 'number' && Number.isSafeInteger(configuredInterval) && configuredInterval > 0) {
+          setCollectionIntervalSeconds(configuredInterval);
+        }
+      } catch {
+        // A falha opcional de configuração não impede a exibição dos serviços.
+      }
 
       const collectionByService = new Map(latestCollections);
       setServices(
@@ -182,6 +214,12 @@ export default function LiveDashboard() {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    // Atualiza o relógio local para que os rótulos relativos continuem avançando.
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const available = services.filter((service) => service.estadoAtual === 'DISPONIVEL').length;
   const unavailable = services.filter((service) => service.estadoAtual === 'INDISPONIVEL').length;
   const noMetrics = services.filter((service) => service.estadoAtual === 'SEM_METRICAS').length;
@@ -216,7 +254,7 @@ export default function LiveDashboard() {
           <span className="demo-toolbar-icon"><Icon name="info" /></span>
           <div>
             <strong>Dados conectados ao backend</strong>
-            <p>Atualização automática a cada 30 segundos.</p>
+            <p>Coleta configurada a cada {collectionIntervalSeconds} segundos · painel atualizado a cada 30 segundos.</p>
           </div>
         </div>
         <button
@@ -262,7 +300,7 @@ export default function LiveDashboard() {
           </div>
           <span className="quiet-label">
             {lastUpdated
-              ? `Atualizado às ${lastUpdated.toLocaleTimeString('pt-BR')}`
+              ? `Última atualização: ${formatRelativeTime(lastUpdated, now)} · ${lastUpdated.toLocaleString('pt-BR')}`
               : 'Aguardando dados'}
           </span>
         </div>
@@ -360,7 +398,7 @@ export default function LiveDashboard() {
             </div>
             <p className="chart-footnote">
               {latestCollectionDate
-                ? `Coleta válida mais recente: ${latestCollectionDate.toLocaleString('pt-BR')}.`
+                ? `Coleta válida mais recente: ${formatRelativeTime(latestCollectionDate, now)} (${latestCollectionDate.toLocaleString('pt-BR')}).`
                 : 'Ainda não há coletas válidas.'}
             </p>
           </>
