@@ -16,14 +16,11 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | --- | --- | --- | --- |
 | GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
 | POST | `/auth/login` | 200, objeto | Autentica com e-mail e senha e retorna `accessToken`. |
-| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais de monitoramento. |
+| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais ou os valores padrão; público. |
 | PUT | `/configuracao` | 200, objeto | Atualiza os intervalos; requer JWT Bearer. |
 | GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
-| POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo. |
-| POST | `/auth/login` | 200, objeto | Valida credenciais e retorna JWT. |
-| GET | `/configuracao` | 200, objeto | Consulta intervalos atuais ou os valores padrão; público. |
-| PUT | `/configuracao` | 200, objeto | Atualiza intervalos; exige JWT Bearer. |
-| POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO. |
+| POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo; requer JWT Bearer. |
+| POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO; requer JWT Bearer. |
 | GET | `/coletas` | 200, array | Consulta histórico. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
