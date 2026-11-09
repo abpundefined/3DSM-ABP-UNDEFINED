@@ -132,19 +132,19 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
     indicatorsFail
       ? route.fulfill({ status: 500, body: 'Erro' })
       : route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          energiaTotalKwh: 2,
-          emissaoTotalGCo2e: 100,
-          servicos: {
-            disponiveis: 1,
-            indisponiveis: 0,
-            semMetricas: 2,
-            removidos: 3,
-          },
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            energiaTotalKwh: 2,
+            emissaoTotalGCo2e: 100,
+            servicos: {
+              disponiveis: 1,
+              indisponiveis: 0,
+              semMetricas: 2,
+              removidos: 3,
+            },
+          }),
         }),
-      }),
   );
   await page.route('**/api/servicos', (route) =>
     route.fulfill({
@@ -323,4 +323,50 @@ test('serviço sem localização usa o código da região e não quebra o card',
   await expect(card).toContainText('Sem métricas');
   await expect(card).toContainText('Japão (Tóquio)');
   await expect(card).toContainText('Cidade não informada');
+});
+
+test('painel informa o intervalo de coleta configurado no backend', async ({
+  page,
+}) => {
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({ status: 500 }),
+  );
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ intervaloColetaSegundos: 60 }),
+    }),
+  );
+  await page.goto('/');
+
+  await expect(
+    page.getByText(
+      'Coleta configurada a cada 60 segundos · painel atualizado a cada 30 segundos.',
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(/Última atualização: agora/)).toBeVisible();
+});
+
+test('sem a configuração, o painel não inventa o intervalo de coleta', async ({
+  page,
+}) => {
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({ status: 500 }),
+  );
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({ status: 500 }),
+  );
+  await page.goto('/');
+
+  await expect(
+    page.getByText('Painel atualizado a cada 30 segundos.'),
+  ).toBeVisible();
+  await expect(page.getByText(/Coleta configurada/)).toHaveCount(0);
 });

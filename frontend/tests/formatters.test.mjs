@@ -33,7 +33,6 @@ test('normalizes numeric API values without treating empty values as zero', () =
   assert.equal(toFiniteNumber(null), null);
 });
 
-
 test('formats service location with country, region and city', () => {
   assert.deepEqual(
     formatServiceLocation(

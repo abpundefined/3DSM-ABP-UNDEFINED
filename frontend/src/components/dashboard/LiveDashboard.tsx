@@ -5,10 +5,10 @@ import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 import ServiceCard from './ServiceCard';
 import type {
-    BackendCollection,
-    BackendService,
-    LiveService,
-  } from './liveTypes';
+  BackendCollection,
+  BackendService,
+  LiveService,
+} from './liveTypes';
 
 type LatestCollectionResponse = {
   dados: BackendCollection;
@@ -131,7 +131,9 @@ export default function LiveDashboard() {
   const [indicatorError, setIndicatorError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [collectionIntervalSeconds, setCollectionIntervalSeconds] = useState(30);
+  const [collectionIntervalSeconds, setCollectionIntervalSeconds] = useState<
+    number | null
+  >(null);
   const activeRequest = useRef<object | null>(null);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
@@ -172,25 +174,6 @@ export default function LiveDashboard() {
           }),
         );
 
-        // Lê o intervalo configurado; se essa consulta falhar, conserva o padrão de 30 segundos.
-        try {
-          const configuration = await apiRequest<BackendConfiguration>(
-            '/configuracao',
-            { signal },
-          );
-          const configuredInterval = configuration?.intervaloColetaSegundos;
-
-          if (
-            typeof configuredInterval === 'number' &&
-            Number.isSafeInteger(configuredInterval) &&
-            configuredInterval > 0
-          ) {
-            setCollectionIntervalSeconds(configuredInterval);
-          }
-        } catch {
-          // Uma falha opcional de configuração não impede a exibição dos serviços.
-        }
-
         if (signal?.aborted) {
           return;
         }
@@ -218,6 +201,27 @@ export default function LiveDashboard() {
       }
     };
 
+    const loadConfiguration = async () => {
+      try {
+        const configuration = await apiRequest<BackendConfiguration>(
+          '/configuracao',
+          { signal },
+        );
+        const configuredInterval = configuration?.intervaloColetaSegundos;
+
+        if (
+          !signal?.aborted &&
+          typeof configuredInterval === 'number' &&
+          Number.isSafeInteger(configuredInterval) &&
+          configuredInterval > 0
+        ) {
+          setCollectionIntervalSeconds(configuredInterval);
+        }
+      } catch {
+        // Sem a configuração, o painel deixa de informar o intervalo de coleta.
+      }
+    };
+
     const loadIndicators = async () => {
       try {
         const response = await apiRequest<unknown>('/indicadores', { signal });
@@ -236,7 +240,11 @@ export default function LiveDashboard() {
     };
 
     try {
-      await Promise.all([loadServices(), loadIndicators()]);
+      await Promise.all([
+        loadServices(),
+        loadIndicators(),
+        loadConfiguration(),
+      ]);
     } finally {
       if (activeRequest.current === requestId) {
         activeRequest.current = null;
@@ -287,8 +295,9 @@ export default function LiveDashboard() {
           <div>
             <strong>Dados conectados ao backend</strong>
             <p>
-              Coleta configurada a cada {collectionIntervalSeconds} segundos ·
-              painel atualizado a cada 30 segundos.
+              {collectionIntervalSeconds === null
+                ? 'Painel atualizado a cada 30 segundos.'
+                : `Coleta configurada a cada ${collectionIntervalSeconds} segundos · painel atualizado a cada 30 segundos.`}
             </p>
           </div>
         </div>
@@ -398,19 +407,16 @@ export default function LiveDashboard() {
                 bem-sucedida.
               </p>
             )}
-            <p className="table-scroll-hint">
-              Em telas pequenas, deslize a tabela para ver todos os indicadores.
-            </p>
-                          <ul
-                className="service-card-grid"
-                aria-label="Cards dos serviços monitorados"
-              >
-                {services.map((service) => (
-                  <li key={service.id}>
-                    <ServiceCard service={service} />
-                  </li>
-                ))}
-              </ul>
+            <ul
+              className="service-card-grid"
+              aria-label="Cards dos serviços monitorados"
+            >
+              {services.map((service) => (
+                <li key={service.id}>
+                  <ServiceCard service={service} />
+                </li>
+              ))}
+            </ul>
             <p className="chart-footnote">
               {latestCollectionDate
                 ? `Coleta válida mais recente: ${formatRelativeTime(latestCollectionDate, now)} (${latestCollectionDate.toLocaleString('pt-BR')}).`
