@@ -50,3 +50,42 @@ export function formatRegionName(regionCode: string | null | undefined) {
     )
     .join(' ');
 }
+
+export type ServiceLocation = {
+  pais?: string | null;
+  regiao?: string | null;
+  cidade?: string | null;
+};
+
+const unknownLocationNames = new Set(['desconhecida', 'desconhecido']);
+
+function knownLocationPart(value: string | null | undefined) {
+  const trimmedValue = value?.trim();
+  if (
+    !trimmedValue ||
+    unknownLocationNames.has(trimmedValue.toLocaleLowerCase('pt-BR'))
+  ) {
+    return null;
+  }
+
+  return trimmedValue;
+}
+
+export function formatServiceLocation(
+  location: ServiceLocation | null | undefined,
+  regionCode: string | null | undefined,
+) {
+  if (!location) {
+    return { area: formatRegionName(regionCode), city: null };
+  }
+
+  const area = [location.pais, location.regiao]
+    .map(knownLocationPart)
+    .filter((part): part is string => part !== null)
+    .join(' · ');
+
+  return {
+    area: area || formatRegionName(regionCode),
+    city: knownLocationPart(location.cidade),
+  };
+}

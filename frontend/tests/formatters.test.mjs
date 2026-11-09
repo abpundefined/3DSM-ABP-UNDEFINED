@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   formatRegionName,
+  formatServiceLocation,
   toFiniteNumber,
 } from '../src/utils/formatters.ts';
 
@@ -30,4 +31,50 @@ test('normalizes numeric API values without treating empty values as zero', () =
   assert.equal(toFiniteNumber(''), null);
   assert.equal(toFiniteNumber('not-a-number'), null);
   assert.equal(toFiniteNumber(null), null);
+});
+
+
+test('formats service location with country, region and city', () => {
+  assert.deepEqual(
+    formatServiceLocation(
+      { pais: 'Brasil', regiao: 'Sudeste', cidade: 'São Paulo' },
+      'br-sudeste',
+    ),
+    { area: 'Brasil · Sudeste', city: 'São Paulo' },
+  );
+});
+
+test('keeps location readable when city or names are missing', () => {
+  assert.deepEqual(
+    formatServiceLocation(
+      { pais: 'Brasil', regiao: 'Sudeste', cidade: null },
+      'br-sudeste',
+    ),
+    { area: 'Brasil · Sudeste', city: null },
+  );
+  assert.deepEqual(
+    formatServiceLocation(
+      { pais: 'Irlanda', regiao: 'Desconhecida', cidade: '  ' },
+      'eu-west',
+    ),
+    { area: 'Irlanda', city: null },
+  );
+  assert.deepEqual(
+    formatServiceLocation(
+      { pais: 'Desconhecida', regiao: 'Desconhecida', cidade: null },
+      'eu-west',
+    ),
+    { area: 'Irlanda (Leinster)', city: null },
+  );
+});
+
+test('falls back to the region code when the location is absent', () => {
+  assert.deepEqual(formatServiceLocation(undefined, 'br-sudeste'), {
+    area: 'Brasil (Sudeste)',
+    city: null,
+  });
+  assert.deepEqual(formatServiceLocation(null, undefined), {
+    area: 'Localização não informada',
+    city: null,
+  });
 });
