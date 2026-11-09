@@ -13,13 +13,29 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
           idExterno: 'billing-api',
           nome: 'Billing API',
           regiaoCodigo: 'br-sudeste',
+          localizacao: {
+            codigo: 'br-sudeste',
+            pais: 'Brasil',
+            regiao: 'Sudeste',
+            cidade: 'São Paulo',
+            latitude: -23.55,
+            longitude: -46.63,
+          },
           estadoAtual: 'DISPONIVEL',
         },
         {
           id: 13,
           idExterno: 'payment-api',
           nome: 'Payment API',
-          regiaoCodigo: 'br-sudeste',
+          regiaoCodigo: 'eu-west',
+          localizacao: {
+            codigo: 'eu-west',
+            pais: 'Irlanda',
+            regiao: 'Leinster',
+            cidade: null,
+            latitude: null,
+            longitude: null,
+          },
           estadoAtual: 'INDISPONIVEL',
         },
       ]),
@@ -78,16 +94,27 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
 
   await page.goto('/');
 
-  const table = page.getByRole('table', {
-    name: 'Serviços e sua coleta válida mais recente.',
+  const cards = page.getByRole('list', {
+    name: 'Cards dos serviços monitorados',
   });
-  await expect(table).toContainText('Billing API');
-  await expect(table).toContainText('Ativo');
-  await expect(table).toContainText('Payment API');
-  await expect(table).toContainText('Indisponível');
-  await expect(table).toContainText('47,5 %');
-  await expect(table).toContainText('2,75 GB');
-  await expect(table).toContainText('Brasil (Sudeste)');
+  await expect(cards.getByRole('listitem')).toHaveCount(2);
+
+  const billing = cards.getByRole('article', { name: 'Billing API' });
+  await expect(billing).toContainText('Ativo');
+  await expect(billing).toContainText('Brasil · Sudeste');
+  await expect(billing).toContainText('São Paulo');
+  await expect(billing).toContainText('47,5 %');
+  await expect(billing).toContainText('2,75 GB');
+  await expect(billing).toContainText('15,00 GB');
+  await expect(billing).toContainText('0,50 GB');
+  await expect(billing).toContainText('1,2346 kWh');
+  await expect(billing).toContainText('1,2346 kgCO₂e');
+
+  const payment = cards.getByRole('article', { name: 'Payment API' });
+  await expect(payment).toContainText('Indisponível');
+  await expect(payment).toContainText('Irlanda · Leinster');
+  await expect(payment).toContainText('Cidade não informada');
+  await expect(payment.getByText('—', { exact: true })).toHaveCount(6);
   const indicators = page.getByLabel('Indicadores gerais');
   await expect(indicators).toContainText('3,7500');
   await expect(indicators).toContainText('2,3450');
@@ -95,11 +122,9 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(indicators.getByText('Serviços indisponíveis')).toBeVisible();
   await expect(indicators.getByText('1', { exact: true })).toHaveCount(2);
   await expect(indicators).toContainText('1 sem métricas · 0 removidos');
-  await expect(table).toContainText('1,2346 kWh');
-  await expect(table).toContainText('1,2346 kgCO₂e');
 });
 
-test('falha nos indicadores não impede tabela e recuperação na atualização', async ({
+test('falha nos indicadores não impede os cards e recuperação na atualização', async ({
   page,
 }) => {
   let indicatorsFail = true;
@@ -107,19 +132,19 @@ test('falha nos indicadores não impede tabela e recuperação na atualização'
     indicatorsFail
       ? route.fulfill({ status: 500, body: 'Erro' })
       : route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            energiaTotalKwh: 2,
-            emissaoTotalGCo2e: 100,
-            servicos: {
-              disponiveis: 1,
-              indisponiveis: 0,
-              semMetricas: 2,
-              removidos: 3,
-            },
-          }),
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          energiaTotalKwh: 2,
+          emissaoTotalGCo2e: 100,
+          servicos: {
+            disponiveis: 1,
+            indisponiveis: 0,
+            semMetricas: 2,
+            removidos: 3,
+          },
         }),
+      }),
   );
   await page.route('**/api/servicos', (route) =>
     route.fulfill({
@@ -147,10 +172,8 @@ test('falha nos indicadores não impede tabela e recuperação na atualização'
   );
   await expect(indicators.getByText('—', { exact: true })).toHaveCount(4);
   await expect(
-    page.getByRole('table', {
-      name: 'Serviços e sua coleta válida mais recente.',
-    }),
-  ).toContainText('Billing API');
+    page.getByRole('article', { name: 'Billing API' }),
+  ).toContainText('Brasil (Sudeste)');
 
   indicatorsFail = false;
   await page.getByRole('button', { name: 'Atualizar agora' }).click();
@@ -199,7 +222,7 @@ test('indicadores continuam disponíveis quando a consulta de serviços falha', 
   ).toBeVisible();
 });
 
-test('a tabela não espera a resposta lenta dos indicadores', async ({
+test('os cards não esperam a resposta lenta dos indicadores', async ({
   page,
 }) => {
   let releaseIndicators!: () => void;
@@ -267,4 +290,37 @@ test('resposta inválida dos indicadores é sinalizada sem ocultar os serviços'
   await expect(
     page.getByLabel('Indicadores gerais').getByText('—', { exact: true }),
   ).toHaveCount(4);
+});
+
+test('serviço sem localização usa o código da região e não quebra o card', async ({
+  page,
+}) => {
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: 20,
+          idExterno: 'legacy-api',
+          nome: 'Legacy API',
+          regiaoCodigo: 'jp-east',
+          localizacao: null,
+          estadoAtual: 'SEM_METRICAS',
+        },
+      ]),
+    }),
+  );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({ status: 500 }),
+  );
+  await page.route('**/api/coletas/servico/20/ultima-valida', (route) =>
+    route.fulfill({ status: 404 }),
+  );
+  await page.goto('/');
+
+  const card = page.getByRole('article', { name: 'Legacy API' });
+  await expect(card).toContainText('Sem métricas');
+  await expect(card).toContainText('Japão (Tóquio)');
+  await expect(card).toContainText('Cidade não informada');
 });

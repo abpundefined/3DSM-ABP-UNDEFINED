@@ -1,33 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api';
-import { formatRegionName, toFiniteNumber } from '../../utils/formatters';
+import { toFiniteNumber } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
-
-type BackendService = {
-  id: number;
-  idExterno: string;
-  nome: string;
-  regiaoCodigo: string;
-  estadoAtual:
-    | 'DISPONIVEL'
-    | 'INDISPONIVEL'
-    | 'SEM_METRICAS'
-    | 'REMOVIDO'
-    | 'DESCONHECIDO';
-  energiaKwh?: number | string | null;
-  emissaoGCo2e?: number | string | null;
-};
-
-type BackendCollection = {
-  iniciadaEm: string;
-  cpuPercent: number | null;
-  memoryGb: number | null;
-  diskGb: number | null;
-  networkGb: number | null;
-  energiaKwh: number | string | null;
-  emissaoGCo2e: number | string | null;
-};
+import ServiceCard from './ServiceCard';
+import type {
+    BackendCollection,
+    BackendService,
+    LiveService,
+  } from './liveTypes';
 
 type LatestCollectionResponse = {
   dados: BackendCollection;
@@ -44,27 +25,7 @@ type BackendIndicators = {
   };
 };
 
-type LiveService = BackendService & {
-  latestCollection: BackendCollection | null;
-};
-
 const REFRESH_INTERVAL_MS = 30_000;
-
-function formatMetric(
-  value: number | string | null | undefined,
-  suffix: string,
-  digits = 2,
-) {
-  const numericValue = toFiniteNumber(value);
-  if (numericValue == null) {
-    return '—';
-  }
-
-  return `${new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(numericValue)} ${suffix}`;
-}
 
 function formatTotal(value: number | undefined) {
   if (value === undefined) {
@@ -128,37 +89,6 @@ function normalizeCollection(
     energiaKwh: toFiniteNumber(collection.energiaKwh),
     emissaoGCo2e: toFiniteNumber(collection.emissaoGCo2e),
   };
-}
-
-function statusFor(service: BackendService) {
-  switch (service.estadoAtual) {
-    case 'DISPONIVEL':
-      return { className: 'active', label: 'Ativo', icon: 'check' as const };
-    case 'SEM_METRICAS':
-      return {
-        className: 'noMetrics',
-        label: 'Sem métricas',
-        icon: 'info' as const,
-      };
-    case 'REMOVIDO':
-      return {
-        className: 'unavailable',
-        label: 'Removido',
-        icon: 'alert' as const,
-      };
-    case 'INDISPONIVEL':
-      return {
-        className: 'unavailable',
-        label: 'Indisponível',
-        icon: 'alert' as const,
-      };
-    default:
-      return {
-        className: 'unavailable',
-        label: 'Desconhecido',
-        icon: 'info' as const,
-      };
-  }
 }
 
 function getErrorMessage(error: unknown) {
@@ -421,74 +351,16 @@ export default function LiveDashboard() {
             <p className="table-scroll-hint">
               Em telas pequenas, deslize a tabela para ver todos os indicadores.
             </p>
-            <div
-              className="service-table-scroll"
-              role="region"
-              aria-label="Tabela de serviços reais e métricas"
-              tabIndex={0}
-            >
-              <table className="service-table live-service-table">
-                <caption className="sr-only">
-                  Serviços e sua coleta válida mais recente.
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Serviço</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">CPU</th>
-                    <th scope="col">Memória</th>
-                    <th scope="col">Disco</th>
-                    <th scope="col">Rede</th>
-                    <th scope="col">Energia</th>
-                    <th scope="col">Emissões</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.map((service) => {
-                    const status = statusFor(service);
-                    const metrics = service.latestCollection;
-                    const energyKwh =
-                      toFiniteNumber(metrics?.energiaKwh) ??
-                      toFiniteNumber(service.energiaKwh);
-                    const emissionsGCo2e =
-                      toFiniteNumber(metrics?.emissaoGCo2e) ??
-                      toFiniteNumber(service.emissaoGCo2e);
-                    return (
-                      <tr key={service.id}>
-                        <th scope="row">
-                          <span className="service-name">{service.nome}</span>
-                          <span className="service-region">
-                            {formatRegionName(service.regiaoCodigo)}
-                          </span>
-                        </th>
-                        <td>
-                          <span
-                            className={`service-badge service-badge--${status.className}`}
-                          >
-                            <Icon name={status.icon} />
-                            {status.label}
-                          </span>
-                        </td>
-                        <td>{formatMetric(metrics?.cpuPercent, '%', 1)}</td>
-                        <td>{formatMetric(metrics?.memoryGb, 'GB')}</td>
-                        <td>{formatMetric(metrics?.diskGb, 'GB')}</td>
-                        <td>{formatMetric(metrics?.networkGb, 'GB')}</td>
-                        <td>{formatMetric(energyKwh, 'kWh', 4)}</td>
-                        <td>
-                          {formatMetric(
-                            emissionsGCo2e === null
-                              ? null
-                              : emissionsGCo2e / 1000,
-                            'kgCO₂e',
-                            4,
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <ul
+                className="service-card-grid"
+                aria-label="Cards dos serviços monitorados"
+              >
+                {services.map((service) => (
+                  <li key={service.id}>
+                    <ServiceCard service={service} />
+                  </li>
+                ))}
+              </ul>
             <p className="chart-footnote">
               {latestCollectionDate
                 ? `Coleta válida mais recente: ${latestCollectionDate.toLocaleString('pt-BR')}.`
