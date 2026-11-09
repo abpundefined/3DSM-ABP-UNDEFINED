@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { CarbonApiService } from "./carbon-api.service";
 
 describe("CarbonApiService", () => {
@@ -13,6 +14,7 @@ describe("CarbonApiService", () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
     if (originalApiUrl === undefined) {
       delete process.env.CARBON_API_URL;
@@ -28,19 +30,23 @@ describe("CarbonApiService", () => {
       85,
     );
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
       "https://carbon.unilaunch.org/regions/br-sudeste/carbon-intensity",
     );
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
-    it("codifica o código da região na URL", async () => {
+  it("codifica o código da região na URL", async () => {
     const service = new CarbonApiService();
 
     await service.obterIntensidadeCarbono("região/sul");
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
       "https://carbon.unilaunch.org/regions/regi%C3%A3o%2Fsul/carbon-intensity",
     );
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it("falha sem consultar a API quando CARBON_API_URL não está configurada", async () => {
@@ -94,5 +100,29 @@ describe("CarbonApiService", () => {
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
       "Falha ao buscar intensidade de carbono para br-sudeste: Erro desconhecido",
     );
+  });
+
+  it("aborta a consulta quando a API não responde no tempo limite", async () => {
+    jest.useFakeTimers();
+    jest.spyOn(Logger.prototype, "error").mockImplementation(() => undefined);
+    fetchMock.mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        }),
+    );
+    const service = new CarbonApiService();
+
+    const resultado = service.obterIntensidadeCarbono("br-sudeste");
+    const verificacao = expect(resultado).rejects.toThrow(
+      "Falha ao buscar intensidade de carbono para br-sudeste: Tempo limite de 8000ms excedido ao consultar a API de intensidade de carbono.",
+    );
+
+    await jest.advanceTimersByTimeAsync(8000);
+    await verificacao;
   });
 });

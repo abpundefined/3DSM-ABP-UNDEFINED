@@ -3,7 +3,10 @@ import { ConfigService } from "@nestjs/config";
 import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import { PrismaService } from "../../database/prisma.service";
+import { comTimeout } from "../../common/utils/com-timeout";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
+
+const DISCOVERY_FETCH_TIMEOUT_MS = 8000;
 
 export interface LocalizacaoServico {
   codigo: string;
@@ -34,19 +37,26 @@ export class ServicosService {
     }
 
     const url = `${baseUrl.replace(/\/+$/, "")}/services`;
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
+    const payload = await comTimeout(
+      DISCOVERY_FETCH_TIMEOUT_MS,
+      "a lista de serviços externos",
+      async (signal): Promise<unknown> => {
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+          },
+          signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Falha ao consultar serviços externos: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        return response.json();
       },
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Falha ao consultar serviços externos: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const payload: unknown = await response.json();
+    );
     const container =
       payload && typeof payload === "object"
         ? (payload as Record<string, unknown>)
