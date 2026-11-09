@@ -1,7 +1,13 @@
-import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ServicosService } from "../servicos/servicos.service";
 import { ColetasService } from "../coletas/coletas.service";
+import { ConfiguracaoService } from "../configuracao/configuracao.service";
 import { normalizeMetricPayload } from "../../common/utils/external-api.util";
 import {
   classificarFalhaDeConexao,
@@ -29,40 +35,78 @@ const getCollectionIntervalSeconds = (payload: unknown): number | undefined => {
 };
 
 @Injectable()
-export class MonitoramentoService implements OnModuleInit {
+export class MonitoramentoService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MonitoramentoService.name);
   private pollingInterval?: NodeJS.Timeout;
   private isCollecting = false;
+  private destroyed = false;
+  private ultimaDescobertaEm?: number;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly servicosService: ServicosService,
     private readonly coletasService: ColetasService,
+    private readonly configuracaoService: ConfiguracaoService,
   ) {}
 
   async onModuleInit() {
     await this.servicosService.verificarSchema();
 
-    const configuredInterval = this.configService.get<string>(
-      "METRICS_POLL_INTERVAL_MS",
-    );
-    const intervalMs = Number(configuredInterval ?? 30000);
-    this.startPolling(intervalMs);
+    void this.runScheduledCycle();
   }
 
-  private startPolling(intervalMs: number) {
-    if (Number.isNaN(intervalMs) || intervalMs <= 0) {
-      this.logger.warn("METRICS_POLL_INTERVAL_MS inválido. Usando 30.000ms.");
-      intervalMs = 30000;
+  onModuleDestroy() {
+    this.destroyed = true;
+    if (this.pollingInterval) {
+      clearTimeout(this.pollingInterval);
+      this.pollingInterval = undefined;
     }
+  }
 
-    void this.pollOnce();
-    this.pollingInterval = setInterval(() => {
-      void this.pollOnce();
-    }, intervalMs);
+  private async obterIntervalos() {
+    try {
+      const configuracao = await this.configuracaoService.obter();
+      if (
+        !Number.isFinite(configuracao.intervaloColetaSegundos) ||
+        configuracao.intervaloColetaSegundos <= 0 ||
+        !Number.isFinite(configuracao.intervaloDescobertaSegundos) ||
+        configuracao.intervaloDescobertaSegundos <= 0
+      ) {
+        throw new Error("Intervalos de monitoramento inválidos.");
+      }
+      return {
+        coletaMs: configuracao.intervaloColetaSegundos * 1000,
+        descobertaMs: configuracao.intervaloDescobertaSegundos * 1000,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Não foi possível ler a configuração de monitoramento; usando o intervalo padrão. ${error instanceof Error ? error.message : String(error)}`,
+      );
+      const configured = Number(
+        this.configService.get<string>("METRICS_POLL_INTERVAL_MS") ?? 30000,
+      );
+      const intervalMs =
+        Number.isFinite(configured) && configured > 0 ? configured : 30000;
+      return { coletaMs: intervalMs, descobertaMs: intervalMs };
+    }
+  }
+
+  private async runScheduledCycle() {
+    if (this.destroyed) return;
+    await this.pollOnce();
+    if (this.destroyed) return;
+    const intervalos = await this.obterIntervalos();
+    if (this.destroyed) return;
+    this.logger.debug(
+      `Próximo ciclo de monitoramento em ${intervalos.coletaMs}ms.`,
+    );
+    this.pollingInterval = setTimeout(() => {
+      void this.runScheduledCycle();
+    }, intervalos.coletaMs);
   }
 
   async pollOnce() {
+    if (this.destroyed) return;
     if (this.isCollecting) {
       this.logger.debug(
         "Ciclo de monitoramento ignorado: já existe um ciclo em execução.",
@@ -72,7 +116,17 @@ export class MonitoramentoService implements OnModuleInit {
 
     this.isCollecting = true;
     try {
-      await this.servicosService.syncServices();
+      const intervalos = await this.obterIntervalos();
+      if (this.destroyed) return;
+      if (
+        this.ultimaDescobertaEm === undefined ||
+        Date.now() - this.ultimaDescobertaEm >= intervalos.descobertaMs
+      ) {
+        await this.servicosService.syncServices();
+        this.ultimaDescobertaEm = Date.now();
+      }
+      if (this.destroyed) return;
+      this.logger.debug("Iniciando coleta de métricas dos serviços.");
       await this.collectMetricsForAllServices();
     } catch (error) {
       this.logger.error(
