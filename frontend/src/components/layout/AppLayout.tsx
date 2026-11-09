@@ -52,7 +52,7 @@ export default function AppLayout() {
               <Icon name="grid" />
               Dashboard
             </NavLink>
-          {isAuthenticated ? (
+            {isAuthenticated ? (
               <button type="button" className="nav-login" onClick={logout}>
                 <Icon name="lock" />
                 <span>Sair</span>

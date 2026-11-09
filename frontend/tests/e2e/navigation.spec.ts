@@ -130,7 +130,7 @@ test('login salva token e retorna ao dashboard após sucesso', async ({
   await expect(
     page.getByRole('heading', { name: 'Dashboard', exact: true }),
   ).toBeVisible();
- await expect
+  await expect
     .poll(() => page.evaluate(() => localStorage.getItem('@greener-abp:token')))
     .toBe('token-de-teste');
 

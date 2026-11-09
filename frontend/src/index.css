@@ -1420,7 +1420,7 @@ h1 {
   .nav-login {
     padding: 9px 11px;
   }
-    button.nav-login {
+  button.nav-login {
     font-size: 12px;
     gap: 5px;
   }
