@@ -1,4 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { comTimeout } from "../../common/utils/com-timeout";
+
+const CARBON_FETCH_TIMEOUT_MS = 8000;
 
 interface CarbonApiResponse {
   carbon_intensity_gco2e_per_kwh: number;
@@ -17,15 +20,22 @@ export class CarbonApiService {
 
       const baseUrl = this.apiUrl.replace(/\/+$/, "");
       const encodedRegionCode = encodeURIComponent(regionCode);
-      const response = await fetch(
-        `${baseUrl}/regions/${encodedRegionCode}/carbon-intensity`,
+      const data = await comTimeout(
+        CARBON_FETCH_TIMEOUT_MS,
+        "a API de intensidade de carbono",
+        async (signal) => {
+          const response = await fetch(
+            `${baseUrl}/regions/${encodedRegionCode}/carbon-intensity`,
+            { signal },
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP Status ${response.status}`);
+          }
+
+          return (await response.json()) as CarbonApiResponse;
+        },
       );
-
-      if (!response.ok) {
-        throw new Error(`HTTP Status ${response.status}`);
-      }
-
-      const data = (await response.json()) as CarbonApiResponse;
       const intensity = data.carbon_intensity_gco2e_per_kwh;
       if (!Number.isFinite(intensity) || intensity < 0) {
         throw new Error("Resposta inválida da API de intensidade de carbono.");
