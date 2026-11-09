@@ -1,8 +1,22 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import { PrismaService } from "../../database/prisma.service";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
+
+export interface LocalizacaoServico {
+  codigo: string;
+  pais: string;
+  regiao: string;
+  cidade: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export type ServicoComLocalizacao = Servico & {
+  localizacao: LocalizacaoServico;
+};
 
 @Injectable()
 export class ServicosService {
@@ -190,10 +204,23 @@ export class ServicosService {
     });
   }
 
-  async listarServicos() {
-    return this.prisma.servico.findMany({
+  async listarServicos(): Promise<ServicoComLocalizacao[]> {
+    const servicos = await this.prisma.servico.findMany({
       orderBy: { atualizadoEm: "desc" },
+      include: { regiao: true },
     });
+
+    return servicos.map(({ regiao, ...servico }) => ({
+      ...servico,
+      localizacao: {
+        codigo: regiao.codigo,
+        pais: regiao.pais,
+        regiao: regiao.regiao,
+        cidade: regiao.cidade,
+        latitude: regiao.latitude,
+        longitude: regiao.longitude,
+      },
+    }));
   }
 
   async findById(id: number) {
