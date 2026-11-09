@@ -81,7 +81,13 @@ describe('CalculosService', () => {
     },
   );
 
-  it('returns the emission factor and calculated emissions', async () => {
+  it("rejeita energia que excede o limite numérico após a conversão", () => {
+    expect(() =>
+      service.calcularEnergia(0, Number.MAX_VALUE, 0, 0, Number.MAX_VALUE),
+    ).toThrow("A energia calculada não é um valor finito.");
+  });
+
+  it("returns the emission factor and calculated emissions", async () => {
     carbonApi.obterIntensidadeCarbono.mockResolvedValue(85);
 
     await expect(service.calcularEmissao(0.002, 'br-sudeste')).resolves.toEqual(
@@ -128,4 +134,12 @@ describe('CalculosService', () => {
       expect(carbonApi.obterIntensidadeCarbono).not.toHaveBeenCalled();
     },
   );
+
+  it("rejeita emissão que excede o limite numérico", async () => {
+    carbonApi.obterIntensidadeCarbono.mockResolvedValue(Number.MAX_VALUE);
+
+    await expect(service.calcularEmissao(10, "br-sudeste")).rejects.toThrow(
+      "A emissão calculada não é um valor finito.",
+    );
+  });
 });

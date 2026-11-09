@@ -27,6 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^12.0.4",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.4.8",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
@@ -80,6 +81,20 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "coverageThreshold": {
+      "./src/modules/calculos/**/*.service.ts": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      },
+      "./src/common/regras/**/*.ts": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
   }
 }

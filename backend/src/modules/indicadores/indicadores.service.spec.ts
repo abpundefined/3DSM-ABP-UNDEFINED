@@ -63,7 +63,21 @@ describe('IndicadoresService', () => {
     });
   });
 
-  it('usa as últimas 24 horas quando o período não é informado', async () => {
+  it("conta serviços disponíveis como ativos independente do resultado das métricas", async () => {
+    repository.contarServicosPorEstado.mockResolvedValue([
+      { estado: "DISPONIVEL", quantidade: 2 },
+      { estado: "SEM_METRICAS", quantidade: 1 },
+      { estado: "INDISPONIVEL", quantidade: 3 },
+    ]);
+
+    const indicadores = await service.obter({});
+
+    expect(indicadores.servicos.disponiveis).toBe(2);
+    expect(indicadores.servicos.indisponiveis).toBe(3);
+    expect(indicadores.servicos.semMetricas).toBe(1);
+  });
+
+  it("usa as últimas 24 horas quando o período não é informado", async () => {
     await service.obter({});
 
     expect(repository.somarImpactoNoPeriodo).toHaveBeenCalledWith(

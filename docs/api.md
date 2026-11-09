@@ -8,22 +8,23 @@ Esta página descreve as rotas implementadas e suas limitações. Os exemplos s�
 - Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
 - Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-O backend não usa prefixo global `/api`. Pelo frontend, o proxy remove `/api` antes de encaminhar as chamadas. Login/JWT e configuração protegida estão implementados; as rotas que não indicam autenticação permanecem públicas. O acesso publicado pelo Compose está ligado a `127.0.0.1`.
+O Swagger está disponível no backend em [http://localhost:3000/docs](http://localhost:3000/docs), com o documento OpenAPI em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). Acesse `POST /auth/login` para obter um JWT e informe-o em **Authorize** para testar `PUT /configuracao`. As operações de escrita alteram dados reais. O Compose publica o backend em `127.0.0.1`.
 
 ## Endpoints
 
 | Método | Caminho no backend | Sucesso | Função |
 | --- | --- | --- | --- |
 | GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
+| POST | `/auth/login` | 200, objeto | Autentica com e-mail e senha e retorna `accessToken`. |
+| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais ou os valores padrão; público. |
+| PUT | `/configuracao` | 200, objeto | Atualiza os intervalos; requer JWT Bearer. |
 | GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
-| POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo. |
-| POST | `/auth/login` | 200, objeto | Valida credenciais e retorna JWT. |
-| GET | `/configuracao` | 200, objeto | Consulta intervalos atuais ou os valores padrão; público. |
-| PUT | `/configuracao` | 200, objeto | Atualiza intervalos; exige JWT Bearer. |
-| POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO. |
+| POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo; requer JWT Bearer. |
+| POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO; requer JWT Bearer. |
 | GET | `/coletas` | 200, array | Consulta histórico. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
+| GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
 
@@ -141,6 +142,36 @@ O retorno é ordenado por `iniciadaEm` decrescente e inclui nome/identificador e
 
 O objeto `dados` contém os demais campos do modelo `Coleta`, omitidos no exemplo por brevidade. `CACHE_FALLBACK` é sempre devolvido por esse endpoint, inclusive quando o serviço está disponível. Portanto, esse rótulo sozinho não comprova falha atual; verificar estado do serviço e timestamp da coleta. Valores podem ser antigos. Campos nulos não significam zero.
 
+## Indicadores consolidados
+
+`GET /indicadores` retorna o consumo energético e a emissão total das coletas com `estadoCalculo = CONCLUIDO` no intervalo informado. Sem datas, considera as últimas 24 horas. `dataInicio` e `dataFim` são opcionais, aceitam datas ISO 8601 e delimitam `iniciadaEm` de forma inclusiva; início posterior ao fim retorna 400.
+
+Exemplo de resposta:
+
+```json
+{
+  "periodo": {
+    "inicio": "2026-11-07T12:00:00.000Z",
+    "fim": "2026-11-08T12:00:00.000Z"
+  },
+  "energiaTotalKwh": 2.5,
+  "emissaoTotalGCo2e": 100,
+  "coletasCalculadas": 2,
+  "servicos": {
+    "monitorados": 6,
+    "disponiveis": 2,
+    "indisponiveis": 1,
+    "semMetricas": 1,
+    "desconhecidos": 2,
+    "removidos": 0
+  },
+  "ultimaColetaEm": "2026-11-08T11:59:30.000Z",
+  "geradoEm": "2026-11-08T12:00:00.000Z"
+}
+```
+
+`energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
+
 ## Erros
 
 Nas rotas de coletas, o filtro retorna:
@@ -155,10 +186,10 @@ Nas rotas de coletas, o filtro retorna:
 }
 ```
 
-`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados de coletas retornam 500 com mensagem genérica. O filtro não está registrado globalmente: outras rotas usam a resposta padrão do NestJS. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
+`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados retornam 500 com mensagem genérica. O filtro é registrado globalmente na aplicação. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
 
 ## Integrações e endpoints futuros
 
 A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
 
-Ranking, comparação e documentação interativa permanecem no plano de entregas. Sua existência no planejamento não representa implementação atual.
+Ranking e comparação permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.

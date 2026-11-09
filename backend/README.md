@@ -15,6 +15,7 @@ src/
   modules/servicos/          descoberta e sincronização
   modules/monitoramento/     agendador e coleta automática
   modules/coletas/           controller, service, repository e DTOs
+  modules/indicadores/       agregados ambientais e contagem por estado
 prisma/
   schema.prisma
   migrations/
@@ -22,7 +23,7 @@ prisma7.config.ts
 test/integration/            regressão de remoção/retorno com PostgreSQL
 ```
 
-O diretório `src/generated/prisma` é gerado pelo Prisma Client e não precisa ser editado. A integração atual não possui os módulos de cálculos, carbono ou autenticação.
+O diretório `src/generated/prisma` é gerado pelo Prisma Client e não precisa ser editado.
 
 ## Executar
 
@@ -41,26 +42,32 @@ npm.cmd run start:dev
 
 ## API atual
 
+Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](http://localhost:3000/docs). O documento OpenAPI em JSON está disponível em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). No Swagger, use `POST /auth/login` para obter um token e o botão **Authorize** para informar o JWT antes de testar as rotas protegidas. As operações de escrita alteram dados reais.
+
 - `GET /servicos`: registros persistidos de serviços, incluindo estados removidos.
 - `POST /servicos/sync`: sincroniza a descoberta externa.
 - `POST /coletas`: registra uma coleta pelo DTO.
 - `GET /coletas`: histórico com filtros opcionais.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
+- `GET /indicadores`: totais de coletas calculadas (24 horas por padrão) e serviços por estado; aceita `dataInicio` e `dataFim`.
 
-Não há prefixo global `/api`; esse prefixo é do proxy do frontend. As rotas atuais não implementam JWT. `GET /` ainda é a resposta inicial do Nest, e não um health check de banco.
+Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas` e `POST /servicos/sync` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
 
-Leia [contratos, unidades e erros](../docs/api.md). Rotas de autenticação, cálculos, ranking, comparação e Swagger ainda não estão implementadas.
+Leia [contratos, unidades e erros](../docs/api.md).
 
 ## Testes e checks
 
 ```powershell
 npm.cmd run build
-npm.cmd test -- --runInBand
+npm.cmd test
+npm.cmd run test:cov
 npx.cmd eslint "{src,apps,libs,test}/**/*.ts"
 ```
 
-Em 19/10: build aprovado após gerar o Prisma Client e 25 testes unitários aprovados. O ESLint ainda apresenta falhas; o comando acima não aplica `--fix`. O `npm run lint` definido no projeto aplica correções automaticamente.
+- `npm test`: roda todos os testes unitários, sem medir cobertura. É o comando do dia a dia.
+- `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se algum arquivo de `src/modules/calculos/*.service.ts` ou de `src/common/regras/` ficar abaixo de 80% em linhas, ramificações, funções ou instruções (`coverageThreshold` no `package.json`). **É o comando executado no CI**: rode-o antes de abrir um PR, principalmente se alterar cálculo ou classificação de estados. O relatório fica em `backend/coverage/`, ignorado pelo Git.
+- O ESLint acima não aplica `--fix` e ainda apresenta falhas de formatação; o `npm run lint` definido no projeto aplica correções automaticamente.
 
 O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado. O `test:e2e` padrão do Nest não é a mesma suíte desse Compose isolado.
 

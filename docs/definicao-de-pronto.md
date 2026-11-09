@@ -30,6 +30,7 @@ O responsável mantém a issue; o revisor registra resultados; o PO decide o ace
 ### Testes e homologação
 
 - [ ] Regras centrais alteradas têm testes executáveis, incluindo dados ausentes/falhas quando pertinentes, e passam.
+- [ ] No backend, `npm run test:cov` passa, respeitando a cobertura mínima de 80% nos services de cálculo e nas regras de estado. É o mesmo comando executado no CI.
 - [ ] Não há regressão do comportamento entregue anteriormente.
 - [ ] A funcionalidade foi verificada no Compose oficial, quando envolve a aplicação, com versão, responsável, resultado e evidência registrados.
 - [ ] Está claro o que foi testado com fixtures/doubles e o que foi verificado com PostgreSQL/serviços reais.

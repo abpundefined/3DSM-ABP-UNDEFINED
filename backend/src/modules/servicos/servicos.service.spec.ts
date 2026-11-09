@@ -277,8 +277,33 @@ describe('Descoberta e retomada do monitoramento de serviços', () => {
     },
   );
 
-  it('reativa o serviço que reaparece como DESCONHECIDO, mantendo seu id', async () => {
-    const service = seedService('REMOVIDO');
+  it("interrompe a descoberta após o tempo limite sem marcar serviços como REMOVIDO", async () => {
+    jest.useFakeTimers();
+    const service = seedService("DISPONIVEL");
+    fetchMock.mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => reject(new DOMException("Aborted", "AbortError")),
+            { once: true },
+          );
+        }),
+    );
+
+    const descoberta = servicosService.syncServices();
+    const verificacao = expect(descoberta).rejects.toThrow(
+      "Tempo limite de 8000ms excedido ao consultar a lista de serviços externos.",
+    );
+
+    await jest.advanceTimersByTimeAsync(8000);
+    await verificacao;
+    expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+    expect(service.estadoAtual).toBe("DISPONIVEL");
+  });
+
+  it("reativa o serviço que reaparece como DESCONHECIDO, mantendo seu id", async () => {
+    const service = seedService("REMOVIDO");
     fetchMock.mockResolvedValueOnce(
       Response.json([externalService('billing-api')]),
     );
