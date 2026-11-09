@@ -43,3 +43,4 @@ A baixa de pontos no burndown seguiu estritamente o critério de **aceite e fech
   - [#20](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/20) — [PBI-20] Testes unitários (8 SP)
   - *Saldo:* **5 SP**.
 - **10/11/2026 (Review):** Encerramento com 5 SP em aberto referente à issue [#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16) (Interface responsiva e acessível), transferida para conclusão na Sprint 3.
+

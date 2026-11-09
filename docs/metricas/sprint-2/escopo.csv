@@ -9,3 +9,4 @@ issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_c
 17,[PBI-17] Exibição de intervalos e timestamps,3,NadlaFernandes,Done,CLOSED,sim,2026-11-09T02:05:42Z,Nenhuma. Intervalo e horário da última coleta no dashboard.
 19,[PBI-19] Segurança,5,Israelisl,Done,CLOSED,sim,2026-11-08T23:31:55Z,Nenhuma. Bcrypt, JWT e segredos em variáveis de ambiente.
 20,[PBI-20] Testes unitários,8,Israelisl,Done,CLOSED,sim,2026-11-09T02:05:48Z,Nenhuma. Cobertura ≥ 80% nos serviços de cálculo e CI.
+
