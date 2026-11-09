@@ -47,9 +47,10 @@ foco visível e ajuste do foco ao navegar. O tema claro é o padrão; os botões
 de lua e sol no cabeçalho alternam entre tema escuro e claro, e a preferência
 fica salva no navegador.
 
-A fonte Figtree é local; as cores seguem a paleta do PO.
-Energia e emissões aguardam os cálculos correspondentes no backend; autenticação
-(#15) e demais telas continuam em suas issues.
+A fonte Figtree é local; as cores seguem a paleta do PO. Os indicadores reais
+consultam o agregado do backend: energia e CO₂e consideram coletas calculadas
+nas últimas 24 horas; ativos e indisponíveis refletem o estado atual dos serviços.
+Autenticação (#15) e demais telas continuam em suas issues.
 Leia [o guia da segunda parte](../docs/frontend-interface.md), com decisões,
 arquitetura, rubrica e capturas das telas.
 
@@ -57,8 +58,11 @@ arquitetura, rubrica e capturas das telas.
 
 O serviço `src/services/api.ts` chama caminhos relativos em `/api`.
 O Vite encaminha essas chamadas para `http://localhost:3000`, removendo o
-prefixo `/api` por padrão. O dashboard consulta `/servicos` e a coleta válida
-mais recente de cada serviço em `/coletas/servico/:id/ultima-valida`.
+prefixo `/api` por padrão. O dashboard consulta `/servicos`, `/indicadores` e a coleta válida mais recente
+de cada serviço em `/coletas/servico/:id/ultima-valida`.
+Os indicadores e a lista são carregados independentemente: se os indicadores
+falharem, os cartões exibem `—` com aviso e a lista continua disponível. O
+resumo também informa quantos serviços estão sem métricas ou foram removidos.
 O mesmo proxy está configurado para desenvolvimento e preview.
 
 Os padrões funcionam sem criar `.env`. Para personalizar:

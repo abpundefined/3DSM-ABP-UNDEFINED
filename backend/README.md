@@ -15,6 +15,7 @@ src/
   modules/servicos/          descoberta e sincronização
   modules/monitoramento/     agendador e coleta automática
   modules/coletas/           controller, service, repository e DTOs
+  modules/indicadores/       agregados ambientais e contagem por estado
 prisma/
   schema.prisma
   migrations/
@@ -22,7 +23,7 @@ prisma7.config.ts
 test/integration/            regressão de remoção/retorno com PostgreSQL
 ```
 
-O diretório `src/generated/prisma` é gerado pelo Prisma Client e não precisa ser editado. A integração atual não possui os módulos de cálculos, carbono ou autenticação.
+O diretório `src/generated/prisma` é gerado pelo Prisma Client e não precisa ser editado.
 
 ## Executar
 
@@ -41,16 +42,19 @@ npm.cmd run start:dev
 
 ## API atual
 
+Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](http://localhost:3000/docs). O documento OpenAPI em JSON está disponível em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). No Swagger, use `POST /auth/login` para obter um token e o botão **Authorize** para informar o JWT antes de testar as rotas protegidas. As operações de escrita alteram dados reais.
+
 - `GET /servicos`: registros persistidos de serviços, incluindo estados removidos.
 - `POST /servicos/sync`: sincroniza a descoberta externa.
 - `POST /coletas`: registra uma coleta pelo DTO.
 - `GET /coletas`: histórico com filtros opcionais.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
+- `GET /indicadores`: totais de coletas calculadas (24 horas por padrão) e serviços por estado; aceita `dataInicio` e `dataFim`.
 
-Não há prefixo global `/api`; esse prefixo é do proxy do frontend. As rotas atuais não implementam JWT. `GET /` ainda é a resposta inicial do Nest, e não um health check de banco.
+Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas` e `POST /servicos/sync` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
 
-Leia [contratos, unidades e erros](../docs/api.md). Rotas de autenticação, cálculos, ranking, comparação e Swagger ainda não estão implementadas.
+Leia [contratos, unidades e erros](../docs/api.md).
 
 ## Testes e checks
 
