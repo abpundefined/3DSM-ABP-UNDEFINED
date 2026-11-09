@@ -1,0 +1,13 @@
+{
+  "sprint": 2,
+  "baseline_sp": 63,
+  "itens_planejados": 10,
+  "sp_entregues": 58,
+  "itens_entregues": 9,
+  "inicio_real": "2026-10-21",
+  "fim_previsto": "2026-11-10",
+  "data_review": "2026-11-10T19:30:00-03:00",
+  "fuso": "America/Sao_Paulo",
+  "taxa_entrega_percentual": 92.06,
+  "status": "Encerrando desenvolvimento para Sprint Review"
+}

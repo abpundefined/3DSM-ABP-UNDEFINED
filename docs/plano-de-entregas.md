@@ -45,7 +45,7 @@ GA01–GA09 e DW01 são obrigatórios em todas as sprints. Os demais seguem a di
 | Sprint | Período documentado | Entrega prevista | Backlog e evidências |
 | --- | --- | --- | --- |
 | 1 | Início real a confirmar; fim 20/10/2026 | Infraestrutura, descoberta/coleta bruta, histórico, interface/protótipos base. | [13 itens, 60 SP](sprints/sprint-1.md); [revisão técnica](sprints/revisao-sprint-1.md). |
-| 2 | 21/10–10/11/2026, previsão | Carbono/cálculos, indicadores reais, evolução do dashboard, JWT e segurança. | [Plano da Sprint 2](sprints/sprint-2.md), a refinar antes do ciclo. |
+| 2 | 21/10–10/11/2026 | Carbono/cálculos, indicadores reais, evolução do dashboard, JWT e segurança. | [10 itens, 63 SP](sprints/sprint-2.md); 9 concluídos (58 SP), 1 em andamento. |
 | 3 | 11/11–23/11/2026, previsão | Ranking, comparação, mapa, avaliação com usuários, melhorias e consolidação. | [Plano da Sprint 3](sprints/sprint-3.md), a refinar antes do ciclo. |
 
 As datas futuras são as previsões já documentadas, não confirmação de cerimônias realizadas. O início real, a capacidade, os resultados de review e a aprovação docente devem ser registrados com fonte real. Não há mudança retroativa de escopo/estimativas nesta reconciliação.
