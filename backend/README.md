@@ -60,11 +60,14 @@ Leia [contratos, unidades e erros](../docs/api.md).
 
 ```powershell
 npm.cmd run build
-npm.cmd test -- --runInBand
+npm.cmd test
+npm.cmd run test:cov
 npx.cmd eslint "{src,apps,libs,test}/**/*.ts"
 ```
 
-Em 19/10: build aprovado após gerar o Prisma Client e 25 testes unitários aprovados. O ESLint ainda apresenta falhas; o comando acima não aplica `--fix`. O `npm run lint` definido no projeto aplica correções automaticamente.
+- `npm test`: roda todos os testes unitários, sem medir cobertura. É o comando do dia a dia.
+- `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se algum arquivo de `src/modules/calculos/*.service.ts` ou de `src/common/regras/` ficar abaixo de 80% em linhas, ramificações, funções ou instruções (`coverageThreshold` no `package.json`). **É o comando executado no CI**: rode-o antes de abrir um PR, principalmente se alterar cálculo ou classificação de estados. O relatório fica em `backend/coverage/`, ignorado pelo Git.
+- O ESLint acima não aplica `--fix` e ainda apresenta falhas de formatação; o `npm run lint` definido no projeto aplica correções automaticamente.
 
 O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado. O `test:e2e` padrão do Nest não é a mesma suíte desse Compose isolado.
 
