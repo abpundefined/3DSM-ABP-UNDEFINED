@@ -45,6 +45,19 @@ Os 10 itens abaixo compuseram a baseline acordada no planejamento da Sprint 2:
 - **Total Concluído:** 58 SP (9 itens fechados — 92% de taxa de entrega)
 - **Restante em Andamento:** 5 SP (1 item — [#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16), em andamento para evolução contínua na Sprint 3)
 
+### Outras entregas da sprint
+
+| Entrega | Responsável | Evidência |
+| --- | --- | --- |
+| CI com build e testes do backend e do frontend | Israelisl | [#55](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/55) |
+| Detecção de serviço indisponível (item da Sprint 1 concluído nesta sprint) | NadlaFernandes | [#51](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/51), commit `d9ed96a` |
+| Distinção entre HTTP 404 (sem métricas) e 5xx/timeout (indisponível); região registrada na coleta | Israelisl | [#57](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/57) |
+| Teste com dados reais da API | MarcusVRDN | [#54](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/54) |
+| Documentação de cálculos alinhada ao modelo do desafio | MarcusVRDN | [#53](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/53) |
+| Correção da numeração das issues no planejamento | MarcusVRDN | [#59](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/59) |
+| Documentação de IHC e protótipos | thalestcd | [#63](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/63) |
+| Situação da Sprint 1 atualizada na revisão por item | RainanKaneka | [#52](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/52) |
+
 ---
 
 ## 📉 Burndown da Sprint 2
@@ -80,16 +93,25 @@ Os 10 itens abaixo compuseram a baseline acordada no planejamento da Sprint 2:
 - **Cobertura de Testes Automatizados:** suíte de testes com cobertura superior a 80% nos services de cálculo e regras de estado (`npm run test:cov` no backend) e testes de integração/E2E no frontend (`npm run test:e2e`).
 - **Resiliência e Timeout:** aplicação de tempo limite em chamadas de APIs externas via `com-timeout.ts`, atendendo ao apontamento do cliente na Sprint 1.
 
----
+### Como verificar
 
-## ⚠️ Pendências Identificadas para a Sprint 3
+```powershell
+docker compose up --build
+```
 
-Para garantir transparência no encerramento da Sprint 2 e conformidade com a Definição de Pronto (DoD), foram registradas as seguintes pendências técnicas e funcionais que serão endereçadas na Sprint 3:
+- Dashboard em `http://localhost:5173`: um card por serviço com status, país, região e cidade, métricas, energia e emissão; intervalo de coleta e "Última atualização".
+- Login em `http://localhost:5173/login` com `ADMIN_EMAIL` e `ADMIN_PASSWORD` do `.env`.
+- Swagger em `http://localhost:3000/docs`.
 
-1. **Aplicação Dinâmica da Configuração:** O endpoint `PUT /configuracao` persiste as alterações no banco de dados, porém os parâmetros atualizados ainda não são aplicados dinamicamente em tempo de execução ao agendador de monitoramento (atendimento parcial do RF16);
-2. **Interface Administrativa no Frontend:** Ausência de página web para visualização e edição de configurações pelo operador/administrador no frontend (configuração realizada atualmente via chamadas autenticadas na API);
-3. **Paginação do Histórico de Coletas:** O endpoint `GET /coletas` ainda não dispõe de suporte a paginação de registros, necessitando de mecanismo de cursor ou limite/offset para prevenir gargalos de memória futuros;
-4. **Interface Responsiva e Acessível ([#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16) — 5 SP):** PBI mantido aberto em andamento para refinamentos detalhados de usabilidade, contraste e responsividade em dispositivos móveis.
+```powershell
+cd backend
+npm.cmd run test:cov   # testes unitários e cobertura mínima de 80% em cálculo e regras de estado
+cd ../frontend
+npm.cmd run lint
+npm.cmd test
+npm.cmd run build
+npm.cmd run test:e2e   # requer npx playwright install chromium
+```
 
 ---
 
@@ -105,6 +127,19 @@ As contribuições e revisões de código de cada integrante foram verificadas d
 | **Nadla Ferreira** | Desenvolvedora Frontend | **PRs entregues:** [#51](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/51) (detecção de indisponível) e [#67](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/67) (intervalos e timestamps).<br>**Commits:** `d9ed96a` (evidências do PBI-04), `5f81425` (intervalos e timestamps no dashboard). |
 | **Thales Cambraia** | Scrum Master / Frontend | **PRs entregues:** [#63](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/63) (documentação de IHC e protótipos).<br>**Commits:** `5edc4d7`, `069fcb3` (revisão de IHC, protótipos e fluxo de navegação). Organização do backlog no Projects. |
 | **Rainan Reis** | Product Owner / Fullstack | **PRs entregues:** [#52](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/52) (reconciliação de status de issues para Done no review da Sprint 1) e [#72](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/72) (registro de objetivo, capacidade, métricas, burndown e fechamento da Sprint 2). Gestão e priorização contínua do backlog. |
+
+---
+
+## ⚠️ Pendências e Continuidade
+
+| Pendência | Encaminhamento |
+| --- | --- |
+| A configuração salva por `PUT /configuracao` ainda não é aplicada ao monitoramento, que usa o intervalo das variáveis de ambiente (RF16 parcial). | Sprint 3 |
+| O frontend grava o token após o login, mas ainda não há página de administração nem indicação de usuário autenticado. | Sprint 3 |
+| `GET /coletas` não tem paginação. | Sprint 3 |
+| Resultados consolidados da avaliação heurística em `docs/interface.md`. | Responsável por IHC |
+| Ranking (RF14), comparação (RF15), mapa (RF13) e avaliação com usuários (IHC05/IHC06). | Sprint 3, conforme o [plano de entregas](../plano-de-entregas.md) |
+| Interface responsiva e acessível ([#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16) — 5 SP). | Sprint 3 |
 
 ---
 
