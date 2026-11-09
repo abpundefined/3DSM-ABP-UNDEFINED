@@ -9,5 +9,6 @@ import { ConfiguracaoService } from "./configuracao.service";
   imports: [DatabaseModule, AuthModule],
   controllers: [ConfiguracaoController],
   providers: [ConfiguracaoService, ConfiguracaoRepository],
+  exports: [ConfiguracaoService],
 })
 export class ConfiguracaoModule {}

@@ -18,6 +18,7 @@ async function bootstrap() {
   );
 
   app.enableCors();
+  app.enableShutdownHooks();
 
   configurarSwagger(app);
 

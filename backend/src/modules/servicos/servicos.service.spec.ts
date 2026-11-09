@@ -7,6 +7,7 @@ import {
   EstadoColetaEnum,
 } from "../coletas/dto/create-coleta.dto";
 import { MonitoramentoService } from "../monitoramento/monitoramento.service";
+import type { ConfiguracaoService } from "../configuracao/configuracao.service";
 import { ServicosService } from "./servicos.service";
 
 // Os serviços reais são exercitados com dependências de configuração e banco isoladas.
@@ -198,6 +199,12 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
       config,
       servicosService,
       coletasService,
+      {
+        obter: jest.fn().mockResolvedValue({
+          intervaloColetaSegundos: 30,
+          intervaloDescobertaSegundos: 30,
+        }),
+      } as unknown as ConfiguracaoService,
     );
     fetchMock = jest
       .spyOn(globalThis, "fetch")
@@ -316,6 +323,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
   });
 
   it("retoma a coleta após desaparecimento e retorno, preservando coletas anteriores", async () => {
+    jest.useFakeTimers();
     const service = seedService("DISPONIVEL");
     const previous = {
       id: 1,
@@ -331,6 +339,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(collections).toEqual([previous]);
 
+    jest.advanceTimersByTime(30000);
     fetchMock
       .mockResolvedValueOnce(Response.json([externalService("billing-api")]))
       .mockResolvedValueOnce(
@@ -479,6 +488,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
 
     const firstCycle = monitoramentoService.pollOnce();
     await monitoramentoService.pollOnce();
+    await Promise.resolve();
 
     expect(syncServices).toHaveBeenCalledTimes(1);
     expect(collectMetrics).not.toHaveBeenCalled();
@@ -490,7 +500,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
 
     await monitoramentoService.pollOnce();
 
-    expect(syncServices).toHaveBeenCalledTimes(2);
+    expect(syncServices).toHaveBeenCalledTimes(1);
     expect(collectMetrics).toHaveBeenCalledTimes(2);
   });
 
