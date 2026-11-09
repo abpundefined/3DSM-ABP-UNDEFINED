@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import Icon from '../components/common/Icon';
+import useAuth from '../hooks/useAuth';
 import usePageTitle from '../hooks/usePageTitle';
 import { ApiError, apiRequest } from '../services/api';
 
@@ -8,11 +9,10 @@ interface LoginResponse {
   accessToken: string;
 }
 
-const TOKEN_STORAGE_KEY = '@greener-abp:token';
-
 export default function Login() {
   usePageTitle('Entrar');
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +37,7 @@ export default function Login() {
         );
       }
 
-      window.localStorage.setItem(TOKEN_STORAGE_KEY, response.accessToken);
+      login(response.accessToken);
       navigate('/');
     } catch (error) {
       if (error instanceof ApiError) {
