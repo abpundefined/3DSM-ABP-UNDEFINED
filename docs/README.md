@@ -12,11 +12,12 @@ Os documentos distinguem implementação atual, evidência disponível e planeja
 | [Sprint 1](sprints/sprint-1.md) | Baseline, responsáveis, contribuições e registros de fechamento. |
 | [Revisão dos 13 itens](sprints/revisao-sprint-1.md) | Evidências, pendências, checks e tabela de sincronização do Projects. |
 | [Preparação do burndown](burndown-sprint-1.md) | Baseline, CSVs, regras de aceite e dados ainda necessários. |
-| [Sprint 2](sprints/sprint-2.md) | Candidatos existentes, IDs/pontos conferidos e planejamento futuro. |
+| [Sprint 2](sprints/sprint-2.md) | Escopo executado (63 SP), burndown, evidências e registros de fechamento. |
+| [Burndown Sprint 2](burndown-sprint-2.md) | Histórico de baixa de pontos, dados do fechamento e gráfico da Sprint 2. |
 | [Sprint 3](sprints/sprint-3.md) | Candidatos existentes e preparação de usabilidade/consolidação. |
 | [Interface e IHC](interface.md) | Personas, protótipos, resultado conhecido e dados ainda não registrados. |
 | [Teste de retorno com PostgreSQL](teste-integracao-problema1.md) | Execução isolada e registro de seis testes em 18/10. |
-| [Modelo de cálculos proposto](calculos.md) | Proposta para validação na Sprint 2; não corresponde a cálculo já implementado. |
+| [Memória de cálculo ambiental](calculos.md) | Fórmulas, fatores, unidades de medida e premissas implementadas no CalculosService. |
 | [Setup inicial do frontend](frontend-setup.md) | Registro histórico da base da #25. |
 | [Interface inicial](frontend-interface.md) | Registro histórico de rotas, layout, paleta e testes. |
 | [Demonstração](frontend-demo.md) | Gráficos com dados fictícios para avaliação visual. |

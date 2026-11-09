@@ -1,0 +1,12 @@
+issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_comprovado,fechado_em,pendencia
+6,[PBI-06] Cálculo individual de consumo e emissão,8,MarcusVRDN,Done,CLOSED,sim,2026-11-08T02:27:28Z,Nenhuma. Entregue e integrado com API de carbono.
+7,[PBI-07] Indicadores agregados,5,PedrinhoDBR,Done,CLOSED,sim,2026-11-09T01:06:03Z,Nenhuma. Entregue com endpoint de totais e Swagger.
+8,[PBI-08] Dashboard operacional,13,thalestcd; Israelisl,Done,CLOSED,sim,2026-11-09T02:36:53Z,Nenhuma. Cards renderizados com consumo e emissão.
+10,[PBI-10] Atualização automática do dashboard,5,MarcusVRDN,Done,CLOSED,sim,2026-11-09T02:06:17Z,Nenhuma. Polling periódico sem reload.
+11,[PBI-11] Localização dos serviços,3,thalestcd; Israelisl,Done,CLOSED,sim,2026-11-09T02:37:12Z,Nenhuma. País, região e cidade exibidos nos cards.
+15,[PBI-15] Autenticação JWT,8,Israelisl; MarcusVRDN,Done,CLOSED,sim,2026-11-09T03:29:42Z,Nenhuma. Login e proteção de rotas restritas operacionais.
+16,[PBI-16] Interface responsiva e acessível,5,thalestcd,In progress,OPEN,nao,,Ajustes finos de acessibilidade e responsividade mantidos para a Sprint 3.
+17,[PBI-17] Exibição de intervalos e timestamps,3,NadlaFernandes,Done,CLOSED,sim,2026-11-09T02:05:42Z,Nenhuma. Intervalo e horário da última coleta no dashboard.
+19,[PBI-19] Segurança,5,Israelisl,Done,CLOSED,sim,2026-11-08T23:31:55Z,Nenhuma. Bcrypt, JWT e segredos em variáveis de ambiente.
+20,[PBI-20] Testes unitários,8,Israelisl,Done,CLOSED,sim,2026-11-09T02:05:48Z,Nenhuma. Cobertura ≥ 80% nos serviços de cálculo e CI.
+
