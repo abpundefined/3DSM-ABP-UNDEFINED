@@ -134,7 +134,7 @@ As contribuições e revisões de código de cada integrante foram verificadas d
 
 | Pendência | Encaminhamento |
 | --- | --- |
-| A configuração salva por `PUT /configuracao` ainda não é aplicada ao monitoramento, que usa o intervalo das variáveis de ambiente (RF16 parcial). | Sprint 3 |
+| Aplicação dinâmica dos intervalos de `PUT /configuracao` ao monitoramento (RF16/DW06). | Implementada e validada com testes automatizados e PUT autenticado no Compose (coleta em 60 s sem reinício); aguarda aceite do PR para concluir RF16. |
 | O frontend grava o token após o login, mas ainda não há página de administração nem indicação de usuário autenticado. | Sprint 3 |
 | `GET /coletas` não tem paginação. | Sprint 3 |
 | Resultados consolidados da avaliação heurística em `docs/interface.md`. | Responsável por IHC |

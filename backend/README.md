@@ -56,6 +56,13 @@ Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /conf
 
 Leia [contratos, unidades e erros](../docs/api.md).
 
+O monitoramento lê os intervalos salvos por `PUT /configuracao` sem reiniciar o
+backend. Ao terminar cada ciclo, agenda o próximo com o intervalo de coleta
+atual; a descoberta só é repetida quando seu próprio intervalo tiver decorrido.
+O tempo de execução do ciclo não é incluído na espera entre ciclos. Se a leitura
+da configuração falhar, registra um aviso e usa `METRICS_POLL_INTERVAL_MS` (ou
+30 segundos). O timer é cancelado no encerramento da aplicação.
+
 ## Testes e checks
 
 ```powershell
@@ -74,7 +81,6 @@ O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problem
 ## Limitações em revisão
 
 - O mapeamento geográfico, a distinção de ausência de métricas, o intervalo real da medição e a validação numérica precisam de correções.
-- O agendador ainda não tem timeout explícito, trava entre ciclos ou encerramento do timer no ciclo de destruição.
 - Serviços/monitoramento ainda acessam o Prisma diretamente; há regras duplicadas em relação ao registro manual de coletas.
 
 Esses pontos estão associados aos itens da [revisão da Sprint 1](../docs/sprints/revisao-sprint-1.md); não são funcionalidades declaradas como concluídas.
