@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CarbonApiService } from './carbon-api.service';
+import { Injectable } from "@nestjs/common";
+import { CarbonApiService } from "./carbon-api.service";
 
 const CPU_MAX_WATTS = 0.5;
 
@@ -17,7 +17,7 @@ export class CalculosService {
     regionCode: string,
   ): Promise<ResultadoCalculoEmissao> {
     if (!Number.isFinite(energiaKwh) || energiaKwh < 0) {
-      throw new RangeError('A energia deve ser um valor finito não negativo.');
+      throw new RangeError("A energia deve ser um valor finito não negativo.");
     }
 
     const intensidadeCarbonoGCo2ePorKwh =
@@ -26,12 +26,12 @@ export class CalculosService {
       !Number.isFinite(intensidadeCarbonoGCo2ePorKwh) ||
       intensidadeCarbonoGCo2ePorKwh < 0
     ) {
-      throw new RangeError('A intensidade de carbono retornada é inválida.');
+      throw new RangeError("A intensidade de carbono retornada é inválida.");
     }
 
     const emissaoGCo2e = energiaKwh * intensidadeCarbonoGCo2ePorKwh;
     if (!Number.isFinite(emissaoGCo2e)) {
-      throw new RangeError('A emissão calculada não é um valor finito.');
+      throw new RangeError("A emissão calculada não é um valor finito.");
     }
 
     return { intensidadeCarbonoGCo2ePorKwh, emissaoGCo2e };
@@ -50,11 +50,11 @@ export class CalculosService {
       cpuPercent > 100
     ) {
       throw new RangeError(
-        'As métricas devem ser finitas e não negativas; CPU deve estar entre 0 e 100%.',
+        "As métricas devem ser finitas e não negativas; CPU deve estar entre 0 e 100%.",
       );
     }
     if (!Number.isFinite(intervaloSegundos) || intervaloSegundos <= 0) {
-      throw new RangeError('O intervalo de coleta deve ser finito e positivo.');
+      throw new RangeError("O intervalo de coleta deve ser finito e positivo.");
     }
 
     const consumoCpu = (cpuPercent / 100) * CPU_MAX_WATTS;
@@ -68,7 +68,7 @@ export class CalculosService {
 
     const energiaKwh = (potenciaWatts * horas) / 1000;
     if (!Number.isFinite(energiaKwh)) {
-      throw new RangeError('A energia calculada não é um valor finito.');
+      throw new RangeError("A energia calculada não é um valor finito.");
     }
 
     return energiaKwh;

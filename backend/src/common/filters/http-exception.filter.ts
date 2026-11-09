@@ -5,8 +5,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Request, Response } from "express";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -25,12 +25,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException
         ? exception.getResponse()
-        : 'Serviço temporariamente indisponível. A última medição válida foi preservada.';
+        : "Serviço temporariamente indisponível. A última medição válida foi preservada.";
 
     const mensagem =
-      typeof exceptionResponse === 'object' &&
+      typeof exceptionResponse === "object" &&
       exceptionResponse !== null &&
-      'message' in exceptionResponse
+      "message" in exceptionResponse
         ? exceptionResponse.message || exceptionResponse
         : exceptionResponse;
 

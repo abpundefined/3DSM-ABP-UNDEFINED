@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import type { Usuario } from '../../generated/prisma/client';
-import { PrismaService } from '../../database/prisma.service';
+import { Injectable } from "@nestjs/common";
+import type { Usuario } from "../../generated/prisma/client";
+import { PrismaService } from "../../database/prisma.service";
 
 export interface NovoUsuario {
   nome: string;

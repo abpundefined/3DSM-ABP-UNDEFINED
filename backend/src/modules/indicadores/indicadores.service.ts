@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import type { EstadoMonitoramento } from '../../generated/prisma/enums';
-import { FiltroIndicadoresDto } from './dto/filtro-indicadores.dto';
+import { BadRequestException, Injectable } from "@nestjs/common";
+import type { EstadoMonitoramento } from "../../generated/prisma/enums";
+import { FiltroIndicadoresDto } from "./dto/filtro-indicadores.dto";
 import {
   ContagemPorEstado,
   IndicadoresRepository,
-} from './indicadores.repository';
+} from "./indicadores.repository";
 
 export const PERIODO_PADRAO_HORAS = 24;
 
@@ -42,7 +42,7 @@ export class IndicadoresService {
 
     if (inicio.getTime() > fim.getTime()) {
       throw new BadRequestException(
-        'dataInicio deve ser anterior ou igual a dataFim.',
+        "dataInicio deve ser anterior ou igual a dataFim.",
       );
     }
 
@@ -67,10 +67,10 @@ export class IndicadoresService {
     const quantidade = (estado: EstadoMonitoramento) =>
       contagens.find((contagem) => contagem.estado === estado)?.quantidade ?? 0;
 
-    const disponiveis = quantidade('DISPONIVEL');
-    const indisponiveis = quantidade('INDISPONIVEL');
-    const semMetricas = quantidade('SEM_METRICAS');
-    const desconhecidos = quantidade('DESCONHECIDO');
+    const disponiveis = quantidade("DISPONIVEL");
+    const indisponiveis = quantidade("INDISPONIVEL");
+    const semMetricas = quantidade("SEM_METRICAS");
+    const desconhecidos = quantidade("DESCONHECIDO");
 
     return {
       monitorados: disponiveis + indisponiveis + semMetricas + desconhecidos,
@@ -78,7 +78,7 @@ export class IndicadoresService {
       indisponiveis,
       semMetricas,
       desconhecidos,
-      removidos: quantidade('REMOVIDO'),
+      removidos: quantidade("REMOVIDO"),
     };
   }
 }

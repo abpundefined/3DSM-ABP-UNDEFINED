@@ -1,14 +1,14 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ColetasRepository } from './coletas.repository';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ColetasRepository } from "./coletas.repository";
 import {
   CreateColetaDto,
   EstadoCalculoEnum,
   EstadoColetaEnum,
-} from './dto/create-coleta.dto';
-import { FilterColetasDto } from './dto/filter-coleta.dto';
-import { CalculosService } from '../calculos/calculos.service';
-import { ServicosService } from '../servicos/servicos.service';
-import { possuiMedicoes } from '../../common/regras/classificacao-estado';
+} from "./dto/create-coleta.dto";
+import { FilterColetasDto } from "./dto/filter-coleta.dto";
+import { CalculosService } from "../calculos/calculos.service";
+import { ServicosService } from "../servicos/servicos.service";
+import { possuiMedicoes } from "../../common/regras/classificacao-estado";
 
 @Injectable()
 export class ColetasService {
@@ -31,7 +31,7 @@ export class ColetasService {
       dto.estadoColeta = EstadoColetaEnum.SEM_METRICAS;
       dto.mensagemErro =
         dto.mensagemErro ??
-        'Serviço acessível, porém sem medições de consumo disponíveis no payload retornado.';
+        "Serviço acessível, porém sem medições de consumo disponíveis no payload retornado.";
     }
 
     if (temMedicao && dto.intervaloColetaSegundos != null) {
@@ -47,7 +47,7 @@ export class ColetasService {
 
         const servico = await this.servicosService.findById(dto.servicoId);
         if (!servico) {
-          throw new NotFoundException('Serviço não encontrado');
+          throw new NotFoundException("Serviço não encontrado");
         }
 
         const resultadoEmissao = await this.calculosService.calcularEmissao(
@@ -61,7 +61,7 @@ export class ColetasService {
         dto.estadoCalculo = EstadoCalculoEnum.CONCLUIDO;
       } catch (error) {
         const mensagemErro =
-          error instanceof Error ? error.message : 'Erro desconhecido';
+          error instanceof Error ? error.message : "Erro desconhecido";
         this.logger.error(
           `Falha ao calcular energia ou emissão da coleta ${dto.servicoId}: ${mensagemErro}`,
           error instanceof Error ? error.stack : undefined,
@@ -90,8 +90,8 @@ export class ColetasService {
     }
 
     return {
-      fonte: 'CACHE_FALLBACK',
-      mensagem: 'Dados recuperados da última coleta válida preservada',
+      fonte: "CACHE_FALLBACK",
+      mensagem: "Dados recuperados da última coleta válida preservada",
       dados: ultimaColeta,
     };
   }

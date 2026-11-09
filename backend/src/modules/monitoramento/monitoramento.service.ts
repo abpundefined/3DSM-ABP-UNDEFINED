@@ -1,27 +1,27 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ServicosService } from '../servicos/servicos.service';
-import { ColetasService } from '../coletas/coletas.service';
-import { normalizeMetricPayload } from '../../common/utils/external-api.util';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { ServicosService } from "../servicos/servicos.service";
+import { ColetasService } from "../coletas/coletas.service";
+import { normalizeMetricPayload } from "../../common/utils/external-api.util";
 import {
   classificarFalhaDeConexao,
   classificarMedicoes,
   classificarRespostaHttp,
-} from '../../common/regras/classificacao-estado';
+} from "../../common/regras/classificacao-estado";
 
 const METRICS_FETCH_TIMEOUT_MS = 8000;
 
 const getCollectionIntervalSeconds = (payload: unknown): number | undefined => {
   if (
-    typeof payload !== 'object' ||
+    typeof payload !== "object" ||
     payload === null ||
-    !('collection_interval_seconds' in payload)
+    !("collection_interval_seconds" in payload)
   ) {
     return undefined;
   }
 
   const interval = payload.collection_interval_seconds;
-  return typeof interval === 'number' &&
+  return typeof interval === "number" &&
     Number.isSafeInteger(interval) &&
     interval > 0
     ? interval
@@ -44,7 +44,7 @@ export class MonitoramentoService implements OnModuleInit {
     await this.servicosService.verificarSchema();
 
     const configuredInterval = this.configService.get<string>(
-      'METRICS_POLL_INTERVAL_MS',
+      "METRICS_POLL_INTERVAL_MS",
     );
     const intervalMs = Number(configuredInterval ?? 30000);
     this.startPolling(intervalMs);
@@ -52,7 +52,7 @@ export class MonitoramentoService implements OnModuleInit {
 
   private startPolling(intervalMs: number) {
     if (Number.isNaN(intervalMs) || intervalMs <= 0) {
-      this.logger.warn('METRICS_POLL_INTERVAL_MS inválido. Usando 30.000ms.');
+      this.logger.warn("METRICS_POLL_INTERVAL_MS inválido. Usando 30.000ms.");
       intervalMs = 30000;
     }
 
@@ -65,7 +65,7 @@ export class MonitoramentoService implements OnModuleInit {
   async pollOnce() {
     if (this.isCollecting) {
       this.logger.debug(
-        'Ciclo de monitoramento ignorado: já existe um ciclo em execução.',
+        "Ciclo de monitoramento ignorado: já existe um ciclo em execução.",
       );
       return;
     }
@@ -76,7 +76,7 @@ export class MonitoramentoService implements OnModuleInit {
       await this.collectMetricsForAllServices();
     } catch (error) {
       this.logger.error(
-        'Erro ao executar monitoramento de serviços',
+        "Erro ao executar monitoramento de serviços",
         error instanceof Error ? error.stack : error,
       );
     } finally {
@@ -102,12 +102,12 @@ export class MonitoramentoService implements OnModuleInit {
     servicoId: number,
     regiaoCodigo: string,
   ) {
-    const baseUrl = this.configService.get<string>('METRICS_API_URL');
+    const baseUrl = this.configService.get<string>("METRICS_API_URL");
     if (!baseUrl) {
-      throw new Error('METRICS_API_URL não configurada.');
+      throw new Error("METRICS_API_URL não configurada.");
     }
 
-    const url = `${baseUrl.replace(/\/+$/, '')}/metrics/${encodeURIComponent(serviceIdExterno)}`;
+    const url = `${baseUrl.replace(/\/+$/, "")}/metrics/${encodeURIComponent(serviceIdExterno)}`;
 
     try {
       const controller = new AbortController();
@@ -120,7 +120,7 @@ export class MonitoramentoService implements OnModuleInit {
 
       try {
         response = await fetch(url, {
-          headers: { Accept: 'application/json' },
+          headers: { Accept: "application/json" },
           signal: controller.signal,
         });
 
@@ -145,7 +145,7 @@ export class MonitoramentoService implements OnModuleInit {
           estadoColeta: classificacao.estadoColeta,
           codigoErro: classificacao.codigoErro,
           mensagemErro:
-            classificacao.estadoServico === 'SEM_METRICAS'
+            classificacao.estadoServico === "SEM_METRICAS"
               ? `O serviço ${serviceIdExterno} está listado, mas não expõe métricas (HTTP ${response.status}).`
               : `Falha ao consultar métricas do serviço ${serviceIdExterno} (HTTP ${response.status}).`,
           iniciadaEm: new Date(),
@@ -160,7 +160,7 @@ export class MonitoramentoService implements OnModuleInit {
       const classificacao = classificarMedicoes(metrics ?? {});
 
       if (
-        classificacao.estadoServico === 'DISPONIVEL' &&
+        classificacao.estadoServico === "DISPONIVEL" &&
         intervaloColetaSegundos === undefined
       ) {
         this.logger.warn(
@@ -173,12 +173,12 @@ export class MonitoramentoService implements OnModuleInit {
         classificacao.estadoServico,
       );
 
-      if (!metrics || classificacao.estadoServico === 'SEM_METRICAS') {
+      if (!metrics || classificacao.estadoServico === "SEM_METRICAS") {
         await this.coletasService.registrarColeta({
           servicoId,
           regiaoCodigoNaColeta: regiaoCodigo,
           estadoColeta: classificacao.estadoColeta,
-          mensagemErro: 'Serviço respondeu, mas não retornou métricas válidas.',
+          mensagemErro: "Serviço respondeu, mas não retornou métricas válidas.",
           iniciadaEm: new Date(),
           finalizadaEm: new Date(),
         });
@@ -200,15 +200,15 @@ export class MonitoramentoService implements OnModuleInit {
       });
     } catch (error) {
       const isTimeout =
-        typeof error === 'object' &&
+        typeof error === "object" &&
         error !== null &&
-        'name' in error &&
-        error.name === 'AbortError';
+        "name" in error &&
+        error.name === "AbortError";
       const errorMessage = isTimeout
         ? `Tempo limite de ${METRICS_FETCH_TIMEOUT_MS}ms excedido ao consultar métricas do serviço ${serviceIdExterno}.`
         : error instanceof Error
           ? error.message
-          : 'Erro ao consultar métricas.';
+          : "Erro ao consultar métricas.";
 
       if (isTimeout) {
         this.logger.warn(errorMessage);

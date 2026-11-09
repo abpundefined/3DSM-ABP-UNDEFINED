@@ -24,7 +24,7 @@ export class ServicosController {
     return this.servicosService.listarServicos();
   }
 
-  @Post('sync')
+  @Post("sync")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Sincronizar serviços com o agregador de métricas" })

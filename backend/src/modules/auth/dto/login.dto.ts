@@ -8,6 +8,6 @@ export class LoginDto {
 
   @ApiProperty({ format: "password", writeOnly: true })
   @IsString()
-  @IsNotEmpty({ message: 'Informe a senha.' })
+  @IsNotEmpty({ message: "Informe a senha." })
   senha!: string;
 }

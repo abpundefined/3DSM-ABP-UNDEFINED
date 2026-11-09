@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { LoginDto } from './dto/login.dto';
-import { UsuariosRepository } from './usuarios.repository';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
+import { LoginDto } from "./dto/login.dto";
+import { UsuariosRepository } from "./usuarios.repository";
 
 export interface TokenPayload {
   sub: number;
@@ -23,7 +23,7 @@ export class AuthService {
       usuario !== null && (await bcrypt.compare(dto.senha, usuario.senhaHash));
 
     if (!usuario || !senhaValida) {
-      throw new UnauthorizedException('Credenciais inválidas.');
+      throw new UnauthorizedException("Credenciais inválidas.");
     }
 
     const payload: TokenPayload = { sub: usuario.id, email: usuario.email };

@@ -18,7 +18,7 @@ export { EstadoCalculoEnum, EstadoColetaEnum };
 export class CreateColetaDto {
   @ApiProperty({ example: 1, description: "ID interno do serviço." })
   @IsInt({
-    message: 'O ID do serviço deve ser um número inteiro (sem decimais).',
+    message: "O ID do serviço deve ser um número inteiro (sem decimais).",
   })
   @IsNotEmpty()
   servicoId!: number;
@@ -54,9 +54,9 @@ export class CreateColetaDto {
     description: "Intervalo da coleta em segundos.",
   })
   @IsInt({
-    message: 'O intervalo de coleta deve ser um número inteiro em segundos.',
+    message: "O intervalo de coleta deve ser um número inteiro em segundos.",
   })
-  @Min(1, { message: 'O intervalo de coleta deve ser de no mínimo 1 segundo.' })
+  @Min(1, { message: "O intervalo de coleta deve ser de no mínimo 1 segundo." })
   @IsOptional()
   intervaloColetaSegundos?: number;
 
@@ -77,8 +77,8 @@ export class CreateColetaDto {
     description: "Uso de CPU em porcentagem.",
   })
   @IsNumber()
-  @Min(0, { message: 'O uso de CPU não pode ser negativo.' })
-  @Max(100, { message: 'O uso de CPU não pode ultrapassar 100%.' })
+  @Min(0, { message: "O uso de CPU não pode ser negativo." })
+  @Max(100, { message: "O uso de CPU não pode ultrapassar 100%." })
   @IsOptional()
   cpuPercent?: number;
 
@@ -88,7 +88,7 @@ export class CreateColetaDto {
     description: "Memória em GB.",
   })
   @IsNumber()
-  @Min(0, { message: 'A memória não pode ter valor negativo.' })
+  @Min(0, { message: "A memória não pode ter valor negativo." })
   @IsOptional()
   memoryGb?: number;
 
@@ -98,13 +98,13 @@ export class CreateColetaDto {
     description: "Disco em GB.",
   })
   @IsNumber()
-  @Min(0, { message: 'O disco não pode ter valor negativo.' })
+  @Min(0, { message: "O disco não pode ter valor negativo." })
   @IsOptional()
   diskGb?: number;
 
   @ApiPropertyOptional({ type: Number, minimum: 0, description: "Rede em GB." })
   @IsNumber()
-  @Min(0, { message: 'A rede não pode ter valor negativo.' })
+  @Min(0, { message: "A rede não pode ter valor negativo." })
   @IsOptional()
   networkGb?: number;
 
