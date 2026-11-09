@@ -24,7 +24,7 @@ jobs:
       - run: npm ci
       - run: npx prisma generate --config ./prisma7.config.ts
       - run: npm run build
-      - run: npm test
+      - run: npm run test:cov
 
   frontend:
     runs-on: ubuntu-latest
