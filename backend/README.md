@@ -62,18 +62,17 @@ Leia [contratos, unidades e erros](../docs/api.md).
 npm.cmd run build
 npm.cmd test
 npm.cmd run test:cov
-npx.cmd eslint "{src,apps,libs,test}/**/*.ts"
+npm.cmd run lint
 ```
 
 - `npm test`: roda todos os testes unitários, sem medir cobertura. É o comando do dia a dia.
 - `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se algum arquivo de `src/modules/calculos/*.service.ts` ou de `src/common/regras/` ficar abaixo de 80% em linhas, ramificações, funções ou instruções (`coverageThreshold` no `package.json`). **É o comando executado no CI**: rode-o antes de abrir um PR, principalmente se alterar cálculo ou classificação de estados. O relatório fica em `backend/coverage/`, ignorado pelo Git.
-- O ESLint acima não aplica `--fix` e ainda apresenta falhas de formatação; o `npm run lint` definido no projeto aplica correções automaticamente.
+- O `npm run lint` verifica problemas sem alterar arquivos; use `npm run lint:fix` para corrigir automaticamente.
 
 O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado. O `test:e2e` padrão do Nest não é a mesma suíte desse Compose isolado.
 
 ## Limitações em revisão
 
-- `start:prod` aponta para `dist/main`; o build atual gera `dist/src/main.js`.
 - O mapeamento geográfico, a distinção de ausência de métricas, o intervalo real da medição e a validação numérica precisam de correções.
 - O agendador ainda não tem timeout explícito, trava entre ciclos ou encerramento do timer no ciclo de destruição.
 - Serviços/monitoramento ainda acessam o Prisma diretamente; há regras duplicadas em relação ao registro manual de coletas.

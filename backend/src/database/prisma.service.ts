@@ -1,7 +1,7 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/client';
+import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
 
 @Injectable()
 export class PrismaService
@@ -10,7 +10,7 @@ export class PrismaService
 {
   constructor(configService: ConfigService) {
     const adapter = new PrismaPg({
-      connectionString: configService.getOrThrow<string>('DATABASE_URL'),
+      connectionString: configService.getOrThrow<string>("DATABASE_URL"),
     });
 
     super({ adapter });
@@ -43,7 +43,7 @@ export class PrismaService
 
     if (result.missing.length > 0) {
       throw new Error(
-        `O banco foi conectado, mas o schema está incompleto (tabelas ausentes: ${result.missing.join(', ')}). Execute "npm run db:migrate" na pasta backend antes de iniciar o monitoramento.`,
+        `O banco foi conectado, mas o schema está incompleto (tabelas ausentes: ${result.missing.join(", ")}). Execute "npm run db:migrate" na pasta backend antes de iniciar o monitoramento.`,
       );
     }
   }

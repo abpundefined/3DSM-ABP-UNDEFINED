@@ -1,4 +1,4 @@
-type JsonRecord = Record<string, any>;
+type JsonRecord = Record<string, unknown>;
 
 const toObject = (value: unknown): JsonRecord | null => {
   if (!value || typeof value !== "object") {
@@ -196,7 +196,8 @@ export const normalizeServicePayload = (payload: unknown) => {
 
   const caminhoMetricas = findString(source, ["metrics_path", "metricsPath"]);
 
-  const normalizedId = String(id ?? "").trim();
+  const normalizedId =
+    typeof id === "string" || typeof id === "number" ? String(id).trim() : "";
   const normalizedName = String(name ?? "").trim();
 
   if (!normalizedId || !normalizedName) {
@@ -232,10 +233,16 @@ export const hasMeaningfulMetricValue = (
     return false;
   }
 
-  const values = [metrics.cpuPercent, metrics.memoryGb, metrics.diskGb, metrics.networkGb];
+  const values = [
+    metrics.cpuPercent,
+    metrics.memoryGb,
+    metrics.diskGb,
+    metrics.networkGb,
+  ];
 
   return values.some(
-    (value) => typeof value === 'number' && Number.isFinite(value) && value !== 0,
+    (value) =>
+      typeof value === "number" && Number.isFinite(value) && value !== 0,
   );
 };
 
@@ -255,7 +262,7 @@ export const normalizeMetricPayload = (payload: unknown) => {
   const values: Record<string, number | undefined> = {};
 
   for (const candidate of metricCandidates) {
-    const metrics = candidate as JsonRecord;
+    const metrics = candidate;
     values.cpuPercent = findNumber(metrics, [
       "cpu_percent",
       "cpuPercent",
