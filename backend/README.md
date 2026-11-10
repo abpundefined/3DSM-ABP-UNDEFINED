@@ -80,7 +80,6 @@ O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problem
 
 ## Limitações em revisão
 
-- O mapeamento geográfico, a distinção de ausência de métricas, o intervalo real da medição e a validação numérica precisam de correções.
-- Serviços/monitoramento ainda acessam o Prisma diretamente; há regras duplicadas em relação ao registro manual de coletas.
+- O `ServicosService` ainda acessa o Prisma diretamente; a extração para um repository está prevista para a Sprint 3.
 
 Esses pontos estão associados aos itens da [revisão da Sprint 1](../docs/sprints/revisao-sprint-1.md); não são funcionalidades declaradas como concluídas.
