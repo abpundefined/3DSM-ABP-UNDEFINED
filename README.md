@@ -356,7 +356,7 @@ docker compose up --build
 
 <h3 id="sprint2">⏱️ Sprint 2 — Cálculos Ambientais, Dashboard e Autenticação 🥈</h3>
 <h4 id="backlogsprint2">📋 Backlog Sprint 2</h4>
-<p>Baseline estabelecida: <strong>10 itens e 63 SP</strong>. Situação ao encerramento do desenvolvimento: 9 itens concluídos (Done, 58 SP) e 1 item em andamento (#16, 5 SP). Taxa de entrega de <strong>92%</strong> dos Story Points planejados.</p>
+<p>Baseline estabelecida: <strong>10 itens e 63 SP</strong>. Situação ao encerramento do desenvolvimento: 10 itens concluídos (63 SP). Taxa de entrega de <strong>100%</strong> dos Story Points planejados.</p>
 <table>
 <tr><th>Issue</th><th>Item</th><th>SP</th><th>Situação</th></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/6">#6</a></td><td>[PBI-06] Cálculo individual de consumo e emissão</td><td>8</td><td>Done</td></tr>
@@ -365,7 +365,7 @@ docker compose up --build
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/10">#10</a></td><td>[PBI-10] Atualização automática do dashboard</td><td>5</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/11">#11</a></td><td>[PBI-11] Localização dos serviços</td><td>3</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/15">#15</a></td><td>[PBI-15] Autenticação JWT</td><td>8</td><td>Done</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16">#16</a></td><td>[PBI-16] Interface responsiva e acessível</td><td>5</td><td>In progress</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16">#16</a></td><td>[PBI-16] Interface responsiva e acessível</td><td>5</td><td>Fechada em 09/11</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/17">#17</a></td><td>[PBI-17] Exibição de intervalos e timestamps</td><td>3</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/19">#19</a></td><td>[PBI-19] Segurança</td><td>5</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/20">#20</a></td><td>[PBI-20] Testes unitários</td><td>8</td><td>Done</td></tr>
