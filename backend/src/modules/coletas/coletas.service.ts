@@ -1,18 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ColetasRepository } from './coletas.repository';
-import { CreateColetaDto, EstadoColetaEnum } from './dto/create-coleta.dto';
-import { FilterColetasDto } from './dto/filter-coleta.dto';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ColetasRepository } from "./coletas.repository";
+import {
+  CreateColetaDto,
+  EstadoCalculoEnum,
+  EstadoColetaEnum,
+} from "./dto/create-coleta.dto";
+import { FilterColetasDto } from "./dto/filter-coleta.dto";
+import { CalculosService } from "../calculos/calculos.service";
+import { ServicosService } from "../servicos/servicos.service";
+import { possuiMedicoes } from "../../common/regras/classificacao-estado";
 
 @Injectable()
 export class ColetasService {
-  constructor(private readonly coletasRepository: ColetasRepository) {}
+  private readonly logger = new Logger(ColetasService.name);
+
+  constructor(
+    private readonly coletasRepository: ColetasRepository,
+    private readonly calculosService: CalculosService,
+    private readonly servicosService: ServicosService,
+  ) {}
 
   async registrarColeta(dto: CreateColetaDto) {
-    const temMedicao =
-      (dto.cpuPercent != null && Number.isFinite(dto.cpuPercent) && dto.cpuPercent !== 0) ||
-      (dto.memoryGb != null && Number.isFinite(dto.memoryGb) && dto.memoryGb !== 0) ||
-      (dto.diskGb != null && Number.isFinite(dto.diskGb) && dto.diskGb !== 0) ||
-      (dto.networkGb != null && Number.isFinite(dto.networkGb) && dto.networkGb !== 0);
+    dto.estadoCalculo = EstadoCalculoEnum.PENDENTE;
+
+    const temMedicao = possuiMedicoes(dto);
 
     const semMedicoes = !temMedicao;
 
@@ -20,7 +31,45 @@ export class ColetasService {
       dto.estadoColeta = EstadoColetaEnum.SEM_METRICAS;
       dto.mensagemErro =
         dto.mensagemErro ??
-        'Serviço acessível, porém sem medições de consumo disponíveis no payload retornado.';
+        "Serviço acessível, porém sem medições de consumo disponíveis no payload retornado.";
+    }
+
+    if (temMedicao && dto.intervaloColetaSegundos != null) {
+      try {
+        const energiaKwh = this.calculosService.calcularEnergia(
+          dto.cpuPercent ?? 0,
+          dto.memoryGb ?? 0,
+          dto.diskGb ?? 0,
+          dto.networkGb ?? 0,
+          dto.intervaloColetaSegundos,
+        );
+        dto.energiaKwh = energiaKwh;
+
+        const servico = await this.servicosService.findById(dto.servicoId);
+        if (!servico) {
+          throw new NotFoundException("Serviço não encontrado");
+        }
+
+        const resultadoEmissao = await this.calculosService.calcularEmissao(
+          energiaKwh,
+          servico.regiaoCodigo,
+        );
+
+        dto.intensidadeCarbonoGCo2ePorKwh =
+          resultadoEmissao.intensidadeCarbonoGCo2ePorKwh;
+        dto.emissaoGCo2e = resultadoEmissao.emissaoGCo2e;
+        dto.estadoCalculo = EstadoCalculoEnum.CONCLUIDO;
+      } catch (error) {
+        const mensagemErro =
+          error instanceof Error ? error.message : "Erro desconhecido";
+        this.logger.error(
+          `Falha ao calcular energia ou emissão da coleta ${dto.servicoId}: ${mensagemErro}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+        dto.estadoColeta = EstadoColetaEnum.SUCESSO;
+        dto.estadoCalculo = EstadoCalculoEnum.FALHA;
+        dto.mensagemErro = `Falha no cálculo ambiental: ${mensagemErro}`;
+      }
     }
 
     return this.coletasRepository.create(dto);
@@ -29,9 +78,10 @@ export class ColetasService {
   async listarHistorico(filtros: FilterColetasDto) {
     return this.coletasRepository.findMany(filtros);
   }
-  
+
   async obterUltimaColetaValida(servicoId: number) {
-    const ultimaColeta = await this.coletasRepository.findLatestSuccessful(servicoId);
+    const ultimaColeta =
+      await this.coletasRepository.findLatestSuccessful(servicoId);
 
     if (!ultimaColeta) {
       throw new NotFoundException(
@@ -40,8 +90,8 @@ export class ColetasService {
     }
 
     return {
-      fonte: 'CACHE_FALLBACK',
-      mensagem: 'Dados recuperados da última coleta válida preservada',
+      fonte: "CACHE_FALLBACK",
+      mensagem: "Dados recuperados da última coleta válida preservada",
       dados: ultimaColeta,
     };
   }

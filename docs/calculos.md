@@ -6,27 +6,24 @@
 
 ---
 
-## Situação e limites — 19/10/2026
+## Situação e limites
 
-**Modelo proposto, ainda não implementado ou validado.** O backend atual não calcula energia/CO₂e nem consulta carbono. Os indicadores reais permanecem indisponíveis. Fórmulas, constantes e fallback descritos abaixo são propostas da documentação inicial e não evidência de comportamento existente.
-
-A API atual fornece `cpu_percent`, GB e `collection_interval_seconds`; a proposta abaixo usa millicores/núcleos em alguns trechos. Antes da Sprint 2, reconciliar as unidades e hipóteses de capacidade, documentar a origem dos fatores e validar com o professor. Não converter percentual em millicores sem definir capacidade, nem assumir que o intervalo do agendador é o intervalo medido. O fallback de 85 gCO₂e/kWh também não está implementado/validado e não deve ser apresentado como estimativa real atual.
+O `CalculosService` aplica as fórmulas abaixo às métricas recebidas e persiste os resultados junto à coleta. O período usado no cálculo é `collection_interval_seconds`, retornado pela API de métricas; a frequência configurada no scheduler apenas agenda consultas e não substitui esse período. Se a API não fornecer um intervalo positivo válido, os dados brutos podem ser salvos, mas o cálculo permanece pendente em vez de assumir uma duração.
 
 ## 🎯 1. Objetivo deste Documento
 
-Este documento formaliza as **fórmulas matemáticas**, **unidades de medida**, **fatores de emissão** e **constantes de referência** utilizadas pelo backend do GreenER para converter métricas de telemetria computacional (CPU, memória e tráfego) em estimativas de **consumo energético (kWh)** e **emissões de dióxido de carbono equivalente (gCO₂e e kgCO₂e)**.
+Este documento formaliza as **fórmulas matemáticas**, **unidades de medida**, **fatores de emissão** e **constantes de referência** que o backend do GreenER utilizará para converter métricas de telemetria computacional (CPU, Memória, Disco e Rede) em estimativas de **consumo energético (kWh)** e **emissões de dióxido de carbono equivalente (gCO₂e e kgCO₂e)**.
 
 ---
 
-## 📐 2. Modelo Teórico de Green Computing
+## 📐 2. Modelo Teórico e Constantes
 
-A metodologia adotada pelo GreenER baseia-se nos padrões da iniciativa **Green Software Foundation (SCI — Software Carbon Intensity)** e modelos consolidados como o **Cloud Carbon Footprint (CCF)**.
+O consumo total de um serviço computacional considera a soma da potência de todos os recursos alocados/utilizados, multiplicada pelo tempo de execução. As constantes adotadas seguem a especificação do desafio:
 
-O consumo total de um serviço computacional considera:
-1. **Energia de Processamento (CPU):** Função do uso de núcleos/millicores e potência média por núcleo.
-2. **Energia de Memória RAM:** Proporcional à quantidade de memória alocada e em uso.
-3. **PUE (Power Usage Effectiveness):** Fator multiplicativo da eficiência da infraestrutura do Data Center (energia gasta em refrigeração e perdas elétricas).
-4. **Intensidade de Carbono Regional ($I_{carbon}$):** Gramas de CO₂ emitidas por kWh gerado na matriz elétrica da região do data center.
+- **Memória RAM:** `0.375 W/GB`
+- **Disco (Armazenamento):** `0.01 W/GB`
+- **Rede (Tráfego):** `0.02 W/GB`
+- **Processamento (CPU):** A implementação usa `CPU_MAX = 0.5 W` como premissa explícita de potência máxima e multiplica esse fator pelo percentual de utilização. Esse valor é distinto do fator de RAM e deve ser validado contra a rubrica oficial, que não especifica numericamente `CPU_MAX`.
 
 ---
 
@@ -34,70 +31,56 @@ O consumo total de um serviço computacional considera:
 
 ### 3.1 Estimativa da Potência e Consumo de Energia ($E$)
 
-O consumo de energia por hora de processamento é modelado da seguinte forma:
+A potência total ($P_{total}$) em Watts no momento da coleta é a soma de:
 
-$$P_{serviço} = P_{CPU} + P_{RAM}$$
+$$P_{total} = P_{CPU} + P_{RAM} + P_{Disco} + P_{Rede}$$
 
 Onde:
-- **Potência da CPU ($P_{CPU}$ em Watts):**
-  $$P_{CPU} = P_{idle} + (P_{max} - P_{idle}) \times \left(\frac{CPU_{mcores}}{1000 \times N_{cores}}\right)$$
-  - $P_{idle}$ (Potência em repouso por vCPU): ~**1.5 W**
-  - $P_{max}$ (Potência em carga máxima por vCPU): ~**4.0 W**
-  - $CPU_{mcores}$: Millicores consumidos no momento da medição.
+- **$P_{RAM}$:** $\text{RAM}_{GB} \times 0.375$
+- **$P_{Disco}$:** $\text{Disco}_{GB} \times 0.01$
+- **$P_{Rede}$:** $\text{Rede}_{GB} \times 0.02$
+- **$P_{CPU}$:** Calculado com base no uso percentual em relação ao `CPU_MAX` do servidor.
 
-- **Potência da Memória RAM ($P_{RAM}$ em Watts):**
-  $$P_{RAM} = RAM_{GB} \times C_{RAM}$$
-  - $C_{RAM}$ (Consumo médio por GB): ~**0.38 W/GB**
-  - $RAM_{GB}$: Volume de memória em Gigabytes ($\text{Bytes} / 1024^3$).
+**Consumo Energético ($E$ em kWh):**
+Para um intervalo de coleta $\Delta t$ (em segundos), convertemos o tempo para horas exatas dividindo por 3600, e a potência para kW dividindo por 1000:
 
-- **Consumo Energético Total com PUE ($E_{total}$ em kWh):**
-  Para um intervalo de coleta $\Delta t$ (em segundos):
-  $$E_{total} (\text{kWh}) = \left(\frac{P_{serviço} \times \text{PUE} \times \Delta t}{3600 \times 1000}\right)$$
-  - $\text{PUE}$ (Data Center Eficiência Padrão): **1.2** (valor de referência para data centers modernos em nuvem).
+$$E \text{ (kWh)} = \frac{P_{total} \times \left(\frac{\Delta t}{3600}\right)}{1000}$$
 
 ---
 
 ### 3.2 Estimativa da Emissão de CO₂ Equivalente ($CO_2e$)
 
-A pegada de carbono operacional do serviço é calculada multiplicando a energia gasta pela intensidade de carbono regional obtida da API externa:
+A pegada de carbono operacional do serviço é calculada multiplicando a energia gasta pela intensidade de carbono regional ($I_{carbon}$) fornecida por API externa:
 
-$$Emissão_{CO_2e} (\text{gCO}_2\text{e}) = E_{total} (\text{kWh}) \times I_{carbon} (\text{gCO}_2\text{e/kWh})$$
+$$Emissão_{CO_2e} (\text{gCO}_2\text{e}) = E (\text{kWh}) \times I_{carbon} (\text{gCO}_2\text{e/kWh})$$
 
 Para exibição em quilogramas (kgCO₂e):
 $$Emissão_{CO_2e} (\text{kgCO}_2\text{e}) = \frac{Emissão_{CO_2e} (\text{gCO}_2\text{e})}{1000}$$
 
-> **Nota:** Se a API de Intensidade de Carbono estiver momentaneamente inacessível, o sistema utiliza o fator de emissão médio da matriz elétrica brasileira do SIN (Sistema Interligado Nacional): **~85.0 gCO₂e/kWh** como fallback tolerante a falhas (**RF05**, **RNF05**).
+> **Falha da API:** Se a API de carbono estiver inacessível, a região não mapeada ou a resposta for inválida, a consulta falha explicitamente. O backend não grava a emissão com um fator substituto; a coleta é classificada como falha.
+
+### 3.3 Integração com a API de intensidade de carbono
+
+O backend consulta `GET {CARBON_API_URL}/regions/{region_code}/carbon-intensity`. A resposta fornece o fator em `carbon_intensity_gco2e_per_kwh`; esse fator e a emissão calculada são persistidos na coleta. Se a consulta falhar ou retornar um fator inválido, o erro propaga-se para o monitoramento e a coleta é registrada como falha, sem persistir um resultado ambiental substituto.
 
 ---
 
-## 📊 4. Indicadores Consolidados Agregados (RF08)
+## 🧪 4. Exemplo Numérico de Referência (Validação de Testes)
 
-Para a visão geral do dashboard, o backend computa os seguintes totais:
+Este exemplo será utilizado como *mock* e validação nos testes unitários do `CalculosService` para garantir a ausência de distorções por arredondamento.
 
-1. **Consumo Total de Energia:**
-   $$E_{agregada} = \sum_{i=1}^{N} E_{total}(i)$$
-2. **Emissão Total de Carbono:**
-   $$CO_{2}e_{agregada} = \sum_{i=1}^{N} Emissão_{CO_2e}(i)$$
-3. **Média de Intensidade Energética por Requisição:**
-   $$\text{Eficiência} = \frac{E_{agregada}}{\text{Total de Requisições do Período}}$$
+**Dados de Entrada:**
+- **Potência Total dos Recursos ($P_{total}$):** 50.87 W
+- **Duração do intervalo ($\Delta t$):** 60 segundos (`collection_interval_seconds` retornado pela API)
+- **Intensidade de Carbono local:** 85.0 gCO₂e/kWh
 
----
+**Passo a passo (sem arredondamento prematuro de tempo):**
 
-## 🧪 5. Exemplo Numérico Prático
+1. **Cálculo da Energia ($E$):**
+   $$E = \frac{50.87 \times \left(\frac{60}{3600}\right)}{1000}$$
+   $$E = \frac{50.87 \times 0.0166666666666667}{1000}$$
+   $$E = \mathbf{0.0008478333 \text{ kWh}}$$
 
-Considere um serviço de catálogo com as seguintes métricas coletadas:
-- **CPU:** 800 millicores (0.8 núcleos)
-- **RAM:** 2.048 MB (2.0 GB)
-- **Duração do intervalo ($\Delta t$):** 60 segundos
-- **Intensidade de Carbono local:** 120 gCO₂e/kWh
-
-**Passo a passo:**
-1. **$P_{CPU}$:** $1.5 + (4.0 - 1.5) \times 0.8 = 1.5 + 2.0 = \mathbf{3.5\text{ W}}$
-2. **$P_{RAM}$:** $2.0\text{ GB} \times 0.38\text{ W/GB} = \mathbf{0.76\text{ W}}$
-3. **$P_{serviço}$:** $3.5 + 0.76 = \mathbf{4.26\text{ W}}$
-4. **$E_{total}$ com PUE 1.2:**
-   $$E_{total} = \frac{4.26 \times 1.2 \times 60}{3600 \times 1000} = \frac{306.72}{3\,600\,000} \approx \mathbf{0.0000852\text{ kWh}}$$
-5. **Emissão de $CO_2e$:**
-   $$Emissão = 0.0000852 \times 120 \approx \mathbf{0.01022\text{ gCO}_2\text{e}}$$
-
-Este algoritmo está totalmente isolado no módulo `CalculosService` do NestJS e coberto por testes unitários conforme exigido por **RP04** e **TP04**.
+2. **Cálculo da Emissão ($CO_2e$):**
+   $$Emissão = 0.0008478333 \times 85.0$$
+   $$Emissão = \mathbf{0.0720658 \text{ gCO}_2\text{e}}$$

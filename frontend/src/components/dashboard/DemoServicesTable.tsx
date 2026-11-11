@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import type { DashboardService } from '../../types/dashboard';
+import { formatRegionName, toFiniteNumber } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 import { formatNumber, serviceStatusPresentation } from './demoPresentation';
@@ -9,15 +10,17 @@ function MetricValue({
   unit,
   digits = 2,
 }: {
-  value: number | null;
+  value: number | string | null | undefined;
   unit: string;
   digits?: number;
 }) {
-  return value === null ? (
+  const numericValue = toFiniteNumber(value);
+  return numericValue === null ? (
     <span aria-label="Dado indisponível">—</span>
   ) : (
     <>
-      {formatNumber(value, digits)} <span className="table-unit">{unit}</span>
+      {formatNumber(numericValue, digits)}{' '}
+      <span className="table-unit">{unit}</span>
     </>
   );
 }
@@ -114,7 +117,9 @@ export default function DemoServicesTable({
                   <tr key={service.id}>
                     <th scope="row">
                       <span className="service-name">{service.name}</span>
-                      <span className="service-region">{service.region}</span>
+                      <span className="service-region">
+                        {formatRegionName(service.region)}
+                      </span>
                     </th>
                     <td>
                       <span
@@ -141,13 +146,17 @@ export default function DemoServicesTable({
                       />
                     </td>
                     <td>
-                      <MetricValue value={service.energyKwh} unit="kWh" />
+                      <MetricValue
+                        value={service.energyKwh}
+                        unit="kWh"
+                        digits={4}
+                      />
                     </td>
                     <td>
                       <MetricValue
                         value={service.carbonKg}
                         unit="kgCO₂e"
-                        digits={3}
+                        digits={4}
                       />
                     </td>
                   </tr>

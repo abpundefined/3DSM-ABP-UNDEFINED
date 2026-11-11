@@ -43,16 +43,47 @@ test('preserves POST body and an explicit Accept header', async (t) => {
   );
 });
 
-test('converts HTTP failures to ApiError without exposing the response body', async (t) => {
-  t.mock.method(
-    globalThis,
-    'fetch',
-    async () => new Response('Internal database details', { status: 500 }),
+test('exposes safe client error messages through ApiError', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json(
+      {
+        sucesso: false,
+        statusCode: 401,
+        mensagem: 'Credenciais inválidas.',
+      },
+      { status: 401 },
+    ),
+  );
+  await assert.rejects(apiRequest('/services'), (error) => {
+    assert.ok(error instanceof ApiError);
+    assert.equal(error.status, 401);
+    assert.equal(error.name, 'ApiError');
+    assert.equal(error.message, 'Credenciais inválidas.');
+    return true;
+  });
+});
+
+test('joins validation messages from the backend error format', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json(
+      { message: ['Informe um e-mail válido.', 'Informe a senha.'] },
+      { status: 400 },
+    ),
+  );
+  await assert.rejects(apiRequest('/auth/login'), (error) => {
+    assert.ok(error instanceof ApiError);
+    assert.equal(error.message, 'Informe um e-mail válido. Informe a senha.');
+    return true;
+  });
+});
+
+test('does not expose server error response details', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json({ message: 'Internal database details' }, { status: 500 }),
   );
   await assert.rejects(apiRequest('/services'), (error) => {
     assert.ok(error instanceof ApiError);
     assert.equal(error.status, 500);
-    assert.equal(error.name, 'ApiError');
     assert.equal(error.message.includes('Internal database details'), false);
     return true;
   });

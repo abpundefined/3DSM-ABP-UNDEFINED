@@ -1,0 +1,13 @@
+{
+  "sprint": 3,
+  "baseline_sp": 178,
+  "itens_planejados": 51,
+  "sp_entregues": 0,
+  "itens_entregues": 0,
+  "inicio_real": "2026-11-11",
+  "fim_previsto": "2026-11-23",
+  "data_review": "2026-11-23T19:30:00-03:00",
+  "fuso": "America/Sao_Paulo",
+  "taxa_entrega_percentual": 0.0,
+  "status": "Em andamento — Planejamento registrado em 11/11 com baseline de 178 SP"
+}

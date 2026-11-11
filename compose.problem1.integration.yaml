@@ -5,7 +5,7 @@ services:
     image: postgres:17
     environment:
       POSTGRES_USER: greener_problem1_test
-      POSTGRES_PASSWORD: greener_problem1_only
+      POSTGRES_HOST_AUTH_METHOD: trust
       POSTGRES_DB: greener_problem1_test
     tmpfs:
       - /var/lib/postgresql/data
@@ -28,7 +28,7 @@ services:
     environment:
       NODE_ENV: test
       GREENER_PROBLEM1_INTEGRATION: '1'
-      DATABASE_URL: postgresql://greener_problem1_test:greener_problem1_only@postgres-problem1:5432/greener_problem1_test?schema=public
+      DATABASE_URL: postgresql://greener_problem1_test@postgres-problem1:5432/greener_problem1_test?schema=public
       METRICS_API_URL: https://metrics.example.test
       METRICS_POLL_INTERVAL_MS: '30000'
     command:

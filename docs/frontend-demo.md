@@ -32,7 +32,7 @@ Valores ausentes são `null` e aparecem como **—**, sem se transformar em mét
 
 ## Arquitetura
 
-- `Dashboard.tsx` lê `?demo=1`, mostra o aviso e alterna `DashboardEmpty`/`DashboardDemo`.
+- `Dashboard.tsx` lê `?demo=1`, mostra o aviso e alterna entre o painel conectado (`LiveDashboard`) e a demonstração (`DashboardDemo`).
 - `MetricCard` aceita valor opcional; sem valor conserva o traço do estado vazio, e valores usam formatação brasileira.
 - `components/charts/` concentra evolução, status e ranking; cada gráfico recebe dados por propriedades.
 - `DemoServicesTable` concentra busca e filtro locais. Seus filtros não alteram os totais ou os gráficos gerais.

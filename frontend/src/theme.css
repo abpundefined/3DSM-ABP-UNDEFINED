@@ -49,6 +49,20 @@
   --border: #35443a;
   --surface: #1b261f;
   --soft-green: #293a2e;
+  --login-panel-background: #0f1e16;
+  --login-text: #f3f7f3;
+  --login-muted: #aab9ad;
+  --login-input-background: #1a2e20;
+  --login-input-border: #46564a;
+  --login-lock-background: rgb(20 83 45 / 30%);
+  --login-accent: #8bd49a;
+  --login-button-background: #3a8b4e;
+  --login-button-hover: #317641;
+  --login-button-text: #fff;
+  --login-divider: rgb(255 255 255 / 10%);
+  --login-alert-background: #302b1d;
+  --login-alert-border: #81703d;
+  --login-alert-text: #f0d98f;
 }
 
 :root[data-theme='dark'] body {
@@ -94,11 +108,6 @@
 }
 :root[data-theme='dark'] .login-form-panel {
   background: var(--surface);
-}
-:root[data-theme='dark'] .availability-notice {
-  border-color: #625638;
-  background: #302b1d;
-  color: #e3d5a9;
 }
 :root[data-theme='dark'] .field input {
   border-color: var(--border);

@@ -79,10 +79,11 @@ docker compose up --build
 <ul>
   <li>Frontend: <a href="http://localhost:5173">http://localhost:5173</a>.</li>
   <li>API direta: <a href="http://localhost:3000/servicos">http://localhost:3000/servicos</a>.</li>
+  <li>Swagger da API: <a href="http://localhost:3000/docs">http://localhost:3000/docs</a>.</li>
   <li>API pelo proxy: <a href="http://localhost:5173/api/servicos">http://localhost:5173/api/servicos</a>.</li>
   <li>Demonstração com dados fictícios: <a href="http://localhost:5173/?demo=1">http://localhost:5173/?demo=1</a>.</li>
 </ul>
-<p>A lista e as últimas coletas já são consumidas do backend. Energia/CO₂e reais, autenticação e análises avançadas ainda não estão implementados. O teste completo dos três containers permanece pendente de homologação registrada. Consulte a <a href="./docs/sprints/revisao-sprint-1.md">revisão técnica e seus limites</a>.</p>
+<p>A lista, as últimas coletas e os indicadores agregados já são consumidos do backend. Energia e CO₂e são consolidados a partir das coletas calculadas nas últimas 24 horas; autenticação e análises avançadas ainda não estão implementadas. O teste completo dos três containers permanece pendente de homologação registrada. Consulte a <a href="./docs/sprints/revisao-sprint-1.md">revisão técnica e seus limites</a>.</p>
 <p>Execução nativa exige Node 24.x/npm 11.x e ambiente configurado na pasta do backend; instruções em <a href="./backend/README.md">backend/README.md</a> e <a href="./frontend/README.md">frontend/README.md</a>. As rotas implementadas estão na <a href="./docs/api.md">documentação da API</a>.</p>
 
 <hr>
@@ -325,22 +326,22 @@ docker compose up --build
 
 <h3 id="sprint1">⏱️ Sprint 1 — Descoberta, Coleta de Métricas e Estrutura Base 🥇</h3>
 <h4 id="backlogsprint1">📋 Backlog Sprint 1</h4>
-<p>Baseline preservada: <strong>13 itens e 60 SP</strong>. Situação técnica recomendada após a revisão de 19/10/2026: 8 itens em revisão, 5 com correções pendentes e nenhum Done com aceite comprovado. As colunas do Projects ainda precisam de sincronização por alguém com permissão.</p>
+<p>Baseline preservada: <strong>13 itens e 60 SP</strong>. Os 13 itens foram fechados no GitHub em 20/10/2026. As pendências técnicas apontadas na revisão de 19/10 (localização, distinção 404/5xx, timeout, sobreposição de ciclos) foram tratadas na Sprint 2.</p>
 <table>
-<tr><th>Issue</th><th>Item</th><th>SP</th><th>Situação técnica recomendada</th></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/1">#1</a></td><td>[PBI-01] Descoberta automática de serviços</td><td>5</td><td>In progress</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/2">#2</a></td><td>[PBI-02] Monitoramento dinâmico de serviços</td><td>8</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/3">#3</a></td><td>[PBI-03] Coleta periódica de métricas</td><td>5</td><td>In progress</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/4">#4</a></td><td>[PBI-04] Detecção de serviço indisponível</td><td>3</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/5">#5</a></td><td>[PBI-05] Detecção de ausência de métricas</td><td>3</td><td>In progress</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/9">#9</a></td><td>[PBI-09] Histórico de coletas</td><td>5</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/18">#18</a></td><td>[PBI-18] Tolerância a falhas</td><td>5</td><td>In progress</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/22">#22</a></td><td>[PBI-22] Setup Docker Compose</td><td>5</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/23">#23</a></td><td>[PBI-23] Protótipos e avaliação de usabilidade (IHC)</td><td>8</td><td>In progress</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/24">#24</a></td><td>[TASK] Setup da estrutura base do backend NestJS com TypeScript</td><td>3</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/25">#25</a></td><td>[TASK] Setup da estrutura base do frontend React com TypeScript e Vite</td><td>3</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/26">#26</a></td><td>[TASK] Configuração de variáveis de ambiente e segurança (.env.example)</td><td>2</td><td>In review</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/27">#27</a></td><td>[TASK] Modelagem relacional e migrações PostgreSQL via ORM</td><td>5</td><td>In review</td></tr>
+<tr><th>Issue</th><th>Item</th><th>SP</th><th>Situação</th></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/1">#1</a></td><td>[PBI-01] Descoberta automática de serviços</td><td>5</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/2">#2</a></td><td>[PBI-02] Monitoramento dinâmico de serviços</td><td>8</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/3">#3</a></td><td>[PBI-03] Coleta periódica de métricas</td><td>5</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/4">#4</a></td><td>[PBI-04] Detecção de serviço indisponível</td><td>3</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/5">#5</a></td><td>[PBI-05] Detecção de ausência de métricas</td><td>3</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/9">#9</a></td><td>[PBI-09] Histórico de coletas</td><td>5</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/18">#18</a></td><td>[PBI-18] Tolerância a falhas</td><td>5</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/22">#22</a></td><td>[PBI-22] Setup Docker Compose</td><td>5</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/23">#23</a></td><td>[PBI-23] Protótipos e avaliação de usabilidade (IHC)</td><td>8</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/24">#24</a></td><td>[TASK] Setup da estrutura base do backend NestJS com TypeScript</td><td>3</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/25">#25</a></td><td>[TASK] Setup da estrutura base do frontend React com TypeScript e Vite</td><td>3</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/26">#26</a></td><td>[TASK] Configuração de variáveis de ambiente e segurança (.env.example)</td><td>2</td><td>Fechada em 20/10</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/27">#27</a></td><td>[TASK] Modelagem relacional e migrações PostgreSQL via ORM</td><td>5</td><td>Fechada em 20/10</td></tr>
 </table>
 <p><a href="./docs/sprints/sprint-1.md">Registro da sprint e contribuições</a> · <a href="./docs/sprints/revisao-sprint-1.md">Evidências e pendências por item</a>.</p>
 <h4 id="burndownsprint1">📉 Burndown Sprint 1</h4>
@@ -355,17 +356,39 @@ docker compose up --build
 
 <h3 id="sprint2">⏱️ Sprint 2 — Cálculos Ambientais, Dashboard e Autenticação 🥈</h3>
 <h4 id="backlogsprint2">📋 Backlog Sprint 2</h4>
-<p>Planejamento futuro: consulte <a href="./docs/sprints/sprint-2.md">Sprint 2</a> e <a href="./docs/sprints/sprint-3.md">Sprint 3</a> para os candidatos com IDs e pontos reconciliados. A seleção depende da capacidade de cada ciclo.</p>
+<p>Baseline estabelecida: <strong>10 itens e 63 SP</strong>. Situação ao encerramento do desenvolvimento: 10 itens concluídos (63 SP). Taxa de entrega de <strong>100%</strong> dos Story Points planejados.</p>
+<table>
+<tr><th>Issue</th><th>Item</th><th>SP</th><th>Situação</th></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/6">#6</a></td><td>[PBI-06] Cálculo individual de consumo e emissão</td><td>8</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/7">#7</a></td><td>[PBI-07] Indicadores agregados</td><td>5</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/8">#8</a></td><td>[PBI-08] Dashboard operacional</td><td>13</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/10">#10</a></td><td>[PBI-10] Atualização automática do dashboard</td><td>5</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/11">#11</a></td><td>[PBI-11] Localização dos serviços</td><td>3</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/15">#15</a></td><td>[PBI-15] Autenticação JWT</td><td>8</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16">#16</a></td><td>[PBI-16] Interface responsiva e acessível</td><td>5</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/17">#17</a></td><td>[PBI-17] Exibição de intervalos e timestamps</td><td>3</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/19">#19</a></td><td>[PBI-19] Segurança</td><td>5</td><td>Done</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/20">#20</a></td><td>[PBI-20] Testes unitários</td><td>8</td><td>Done</td></tr>
+</table>
+<p><a href="./docs/sprints/sprint-2.md">Registro da sprint e contribuições</a> · <a href="./docs/burndown-sprint-2.md">Métricas e evolução do burndown</a>.</p>
 <h4 id="burndownsprint2">📉 Burndown Sprint 2</h4>
-<p><em>A definir.</em></p>
+<p align="center">
+  <img
+    src="./docs/GreenER_Burndown_Sprint2.png"
+    alt="Burndown da Sprint 2"
+    width="850"
+  >
+</p>
 
 <hr>
 
-<h3 id="sprint3">⏱️ Sprint 3 — Ranking, Comparações, IHC e Finalização 🥉</h3>
+<h3 id="sprint3">⏱️ Sprint 3 — Análises Avançadas, Usabilidade, Consolidação e Feira 🥉</h3>
 <h4 id="backlogsprint3">📋 Backlog Sprint 3</h4>
-<p>Planejamento futuro: consulte <a href="./docs/sprints/sprint-2.md">Sprint 2</a> e <a href="./docs/sprints/sprint-3.md">Sprint 3</a> para os candidatos com IDs e pontos reconciliados. A seleção depende da capacidade de cada ciclo.</p>
+<p>Baseline estabelecida em <strong>11/11/2026</strong>: <strong>51 itens comprometidos totalizando 178 Story Points (SP)</strong>, além de 8 PBIs guarda-chuva decompostas em tarefas e 10 itens no backlog de reserva/opcional (29 SP). Consulte o planejamento detalhado em <a href="./docs/sprints/sprint-3.md">docs/sprints/sprint-3.md</a> e o acompanhamento métrico em <a href="./docs/burndown-sprint-3.md">docs/burndown-sprint-3.md</a>.</p>
 <h4 id="burndownsprint3">📉 Burndown Sprint 3</h4>
-<p><em>A definir.</em></p>
+<p align="center">
+    <img src="./docs/GreenER_Burndown_Sprint3.png" alt="Burndown Sprint 3" width="700">
+</p>
 
 <hr>
 

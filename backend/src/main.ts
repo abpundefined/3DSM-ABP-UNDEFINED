@@ -1,7 +1,8 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { NestFactory } from "@nestjs/core";
+import { Logger, ValidationPipe } from "@nestjs/common";
+import { AppModule } from "./app.module";
+import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { configurarSwagger } from "./swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,8 +18,18 @@ async function bootstrap() {
   );
 
   app.enableCors();
+  app.enableShutdownHooks();
+
+  configurarSwagger(app);
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 }
-bootstrap();
+void bootstrap().catch((error: unknown) => {
+  const logger = new Logger("Bootstrap");
+  logger.error(
+    "Falha ao iniciar a aplicação.",
+    error instanceof Error ? error.stack : String(error),
+  );
+  process.exitCode = 1;
+});

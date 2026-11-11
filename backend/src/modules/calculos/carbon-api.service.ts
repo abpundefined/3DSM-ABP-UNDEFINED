@@ -1,0 +1,58 @@
+import { Injectable, Logger } from "@nestjs/common";
+import { comTimeout } from "../../common/utils/com-timeout";
+
+const CARBON_FETCH_TIMEOUT_MS = 8000;
+
+interface CarbonApiResponse {
+  carbon_intensity_gco2e_per_kwh: number;
+}
+
+@Injectable()
+export class CarbonApiService {
+  private readonly logger = new Logger(CarbonApiService.name);
+  private readonly apiUrl = process.env.CARBON_API_URL;
+
+  async obterIntensidadeCarbono(regionCode: string): Promise<number> {
+    try {
+      if (!this.apiUrl) {
+        throw new Error("CARBON_API_URL não configurada.");
+      }
+
+      const baseUrl = this.apiUrl.replace(/\/+$/, "");
+      const encodedRegionCode = encodeURIComponent(regionCode);
+      const data = await comTimeout(
+        CARBON_FETCH_TIMEOUT_MS,
+        "a API de intensidade de carbono",
+        async (signal) => {
+          const response = await fetch(
+            `${baseUrl}/regions/${encodedRegionCode}/carbon-intensity`,
+            { signal },
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP Status ${response.status}`);
+          }
+
+          return (await response.json()) as CarbonApiResponse;
+        },
+      );
+      const intensity = data.carbon_intensity_gco2e_per_kwh;
+      if (!Number.isFinite(intensity) || intensity < 0) {
+        throw new Error("Resposta inválida da API de intensidade de carbono.");
+      }
+
+      return intensity;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Erro desconhecido";
+
+      this.logger.error(
+        `Falha ao buscar intensidade de carbono para ${regionCode}.`,
+        errorMessage,
+      );
+      throw new Error(
+        `Falha ao buscar intensidade de carbono para ${regionCode}: ${errorMessage}`,
+      );
+    }
+  }
+}
