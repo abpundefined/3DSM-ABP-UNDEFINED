@@ -382,11 +382,13 @@ docker compose up --build
 
 <hr>
 
-<h3 id="sprint3">⏱️ Sprint 3 — Ranking, Comparações, IHC e Finalização 🥉</h3>
+<h3 id="sprint3">⏱️ Sprint 3 — Análises Avançadas, Usabilidade, Consolidação e Feira 🥉</h3>
 <h4 id="backlogsprint3">📋 Backlog Sprint 3</h4>
-<p>Planejamento futuro: consulte <a href="./docs/sprints/sprint-2.md">Sprint 2</a> e <a href="./docs/sprints/sprint-3.md">Sprint 3</a> para os candidatos com IDs e pontos reconciliados. A seleção depende da capacidade de cada ciclo.</p>
+<p>Baseline estabelecida em <strong>11/11/2026</strong>: <strong>51 itens comprometidos totalizando 178 Story Points (SP)</strong>, além de 8 PBIs guarda-chuva decompostas em tarefas e 10 itens no backlog de reserva/opcional (29 SP). Consulte o planejamento detalhado em <a href="./docs/sprints/sprint-3.md">docs/sprints/sprint-3.md</a> e o acompanhamento métrico em <a href="./docs/burndown-sprint-3.md">docs/burndown-sprint-3.md</a>.</p>
 <h4 id="burndownsprint3">📉 Burndown Sprint 3</h4>
-<p><em>A definir.</em></p>
+<p align="center">
+    <img src="./docs/GreenER_Burndown_Sprint3.png" alt="Burndown Sprint 3" width="700">
+</p>
 
 <hr>
 
