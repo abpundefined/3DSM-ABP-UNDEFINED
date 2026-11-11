@@ -86,11 +86,11 @@ Conferida em 09/11/2026. A situação descreve a entrega; a avaliação dos crit
 | Código | Requisito relacionado | Entrega concreta | Como verificar | Responsáveis | Evidência no GitHub | Situação |
 | --- | --- | --- | --- | --- | --- | --- |
 | GA01 | Gestão ágil | Backlog com PBIs, critérios e prioridades nas issues. | Conferir as issues e os épicos E01–E06. | PO | Issues #1–#37 | Mantido |
-| GA02 | Gestão ágil | Itens da sprint, responsáveis e SP registrados. | Conferir a tabela de itens do registro da sprint. | PO, SM | [Sprint 2](sprints/sprint-2.md) | Concluído (63 SP planejados, 58 SP entregues) |
+| GA02 | Gestão ágil | Itens da sprint, responsáveis e SP registrados. | Conferir a tabela de itens do registro da sprint. | PO, SM | [Sprint 2](sprints/sprint-2.md) | Concluído (63 SP planejados, 63 SP entregues) |
 | GA03 | Gestão ágil | Critérios de aceite verificáveis em cada issue. | Abrir as issues da sprint e conferir os critérios. | PO, equipe | Issues #6–#20 | Concluído |
 | GA04 | Gestão ágil | Issues vinculadas aos PRs que as entregam. | Conferir os vínculos entre issues e PRs. | Equipe | [Sprint 2](sprints/sprint-2.md) | Concluído |
 | GA05 | Gestão ágil | Entregas em PRs pequenos por funcionalidade. | Conferir o histórico de PRs da sprint. | Equipe | [#51](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/51), [#68](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/68) | Concluído; concentração dos merges entre 07 e 09/11 registrada |
-| GA06 | Gestão ágil | Sprint Review e retrospectiva com ações. | Conferir as seções de review e retrospectiva. | PO, SM | [Sprint 2](sprints/sprint-2.md) | A registrar após 10/11 |
+| GA06 | Gestão ágil | Sprint Review e retrospectiva com ações. | Conferir as seções de review e retrospectiva. | PO, SM | [Sprint 2](sprints/sprint-2.md) | Concluído: Review e retrospectiva registradas após 10/11 |
 | GA07 | Gestão ágil | DoD aplicada: revisão por outro integrante, CI verde, testes e cobertura mínima. | Conferir as aprovações e os checks dos PRs. | Equipe | [DoD](definicao-de-pronto.md) | Concluído |
 | GA08 | Gestão ágil | README, registro da sprint, API e execução atualizados. | Seguir as instruções do registro da sprint. | Equipe | [Sprint 2](sprints/sprint-2.md), [API](api.md) | Concluído |
 | GA09 | Gestão ágil | Participação dos seis integrantes com evidências. | Conferir a tabela de participação. | Todos | [Sprint 2](sprints/sprint-2.md#participação-verificada-na-develop-sprint-2--critério-ga09) | Concluído |
