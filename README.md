@@ -365,7 +365,7 @@ docker compose up --build
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/10">#10</a></td><td>[PBI-10] Atualização automática do dashboard</td><td>5</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/11">#11</a></td><td>[PBI-11] Localização dos serviços</td><td>3</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/15">#15</a></td><td>[PBI-15] Autenticação JWT</td><td>8</td><td>Done</td></tr>
-<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16">#16</a></td><td>[PBI-16] Interface responsiva e acessível</td><td>5</td><td>Fechada em 09/11</td></tr>
+<tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16">#16</a></td><td>[PBI-16] Interface responsiva e acessível</td><td>5</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/17">#17</a></td><td>[PBI-17] Exibição de intervalos e timestamps</td><td>3</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/19">#19</a></td><td>[PBI-19] Segurança</td><td>5</td><td>Done</td></tr>
 <tr><td><a href="https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/20">#20</a></td><td>[PBI-20] Testes unitários</td><td>8</td><td>Done</td></tr>

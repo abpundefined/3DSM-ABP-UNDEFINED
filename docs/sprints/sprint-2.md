@@ -134,8 +134,8 @@ As contribuições e revisões de código de cada integrante foram verificadas d
 | **Marcus Nascimento** | Desenvolvedor Backend / DevOps | **Implementação:** Cálculo de energia/CO₂e e integração com a API de carbono (commits `2c115d1`, `cdc454a`, `347ff63`, `27c25b9`).<br>**PRs entregues:** [#53](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/53) (documentação de cálculos), [#54](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/54) (testes com dados reais), [#59](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/59) (correção de numeração da Sprint 2), [#60](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/60) (tela de login), [#71](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/71) (start:prod corrigido, lint sem --fix e lint no CI).<br>**Revisões em:** [#55](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/55), [#56](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/56), [#57](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/57), [#58](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/58), [#61](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/61), [#64](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/64), [#66](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/66), [#68](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/68). |
 | **Pedro Gomes** | Desenvolvedor Backend | **PRs entregues:** [#62](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/62) (indicadores no frontend e Swagger), [#76](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/76) (monitoramento aplica configuração salva - RF16).<br>**Commits:** `76cbe75` (totais de indicadores), `175858f` (docs indicadores), `527b1d7` (Swagger). |
 | **Nadla Ferreira** | Desenvolvedora Frontend | **PRs entregues:** [#51](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/51) (detecção de indisponível), [#67](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/67) (intervalos e timestamps), [#74](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/74) (remoção de código morto e format:check no CI), [#75](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/75) (AuthContext/AuthProvider e opção "Sair" no cabeçalho).<br>**Commits:** `d9ed96a` (evidências do PBI-04), `5f81425` (intervalos e timestamps no dashboard). |
-| **Thales Cambraia** | Scrum Master / Frontend | **PRs entregues:** [#63](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/63) (documentação de IHC e protótipos), [#77](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/77) (evidências de layout responsivo a 1920px e 375px e fechamento da issue [#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16)).<br>**Commits:** `5edc4d7`, `069fcb3`, `794d08f`, `25828f6` (revisão de IHC, protótipos e layout responsivo). Organização do backlog no Projects. |
-| **Rainan Reis** | Product Owner / Fullstack | **PRs entregues:** [#52](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/52) (reconciliação de status de issues para Done no review da Sprint 1), [#72](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/72) e PR final de documentação e fechamento da Sprint 2. Gestão e priorização contínua do backlog. |
+| **Thales Cambraia** | Scrum Master / Frontend | **PRs entregues:** [#63](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/63) (documentação de IHC e protótipos), [#77](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/77) (layout responsivo a 1920px e 375px e evidências da issue [#16](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/16)).<br>**Commits:** `5edc4d7`, `069fcb3`, `794d08f`, `25828f6`, `b0ca8ef` (revisão de IHC, protótipos e layout responsivo). Organização do backlog no Projects. |
+| **Rainan Reis** | Product Owner / Fullstack | **PRs entregues:** [#52](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/52) (reconciliação de status de issues para Done no review da Sprint 1), [#72](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/72) e [#82](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/82) (documentação e fechamento da Sprint 2). Gestão e priorização contínua do backlog. |
 
 ---
 
@@ -151,32 +151,31 @@ As contribuições e revisões de código de cada integrante foram verificadas d
 
 ---
 
-## 📊 Sprint Review — Registro a Concluir com Fatos
+## 📊 Sprint Review
 
-> **Situação:** A registrar pelo PO e equipe após a apresentação oficial da Sprint 2 agendada para **terça-feira, 10/11/2026, às 19h30**. Não antecipar aprovação ou feedback antes da realização da cerimônia com o corpo docente e cliente.
-
-| Campo | Registro Necessário |
+| Campo | Registro |
 | :--- | :--- |
-| **Data, horário e participantes** | Agendada para 10/11/2026 às 19h30 com a equipe (Rainan Reis, Thales Cambraia, Marcus Nascimento, Israel Lemes, Pedro Gomes, Nadla Ferreira) e docentes avaliadores. |
-| **Versão demonstrada** | Commit de consolidação da Sprint 2 na branch `develop` (identificada pela tag planejada `sprint-2`). |
-| **Entregas demonstradas** | A registrar após a apresentação: demonstração das funcionalidades entregues no ciclo. |
-| **Feedback recebido** | Registrar o retorno real de docentes, cliente e PO. |
-| **Aceites e pendências** | Registrar a decisão formal por funcionalidade, homologação e transição das pendências para o backlog da Sprint 3. |
+| **Data, horário e participantes** | Realizada em **10/11/2026 às 19h30**, com apresentação do projeto ao cliente e participação da equipe (Rainan Reis, Thales Cambraia, Marcus Nascimento, Israel Lemes, Pedro Gomes e Nadla Ferreira) e professores da disciplina. |
+| **Versão demonstrada** | Consolidação da Sprint 2 na branch `develop` (commit `8326f79`, tag planejada `sprint-2`), acompanhada de vídeo demonstrativo da aplicação. |
+| **Entregas demonstradas** | Motor de cálculo energético (kWh) e emissão de CO₂e integrado à API de Intensidade de Carbono, indicadores consolidados, dashboard operacional responsivo (1920px e 375px) com cards individuais por serviço, localização geográfica, intervalos/timestamps, atualização automática e autenticação JWT. |
+| **Feedback recebido** | A apresentação teve recepção muito positiva por parte do cliente, com destaque especial para o vídeo demonstrativo — em particular no trecho em que é feito zoom no globo. Como pontos de atenção e evolução, o cliente ressaltou a importância de o sistema manter sua operação e disponibilidade mesmo diante de falhas nas APIs externas e comentou sobre a periodização das análises. |
+| **Aceites e pendências** | Apresentação concluída perante o cliente (notas formais das entregas da Sprint 2 ainda não divulgadas pelos docentes). As pendências listadas na seção anterior e a demanda de periodização das análises foram encaminhadas para o backlog da Sprint 3. |
 
 ---
 
-## 🔄 Retrospectiva e Ações de Melhoria — A Registrar com a Equipe
+## 🔄 Retrospectiva e Ações de Melhoria
 
-> **Situação:** Reunião de retrospectiva a ser realizada após a Sprint Review de 10/11/2026 pelo Scrum Master Thales Cambraia junto à equipe e ao PO Rainan Reis.
+Reunião realizada no grupo após a Sprint Review de **10/11/2026** (com o Scrum Master Thales Cambraia, o PO Rainan Reis e demais integrantes), consolidando os aprendizados da Sprint 2 e definindo o plano de prioridades, ordem de execução e backlog da Sprint 3:
 
-### Pontos em Pauta para Discussão na Cerimônia
+### Principais Pontos Levantados
 - **Concentração de merges no final do ciclo:** Grande parte dos PRs foi integrada entre 07/11 e 09/11, gerando sobrecarga nas revisões e validações finais;
-- **Commits diretos na develop antes do CI:** Ocorrência de commits diretos na branch `develop` antes da consolidação do workflow de CI e proteções de branch;
-- **Resiliência de integrações externas:** Implementação de timeouts e tratamento de falhas decorrente do apontamento da Sprint 1;
-- **Fluxo com GitHub Actions:** Avaliação da eficácia da esteira de CI iniciada no PR #55 para garantir estabilidade contínua.
+- **Commits diretos na `develop` antes do CI:** Ocorrência de commits diretos no início da sprint antes da consolidação do workflow de CI e revisões obrigatórias;
+- **Resiliência de integrações externas:** Implementação de timeouts e tratamento de falhas decorrente do apontamento da Sprint 1 e reforçada pelo feedback do cliente na Review;
+- **Organização do próximo ciclo:** Necessidade de ordenar claramente dependências entre backend e frontend para viabilizar o escopo maior da Sprint 3.
 
-### Ações de Melhoria (A Validar e Consolidar após a Reunião)
-| Proposta de Ação | Responsável Proposto | Aplicação Planejada |
+### Ações de Melhoria Definidas
+| Ação Definida | Responsável | Aplicação |
 | :--- | :--- | :--- |
-| **1. Distribuição contínua de PRs:** Submeter e revisar pull requests ao longo de toda a sprint, evitando acúmulo nas últimas 48h. | Thales Cambraia (SM) e equipe | Sprint 3 |
-| **2. Paginação do GET /coletas e extração de um repository para ServicosService:** Otimizar consultas de coletas e desacoplar o serviço de regras de serviços da camada do Prisma. | Marcus Nascimento e Israel Lemes | Sprint 3 |
+| **1. Plano de prioridades, ordem e backlog da Sprint 3:** Definição de prioridades (P0 → P1 → P2 → P3), pontos de controle intermediários e ordem de corte em 18/11, com divisão balanceada das tarefas entre os 6 integrantes. | Thales Cambraia (SM), Rainan Reis (PO) e equipe | Sprint 3 |
+| **2. Distribuição contínua de PRs pequenos:** Submeter PRs pequenos (~300 linhas, uma issue por PR) ao longo de toda a sprint (a cada 1 ou 2 dias), evitando acúmulo nas últimas 48h e respeitando CI e code review obrigatórios. | Toda a equipe | Sprint 3 |
+| **3. Paginação do `GET /coletas` e extração de um repository para `ServicosService`:** Otimizar consultas de coletas e desacoplar o serviço de serviços da camada do Prisma logo na sequência base da Sprint 3. | Pedro Gomes ([#79](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/79) e [#80](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/80)) | Sprint 3 |
