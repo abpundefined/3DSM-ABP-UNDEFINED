@@ -22,6 +22,40 @@ describe("PeriodoDto", () => {
     const errors = await validar({ periodo: "365d" });
 
     expect(errors.map((error) => error.property)).toContain("periodo");
+    expect(errors[0].constraints?.isEnum).toContain(
+      "periodo deve ser 24h, 7d, 30d, mes-atual ou mes-anterior.",
+    );
+  });
+
+  it.each([
+    [
+      { periodo: "24h", inicio: "2026-01-01T00:00:00Z" },
+      "Não combine periodo com inicio ou fim.",
+    ],
+    [
+      { inicio: "2026-01-01T00:00:00Z" },
+      "Informe inicio e fim para um período customizado.",
+    ],
+    [
+      { inicio: "2026-01-01T00:00:00", fim: "2026-01-02T00:00:00Z" },
+      "inicio e fim devem incluir Z ou um offset de fuso horário.",
+    ],
+    [
+      { inicio: "2026-01-02T00:00:00Z", fim: "2026-01-02T00:00:00Z" },
+      "inicio deve ser anterior a fim.",
+    ],
+    [
+      {
+        inicio: "2026-01-01T00:00:00.000Z",
+        fim: "2026-04-01T00:00:00.001Z",
+      },
+      "O intervalo entre inicio e fim não pode exceder 90 dias.",
+    ],
+  ])("informa o motivo do intervalo inválido: %o", async (value, message) => {
+    const errors = await validar(value);
+    const messages = Object.values(errors[0].constraints ?? {});
+
+    expect(messages).toContain(message);
   });
 
   it.each([

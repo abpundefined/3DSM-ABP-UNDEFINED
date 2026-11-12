@@ -13,7 +13,9 @@ export enum PeriodoPredefinido {
 export class PeriodoDto {
   @ApiPropertyOptional({ enum: PeriodoPredefinido })
   @IsOptional()
-  @IsEnum(PeriodoPredefinido)
+  @IsEnum(PeriodoPredefinido, {
+    message: "periodo deve ser 24h, 7d, 30d, mes-atual ou mes-anterior.",
+  })
   periodo?: PeriodoPredefinido;
 
   @ApiPropertyOptional({

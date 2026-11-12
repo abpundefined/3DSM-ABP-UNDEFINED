@@ -1,13 +1,11 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { subMilliseconds } from "date-fns";
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
+import { intervaloMesCalendarioAnterior } from "./date-conversion.helper";
+import { PeriodoPredefinido } from "./dto/periodo.dto";
 import {
   ContagemPorEstado,
   IndicadoresRepository,
 } from "./indicadores.repository";
-
-const TIME_ZONE = "America/Sao_Paulo";
 
 export interface ResumoServicos {
   monitorados: number;
@@ -45,7 +43,7 @@ export class IndicadoresService {
   async obter(
     inicio: Date,
     fim: Date,
-    tipoPeriodo?: string,
+    tipoPeriodo?: PeriodoPredefinido,
   ): Promise<IndicadoresConsolidados> {
     const geradoEm = new Date();
 
@@ -58,8 +56,8 @@ export class IndicadoresService {
     }
 
     const periodoComparacao =
-      tipoPeriodo === "mes-anterior"
-        ? this.intervaloMesComparacao(inicio)
+      tipoPeriodo === PeriodoPredefinido.MES_ANTERIOR
+        ? intervaloMesCalendarioAnterior(inicio)
         : null;
 
     const [totais, contagens, ultimaColetaEm, totaisComparacao] =
@@ -103,25 +101,6 @@ export class IndicadoresService {
       servicos: this.resumirServicos(contagens),
       ultimaColetaEm,
       geradoEm,
-    };
-  }
-
-  private intervaloMesComparacao(inicio: Date): { inicio: Date; fim: Date } {
-    const mesSelecionado = formatInTimeZone(inicio, TIME_ZONE, "yyyy-MM");
-    const [anoSelecionado, numeroMesSelecionado] = mesSelecionado
-      .split("-")
-      .map(Number);
-    const anoComparacao =
-      numeroMesSelecionado === 1 ? anoSelecionado - 1 : anoSelecionado;
-    const numeroMesComparacao =
-      numeroMesSelecionado === 1 ? 12 : numeroMesSelecionado - 1;
-    const mesComparacao = `${anoComparacao.toString().padStart(4, "0")}-${numeroMesComparacao
-      .toString()
-      .padStart(2, "0")}`;
-
-    return {
-      inicio: fromZonedTime(`${mesComparacao}-01T00:00:00.000`, TIME_ZONE),
-      fim: subMilliseconds(inicio, 1),
     };
   }
 

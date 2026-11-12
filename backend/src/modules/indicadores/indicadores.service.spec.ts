@@ -3,6 +3,7 @@ jest.mock("../../database/prisma.service", () => ({
 }));
 
 import { BadRequestException } from "@nestjs/common";
+import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
 import { IndicadoresService } from "./indicadores.service";
 
@@ -148,7 +149,11 @@ describe("IndicadoresService", () => {
 
     const inicio = new Date("2026-10-01T03:00:00.000Z");
     const fim = new Date("2026-11-01T02:59:59.999Z");
-    const indicadores = await service.obter(inicio, fim, "mes-anterior");
+    const indicadores = await service.obter(
+      inicio,
+      fim,
+      PeriodoPredefinido.MES_ANTERIOR,
+    );
 
     expect(repository.somarImpactoNoPeriodo).toHaveBeenNthCalledWith(
       1,
@@ -164,6 +169,39 @@ describe("IndicadoresService", () => {
       energiaTotalKwh: { absoluta: 30, percentual: null },
       emissaoTotalGCo2e: { absoluta: 0, percentual: 0 },
       coletasCalculadas: { absoluta: 3, percentual: 100 },
+    });
+  });
+
+  it("compara janeiro com o mês de dezembro do ano anterior", async () => {
+    repository.somarImpactoNoPeriodo
+      .mockReset()
+      .mockResolvedValueOnce({
+        energiaKwh: 10,
+        emissaoGCo2e: 20,
+        coletasCalculadas: 2,
+      })
+      .mockResolvedValueOnce({
+        energiaKwh: 5,
+        emissaoGCo2e: 10,
+        coletasCalculadas: 1,
+      });
+
+    const inicio = new Date("2026-01-01T03:00:00.000Z");
+    const fim = new Date("2026-02-01T02:59:59.999Z");
+    const indicadores = await service.obter(
+      inicio,
+      fim,
+      PeriodoPredefinido.MES_ANTERIOR,
+    );
+
+    expect(repository.somarImpactoNoPeriodo).toHaveBeenNthCalledWith(
+      2,
+      new Date("2025-12-01T03:00:00.000Z"),
+      new Date("2026-01-01T02:59:59.999Z"),
+    );
+    expect(indicadores.variacao?.coletasCalculadas).toEqual({
+      absoluta: 1,
+      percentual: 100,
     });
   });
 

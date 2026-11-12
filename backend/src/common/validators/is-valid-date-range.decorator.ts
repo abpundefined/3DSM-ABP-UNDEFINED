@@ -56,16 +56,56 @@ class IsValidDateRangeConstraint implements ValidatorConstraintInterface {
     );
   }
 
-  defaultMessage(): string {
-    return "Informe um período predefinido ou um intervalo ISO 8601 válido, com início anterior ao fim e duração máxima de 90 dias.";
+  defaultMessage(args: ValidationArguments): string {
+    const { periodo, inicio, fim } = args.object as DateRangeQuery;
+
+    if (periodo === null) {
+      return "periodo deve ser um período predefinido válido.";
+    }
+
+    if (periodo !== undefined) {
+      return "Não combine periodo com inicio ou fim.";
+    }
+
+    if ((inicio === undefined) !== (fim === undefined)) {
+      return "Informe inicio e fim para um período customizado.";
+    }
+
+    if (inicio === undefined && fim === undefined) {
+      return "Informe um período predefinido válido.";
+    }
+
+    if (!this.isIsoDate(inicio) || !this.isIsoDate(fim)) {
+      return "inicio e fim devem ser datas válidas em ISO 8601.";
+    }
+
+    if (!this.hasTimezone(inicio) || !this.hasTimezone(fim)) {
+      return "inicio e fim devem incluir Z ou um offset de fuso horário.";
+    }
+
+    const intervalMilliseconds =
+      new Date(fim).getTime() - new Date(inicio).getTime();
+
+    if (intervalMilliseconds <= 0) {
+      return "inicio deve ser anterior a fim.";
+    }
+
+    return "O intervalo entre inicio e fim não pode exceder 90 dias.";
   }
 
   private isAbsoluteIsoDate(value: unknown): value is string {
+    return this.isIsoDate(value) && this.hasTimezone(value);
+  }
+
+  private isIsoDate(value: unknown): value is string {
     return (
       typeof value === "string" &&
-      isDateString(value, { strict: true, strictSeparator: true }) &&
-      ISO_8601_TIMEZONE_SUFFIX.test(value)
+      isDateString(value, { strict: true, strictSeparator: true })
     );
+  }
+
+  private hasTimezone(value: string): boolean {
+    return ISO_8601_TIMEZONE_SUFFIX.test(value);
   }
 }
 

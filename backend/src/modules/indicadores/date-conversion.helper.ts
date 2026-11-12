@@ -27,7 +27,7 @@ export function converterPeriodo(dto: PeriodoDto): IntervaloIndicadores {
         fim: agora,
       };
     case PeriodoPredefinido.MES_ANTERIOR:
-      return intervaloMesAnterior(agora);
+      return intervaloMesCalendarioAnterior(agora);
     case undefined:
       return intervaloCustomizadoOuPadrao(dto, agora);
     default:
@@ -72,8 +72,10 @@ function inicioDoMes(data: Date): Date {
   return fromZonedTime(`${mesAtual}-01T00:00:00.000`, TIME_ZONE);
 }
 
-function intervaloMesAnterior(agora: Date): IntervaloIndicadores {
-  const mesAtual = formatInTimeZone(agora, TIME_ZONE, "yyyy-MM");
+export function intervaloMesCalendarioAnterior(
+  data: Date,
+): IntervaloIndicadores {
+  const mesAtual = formatInTimeZone(data, TIME_ZONE, "yyyy-MM");
   const [anoAtual, numeroMesAtual] = mesAtual.split("-").map(Number);
   const anoAnterior = numeroMesAtual === 1 ? anoAtual - 1 : anoAtual;
   const numeroMesAnterior = numeroMesAtual === 1 ? 12 : numeroMesAtual - 1;
