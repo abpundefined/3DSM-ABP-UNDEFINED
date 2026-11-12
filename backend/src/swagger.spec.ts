@@ -126,8 +126,9 @@ describe("Swagger", () => {
     }
     expect(document.paths["/indicadores"].get.parameters).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: "dataInicio" }),
-        expect.objectContaining({ name: "dataFim" }),
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
       ]),
     );
     expect(document.components.schemas.LoginDto.required).toEqual(

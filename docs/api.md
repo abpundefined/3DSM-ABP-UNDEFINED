@@ -144,7 +144,17 @@ O objeto `dados` contém os demais campos do modelo `Coleta`, omitidos no exempl
 
 ## Indicadores consolidados
 
-`GET /indicadores` retorna o consumo energético e a emissão total das coletas com `estadoCalculo = CONCLUIDO` no intervalo informado. Sem datas, considera as últimas 24 horas. `dataInicio` e `dataFim` são opcionais, aceitam datas ISO 8601 e delimitam `iniciadaEm` de forma inclusiva; início posterior ao fim retorna 400.
+`GET /indicadores` retorna o consumo energético e a emissão total das coletas com `estadoCalculo = CONCLUIDO` no intervalo informado. Os limites de `inicio` e `fim` são inclusivos para `iniciadaEm`.
+
+| Query | Formato |
+| --- | --- |
+| `periodo` | Opcional: `24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`. Não pode ser combinado com `inicio`/`fim`. |
+| `inicio` | Início inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `fim`. |
+| `fim` | Fim inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `inicio`. |
+
+Sem parâmetros, considera as últimas 24 horas. `24h`, `7d` e `30d` representam durações exatas retroativas a partir do instante atual. `mes-atual` usa o mês calendário no fuso `America/Sao_Paulo`, do primeiro dia até agora; `mes-anterior` usa o mês calendário completo imediatamente anterior nesse mesmo fuso. O intervalo customizado aceita no máximo 90 dias; `inicio` deve ser anterior a `fim`. Parâmetros inválidos retornam 400.
+
+Quando `periodo=mes-anterior`, a resposta inclui `variacao`, comparando os totais do período selecionado com os do mês calendário imediatamente anterior a ele. Para cada métrica (`energiaTotalKwh`, `emissaoTotalGCo2e` e `coletasCalculadas`), `absoluta` é a diferença entre atual e comparação, e `percentual` é a variação percentual; esse campo é `null` quando o valor de comparação é zero e o atual é diferente de zero.
 
 Exemplo de resposta:
 

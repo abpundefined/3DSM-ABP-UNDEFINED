@@ -50,7 +50,7 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /coletas`: histórico com filtros opcionais.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
-- `GET /indicadores`: totais de coletas calculadas (24 horas por padrão) e serviços por estado; aceita `dataInicio` e `dataFim`.
+- `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. `mes-anterior` inclui a comparação `variacao` com o mês calendário anterior.
 
 Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas` e `POST /servicos/sync` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
 
