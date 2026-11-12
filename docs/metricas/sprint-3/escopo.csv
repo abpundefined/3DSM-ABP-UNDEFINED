@@ -1,6 +1,6 @@
 issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_comprovado,fechado_em,pendencia
 79,[TASK] Repository para ServicosService,5,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-84,[TASK] Periodização no backend (PeriodoDto),3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+84,[TASK] Periodização no backend (PeriodoDto),3,MarcusVRDN,Done,CLOSED,sim,2026-11-12T12:45:48Z,
 85,"[TASK] Navegação, rotas e biblioteca de gráficos",2,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 86,[TASK] Seletor de período compartilhado (frontend),5,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 88,[TASK] Endpoint GET /ranking,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.

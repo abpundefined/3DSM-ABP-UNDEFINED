@@ -28,3 +28,4 @@ A baixa de pontos no burndown segue estritamente o critério de **aceite e fecha
 
 ### Linha do Tempo (Datas UTC):
 - **11/11/2026 (Início do Ciclo):** 178 SP restantes (51 itens comprometidos abertos).
+- **12/11/2026:** 175 SP restantes (1 item concluído: [#84](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/84) — 3 SP, via PR [#160](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/160)).

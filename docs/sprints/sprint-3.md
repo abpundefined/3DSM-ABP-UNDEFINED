@@ -33,7 +33,7 @@ A tabela abaixo lista os 51 itens que compõem o escopo devedor da Sprint 3:
 | Issue | Item | SP | Responsável | Epic | Situação |
 | :---: | :--- | :---: | :--- | :--- | :---: |
 | [#79](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/79) | [TASK] Repository para ServicosService | 5 | Pedro Gomes | #37 | Backlog |
-| [#84](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/84) | [TASK] Periodização no backend (PeriodoDto) | 3 | Marcus Nascimento | #35 | Backlog |
+| [#84](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/84) | [TASK] Periodização no backend (PeriodoDto) | 3 | Marcus Nascimento | #35 | Done |
 | [#85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) | [TASK] Navegação, rotas e biblioteca de gráficos | 2 | Nadla Ferreira | #35 | Backlog |
 | [#86](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/86) | [TASK] Seletor de período compartilhado (frontend) | 5 | Nadla Ferreira | #35 | Backlog |
 | [#88](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/88) | [TASK] Endpoint GET /ranking | 3 | Marcus Nascimento | #35 | Backlog |
