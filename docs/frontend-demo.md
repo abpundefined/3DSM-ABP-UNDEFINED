@@ -37,7 +37,7 @@ Valores ausentes são `null` e aparecem como **—**, sem se transformar em mét
 - `components/charts/` concentra evolução, status e ranking; cada gráfico recebe dados por propriedades.
 - `DemoServicesTable` concentra busca e filtro locais. Seus filtros não alteram os totais ou os gráficos gerais.
 - `types/dashboard.ts` descreve os dados de apresentação. Não é um DTO do backend.
-- `demo.css` complementa os tokens existentes. Os gráficos usam SVG/CSS, sem adicionar uma biblioteca de gráficos.
+- `demo.css` complementa os tokens existentes. Os gráficos do modo demonstração do dashboard usam SVG/CSS. A partir da Sprint 3, gráficos novos usam o Recharts, a biblioteca única do projeto (exemplo em `components/charts/ChartExample.tsx`), com unidade nos eixos, frase resumo em texto e `isAnimationActive` desligado quando `usePrefersReducedMotion()` for verdadeiro.
 
 Não há chamadas a `/api`, polling, persistência ou autenticação neste modo. Ele não representa entrega das funcionalidades reais de dashboard, histórico, ranking ou comparação.
 

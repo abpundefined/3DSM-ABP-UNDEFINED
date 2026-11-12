@@ -4,11 +4,13 @@ import Brand from '../common/Brand';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
 import useAuth from '../../hooks/useAuth';
+import { getNavItems } from '../../navigation';
 
 export default function AppLayout() {
   const { pathname } = useLocation();
   const isLoginPage = pathname === '/login';
   const { isAuthenticated, logout } = useAuth();
+  const navItems = getNavItems(isAuthenticated);
   const previousPath = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -48,10 +50,19 @@ export default function AppLayout() {
         <div className="header-inner">
           <Brand />
           <nav aria-label="Navegação principal">
-            <NavLink to="/" className="nav-dashboard">
-              <Icon name="grid" />
-              Dashboard
-            </NavLink>
+            <div className="nav-pages">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  className="nav-page"
+                >
+                  <Icon name={item.icon} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
             {isAuthenticated ? (
               <button type="button" className="nav-login" onClick={logout}>
                 <Icon name="lock" />
@@ -111,6 +122,14 @@ export default function AppLayout() {
           </span>
         </div>
       </footer>
+      <nav className="bottom-nav" aria-label="Navegação inferior">
+        {navItems.map((item) => (
+          <NavLink key={item.to} to={item.to} end={item.to === '/'}>
+            <Icon name={item.icon} />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }
