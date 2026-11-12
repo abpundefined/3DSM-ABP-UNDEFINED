@@ -18,17 +18,17 @@ bloqueado pela política local. Em outros terminais, `npm` também funciona.
 
 ## Comandos
 
-| Comando                    | Finalidade                                       |
-| -------------------------- | ------------------------------------------------ |
-| `npm.cmd run dev`          | Desenvolvimento com atualização automática       |
-| `npm.cmd run build`        | Verificar TypeScript e gerar `dist/`             |
-| `npm.cmd run preview`      | Conferir o build em http://localhost:4173        |
-| `npm.cmd run lint`         | Verificar problemas de código                    |
-| `npm.cmd run format`       | Aplicar Prettier aos arquivos do frontend        |
-| `npm.cmd run format:check` | Conferir formatação                              |
-| `npm.cmd test`             | Executar os testes do serviço HTTP               |
+| Comando                    | Finalidade                                             |
+| -------------------------- | ------------------------------------------------------ |
+| `npm.cmd run dev`          | Desenvolvimento com atualização automática             |
+| `npm.cmd run build`        | Verificar TypeScript e gerar `dist/`                   |
+| `npm.cmd run preview`      | Conferir o build em http://localhost:4173              |
+| `npm.cmd run lint`         | Verificar problemas de código                          |
+| `npm.cmd run format`       | Aplicar Prettier aos arquivos do frontend              |
+| `npm.cmd run format:check` | Conferir formatação                                    |
+| `npm.cmd test`             | Executar os testes do serviço HTTP                     |
 | `npm.cmd run test:e2e`     | Gerar o build e testar as páginas em desktop e celular |
-| `npm.cmd run test:e2e:dev` | Testar as páginas em desenvolvimento             |
+| `npm.cmd run test:e2e:dev` | Testar as páginas em desenvolvimento                   |
 
 Execute `build` antes de `preview`. O comando `test:e2e` gera um build atualizado
 automaticamente. Preview é uma conferência local, não a configuração de publicação
