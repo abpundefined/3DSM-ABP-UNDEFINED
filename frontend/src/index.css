@@ -1587,6 +1587,12 @@ h1 {
     }
   }
 
+@media (max-width: 520px) {
+  .header-inner nav {
+    gap: 15px;
+  }
+}
+
   @media (max-width: 1000px) {
     .app-shell {
       padding-bottom: calc(64px + env(safe-area-inset-bottom));
