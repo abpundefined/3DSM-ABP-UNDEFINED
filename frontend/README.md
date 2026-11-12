@@ -27,11 +27,12 @@ bloqueado pela política local. Em outros terminais, `npm` também funciona.
 | `npm.cmd run format`       | Aplicar Prettier aos arquivos do frontend        |
 | `npm.cmd run format:check` | Conferir formatação                              |
 | `npm.cmd test`             | Executar os testes do serviço HTTP               |
-| `npm.cmd run test:e2e`     | Testar as páginas no build, em desktop e celular |
+| `npm.cmd run test:e2e`     | Gerar o build e testar as páginas em desktop e celular |
 | `npm.cmd run test:e2e:dev` | Testar as páginas em desenvolvimento             |
 
-Execute `build` antes de `preview` ou `test:e2e`. Preview é uma conferência local,
-não a configuração de publicação da aplicação.
+Execute `build` antes de `preview`. O comando `test:e2e` gera um build atualizado
+automaticamente. Preview é uma conferência local, não a configuração de publicação
+da aplicação.
 
 ## Páginas e navegação
 
@@ -101,7 +102,6 @@ Para enviar JSON, informe `Content-Type` e serialize o corpo explicitamente.
 ## Testes de navegador
 
 ```powershell
-npm.cmd run build
 npx.cmd playwright install chromium
 npm.cmd run test:e2e
 npm.cmd run test:e2e:dev
@@ -110,8 +110,9 @@ npm.cmd run test:e2e:dev
 Playwright testa Chromium em desktop e celular: navegação, foco, acesso direto,
 refresh, formulário, carregamento e falha. Axe verifica problemas automatizáveis
 de acessibilidade. Esses testes não substituem testes com usuários.
-`test:e2e` inicia o preview na porta 4173; `test:e2e:dev` inicia o Vite na 5173.
-As portas devem estar livres. Capturas e traces ficam em `test-results/` (ignorado).
+`test:e2e` gera o build e inicia o preview na porta 4173; `test:e2e:dev` inicia o
+Vite na 5173. As portas devem estar livres. Capturas e traces ficam em
+`test-results/` (ignorado).
 
 Em produção, o servidor deve oferecer fallback de URLs da SPA para `index.html`,
 sem interceptar `/api`. Isso será coordenado com a configuração de publicação/Compose.
