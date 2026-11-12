@@ -35,12 +35,12 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Navigate to="/" replace />} />
           <Route path="login" element={<Login />} />
-      <Route path="ranking" element={<Ranking />} />
-      <Route path="comparar" element={<Comparacao />} />
-      <Route path="mapa" element={<Mapa />} />
-      <Route path="servicos/:id" element={<ServicoDetalhe />} />
-      <Route path="admin" element={<Admin />} />
-      <Route path="metodologia" element={<Metodologia />} />
+          <Route path="ranking" element={<Ranking />} />
+          <Route path="comparar" element={<Comparacao />} />
+          <Route path="mapa" element={<Mapa />} />
+          <Route path="servicos/:id" element={<ServicoDetalhe />} />
+          <Route path="admin" element={<Admin />} />
+          <Route path="metodologia" element={<Metodologia />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

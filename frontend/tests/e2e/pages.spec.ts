@@ -29,10 +29,9 @@ for (const { path, heading } of pages) {
   });
 }
 
-test('menu leva a todas as páginas e marca a página atual', async (
-  { page },
-  testInfo,
-) => {
+test('menu leva a todas as páginas e marca a página atual', async ({
+  page,
+}, testInfo) => {
   const menuName =
     testInfo.project.name === 'mobile'
       ? 'Navegação inferior'
@@ -51,10 +50,9 @@ test('menu leva a todas as páginas e marca a página atual', async (
   ).toHaveCount(0);
 });
 
-test('Admin aparece no menu só para usuário autenticado', async (
-  { page },
-  testInfo,
-) => {
+test('Admin aparece no menu só para usuário autenticado', async ({
+  page,
+}, testInfo) => {
   const menuName =
     testInfo.project.name === 'mobile'
       ? 'Navegação inferior'
@@ -80,10 +78,9 @@ test('gráfico de exemplo mostra a unidade e funciona com ?demo=1', async ({
   await expect(chart.locator('.recharts-bar-rectangle')).toHaveCount(3);
 });
 
-test('barra inferior não cobre o fim da página no celular', async (
-  { page },
-  testInfo,
-) => {
+test('barra inferior não cobre o fim da página no celular', async ({
+  page,
+}, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'Só existe no celular');
   await page.goto('/metodologia');
   await page.setViewportSize({ width: 375, height: 667 });
