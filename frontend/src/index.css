@@ -34,13 +34,19 @@
   --radius: 16px;
 }
 
-* {
-  box-sizing: border-box;
-}
+/* Proteção global contra scroll horizontal indesejado no desktop */
+html,
 body {
   margin: 0;
   min-width: 320px;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
+
+* {
+  box-sizing: border-box;
+}
+
 button,
 input {
   font: inherit;
@@ -94,6 +100,8 @@ summary {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
 }
 .skip-link {
   position: fixed;
@@ -1275,6 +1283,9 @@ h1 {
   .footer-inner {
     width: min(100% - 48px, 1240px);
   }
+  .main-content.main-content--login {
+    width: 100%;
+  }
   .app-shell {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
@@ -1345,6 +1356,9 @@ h1 {
 @media (max-width: 760px) {
   .main-content {
     padding-block: 30px 36px;
+  }
+  .main-content.main-content--login {
+    padding: 0;
   }
   .page-heading {
     flex-direction: column;
@@ -1627,23 +1641,6 @@ h1 {
     padding: 36px 24px;
   }
 
-  @media (max-width: 1000px) {
-    .main-content.main-content--login {
-      width: 100%;
-    }
-  }
-
-  @media (max-width: 760px) {
-    .main-content.main-content--login {
-      padding: 0;
-    }
-  }
-
-  @media (max-width: 520px) {
-    .main-content.main-content--login {
-      width: 100%;
-    }
-  }
   .availability-notice {
     margin-block: 22px;
   }
