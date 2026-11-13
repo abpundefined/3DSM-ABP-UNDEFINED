@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import App from './App';
 import AuthProvider from './providers/AuthProvider';
+import PeriodProvider from './providers/PeriodProvider';
 import './index.css';
 import './theme.css';
 
@@ -17,7 +18,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <PeriodProvider>
+          <App />
+        </PeriodProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

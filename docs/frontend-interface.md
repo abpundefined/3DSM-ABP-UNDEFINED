@@ -45,7 +45,10 @@ src/
   components/
     common/       Icon, Brand, MetricCard, FeedbackPanel, AppErrorBoundary
     layout/       AppLayout
-  hooks/          usePageTitle
+  contexts/       auth-context, period-context
+  providers/      AuthProvider, PeriodProvider (período na URL)
+  hooks/          usePageTitle, useAuth, usePrefersReducedMotion, usePeriod
+  utils/          formatters, period (regras e conversão do período)
   pages/          Dashboard, Login, NotFound
   services/       api.ts (base HTTP da parte 1)
   App.tsx         rotas e carregamento das páginas
@@ -53,7 +56,11 @@ src/
   index.css       tokens, componentes e regras responsivas
 ```
 
-Cada página organiza seu conteúdo. Componentes comuns recebem propriedades tipadas e podem ser reutilizados. O CSS usa variáveis de cor, espaçamento e foco, evitando valores de marca espalhados. `FeedbackPanel` oferece vazio, carregamento e erro, com texto além da cor. Não há contexto artificial: ainda não existe sessão ou dado compartilhado que o justifique. O `BrowserRouter` já fornece o contexto de navegação.
+Cada página organiza seu conteúdo. Componentes comuns recebem propriedades tipadas e podem ser reutilizados. O CSS usa variáveis de cor, espaçamento e foco, evitando valores de marca espalhados. `FeedbackPanel` oferece vazio, carregamento e erro, com texto além da cor. Os contextos existem onde há estado compartilhado de verdade: a sessão (`AuthProvider`) e o período analisado (`PeriodProvider`).
+
+### Seletor de período
+
+`PeriodSelector` oferece Últimas 24 horas, Últimos 7 dias, Últimos 30 dias, Este mês, Mês passado e Personalizado (início e fim, no máximo 90 dias, fim igual ou posterior ao início). A URL é a fonte do período (`?periodo=7d` ou `?inicio=2026-11-01&fim=2026-11-07`); sem parâmetro, vale 24 horas. Por isso o período sobrevive a recarregar a página, a voltar no navegador e a compartilhar o link, e os links do menu o mantêm ao trocar de tela. Telas novas leem o período com `usePeriod()`: `apiQuery` traz os parâmetros prontos para a API (o personalizado vai em ISO 8601 com o fuso de São Paulo, `-03:00`) e `linkSearch` serve para links internos. O período por extenso fica sempre visível junto ao seletor e é anunciado ao leitor de tela quando muda. No modo `?demo=1` o seletor não aparece, porque os dados de demonstração são um retrato fixo de 07/10/2026.
 
 ## Executar e verificar
 

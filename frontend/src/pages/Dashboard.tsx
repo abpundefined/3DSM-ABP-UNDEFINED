@@ -1,16 +1,19 @@
 import { Link, useSearchParams } from 'react-router';
 import Icon from '../components/common/Icon';
 import MetricCard from '../components/common/MetricCard';
+import PeriodSelector from '../components/common/PeriodSelector';
 import DashboardDemo from '../components/dashboard/DashboardDemo';
 import LiveDashboard from '../components/dashboard/LiveDashboard';
 import { demoTotals } from '../mocks/dashboard';
 import usePageTitle from '../hooks/usePageTitle';
+import usePeriod from '../hooks/usePeriod';
 import '../components/dashboard/demo.css';
 import '../components/dashboard/live.css';
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
+  const { apiQuery } = usePeriod();
   usePageTitle(isDemo ? 'Dashboard · demonstração' : 'Dashboard');
 
   return (
@@ -99,7 +102,10 @@ export default function Dashboard() {
           <DashboardDemo />
         </>
       ) : (
-        <LiveDashboard />
+        <>
+          <PeriodSelector />
+          <LiveDashboard key={apiQuery} periodQuery={apiQuery} />
+        </>
       )}
     </div>
   );
