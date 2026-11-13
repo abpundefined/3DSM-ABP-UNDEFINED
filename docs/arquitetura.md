@@ -24,7 +24,7 @@ flowchart LR
 | `frontend/src/components` | Layout, feedback, gráficos demonstrativos e painel conectado `LiveDashboard`. |
 | `frontend/src/services/api.ts` | Cliente JSON por caminhos relativos, erros HTTP e cancelamento por signal fornecido. Não valida o JSON em runtime. |
 | `frontend/src/hooks/usePageTitle.ts` | Título da página. A lógica de consultas periódicas ainda está no componente LiveDashboard. |
-| `backend/src/modules/servicos` | Descobre, normaliza e sincroniza serviços; lista registros persistidos. Acessa Prisma diretamente. |
+| `backend/src/modules/servicos` | Descobre, normaliza e sincroniza serviços; lista registros persistidos via repository. |
 | `backend/src/modules/monitoramento` | Inicia ciclo ao subir o módulo, sincroniza descoberta e coleta sequencialmente os serviços não removidos. Persiste diretamente no Prisma. |
 | `backend/src/modules/coletas` | API de registro/histórico/última coleta válida, DTOs e repository próprio. O coletor automático não passa por esse service. |
 | `backend/src/database` | PrismaService e verificação das tabelas necessárias. |
@@ -43,7 +43,7 @@ No Compose, os nomes de rede são `postgres`, `backend` e `frontend`. O navegado
 ## Decisões e melhorias necessárias
 
 - A base modular e a injeção permitem substituir persistência/agendador em testes isolados.
-- A separação em repositories é parcial: existe em coletas, mas descoberta e monitoramento concentram persistência e integração.
+- A separação em repositories existe nos módulos de serviços, coletas e indicadores; monitoramento orquestra integrações sem acessar Prisma diretamente.
 - A regra de ausência de métricas está duplicada e diverge entre registro manual e automático; deve ter uma implementação compartilhada.
 - A leitura de localização não corresponde ao objeto `location` oficial. É necessário preservar a região original antes da integração de carbono.
 - Coleta não tem timeout explícito nem trava de ciclo; o intervalo gravado não usa o intervalo real recebido.

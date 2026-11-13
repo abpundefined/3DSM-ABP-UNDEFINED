@@ -1,6 +1,5 @@
 import { Logger } from "@nestjs/common";
 import type { ConfigService } from "@nestjs/config";
-import type { PrismaService } from "../../database/prisma.service";
 import type { ColetasService } from "../coletas/coletas.service";
 import {
   CreateColetaDto,
@@ -8,12 +7,13 @@ import {
 } from "../coletas/dto/create-coleta.dto";
 import { MonitoramentoService } from "../monitoramento/monitoramento.service";
 import type { ConfiguracaoService } from "../configuracao/configuracao.service";
+import type { ServicosRepository } from "./servicos.repository";
 import { ServicosService } from "./servicos.service";
 
 // Os serviços reais são exercitados com dependências de configuração e banco isoladas.
 jest.mock("@nestjs/config", () => ({ ConfigService: jest.fn() }));
-jest.mock("../../database/prisma.service", () => ({
-  PrismaService: jest.fn(),
+jest.mock("./servicos.repository", () => ({
+  ServicosRepository: jest.fn(),
 }));
 
 type ServiceState =
@@ -31,11 +31,6 @@ type StoredCollection = {
   id: number;
   servicoId: number;
   estadoColeta: "SUCESSO" | "FALHA" | "SEM_METRICAS";
-};
-
-type ServiceFilter = {
-  idExterno?: { in: string[] };
-  estadoAtual?: ServiceState | { not: ServiceState };
 };
 
 const externalService = (id: string) => ({
@@ -56,92 +51,80 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
   let monitoramentoService: MonitoramentoService;
   let fetchMock: jest.SpiedFunction<typeof fetch>;
   let registrarColeta: jest.Mock;
-  let prisma: ReturnType<typeof createPrismaMock>;
+  let repository: ReturnType<typeof createRepositoryMock>;
 
-  function matches(service: StoredService, where: ServiceFilter = {}) {
-    if (where.idExterno && !where.idExterno.in.includes(service.idExterno)) {
-      return false;
-    }
-
-    if (typeof where.estadoAtual === "string") {
-      return service.estadoAtual === where.estadoAtual;
-    }
-
-    return !where.estadoAtual || service.estadoAtual !== where.estadoAtual.not;
-  }
-
-  function createPrismaMock() {
+  function createRepositoryMock() {
     return {
-      regiao: {
-        upsert: jest.fn().mockResolvedValue({}),
-      },
-      servico: {
-        findMany: jest.fn((args: { where?: ServiceFilter } = {}) =>
-          services.filter((service) => matches(service, args.where)),
-        ),
-        upsert: jest.fn(
-          ({
-            where,
-            update,
-            create,
-          }: {
-            where: { idExterno: string };
-            update: Partial<StoredService>;
-            create: Omit<StoredService, "id">;
-          }) => {
-            const existing = services.find(
-              (service) => service.idExterno === where.idExterno,
-            );
+      upsertRegiao: jest.fn().mockResolvedValue({}),
+      listarParaMonitoramento: jest.fn(() =>
+        services.filter((service) => service.estadoAtual !== "REMOVIDO"),
+      ),
+      upsertServicoDescoberto: jest.fn(
+        ({
+          idExterno,
+          nome,
+          regiaoCodigo,
+        }: {
+          idExterno: string;
+          nome: string;
+          regiaoCodigo: string;
+          caminhoMetricas: string;
+        }) => {
+          const existing = services.find(
+            (service) => service.idExterno === idExterno,
+          );
 
-            if (existing) {
-              Object.assign(existing, update);
-              return existing;
-            }
+          if (existing) {
+            Object.assign(existing, { nome, regiaoCodigo });
+            return existing;
+          }
 
-            const service = {
-              id: Math.max(0, ...services.map((entry) => entry.id)) + 1,
-              ...create,
-            };
-            services.push(service);
-            return service;
-          },
-        ),
-        updateMany: jest.fn(
-          ({
-            where,
-            data,
-          }: {
-            where: ServiceFilter;
-            data: Partial<StoredService>;
-          }) => {
-            const matching = services.filter((service) =>
-              matches(service, where),
-            );
-            matching.forEach((service) => Object.assign(service, data));
-            return { count: matching.length };
-          },
-        ),
-        update: jest.fn(
-          ({
-            where,
-            data,
-          }: {
-            where: { id: number };
-            data: Partial<StoredService>;
-          }) => {
-            const service = services.find((entry) => entry.id === where.id);
-            if (!service) throw new Error("Serviço inexistente no teste.");
-            return Object.assign(service, data);
-          },
-        ),
-      },
-      coleta: {
-        create: jest.fn(({ data }: { data: Omit<StoredCollection, "id"> }) => {
-          const collection = { id: collections.length + 1, ...data };
-          collections.push(collection);
-          return collection;
-        }),
-      },
+          const service = {
+            id: Math.max(0, ...services.map((entry) => entry.id)) + 1,
+            idExterno,
+            nome,
+            regiaoCodigo,
+            estadoAtual: "DESCONHECIDO" as const,
+          };
+          services.push(service);
+          return service;
+        },
+      ),
+      restaurarServicosRemovidos: jest.fn((idsExternos: string[]) => {
+        const matching = services.filter(
+          (service) =>
+            idsExternos.includes(service.idExterno) &&
+            service.estadoAtual === "REMOVIDO",
+        );
+        matching.forEach((service) => {
+          service.estadoAtual = "DESCONHECIDO";
+        });
+        return { count: matching.length };
+      }),
+      listarIdsExternos: jest.fn(() =>
+        services.map((service) => service.idExterno),
+      ),
+      marcarServicosComoRemovidos: jest.fn((idsExternos: string[]) => {
+        const matching = services.filter((service) =>
+          idsExternos.includes(service.idExterno),
+        );
+        matching.forEach((service) => {
+          service.estadoAtual = "REMOVIDO";
+        });
+        return { count: matching.length };
+      }),
+      atualizarEstadoMonitoramento: jest.fn(
+        (id: number, estadoAtual: ServiceState) => {
+          const service = services.find((entry) => entry.id === id);
+          if (!service) throw new Error("Serviço inexistente no teste.");
+          return Object.assign(service, { estadoAtual });
+        },
+      ),
+      listarComLocalizacao: jest.fn(() => services),
+      findById: jest.fn(
+        (id: number) => services.find((service) => service.id === id) ?? null,
+      ),
+      verificarSchema: jest.fn().mockResolvedValue(undefined),
     };
   }
 
@@ -158,17 +141,17 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
   }
 
   function expectNoWrites() {
-    expect(prisma.regiao.upsert).not.toHaveBeenCalled();
-    expect(prisma.servico.upsert).not.toHaveBeenCalled();
-    expect(prisma.servico.updateMany).not.toHaveBeenCalled();
-    expect(prisma.servico.update).not.toHaveBeenCalled();
-    expect(prisma.coleta.create).not.toHaveBeenCalled();
+    expect(repository.upsertRegiao).not.toHaveBeenCalled();
+    expect(repository.upsertServicoDescoberto).not.toHaveBeenCalled();
+    expect(repository.restaurarServicosRemovidos).not.toHaveBeenCalled();
+    expect(repository.marcarServicosComoRemovidos).not.toHaveBeenCalled();
+    expect(repository.atualizarEstadoMonitoramento).not.toHaveBeenCalled();
   }
 
   beforeEach(() => {
     services = [];
     collections = [];
-    prisma = createPrismaMock();
+    repository = createRepositoryMock();
     const configValues: Record<string, string | number> = {
       METRICS_API_URL: "https://metrics.example.test",
       METRICS_POLL_INTERVAL_MS: 30000,
@@ -176,8 +159,10 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     const config = {
       get: jest.fn((key: string) => configValues[key]),
     } as unknown as ConfigService;
-    const prismaService = prisma as unknown as PrismaService;
-    servicosService = new ServicosService(prismaService, config);
+    servicosService = new ServicosService(
+      repository as unknown as ServicosRepository,
+      config,
+    );
     registrarColeta = jest.fn((data: CreateColetaDto) => {
       const estadoColeta =
         data.estadoColeta === EstadoColetaEnum.SUCESSO
@@ -320,6 +305,30 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     expect(services).toHaveLength(1);
     expect(services[0].id).toBe(service.id);
     expect(service.estadoAtual).toBe("DESCONHECIDO");
+  });
+
+  it("gera o código de região quando a API externa não informa region_code", async () => {
+    fetchMock.mockResolvedValueOnce(
+      Response.json([
+        {
+          id: "novo",
+          name: "Serviço novo",
+          location: {
+            country: "Brasil",
+            region: "Sudeste",
+            city: "São Paulo",
+          },
+        },
+      ]),
+    );
+
+    await servicosService.syncServices();
+
+    expect(repository.upsertRegiao).toHaveBeenCalledWith(
+      expect.objectContaining({
+        codigo: "brasil-sudeste-s-o-paulo-s-o-paulo",
+      }),
+    );
   });
 
   it("retoma a coleta após desaparecimento e retorno, preservando coletas anteriores", async () => {
@@ -649,4 +658,68 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
       expectNoWrites();
     },
   );
+
+  it("delega a verificação do schema para o repository", async () => {
+    await servicosService.verificarSchema();
+
+    expect(repository.verificarSchema).toHaveBeenCalledTimes(1);
+  });
+
+  it("busca serviço por id via repository", async () => {
+    seedService("DISPONIVEL");
+
+    await expect(servicosService.findById(1)).resolves.toEqual(
+      expect.objectContaining({
+        id: 1,
+        idExterno: "billing-api",
+      }),
+    );
+    expect(repository.findById).toHaveBeenCalledWith(1);
+  });
+
+  it("falha quando METRICS_API_URL não está configurada", async () => {
+    const semUrl = new ServicosService(
+      repository as unknown as ServicosRepository,
+      {
+        get: jest.fn().mockReturnValue(undefined),
+      } as unknown as ConfigService,
+    );
+
+    await expect(semUrl.discoverServices()).rejects.toThrow(
+      "METRICS_API_URL não configurada.",
+    );
+  });
+
+  it("usa valores padrão de localização quando o payload externo não informa região", async () => {
+    fetchMock.mockResolvedValueOnce(
+      Response.json([
+        {
+          id: "sem-regiao",
+          name: "Sem Região",
+        },
+      ]),
+    );
+
+    await servicosService.syncServices();
+
+    expect(repository.upsertRegiao).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pais: "Desconhecida",
+        regiao: "Desconhecida",
+        cidade: null,
+      }),
+    );
+  });
+
+  it("aplica fallback para código de região sem localização útil", () => {
+    const codigo = (
+      servicosService as unknown as {
+        buildRegiaoCodigo: (service: { localizacao: string }) => string;
+      }
+    ).buildRegiaoCodigo({
+      localizacao: "",
+    });
+
+    expect(codigo).toBe("regiao-desconhecida");
+  });
 });

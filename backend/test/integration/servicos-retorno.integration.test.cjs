@@ -20,6 +20,9 @@ require('reflect-metadata');
 const { ConfigService } = require('@nestjs/config');
 const { PrismaService } = require('../../dist/src/database/prisma.service');
 const {
+  ServicosRepository,
+} = require('../../dist/src/modules/servicos/servicos.repository');
+const {
   ServicosService,
 } = require('../../dist/src/modules/servicos/servicos.service');
 const {
@@ -91,8 +94,40 @@ before(async () => {
   });
 
   // Não inicializa AppModule nem o agendador: cada fase é acionada pelo teste.
-  servicos = new ServicosService(prisma, config);
-  monitoramento = new MonitoramentoService(prisma, config, servicos);
+  const servicosRepository = new ServicosRepository(prisma);
+  servicos = new ServicosService(servicosRepository, config);
+  monitoramento = new MonitoramentoService(
+    config,
+    servicos,
+    {
+      async registrarColeta(dto) {
+        return prisma.coleta.create({
+          data: {
+            servicoId: dto.servicoId,
+            regiaoCodigoNaColeta: dto.regiaoCodigoNaColeta,
+            estadoColeta: dto.estadoColeta,
+            iniciadaEm: dto.iniciadaEm,
+            finalizadaEm: dto.finalizadaEm,
+            intervaloColetaSegundos: dto.intervaloColetaSegundos,
+            codigoErro: dto.codigoErro,
+            mensagemErro: dto.mensagemErro,
+            cpuPercent: dto.cpuPercent,
+            memoryGb: dto.memoryGb,
+            diskGb: dto.diskGb,
+            networkGb: dto.networkGb,
+          },
+        });
+      },
+    },
+    {
+      async obter() {
+        return {
+          intervaloColetaSegundos: 30,
+          intervaloDescobertaSegundos: 30,
+        };
+      },
+    },
+  );
 });
 
 after(async () => {

@@ -78,8 +78,3 @@ npm.cmd run lint
 
 O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado. O `test:e2e` padrão do Nest não é a mesma suíte desse Compose isolado.
 
-## Limitações em revisão
-
-- O `ServicosService` ainda acessa o Prisma diretamente; a extração para um repository está prevista para a Sprint 3.
-
-Esses pontos estão associados aos itens da [revisão da Sprint 1](../docs/sprints/revisao-sprint-1.md); não são funcionalidades declaradas como concluídas.
