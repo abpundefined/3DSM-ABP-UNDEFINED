@@ -1,16 +1,16 @@
 jest.mock("@nestjs/config", () => ({ ConfigService: class ConfigService {} }));
-jest.mock("../../database/prisma.service", () => ({
-  PrismaService: class PrismaService {},
+jest.mock("./servicos.repository", () => ({
+  ServicosRepository: class ServicosRepository {},
 }));
 
 import { ConfigService } from "@nestjs/config";
-import { PrismaService } from "../../database/prisma.service";
+import { ServicosRepository } from "./servicos.repository";
 import { ServicosService } from "./servicos.service";
 
 describe("ServicosService.listarServicos", () => {
-  const findMany = jest.fn();
+  const listarComLocalizacao = jest.fn();
   const service = new ServicosService(
-    { servico: { findMany } } as unknown as PrismaService,
+    { listarComLocalizacao } as unknown as ServicosRepository,
     {} as ConfigService,
   );
 
@@ -37,22 +37,21 @@ describe("ServicosService.listarServicos", () => {
   };
 
   beforeEach(() => {
-    findMany.mockReset();
+    listarComLocalizacao.mockReset();
   });
 
   it("busca os serviços com a região, do mais recente ao mais antigo", async () => {
-    findMany.mockResolvedValue([]);
+    listarComLocalizacao.mockResolvedValue([]);
 
     await service.listarServicos();
 
-    expect(findMany).toHaveBeenCalledWith({
-      orderBy: { atualizadoEm: "desc" },
-      include: { regiao: true },
-    });
+    expect(listarComLocalizacao).toHaveBeenCalledWith();
   });
 
   it("devolve país, região e cidade de cada serviço", async () => {
-    findMany.mockResolvedValue([{ ...servicoBase, regiao: regiaoSudeste }]);
+    listarComLocalizacao.mockResolvedValue([
+      { ...servicoBase, regiao: regiaoSudeste },
+    ]);
 
     const [servico] = await service.listarServicos();
 
@@ -71,7 +70,7 @@ describe("ServicosService.listarServicos", () => {
   });
 
   it("mantém a cidade e as coordenadas como null quando a API não informa", async () => {
-    findMany.mockResolvedValue([
+    listarComLocalizacao.mockResolvedValue([
       {
         ...servicoBase,
         regiaoCodigo: "us-east",

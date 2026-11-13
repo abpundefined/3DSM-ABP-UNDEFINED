@@ -2,9 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
-import { PrismaService } from "../../database/prisma.service";
 import { comTimeout } from "../../common/utils/com-timeout";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
+import { ServicosRepository } from "./servicos.repository";
 
 const DISCOVERY_FETCH_TIMEOUT_MS = 8000;
 
@@ -26,7 +26,7 @@ export class ServicosService {
   private readonly logger = new Logger(ServicosService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly servicosRepository: ServicosRepository,
     private readonly configService: ConfigService,
   ) {}
 
@@ -105,120 +105,58 @@ export class ServicosService {
       const latitude = service.latitude;
       const longitude = service.longitude;
 
-      await this.prisma.regiao.upsert({
-        where: { codigo: regiaoCodigo },
-        update: {
-          pais: country,
-          regiao: region,
-          cidade: city,
-          latitude,
-          longitude,
-          atualizadaEm: new Date(),
-        },
-        create: {
-          codigo: regiaoCodigo,
-          pais: country,
-          regiao: region,
-          cidade: city,
-          latitude,
-          longitude,
-          atualizadaEm: new Date(),
-        },
+      await this.servicosRepository.upsertRegiao({
+        codigo: regiaoCodigo,
+        pais: country,
+        regiao: region,
+        cidade: city,
+        latitude,
+        longitude,
       });
 
-      await this.prisma.servico.upsert({
-        where: { idExterno: service.idExterno },
-        update: {
-          nome: service.nome,
-          regiaoCodigo: regiaoCodigo,
-          caminhoMetricas: service.caminhoMetricas,
-          // A descoberta só confirma que o serviço existe; quem confirma disponibilidade é a coleta de métricas.
-          // Preservamos o estado atual para a sincronização não apagar uma falha antes da próxima coleta.
-          ultimaVezListadoEm: new Date(),
-          atualizadoEm: new Date(),
-        },
-        create: {
-          idExterno: service.idExterno,
-          nome: service.nome,
-          regiaoCodigo: regiaoCodigo,
-          caminhoMetricas: service.caminhoMetricas,
-          estadoAtual: "DESCONHECIDO",
-          descobertoEm: new Date(),
-          ultimaVezListadoEm: new Date(),
-          atualizadoEm: new Date(),
-        },
+      await this.servicosRepository.upsertServicoDescoberto({
+        idExterno: service.idExterno,
+        nome: service.nome,
+        regiaoCodigo: regiaoCodigo,
+        caminhoMetricas: service.caminhoMetricas,
       });
     }
 
     // Apenas serviços removidos que reapareceram aguardam uma nova coleta.
     // Os demais preservam o estado determinado pela última coleta.
-    if (discoveredIds.size > 0) {
-      await this.prisma.servico.updateMany({
-        where: {
-          idExterno: { in: [...discoveredIds] },
-          estadoAtual: "REMOVIDO",
-        },
-        data: {
-          estadoAtual: "DESCONHECIDO",
-          atualizadoEm: new Date(),
-        },
-      });
-    }
+    await this.servicosRepository.restaurarServicosRemovidos([
+      ...discoveredIds,
+    ]);
 
-    const existingServices = await this.prisma.servico.findMany({
-      select: { idExterno: true },
-    });
+    const removedServices = (
+      await this.servicosRepository.listarIdsExternos()
+    ).filter((idExterno) => !discoveredIds.has(idExterno));
 
-    const removedServices = existingServices
-      .map((service) => service.idExterno)
-      .filter((idExterno) => !discoveredIds.has(idExterno));
-
-    if (removedServices.length > 0) {
-      await this.prisma.servico.updateMany({
-        where: { idExterno: { in: removedServices } },
-        data: {
-          estadoAtual: "REMOVIDO",
-          atualizadoEm: new Date(),
-        },
-      });
-    }
+    await this.servicosRepository.marcarServicosComoRemovidos(removedServices);
 
     return services;
   }
 
   async verificarSchema() {
-    return this.prisma.verifySchema();
+    return this.servicosRepository.verificarSchema();
   }
 
   async listarServicosParaMonitoramento() {
-    return this.prisma.servico.findMany({
-      where: {
-        estadoAtual: {
-          not: "REMOVIDO",
-        },
-      },
-      orderBy: { atualizadoEm: "desc" },
-    });
+    return this.servicosRepository.listarParaMonitoramento();
   }
 
   async atualizarEstadoMonitoramento(
     id: number,
     estadoAtual: EstadoMonitoramento,
   ) {
-    return this.prisma.servico.update({
-      where: { id },
-      data: {
-        estadoAtual,
-        atualizadoEm: new Date(),
-      },
-    });
+    return this.servicosRepository.atualizarEstadoMonitoramento(
+      id,
+      estadoAtual,
+    );
   }
 
   async listarServicos(): Promise<ServicoComLocalizacao[]> {
-    const servicos = await this.prisma.servico.findMany({
-      orderBy: { atualizadoEm: "desc" },
-      include: { regiao: true },
-    });
+    const servicos = await this.servicosRepository.listarComLocalizacao();
 
     return servicos.map(({ regiao, ...servico }) => ({
       ...servico,
@@ -234,9 +172,7 @@ export class ServicosService {
   }
 
   async findById(id: number) {
-    return this.prisma.servico.findUnique({
-      where: { id },
-    });
+    return this.servicosRepository.findById(id);
   }
 
   private buildRegiaoCodigo(service: {
