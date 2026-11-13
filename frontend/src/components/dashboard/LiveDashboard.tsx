@@ -140,127 +140,130 @@ export default function LiveDashboard({
   >(null);
   const activeRequest = useRef<object | null>(null);
 
-  const refresh = useCallback(async (signal?: AbortSignal) => {
-    if (activeRequest.current) {
-      return;
-    }
+  const refresh = useCallback(
+    async (signal?: AbortSignal) => {
+      if (activeRequest.current) {
+        return;
+      }
 
-    const requestId = {};
-    activeRequest.current = requestId;
-    setIsLoading(true);
-    setIsLoadingServices(true);
-    setErrorMessage(null);
-    setIndicatorError(null);
+      const requestId = {};
+      activeRequest.current = requestId;
+      setIsLoading(true);
+      setIsLoadingServices(true);
+      setErrorMessage(null);
+      setIndicatorError(null);
 
-    const loadServices = async () => {
-      try {
-        const response = await apiRequest<BackendService[]>('/servicos', {
-          signal,
-        });
-        if (!Array.isArray(response)) {
-          throw new Error('Formato de serviços inválido.');
-        }
+      const loadServices = async () => {
+        try {
+          const response = await apiRequest<BackendService[]>('/servicos', {
+            signal,
+          });
+          if (!Array.isArray(response)) {
+            throw new Error('Formato de serviços inválido.');
+          }
 
-        const latestCollections = await Promise.all(
-          response.map(async (service) => {
-            try {
-              const result = await apiRequest<LatestCollectionResponse>(
-                `/coletas/servico/${service.id}/ultima-valida`,
-                { signal },
-              );
-              return [service.id, result?.dados ?? null] as const;
-            } catch (error) {
-              if (error instanceof ApiError && error.status === 404) {
-                return [service.id, null] as const;
+          const latestCollections = await Promise.all(
+            response.map(async (service) => {
+              try {
+                const result = await apiRequest<LatestCollectionResponse>(
+                  `/coletas/servico/${service.id}/ultima-valida`,
+                  { signal },
+                );
+                return [service.id, result?.dados ?? null] as const;
+              } catch (error) {
+                if (error instanceof ApiError && error.status === 404) {
+                  return [service.id, null] as const;
+                }
+                throw error;
               }
-              throw error;
-            }
-          }),
-        );
+            }),
+          );
 
-        if (signal?.aborted) {
-          return;
-        }
+          if (signal?.aborted) {
+            return;
+          }
 
-        const collectionByService = new Map(latestCollections);
-        setServices(
-          response.map((service) => ({
-            ...service,
-            energiaKwh: toFiniteNumber(service.energiaKwh),
-            emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
-            latestCollection: normalizeCollection(
-              collectionByService.get(service.id) ?? null,
-            ),
-          })),
-        );
-        setLastUpdated(new Date());
-      } catch (error) {
-        if (!signal?.aborted) {
-          setErrorMessage(getErrorMessage(error));
+          const collectionByService = new Map(latestCollections);
+          setServices(
+            response.map((service) => ({
+              ...service,
+              energiaKwh: toFiniteNumber(service.energiaKwh),
+              emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
+              latestCollection: normalizeCollection(
+                collectionByService.get(service.id) ?? null,
+              ),
+            })),
+          );
+          setLastUpdated(new Date());
+        } catch (error) {
+          if (!signal?.aborted) {
+            setErrorMessage(getErrorMessage(error));
+          }
+        } finally {
+          if (!signal?.aborted) {
+            setIsLoadingServices(false);
+          }
         }
+      };
+
+      const loadConfiguration = async () => {
+        try {
+          const configuration = await apiRequest<BackendConfiguration>(
+            '/configuracao',
+            { signal },
+          );
+          const configuredInterval = configuration?.intervaloColetaSegundos;
+
+          if (
+            !signal?.aborted &&
+            typeof configuredInterval === 'number' &&
+            Number.isSafeInteger(configuredInterval) &&
+            configuredInterval > 0
+          ) {
+            setCollectionIntervalSeconds(configuredInterval);
+          }
+        } catch {
+          // Sem a configuração, o painel deixa de informar o intervalo de coleta.
+        }
+      };
+
+      const loadIndicators = async () => {
+        try {
+          const response = await apiRequest<unknown>(
+            `/indicadores${periodQuery}`,
+            { signal },
+          );
+          if (!isBackendIndicators(response)) {
+            throw new Error('Formato de indicadores inválido.');
+          }
+          if (!signal?.aborted) {
+            setIndicators(response);
+          }
+        } catch (error) {
+          if (!signal?.aborted) {
+            setIndicators(undefined);
+            setIndicatorError(getErrorMessage(error));
+          }
+        }
+      };
+
+      try {
+        await Promise.all([
+          loadServices(),
+          loadIndicators(),
+          loadConfiguration(),
+        ]);
       } finally {
-        if (!signal?.aborted) {
-          setIsLoadingServices(false);
+        if (activeRequest.current === requestId) {
+          activeRequest.current = null;
+          if (!signal?.aborted) {
+            setIsLoading(false);
+          }
         }
       }
-    };
-
-    const loadConfiguration = async () => {
-      try {
-        const configuration = await apiRequest<BackendConfiguration>(
-          '/configuracao',
-          { signal },
-        );
-        const configuredInterval = configuration?.intervaloColetaSegundos;
-
-        if (
-          !signal?.aborted &&
-          typeof configuredInterval === 'number' &&
-          Number.isSafeInteger(configuredInterval) &&
-          configuredInterval > 0
-        ) {
-          setCollectionIntervalSeconds(configuredInterval);
-        }
-      } catch {
-        // Sem a configuração, o painel deixa de informar o intervalo de coleta.
-      }
-    };
-
-    const loadIndicators = async () => {
-      try {
-        const response = await apiRequest<unknown>(
-          `/indicadores${periodQuery}`,
-          { signal },
-        );
-        if (!isBackendIndicators(response)) {
-          throw new Error('Formato de indicadores inválido.');
-        }
-        if (!signal?.aborted) {
-          setIndicators(response);
-        }
-      } catch (error) {
-        if (!signal?.aborted) {
-          setIndicators(undefined);
-          setIndicatorError(getErrorMessage(error));
-        }
-      }
-    };
-
-    try {
-      await Promise.all([
-        loadServices(),
-        loadIndicators(),
-        loadConfiguration(),
-      ]);
-    } finally {
-      if (activeRequest.current === requestId) {
-        activeRequest.current = null;
-        if (!signal?.aborted) {
-          setIsLoading(false);
-        }
-      }
-    }
-  }, [periodQuery]);
+    },
+    [periodQuery],
+  );
 
   useEffect(() => {
     const controller = new AbortController();

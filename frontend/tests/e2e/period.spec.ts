@@ -69,7 +69,9 @@ test('período personalizado inválido mostra o erro e não muda a URL', async (
   await mockBackend(page);
   await page.goto('/');
 
-  await page.getByLabel('Período', { exact: true }).selectOption('personalizado');
+  await page
+    .getByLabel('Período', { exact: true })
+    .selectOption('personalizado');
   await page.getByLabel('Início', { exact: true }).fill('2026-11-10');
   await page.getByLabel('Fim', { exact: true }).fill('2026-11-01');
   await page.getByRole('button', { name: 'Aplicar' }).click();
@@ -96,7 +98,9 @@ test('período personalizado válido vai para a URL e para a API', async ({
   const requests = await mockBackend(page);
   await page.goto('/');
 
-  await page.getByLabel('Período', { exact: true }).selectOption('personalizado');
+  await page
+    .getByLabel('Período', { exact: true })
+    .selectOption('personalizado');
   await page.getByLabel('Início', { exact: true }).fill('2026-11-01');
   await page.getByLabel('Fim', { exact: true }).fill('2026-11-07');
   await page.getByRole('button', { name: 'Aplicar' }).click();

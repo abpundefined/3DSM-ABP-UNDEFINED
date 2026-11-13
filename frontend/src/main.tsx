@@ -17,11 +17,11 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
-        <AuthProvider>
-          <PeriodProvider>
-            <App />
-          </PeriodProvider>
-        </AuthProvider>
+      <AuthProvider>
+        <PeriodProvider>
+          <App />
+        </PeriodProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );
