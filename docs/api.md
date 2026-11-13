@@ -25,6 +25,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
+| GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
 
@@ -181,6 +182,51 @@ Exemplo de resposta:
 ```
 
 `energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
+
+## Mapa
+
+`GET /mapa` alimenta o mapa animado. Aceita os mesmos parâmetros e regras de `GET /indicadores` (`periodo` ou `inicio` e `fim`; sem parâmetros, as últimas 24 horas) e considera apenas coletas com `estadoCalculo = CONCLUIDO`, com `inicio` e `fim` inclusivos para `iniciadaEm`.
+
+A granularidade é `hora` para períodos de até 48 horas e `dia` acima disso. Os dias seguem o calendário do fuso `America/Sao_Paulo`. `intervalos` traz o início de cada intervalo; o primeiro pode começar antes de `inicio`, porque é o início da hora ou do dia que contém esse instante.
+
+Cada item de `servicos` traz a posição da região do serviço, os totais do período e `serie`, a emissão em gCO₂e de cada intervalo, na mesma ordem de `intervalos`. Intervalo sem coleta calculada vem como `null`, que não significa zero. Serviço sem coleta calculada no período aparece com totais nulos. Serviços cuja região não tem latitude e longitude válidas vêm em `semCoordenadas`. Serviços com estado `REMOVIDO` só aparecem se tiverem coleta calculada no período.
+
+Exemplo de resposta (`periodo=24h`, encurtado):
+
+```json
+{
+  "periodo": {
+    "inicio": "2026-11-10T12:00:00.000Z",
+    "fim": "2026-11-11T12:00:00.000Z"
+  },
+  "granularidade": "hora",
+  "intervalos": ["2026-11-10T12:00:00.000Z", "2026-11-10T13:00:00.000Z"],
+  "servicos": [
+    {
+      "servicoId": 1,
+      "nome": "Auth Service",
+      "estado": "DISPONIVEL",
+      "regiaoCodigo": "br-sudeste",
+      "latitude": -23.5505,
+      "longitude": -46.6333,
+      "local": "Brasil · São Paulo",
+      "totais": { "energiaKwh": 0.004, "emissaoGCo2e": 0.4 },
+      "serie": [0.1, null]
+    }
+  ],
+  "semCoordenadas": [
+    {
+      "servicoId": 2,
+      "nome": "Email Worker",
+      "estado": "DISPONIVEL",
+      "regiaoCodigo": "eu-west",
+      "totais": { "energiaKwh": 0.002, "emissaoGCo2e": 0.25 }
+    }
+  ]
+}
+```
+
+`energiaKwh` é expresso em kWh e `emissaoGCo2e` em gramas de CO₂e. `local` junta país e cidade (ou região, sem cidade); sem nenhum dos dois, vem `Localização não informada`.
 
 ## Erros
 
