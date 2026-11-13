@@ -122,7 +122,11 @@ function getErrorMessage(error: unknown) {
   return 'O backend retornou uma resposta inesperada. Tente atualizar os dados.';
 }
 
-export default function LiveDashboard() {
+export default function LiveDashboard({
+  periodQuery,
+}: {
+  periodQuery: string;
+}) {
   const [services, setServices] = useState<LiveService[]>([]);
   const [indicators, setIndicators] = useState<BackendIndicators>();
   const [isLoading, setIsLoading] = useState(true);
@@ -224,7 +228,10 @@ export default function LiveDashboard() {
 
     const loadIndicators = async () => {
       try {
-        const response = await apiRequest<unknown>('/indicadores', { signal });
+        const response = await apiRequest<unknown>(
+          `/indicadores${periodQuery}`,
+          { signal },
+        );
         if (!isBackendIndicators(response)) {
           throw new Error('Formato de indicadores inválido.');
         }
@@ -253,7 +260,7 @@ export default function LiveDashboard() {
         }
       }
     }
-  }, []);
+  }, [periodQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -316,7 +323,7 @@ export default function LiveDashboard() {
         <MetricSummary
           label="Consumo energético total"
           value={formatTotal(indicators?.energiaTotalKwh)}
-          description="Coletas calculadas nas últimas 24 horas · kWh"
+          description="Coletas calculadas no período analisado · kWh"
           icon="bolt"
           tone="leaf"
         />
@@ -327,7 +334,7 @@ export default function LiveDashboard() {
               ? undefined
               : indicators.emissaoTotalGCo2e / 1000,
           )}
-          description="Coletas calculadas nas últimas 24 horas · kgCO₂e"
+          description="Coletas calculadas no período analisado · kgCO₂e"
           icon="cloud"
           tone="olive"
         />
