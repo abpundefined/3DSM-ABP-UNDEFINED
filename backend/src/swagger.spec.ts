@@ -11,6 +11,9 @@ jest.mock("./modules/configuracao/configuracao.service", () => ({
 jest.mock("./modules/indicadores/indicadores.service", () => ({
   IndicadoresService: class IndicadoresService {},
 }));
+jest.mock("./modules/mapa/mapa.service", () => ({
+  MapaService: class MapaService {},
+}));
 jest.mock("./modules/servicos/servicos.service", () => ({
   ServicosService: class ServicosService {},
 }));
@@ -30,6 +33,8 @@ import { ConfiguracaoController } from "./modules/configuracao/configuracao.cont
 import { ConfiguracaoService } from "./modules/configuracao/configuracao.service";
 import { IndicadoresController } from "./modules/indicadores/indicadores.controller";
 import { IndicadoresService } from "./modules/indicadores/indicadores.service";
+import { MapaController } from "./modules/mapa/mapa.controller";
+import { MapaService } from "./modules/mapa/mapa.service";
 import { ServicosController } from "./modules/servicos/servicos.controller";
 import { ServicosService } from "./modules/servicos/servicos.service";
 import { configurarSwagger } from "./swagger";
@@ -45,6 +50,7 @@ describe("Swagger", () => {
         ColetasController,
         ConfiguracaoController,
         IndicadoresController,
+        MapaController,
         ServicosController,
       ],
       providers: [
@@ -53,6 +59,7 @@ describe("Swagger", () => {
         { provide: ColetasService, useValue: {} },
         { provide: ConfiguracaoService, useValue: {} },
         { provide: IndicadoresService, useValue: {} },
+        { provide: MapaService, useValue: {} },
         { provide: ServicosService, useValue: {} },
         { provide: JwtService, useValue: {} },
       ],
@@ -119,12 +126,20 @@ describe("Swagger", () => {
       ["/coletas/{id}", "get"],
       ["/coletas/servico/{servicoId}/ultima-valida", "get"],
       ["/indicadores", "get"],
+      ["/mapa", "get"],
       ["/configuracao", "get"],
       ["/configuracao", "put"],
     ]) {
       expect(document.paths[path]?.[method]).toBeDefined();
     }
     expect(document.paths["/indicadores"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+      ]),
+    );
+    expect(document.paths["/mapa"].get.parameters).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "periodo" }),
         expect.objectContaining({ name: "inicio" }),
@@ -176,6 +191,7 @@ describe("Swagger", () => {
         "application/json",
       ],
       ["/indicadores", "get", "200", "application/json"],
+      ["/mapa", "get", "200", "application/json"],
       ["/configuracao", "get", "200", "application/json"],
       ["/configuracao", "put", "200", "application/json"],
     ]) {

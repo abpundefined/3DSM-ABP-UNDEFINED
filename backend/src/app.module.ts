@@ -9,6 +9,7 @@ import { MonitoramentoModule } from "./modules/monitoramento/monitoramento.modul
 import { AuthModule } from "./modules/auth/auth.module";
 import { ConfiguracaoModule } from "./modules/configuracao/configuracao.module";
 import { IndicadoresModule } from "./modules/indicadores/indicadores.module";
+import { MapaModule } from "./modules/mapa/mapa.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { IndicadoresModule } from "./modules/indicadores/indicadores.module";
     AuthModule,
     ConfiguracaoModule,
     IndicadoresModule,
+    MapaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
