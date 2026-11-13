@@ -104,3 +104,17 @@ export function toLinkSearch(period: Period): string {
   const search = writePeriod(new URLSearchParams(), period).toString();
   return search ? `?${search}` : '';
 }
+
+const SAO_PAULO_OFFSET = '-03:00';
+
+export function toApiQuery(period: Period): string {
+  if (period.kind === 'preset') {
+    return period.preset === '24h' ? '' : `?periodo=${period.preset}`;
+  }
+
+  const params = new URLSearchParams({
+    inicio: `${period.inicio}T00:00:00.000${SAO_PAULO_OFFSET}`,
+    fim: `${period.fim}T23:59:59.999${SAO_PAULO_OFFSET}`,
+  });
+  return `?${params}`;
+}

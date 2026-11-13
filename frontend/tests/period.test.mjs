@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   DEFAULT_PERIOD,
   readPeriod,
+  toApiQuery,
   toLinkSearch,
   validateCustomRange,
   writePeriod,
@@ -57,6 +58,20 @@ test('grava o período na URL sem perder os outros parâmetros', () => {
 test('monta o trecho de URL usado nos links do menu', () => {
   assert.equal(toLinkSearch(DEFAULT_PERIOD), '');
   assert.equal(toLinkSearch({ kind: 'preset', preset: '7d' }), '?periodo=7d');
+});
+
+test('converte o período para os parâmetros da API', () => {
+  assert.equal(toApiQuery(DEFAULT_PERIOD), '');
+  assert.equal(
+    toApiQuery({ kind: 'preset', preset: 'mes-anterior' }),
+    '?periodo=mes-anterior',
+  );
+
+  const query = new URLSearchParams(
+    toApiQuery({ kind: 'custom', inicio: '2026-11-01', fim: '2026-11-07' }),
+  );
+  assert.equal(query.get('inicio'), '2026-11-01T00:00:00.000-03:00');
+  assert.equal(query.get('fim'), '2026-11-07T23:59:59.999-03:00');
 });
 
 test('valida o período personalizado', () => {
