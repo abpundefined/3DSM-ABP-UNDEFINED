@@ -12,13 +12,22 @@ const CUSTOM = 'personalizado';
 const presets = Object.keys(PRESET_LABELS) as PeriodPreset[];
 
 export default function PeriodSelector() {
-  const { period, setPeriod } = usePeriod();
+  const { period, setPeriod, linkSearch } = usePeriod();
   const [isCustomOpen, setIsCustomOpen] = useState(period.kind === 'custom');
   const [inicio, setInicio] = useState(
     period.kind === 'custom' ? period.inicio : '',
   );
   const [fim, setFim] = useState(period.kind === 'custom' ? period.fim : '');
   const [error, setError] = useState<string | null>(null);
+  const [syncedSearch, setSyncedSearch] = useState(linkSearch);
+
+  if (syncedSearch !== linkSearch) {
+    setSyncedSearch(linkSearch);
+    setIsCustomOpen(period.kind === 'custom');
+    setInicio(period.kind === 'custom' ? period.inicio : '');
+    setFim(period.kind === 'custom' ? period.fim : '');
+    setError(null);
+  }
 
   const selectValue =
     isCustomOpen || period.kind === 'custom' ? CUSTOM : period.preset;
