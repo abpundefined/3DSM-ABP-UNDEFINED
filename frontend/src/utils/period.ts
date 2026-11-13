@@ -118,3 +118,79 @@ export function toApiQuery(period: Period): string {
   });
   return `?${params}`;
 }
+
+const saoPauloParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Sao_Paulo',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+function toSaoPaulo(date: Date) {
+  const parts = Object.fromEntries(
+    saoPauloParts.formatToParts(date).map((part) => [part.type, part.value]),
+  );
+
+  return {
+    day: `${parts.year}-${parts.month}-${parts.day}`,
+    time: `${parts.hour}:${parts.minute}`,
+  };
+}
+
+function addDays(day: string, amount: number): string {
+  const time = Date.parse(`${day}T00:00:00Z`) + amount * DAY_MS;
+  return new Date(time).toISOString().slice(0, 10);
+}
+
+function formatDay(day: string, withYear: boolean): string {
+  const [year, month, date] = day.split('-');
+  return withYear ? `${date}/${month}/${year}` : `${date}/${month}`;
+}
+
+function formatDayRange(start: string, end: string): string {
+  if (start === end) {
+    return formatDay(end, true);
+  }
+
+  const sameYear = start.slice(0, 4) === end.slice(0, 4);
+  return `${formatDay(start, !sameYear)} a ${formatDay(end, true)}`;
+}
+
+export function describePeriod(period: Period, now: Date): string {
+  if (period.kind === 'custom') {
+    return formatDayRange(period.inicio, period.fim);
+  }
+
+  const today = toSaoPaulo(now);
+
+  switch (period.preset) {
+    case '24h': {
+      const start = toSaoPaulo(new Date(now.getTime() - DAY_MS));
+      return `${formatDay(start.day, true)}, ${start.time} a ${formatDay(today.day, true)}, ${today.time}`;
+    }
+    case '7d':
+      return formatDayRange(
+        toSaoPaulo(new Date(now.getTime() - 7 * DAY_MS)).day,
+        today.day,
+      );
+    case '30d':
+      return formatDayRange(
+        toSaoPaulo(new Date(now.getTime() - 30 * DAY_MS)).day,
+        today.day,
+      );
+    case 'mes-atual':
+      return formatDayRange(`${today.day.slice(0, 8)}01`, today.day);
+    case 'mes-anterior': {
+      const lastDay = addDays(`${today.day.slice(0, 8)}01`, -1);
+      return formatDayRange(`${lastDay.slice(0, 8)}01`, lastDay);
+    }
+  }
+}
+
+export function defaultCustomRange(now: Date): { inicio: string; fim: string } {
+  const fim = toSaoPaulo(now).day;
+  return { inicio: addDays(fim, -6), fim };
+}
