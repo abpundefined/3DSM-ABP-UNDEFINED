@@ -4,6 +4,7 @@ import Brand from '../common/Brand';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
 import useAuth from '../../hooks/useAuth';
+import usePeriod from '../../hooks/usePeriod';
 import { getNavItems } from '../../navigation';
 
 export default function AppLayout() {
@@ -11,6 +12,7 @@ export default function AppLayout() {
   const isLoginPage = pathname === '/login';
   const { isAuthenticated, logout } = useAuth();
   const navItems = getNavItems(isAuthenticated);
+  const { linkSearch } = usePeriod();
   const previousPath = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -54,7 +56,7 @@ export default function AppLayout() {
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
-                  to={item.to}
+                  to={{ pathname: item.to, search: linkSearch }}
                   end={item.to === '/'}
                   className="nav-page"
                 >
@@ -124,7 +126,11 @@ export default function AppLayout() {
       </footer>
       <nav className="bottom-nav" aria-label="Navegação inferior">
         {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.to === '/'}>
+          <NavLink
+            key={item.to}
+            to={{ pathname: item.to, search: linkSearch }}
+            end={item.to === '/'}
+          >
             <Icon name={item.icon} />
             <span>{item.label}</span>
           </NavLink>
