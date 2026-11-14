@@ -1,0 +1,131 @@
+.mapa-page {
+  --mapa-faixa-1: #c97405;
+  --mapa-faixa-2: #ac6304;
+  --mapa-faixa-3: #905203;
+  --mapa-faixa-4: #754102;
+  --mapa-faixa-5: #5b3101;
+  --mapa-sem-dados: #8a948d;
+  --mapa-grupo: #123a1f;
+  --mapa-grupo-texto: #e7f6ea;
+  display: grid;
+  gap: 24px;
+}
+
+.mapa-painel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.mapa-resumo {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.mapa-leaflet {
+  isolation: isolate;
+  height: 520px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #aad3df;
+}
+
+.mapa-leaflet:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+}
+
+.mapa-marcador {
+  stroke: #fff;
+  fill-opacity: 0.92;
+}
+
+.mapa-marcador:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.mapa-marcador--faixa-1 {
+  fill: var(--mapa-faixa-1);
+}
+.mapa-marcador--faixa-2 {
+  fill: var(--mapa-faixa-2);
+}
+.mapa-marcador--faixa-3 {
+  fill: var(--mapa-faixa-3);
+}
+.mapa-marcador--faixa-4 {
+  fill: var(--mapa-faixa-4);
+}
+.mapa-marcador--faixa-5 {
+  fill: var(--mapa-faixa-5);
+}
+.mapa-marcador--sem-dados {
+  fill: var(--mapa-sem-dados);
+  stroke-dasharray: 3 2;
+}
+
+.mapa-grupo {
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--mapa-grupo);
+  color: var(--mapa-grupo-texto);
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
+}
+
+.mapa-popup {
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+  color: #1e2d25;
+  font-family: inherit;
+}
+
+.mapa-popup-nome {
+  font-size: 0.95rem;
+}
+
+.mapa-popup-local {
+  color: #4f5c53;
+  font-size: 0.8rem;
+}
+
+.mapa-popup-dados {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0;
+}
+
+.mapa-popup-linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8rem;
+}
+
+.mapa-popup-linha dt {
+  color: #4f5c53;
+}
+
+.mapa-popup-linha dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.mapa-popup .mapa-popup-link {
+  color: #00661c;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .mapa-leaflet {
+    height: 380px;
+  }
+}
