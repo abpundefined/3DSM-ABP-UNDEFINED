@@ -657,11 +657,11 @@ h1 {
   background: #004f15;
 }
 .button--accent {
-  background: var(--accent-purple);
-  color: #281637;
+  background: #123a1f;
+  color: #e7f6ea;
 }
 .button--accent:hover {
-  background: #b849f0;
+  background: #0b2a15;
 }
 .text-link {
   display: inline-flex;
