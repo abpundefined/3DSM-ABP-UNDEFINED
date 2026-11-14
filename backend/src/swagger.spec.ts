@@ -11,6 +11,9 @@ jest.mock("./modules/configuracao/configuracao.service", () => ({
 jest.mock("./modules/indicadores/indicadores.service", () => ({
   IndicadoresService: class IndicadoresService {},
 }));
+jest.mock("./modules/indicadores/ranking.service", () => ({
+  RankingService: class RankingService {},
+}));
 jest.mock("./modules/mapa/mapa.service", () => ({
   MapaService: class MapaService {},
 }));
@@ -33,6 +36,8 @@ import { ConfiguracaoController } from "./modules/configuracao/configuracao.cont
 import { ConfiguracaoService } from "./modules/configuracao/configuracao.service";
 import { IndicadoresController } from "./modules/indicadores/indicadores.controller";
 import { IndicadoresService } from "./modules/indicadores/indicadores.service";
+import { RankingController } from "./modules/indicadores/ranking.controller";
+import { RankingService } from "./modules/indicadores/ranking.service";
 import { MapaController } from "./modules/mapa/mapa.controller";
 import { MapaService } from "./modules/mapa/mapa.service";
 import { ServicosController } from "./modules/servicos/servicos.controller";
@@ -50,6 +55,7 @@ describe("Swagger", () => {
         ColetasController,
         ConfiguracaoController,
         IndicadoresController,
+        RankingController,
         MapaController,
         ServicosController,
       ],
@@ -59,6 +65,7 @@ describe("Swagger", () => {
         { provide: ColetasService, useValue: {} },
         { provide: ConfiguracaoService, useValue: {} },
         { provide: IndicadoresService, useValue: {} },
+        { provide: RankingService, useValue: {} },
         { provide: MapaService, useValue: {} },
         { provide: ServicosService, useValue: {} },
         { provide: JwtService, useValue: {} },
@@ -126,6 +133,7 @@ describe("Swagger", () => {
       ["/coletas/{id}", "get"],
       ["/coletas/servico/{servicoId}/ultima-valida", "get"],
       ["/indicadores", "get"],
+      ["/ranking", "get"],
       ["/mapa", "get"],
       ["/configuracao", "get"],
       ["/configuracao", "put"],
@@ -146,6 +154,24 @@ describe("Swagger", () => {
         expect.objectContaining({ name: "fim" }),
       ]),
     );
+    expect(document.paths["/ranking"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+        expect.objectContaining({ name: "metrica" }),
+        expect.objectContaining({ name: "limite" }),
+      ]),
+    );
+    const rankingSchema =
+      document.paths["/ranking"].get.responses["200"].content?.[
+        "application/json"
+      ].schema;
+    expect(rankingSchema).toHaveProperty("type", "object");
+    expect(rankingSchema).toHaveProperty("properties.periodo");
+    expect(rankingSchema).toHaveProperty("properties.metrica");
+    expect(rankingSchema).toHaveProperty("properties.itens");
+    expect(rankingSchema).toHaveProperty("properties.semDados");
     expect(document.components.schemas.LoginDto.required).toEqual(
       expect.arrayContaining(["email", "senha"]),
     );
@@ -191,6 +217,7 @@ describe("Swagger", () => {
         "application/json",
       ],
       ["/indicadores", "get", "200", "application/json"],
+      ["/ranking", "get", "200", "application/json"],
       ["/mapa", "get", "200", "application/json"],
       ["/configuracao", "get", "200", "application/json"],
       ["/configuracao", "put", "200", "application/json"],
