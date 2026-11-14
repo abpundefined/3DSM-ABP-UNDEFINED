@@ -266,6 +266,170 @@
   font-weight: 700;
 }
 
+.mapa-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mapa-visoes {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.mapa-visoes button {
+  padding: 6px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mapa-visoes button[aria-pressed='true'] {
+  background: var(--green-forest);
+  color: var(--surface);
+}
+
+.mapa-visoes button:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+}
+
+.globo {
+  --globo-fundo: #0c1711;
+  --globo-oceano: #183521;
+  --globo-terra: #336a43;
+  --globo-grade: rgb(139 212 154 / 14%);
+  --globo-contorno: rgb(139 212 154 / 45%);
+  --globo-faixa-1: #ce8708;
+  --globo-faixa-2: #eb9a04;
+  --globo-faixa-3: #ffb348;
+  --globo-faixa-4: #ffd29c;
+  --globo-faixa-5: #ffefdc;
+  --globo-sem-dados: #8a948d;
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 520px;
+  overflow: hidden;
+  border-radius: 12px;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgb(139 212 154 / 18%) 0,
+      rgb(139 212 154 / 0%) 52%
+    ),
+    var(--globo-fundo);
+  color: #e7f6ea;
+}
+
+.globo:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+}
+
+.globo-svg {
+  width: min(100%, 470px);
+  height: auto;
+  overflow: visible;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.globo-svg:active {
+  cursor: grabbing;
+}
+
+.globo-oceano {
+  fill: var(--globo-oceano);
+  stroke: var(--globo-contorno);
+  stroke-width: 1.5;
+}
+
+.globo-grade {
+  fill: none;
+  stroke: var(--globo-grade);
+  stroke-width: 0.6;
+}
+
+.globo-terra {
+  fill: var(--globo-terra);
+  stroke: rgb(12 23 17 / 55%);
+  stroke-width: 0.5;
+}
+
+.globo-ponto {
+  stroke: var(--globo-fundo);
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.globo-ponto:focus {
+  outline: none;
+}
+
+.globo-ponto:focus-visible {
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+.globo-ponto--faixa-1 {
+  fill: var(--globo-faixa-1);
+}
+.globo-ponto--faixa-2 {
+  fill: var(--globo-faixa-2);
+}
+.globo-ponto--faixa-3 {
+  fill: var(--globo-faixa-3);
+}
+.globo-ponto--faixa-4 {
+  fill: var(--globo-faixa-4);
+}
+.globo-ponto--faixa-5 {
+  fill: var(--globo-faixa-5);
+}
+.globo-ponto--sem-dados {
+  fill: var(--globo-sem-dados);
+  stroke-dasharray: 3 2;
+}
+
+.globo-dica {
+  position: absolute;
+  display: grid;
+  gap: 2px;
+  max-width: 240px;
+  padding: 8px 10px;
+  transform: translate(-50%, calc(-100% - 18px));
+  border: 1px solid rgb(139 212 154 / 35%);
+  border-radius: 10px;
+  background: rgb(12 23 17 / 92%);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.globo-dica strong {
+  font-size: 0.85rem;
+}
+
+.globo-instrucoes {
+  position: absolute;
+  bottom: 10px;
+  margin: 0;
+  padding: 0 12px;
+  color: #a5b3a8;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
 @media (max-width: 960px) {
   .mapa-conteudo {
     grid-template-columns: 1fr;
@@ -273,7 +437,8 @@
 }
 
 @media (max-width: 640px) {
-  .mapa-leaflet {
+  .mapa-leaflet,
+  .globo {
     height: 380px;
   }
 }

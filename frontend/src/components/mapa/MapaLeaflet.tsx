@@ -4,6 +4,7 @@ import L from './leaflet';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import usePeriod from '../../hooks/usePeriod';
+import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import type { ServicoNoMapa } from '../../types/mapa';
 import {
   formatarEnergia,
@@ -19,10 +20,20 @@ const VISTA_INICIAL: L.LatLngTuple = [20, 0];
 const ZOOM_INICIAL = 2;
 const ZOOM_MINIMO = 0;
 const ZOOM_MAXIMO_AO_AJUSTAR = 6;
+const ZOOM_DE_CHEGADA = 4;
+const ZOOM_DO_FOCO = 8;
+const DURACAO_DO_VOO_S = 1.2;
+
+export type FocoDoMapa = {
+  latitude: number;
+  longitude: number;
+  servicoIds: number[];
+};
 
 type MapaLeafletProps = {
   servicos: ServicoNoMapa[];
   escala: EscalaEmissao;
+  foco?: FocoDoMapa | null;
 };
 
 function criarElemento<K extends keyof HTMLElementTagNameMap>(
@@ -49,12 +60,17 @@ function criarIconeDoGrupo(grupo: L.MarkerCluster) {
   });
 }
 
-export default function MapaLeaflet({ servicos, escala }: MapaLeafletProps) {
+export default function MapaLeaflet({
+  servicos,
+  escala,
+  foco = null,
+}: MapaLeafletProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
   const grupoRef = useRef<L.MarkerClusterGroup | null>(null);
   const navigate = useNavigate();
   const { linkSearch } = usePeriod();
+  const movimentoReduzido = usePrefersReducedMotion();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -142,6 +158,7 @@ export default function MapaLeaflet({ servicos, escala }: MapaLeafletProps) {
     };
 
     grupo.clearLayers();
+    const marcadores = new Map<number, L.CircleMarker>();
     for (const servico of servicos) {
       const emissao = servico.totais.emissaoGCo2e;
       const faixa = escala.faixa(emissao);
@@ -153,6 +170,32 @@ export default function MapaLeaflet({ servicos, escala }: MapaLeafletProps) {
       marcador.bindTooltip(servico.nome, { direction: 'top', offset: [0, -6] });
       marcador.bindPopup(() => criarPopup(servico), { maxWidth: 260 });
       grupo.addLayer(marcador);
+      marcadores.set(servico.servicoId, marcador);
+    }
+
+    if (foco) {
+      const destino: L.LatLngTuple = [foco.latitude, foco.longitude];
+      const marcadorUnico =
+        foco.servicoIds.length === 1
+          ? marcadores.get(foco.servicoIds[0])
+          : undefined;
+      const abrirPopup = () => {
+        if (marcadorUnico && mapa.hasLayer(marcadorUnico)) {
+          marcadorUnico.openPopup();
+        }
+      };
+
+      if (movimentoReduzido) {
+        mapa.setView(destino, ZOOM_DO_FOCO, { animate: false });
+        abrirPopup();
+      } else {
+        mapa.setView(destino, ZOOM_DE_CHEGADA, { animate: false });
+        mapa.once('moveend', abrirPopup);
+        mapa.flyTo(destino, ZOOM_DO_FOCO, { duration: DURACAO_DO_VOO_S });
+      }
+      return () => {
+        mapa.off('moveend', abrirPopup);
+      };
     }
 
     const limites = limitesDosServicos(servicos);
@@ -165,7 +208,7 @@ export default function MapaLeaflet({ servicos, escala }: MapaLeafletProps) {
     } else {
       mapa.setView(VISTA_INICIAL, ZOOM_INICIAL, { animate: false });
     }
-  }, [escala, linkSearch, navigate, servicos]);
+  }, [escala, foco, linkSearch, movimentoReduzido, navigate, servicos]);
 
   return (
     <div

@@ -25,7 +25,7 @@ test('mostra os serviços com marcadores e agrupa os que estão próximos', asyn
   page,
 }) => {
   await simularMapa(page);
-  await page.goto('/mapa');
+  await page.goto('/mapa?visao=mapa');
 
   await expect(
     page.getByText('8 de 10 serviços com localização no mapa'),
@@ -44,7 +44,7 @@ test('mostra os serviços com marcadores e agrupa os que estão próximos', asyn
 
 test('popup mostra os dados do serviço e leva ao detalhe', async ({ page }) => {
   await simularMapa(page);
-  await page.goto('/mapa?periodo=7d');
+  await page.goto('/mapa?periodo=7d&visao=mapa');
 
   await page
     .locator('path.mapa-marcador:not(.mapa-marcador--sem-dados)')
@@ -62,7 +62,7 @@ test('popup mostra os dados do serviço e leva ao detalhe', async ({ page }) => 
 
 test('consulta a API com o período selecionado', async ({ page }) => {
   const chamadas = await simularMapa(page);
-  await page.goto('/mapa?periodo=30d');
+  await page.goto('/mapa?periodo=30d&visao=mapa');
 
   await expect(page.locator('.mapa-grupo').first()).toBeVisible();
   expect(chamadas.at(-1)).toMatch(/\/api\/mapa\?periodo=30d$/);
@@ -75,7 +75,7 @@ test('mostra o erro e permite tentar de novo', async ({ page }) => {
       ? route.fulfill({ status: 502, body: '' })
       : route.fulfill({ json: mapaDemo }),
   );
-  await page.goto('/mapa');
+  await page.goto('/mapa?visao=mapa');
 
   const alerta = page.getByRole('alert');
   await expect(alerta).toContainText('Não foi possível carregar o mapa');
@@ -108,7 +108,7 @@ test('modo demonstração usa dados locais sem chamar a API', async ({
   page,
 }) => {
   const chamadas = await simularMapa(page);
-  await page.goto('/mapa?demo=1');
+  await page.goto('/mapa?demo=1&visao=mapa');
 
   await expect(page).toHaveTitle('Mapa de emissões · demonstração | GreenER');
   await expect(page.locator('.mapa-grupo').first()).toBeVisible();
@@ -118,7 +118,7 @@ test('modo demonstração usa dados locais sem chamar a API', async ({
 
 test('mapa carregado não tem violações do Axe', async ({ page }) => {
   await simularMapa(page);
-  await page.goto('/mapa');
+  await page.goto('/mapa?visao=mapa');
   await expect(page.locator('.mapa-grupo').first()).toBeVisible();
 
   const resultado = await new AxeBuilder({ page })
@@ -202,4 +202,134 @@ test('tabela aberta não tem violações do Axe', async ({ page }) => {
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
   expect(resultado.violations).toEqual([]);
+});
+
+const pontosDoGlobo = (page: Page) =>
+  page.getByRole('button', { name: /^Aproximar no mapa/ });
+
+async function analisarAcessibilidade(page: Page) {
+  const resultado = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(resultado.violations).toEqual([]);
+}
+
+test('abre no globo com um ponto por local visível', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+
+  await expect(
+    page.getByRole('button', { name: 'Globo', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(pontosDoGlobo(page)).toHaveCount(4);
+  await expect(
+    page.getByRole('button', { name: /Brasil · São Paulo/ }),
+  ).toHaveAccessibleName(/Auth Service, Catalog API, Billing Service/);
+});
+
+test('arrastar e as setas do teclado giram o globo', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const svg = page.locator('.globo-svg');
+  const inicial = await svg.getAttribute('data-rotacao');
+
+  const caixa = await svg.boundingBox();
+  if (!caixa) {
+    throw new Error('Globo sem área visível.');
+  }
+  await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    caixa.x + caixa.width / 2 + 80,
+    caixa.y + caixa.height / 2,
+    { steps: 6 },
+  );
+  await page.mouse.up();
+  await expect(svg).not.toHaveAttribute('data-rotacao', inicial ?? '');
+
+  const depoisDoArrasto = await svg.getAttribute('data-rotacao');
+  const longitude = Number(depoisDoArrasto?.split(',')[0]);
+  await page
+    .getByRole('group', { name: 'Globo com os serviços monitorados' })
+    .press('ArrowLeft');
+  await expect(svg).toHaveAttribute(
+    'data-rotacao',
+    new RegExp(`^${(longitude + 12).toFixed(1)},`),
+  );
+});
+
+test('dica mostra os serviços e o impacto do local', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+
+  await page.getByRole('button', { name: /Estados Unidos · Ashburn/ }).focus();
+  const dica = page.locator('.globo-dica');
+  await expect(dica).toContainText('Estados Unidos · Ashburn');
+  await expect(dica).toContainText('Search API, Video Processor');
+  await expect(dica).toContainText('gCO₂e');
+});
+
+test('selecionar um local aproxima no mapa e abre o serviço', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await simularMapa(page);
+  await page.goto('/mapa?periodo=7d');
+
+  await page.getByRole('button', { name: /Canadá · Toronto/ }).press('Enter');
+  await expect(page).toHaveURL(/visao=mapa/);
+  await expect(
+    page.getByRole('button', { name: 'Mapa', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.leaflet-popup-content')).toContainText(
+    'Reports Engine',
+  );
+});
+
+test('com animação, o clique no globo também chega ao mapa', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+
+  await page.getByRole('button', { name: /Canadá · Toronto/ }).click();
+  await expect(page.locator('.leaflet-popup-content')).toContainText(
+    'Reports Engine',
+    { timeout: 10_000 },
+  );
+});
+
+test('botões alternam entre globo e mapa mantendo o período', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?periodo=7d');
+
+  await page.getByRole('button', { name: 'Mapa', exact: true }).click();
+  await expect(page).toHaveURL(/periodo=7d&visao=mapa$/);
+  await expect(page.locator('.leaflet-container')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Globo', exact: true }).click();
+  await expect(page).toHaveURL(/\/mapa\?periodo=7d$/);
+  await expect(pontosDoGlobo(page)).toHaveCount(4);
+});
+
+test('globo não tem violações do Axe no tema claro', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await expect(pontosDoGlobo(page)).toHaveCount(4);
+
+  await analisarAcessibilidade(page);
+});
+
+test('globo não tem violações do Axe no tema escuro', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('greener-theme', 'dark');
+  });
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(pontosDoGlobo(page)).toHaveCount(4);
+
+  await analisarAcessibilidade(page);
 });

@@ -1,20 +1,51 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
+import GloboInterativo from '../components/mapa/GloboInterativo';
 import PeriodSelector from '../components/common/PeriodSelector';
 import LegendaEmissao from '../components/mapa/LegendaEmissao';
 import ListaSemCoordenadas from '../components/mapa/ListaSemCoordenadas';
-import MapaLeaflet from '../components/mapa/MapaLeaflet';
+import MapaLeaflet, { type FocoDoMapa } from '../components/mapa/MapaLeaflet';
 import TabelaMapa from '../components/mapa/TabelaMapa';
 import useMapa, { type EstadoDoMapa } from '../hooks/useMapa';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import { mapaDemo } from '../mocks/mapa';
 import type { RespostaMapa } from '../types/mapa';
+import type { LocalNoGlobo } from '../utils/globo';
 import { criarEscalaEmissao, maiorEmissao } from '../utils/mapaEscala';
 import '../components/mapa/mapa.css';
 
+type Visao = 'globo' | 'mapa';
+
 function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const visao: Visao = searchParams.get('visao') === 'mapa' ? 'mapa' : 'globo';
+  const [foco, setFoco] = useState<FocoDoMapa | null>(null);
+
+  const trocarVisao = (proxima: Visao, novoFoco: FocoDoMapa | null = null) => {
+    setFoco(novoFoco);
+    setSearchParams(
+      (atuais) => {
+        const parametros = new URLSearchParams(atuais);
+        if (proxima === 'mapa') {
+          parametros.set('visao', 'mapa');
+        } else {
+          parametros.delete('visao');
+        }
+        return parametros;
+      },
+      { replace: true },
+    );
+  };
+
+  const aproximar = (local: LocalNoGlobo) =>
+    trocarVisao('mapa', {
+      latitude: local.latitude,
+      longitude: local.longitude,
+      servicoIds: local.servicos.map(({ servicoId }) => servicoId),
+    });
+
   const escala = useMemo(
     () =>
       criarEscalaEmissao(
@@ -45,11 +76,33 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
 
   return (
     <section className="mapa-painel" aria-label="Mapa de emissões">
-      <p className="mapa-resumo">
-        {dados.servicos.length} de {total} serviços com localização no mapa
-      </p>
+      <div className="mapa-barra">
+        <p className="mapa-resumo">
+          {dados.servicos.length} de {total} serviços com localização no mapa
+        </p>
+        <div className="mapa-visoes" role="group" aria-label="Visualização">
+          <button
+            type="button"
+            aria-pressed={visao === 'globo'}
+            onClick={() => trocarVisao('globo')}
+          >
+            Globo
+          </button>
+          <button
+            type="button"
+            aria-pressed={visao === 'mapa'}
+            onClick={() => trocarVisao('mapa')}
+          >
+            Mapa
+          </button>
+        </div>
+      </div>
       <div className="mapa-conteudo">
-        <MapaLeaflet servicos={dados.servicos} escala={escala} />
+        {visao === 'globo' ? (
+          <GloboInterativo servicos={dados.servicos} onSelecionar={aproximar} />
+        ) : (
+          <MapaLeaflet servicos={dados.servicos} escala={escala} foco={foco} />
+        )}
         <aside
           className="mapa-laterais"
           aria-label="Legenda e serviços fora do mapa"
