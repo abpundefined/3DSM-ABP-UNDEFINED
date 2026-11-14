@@ -5,10 +5,11 @@
 > **Equipe:** Undefined  
 > **Responsável pela documentação:** Thales Cambraia Dias  
 > **Sprint de referência:** Sprint 2 (histórico) e Sprint 3 (Rodada 1 de IHC)  
-> **Atualização da documentação:** 13/11/2026  
+> **Atualização da documentação:** 13/11/2026 (Rodada 1 e referências às capturas complementares)  
 > **Registro anterior:** revisão da Sprint 2 em 08/11/2026  
 > **Código consultado na Sprint 2:** `afe3865fa0833ce0a33ffa3d337362738a7e769a` — branch `develop`  
 > **Código de referência da Rodada 1:** `76b4658f2e122d683018012bdcc41ead2988451f` — branch `develop`  
+> **Evidências complementares:** [PR #167](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167), aberto para revisão na data desta atualização  
 > **Apresentação da Sprint 2:** 10/11/2026  
 > **Protótipo oficial no Figma:** [Acessar Projeto no Figma](https://www.figma.com/design/CzTTbJAFqZrm2eUIBTSCNl/Undefined-FatecABP-GreenER?node-id=0-1)  
 > **Página das telas selecionadas:** GreenER — Interfaces
@@ -82,9 +83,9 @@ flowchart TD
 
 O diagrama combina o fluxo implementado de login com a navegação proposta. Ligações pontilhadas indicam fluxos planejados; o trecho globo–mapa também pertence exclusivamente ao Figma.
 
-Na versão do [roteador consultada para a Sprint 2](../frontend/src/App.tsx), estavam definidos o dashboard em `/`, o redirecionamento de `/dashboard` para `/`, o login em `/login` e o tratamento de páginas não encontradas. Naquele recorte, Histórico, Ranking, Comparação e Configuração não possuíam rotas próprias nesse arquivo. Isso não exclui a existência de componentes ou gráficos dentro do dashboard.
+Na versão do [roteador consultada para a Sprint 2](../frontend/src/App.tsx), estavam definidos o dashboard em `/`, o redirecionamento de `/dashboard` para `/`, o login em `/login` e o tratamento de páginas não encontradas. Naquele recorte, Histórico, Ranking, Comparação e Configuração não possuíam rotas próprias nesse arquivo; o dashboard já reunia componentes e gráficos.
 
-**Atualização da Sprint 3 (13/11):** a [issue #85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) introduziu as rotas `/ranking`, `/comparar`, `/mapa`, `/servicos/:id`, `/admin` e `/metodologia`, com páginas inicialmente provisórias. A criação dessas rotas não significa que as funcionalidades finais estejam prontas ou avaliadas. A navegação comum do cabeçalho e a barra inferior móvel são consideradas na Rodada 1 da seção 5.2.
+**Atualização da Sprint 3 (13/11):** a [issue #85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) introduziu as rotas `/ranking`, `/comparar`, `/mapa`, `/servicos/:id`, `/admin` e `/metodologia`, com páginas inicialmente provisórias. As rotas foram criadas com páginas provisórias. A Rodada 1 da seção 5.2 examina a navegação comum do cabeçalho e a barra inferior móvel; os conteúdos finais ficam para a Rodada 2.
 
 ### 🖼️ Telas selecionadas no Figma
 
@@ -103,7 +104,7 @@ O dashboard é público e possui acesso à tela de login administrativo. O [PR #
 
 O [código atual do login](../frontend/src/pages/Login.tsx) contém formulário de e-mail e senha, envio à API de autenticação, estado “Entrando...”, bloqueio do envio durante a requisição, mensagens de erro, controle de visibilidade da senha e retorno ao dashboard após autenticação válida.
 
-A implementação do login não comprova a existência do painel de configuração ou a conclusão do controle de autorização das demais rotas. Esses pontos exigem verificação própria.
+A avaliação do painel de configuração e das autorizações das demais rotas será realizada separadamente.
 
 ### 🌍 Nova versão do protótipo: Globo com Mapa
 
@@ -119,9 +120,9 @@ A experiência proposta contempla:
 6. Consulta dos detalhes do serviço.
 7. Retorno à visão global.
 
-**Situação registrada na Sprint 2:** o globo e o mapa local estavam exclusivamente no protótipo do Figma. O globo, a animação de transição e a integração com o mapa não estavam implementados no frontend. A rota provisória `/mapa` criada na Sprint 3 não comprova a implementação dessa experiência de exploração geográfica.
+**Situação registrada na Sprint 2:** o globo e o mapa local estavam exclusivamente no protótipo do Figma. O globo, a animação de transição e a integração com o mapa não estavam implementados no frontend. A rota `/mapa` criada na Sprint 3 ainda é provisória e será avaliada quando a experiência geográfica estiver implementada.
 
-As telas representam a experiência proposta. As conexões e transições devem ser conferidas no modo de apresentação do Figma; a presença de estados visuais não comprova uma animação funcional.
+A fluidez das conexões e transições do protótipo deverá ser conferida no modo de apresentação do Figma.
 
 As localizações representadas são aproximadas e os dados demonstrativos devem permanecer identificados.
 
@@ -129,7 +130,7 @@ As localizações representadas são aproximadas e os dados demonstrativos devem
 
 ## 🏷️ 3. Indicadores e Estados da Interface (IHC03)
 
-O projeto adota as seguintes unidades e identificações para a interface. A tabela descreve o padrão de apresentação, sem comprovar que todos os indicadores e campos estejam implementados:
+O projeto adota as seguintes unidades e identificações como padrão de apresentação. A implementação de cada campo é acompanhada nas funcionalidades correspondentes:
 
 | Indicador | Unidade ou identificação |
 | --- | --- |
@@ -164,7 +165,7 @@ Os três estados abaixo compõem a representação principal do protótipo. O fr
 
 Os elementos representados no Figma devem ser diferenciados dos dados efetivamente disponibilizados pela aplicação.
 
-Na versão de `LiveDashboard.tsx` consultada em 08/11, existe apresentação da região por `regiaoCodigo`; a estrutura de serviço utilizada pelo componente não inclui país e cidade. Isso não comprova atendimento completo à #11, que exige país, região, cidade quando disponível e tratamento de ausência de cidade. O componente contém totais ambientais, mas utiliza zero como fallback na soma quando não há valor numérico; portanto, a regra de distinguir ausência de dados de zero permanece um critério a verificar, não uma correção declarada neste documento.
+Na versão de `LiveDashboard.tsx` consultada em 08/11, existe apresentação da região por `regiaoCodigo`; a estrutura de serviço utilizada pelo componente não inclui país e cidade. A issue #11 exige também país, região, cidade quando disponível e tratamento de cidade ausente. O componente contém totais ambientais, mas utiliza zero como fallback na soma quando não há valor numérico; portanto, a regra de distinguir ausência de dados de zero permanece um critério a verificar, não uma correção declarada neste documento.
 
 ---
 
@@ -172,7 +173,7 @@ Na versão de `LiveDashboard.tsx` consultada em 08/11, existe apresentação da 
 
 A situação histórica da Sprint 2 é registrada por funcionalidade, sem declaração de conclusão ou aprovação geral do frontend.
 
-Na consulta histórica de 08/11/2026, o PR #60 de login estava integrado à `develop`; o PR #62 permanecia aberto e as issues #8 e #11 seguiam abertas, com critérios ainda não assinalados. Esses registros não comprovam conclusão ou aceite das funcionalidades pendentes. O globo e o mapa local permanecem exclusivamente no Figma.
+Na consulta histórica de 08/11/2026, o PR #60 de login estava integrado à `develop`; o PR #62 permanecia aberto e as issues #8 e #11 seguiam abertas, com critérios ainda não assinalados. O globo e o mapa local permanecem exclusivamente no Figma.
 
 ### Aspectos de interface considerados
 
@@ -219,7 +220,7 @@ A implementação futura deverá considerar:
 
 A revisão interna considera clareza das informações, consistência visual, feedback e controle da navegação.
 
-A existência de código e de um PR integrado é evidência de implementação, não de execução bem-sucedida de todos os cenários de teste. Não são atribuídos resultados de testes da Sprint 2 sem relatório ou evidência correspondente.
+Os registros da Sprint 2 distinguem funcionalidades implementadas das verificações efetivamente documentadas.
 
 As telas de exploração geográfica fazem parte da evolução do protótipo no Figma. Não há implementação dessas funcionalidades no frontend para testar.
 
@@ -237,7 +238,7 @@ A realização da avaliação heurística foi informada pelo responsável na ati
 | H4 — Consistência e padrões | Identidade visual, cabeçalhos, botões, indicadores e cards. |
 | H8 — Design estético e minimalista | Hierarquia visual e agrupamento de indicadores, gráficos e listas. |
 
-A tabela relaciona princípios aos aspectos da interface. Não substitui o registro individual dos problemas encontrados e não constitui uma classificação de gravidade dos achados.
+A tabela apresenta o mapeamento inicial das heurísticas; a análise individual dos achados e das gravidades consta na Rodada 1, abaixo.
 
 ### Rastreabilidade da avaliação
 
@@ -252,13 +253,11 @@ O registro dos resultados da avaliação deve identificar:
 | Ajustes e evidências antes/depois | Relacionar às alterações efetivamente realizadas. |
 | Resultado da verificação dos ajustes | Registrar a evidência correspondente. |
 
-A situação de implementação das funcionalidades é distinta da completude documental da avaliação heurística. Não se presume que a avaliação anterior tenha incluído as novas telas de globo e mapa.
-
-Não são atribuídos datas, participantes, gravidades ou resultados sem registro correspondente.
+Os registros deste trecho representam a situação da Sprint 2. O levantamento detalhado da Sprint 3, com data, versão e gravidades, é apresentado na sequência.
 
 **Referência:** [10 heurísticas de usabilidade de Jakob Nielsen — Nielsen Norman Group](https://www.nngroup.com/articles/ten-usability-heuristics/).
 
-**Observação histórica:** os parágrafos e a tabela de rastreabilidade anteriores descrevem a situação documental registrada até a Sprint 2. O registro específico da primeira avaliação da Sprint 3 começa abaixo. Esta atualização não atribui retroativamente os resultados de 13/11 às entregas anteriores.
+**Observação histórica:** os parágrafos e a tabela de rastreabilidade anteriores descrevem a situação documental registrada até a Sprint 2. O levantamento específico da Sprint 3, realizado em 13/11, começa abaixo.
 
 #### Rodada 1 — 13/11/2026
 
@@ -266,13 +265,13 @@ Não são atribuídos datas, participantes, gravidades ou resultados sem registr
 
 - **Atividade:** [#81 — Avaliação heurística e avaliação com usuários](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81).
 - **Encaminhamento das melhorias:** [#101 — Melhorias de usabilidade (P01 a P08)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101).
-- **Responsável pela documentação:** Thales Cambraia Dias. O levantamento foi preparado com auxílio do Codex a partir da leitura do código e de uma navegação automatizada local relatada na sessão. Não constitui avaliação independente realizada por vários especialistas ou teste com usuários reais. A classificação deve ser conferida pelo responsável e pela equipe.
-- **Versão de referência:** branch `develop`, commit [`76b4658f2e122d683018012bdcc41ead2988451f`](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/76b4658f2e122d683018012bdcc41ead2988451f). Esse commit identifica a versão analisada; a documentação poderá mudar quando a `develop` receber novas alterações.
+- **Responsável pela documentação:** Thales Cambraia Dias. O levantamento foi preparado com auxílio do Codex a partir da leitura do código e de uma navegação automatizada local relatada na sessão. As classificações propostas foram revisadas no PR #166.
+- **Versão de referência:** branch `develop`, commit [`76b4658f2e122d683018012bdcc41ead2988451f`](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/76b4658f2e122d683018012bdcc41ead2988451f). Esse commit delimita a versão analisada.
 - **Ambiente informado pelo Codex:** Windows, frontend, API e PostgreSQL locais via Docker; endereço `http://localhost:5173`; navegador automatizado, tema claro. O relato indica inspeção aproximadamente entre 21h33 e 21h36 de 13/11/2026 (horário de Brasília).
 - **Telas incluídas no relato:** dashboard conectado (`/`), modo de demonstração (`/?demo=1`), login (`/login`), menu superior em 1440 × 900 px e barra inferior em 375 × 812 px. A visualização móvel foi simulada no navegador, não em um aparelho físico.
-- **Fora do escopo da Rodada 1:** conteúdos finais de ranking (`/ranking`), comparação (`/comparar`), mapa (`/mapa`), detalhe (`/servicos/:id`) e administração (`/admin`), inicialmente disponibilizados como páginas provisórias. O item Admin no menu foi observado, mas o conteúdo da página não recebeu avaliação.
+- **Fora do escopo da Rodada 1:** conteúdos finais de ranking (`/ranking`), comparação (`/comparar`), mapa (`/mapa`), detalhe (`/servicos/:id`) e administração (`/admin`), inicialmente disponibilizados como páginas provisórias. O item Admin no menu foi observado, mas o conteúdo da página não recebeu avaliação. O seletor de período presente no dashboard foi identificado no código, porém suas interações não foram avaliadas nesta rodada; o encaminhamento está registrado abaixo.
 
-Foram utilizadas duas categorias de evidência: **C (código-fonte)**, verificável na revisão identificada, e **V (verificação visual/funcional relatada pelo Codex)**. As capturas da sessão não foram preservadas em `docs/evidencias/`, portanto os relatos V01 a V07 dependem de revisão ou reprodução para servirem como evidência visual permanente. Não há registro de execução de E2E, Axe, auditoria de contraste, leitor de tela, teste completo por teclado ou questionário SUS nesta rodada.
+**Método e limites da Rodada 1:** **C** identifica evidências do código-fonte no commit de referência; **V** identifica observações de navegação automatizada relatadas pelo Codex. As capturas originais dessa sessão não foram guardadas. Seis imagens complementares estão na branch do [PR #167](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167), mas a reprodução pessoal de V01 a V07, com data e commit, ainda precisa ser registrada. E2E, Axe, contraste, leitor de tela, teste completo por teclado e SUS não foram executados nesta rodada documental.
 
 A avaliação considerou frequência, impacto e persistência do problema, de acordo com a [escala de gravidade de Nielsen](https://www.nngroup.com/articles/how-to-rate-the-severity-of-usability-problems/): **0 = não é problema no recorte observado; 1 = cosmético; 2 = menor; 3 = grave; 4 = crítico/catastrófico**. As notas são propostas de análise, não medições estatísticas nem resultados de participantes. Nenhum achado recebeu nota 4.
 
@@ -291,21 +290,55 @@ A avaliação considerou frequência, impacto e persistência do problema, de ac
 | **H9 — Ajudar a reconhecer, diagnosticar e recuperar erros** | Feedback de indisponibilidade do backend, ausência de coleta e erros de indicadores: P01, P02 e P07. |
 | **H10 — Ajuda e documentação** | Textos explicativos sobre demonstração e atualização. A suficiência das orientações não foi aferida com usuários; a página `/metodologia` não foi avaliada. |
 
-Relacionar os dez princípios não significa que todos apresentem infrações, nem comprova aprovação de usabilidade ou acessibilidade.
+Os dez princípios foram considerados na inspeção; nem todos deram origem a problemas classificados.
+
+##### Seletor de período — delimitação do escopo
+
+O [seletor de período](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/components/common/PeriodSelector.tsx) já integrava o dashboard na versão de referência. O componente apresenta períodos predefinidos e intervalo personalizado, com validação de datas e indicação do período analisado. **Nesta Rodada 1, foi identificado no código, mas não passou por avaliação de uso ou teste de mudança de período.** A conferência de clareza dos rótulos, validação, retorno visual e navegação por teclado fica registrada para a próxima rodada; nenhuma nota de gravidade foi atribuída a esse componente.
 
 ##### Evidências de navegação e interface relatadas pelo Codex
 
 | ID | Procedimento informado | Observação registrada |
 | --- | --- | --- |
-| **V01** | Abrir o dashboard conectado em desktop e 375 px. | O relato descreve oito cards na lista real, sem busca, filtro e ordenação; unidades dos indicadores ambientais abaixo dos números; cards com quatro casas decimais, inclusive `0,0000`. Não houve auditoria dos valores brutos. |
+| **V01** | Abrir o dashboard conectado em desktop e 375 px. | O relato descreve oito cards na lista real, sem busca, filtro e ordenação; unidades dos indicadores ambientais abaixo dos números; cards com quatro casas decimais, inclusive `0,0000`. Os valores brutos ainda precisam de conferência. |
 | **V02** | Abrir e sair da demonstração em desktop e 375 px. | Dados fictícios identificados; unidades junto aos indicadores. O aviso ocupou aproximadamente 151 px de altura no cenário móvel observado. O botão de saída dizia “Voltar ao estado vazio”, mas retornava ao dashboard conectado. |
 | **V03** | Observar menu móvel, rodapé e menu desktop antes e depois do login. | A barra inferior permaneceu fixa sem cobrir o rodapé no cenário informado; o item Admin surgiu após login. O rótulo Metodologia apresentou abreviação visual na largura testada; falta verificar legibilidade em aparelho físico. |
 | **V04** | Tentar login vazio, credenciais inválidas e login com conta local de teste. | O formulário vazio exibiu a validação nativa do navegador; credenciais inválidas mostraram alerta visual; login de teste retornou ao dashboard com “Sair” e Admin. A página Admin não foi avaliada. Não se registram credenciais neste documento. |
 | **V05** | Após carregar dados, interromper temporariamente o backend local e atualizar. | Foi relatado erro HTTP 502; o título “Dados conectados ao backend” permaneceu; a lista reteve os serviços anteriores com alerta de última atualização válida; os indicadores ficaram com `—`. |
 | **V06** | Reiniciar backend e atualizar o dashboard. | Os alertas desapareceram e os indicadores voltaram a apresentar valores, segundo a sessão. |
-| **V07** | Usar busca por “Video” e filtro “Sem métricas” na demonstração. | A busca reduziu a tabela fictícia a 1 de 12 serviços; o filtro apresentou um serviço sem métricas. Esse cenário não comprova o comportamento de um card conectado sem coleta. |
+| **V07** | Usar busca por “Video” e filtro “Sem métricas” na demonstração. | A busca reduziu a tabela fictícia a 1 de 12 serviços; o filtro apresentou um serviço sem métricas. O card conectado sem coleta deverá ser verificado em cenário próprio. |
 
-**Limitação das evidências V:** as capturas mostradas durante a sessão de automação não foram anexadas e os procedimentos não foram repetidos de forma independente nesta documentação. Recomenda-se salvar novas capturas e registrar a reprodução dos casos antes da aprovação final.
+##### Capturas complementares — PR #167
+
+As imagens abaixo foram adicionadas à branch `thalestcd-patch-2` no [PR #167 — evidências da Rodada 1](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167), que permanecia **aberto para revisão** nesta atualização. Os links são relativos ao diretório `docs/` e funcionam na branch do PR; após a integração, ficarão disponíveis também na `develop`.
+
+| Identificação | Captura de tela | Achado e relação com os cenários relatados |
+| --- | --- | --- |
+| **IMG01** | [Erro de backend — P01/P07](evidencias/frontend-25/P01-P07-erro-backend.png) | Mensagens de indisponibilidade do dashboard; complemento visual do relato V05, associado a P01 e P07. |
+| **IMG02** | [Indicadores — P03](evidencias/frontend-25/P03-indicadores.png) | Apresentação de valores e unidades no dashboard; relacionada a V01 e P03. |
+| **IMG03** | [Lista de serviços — P04](evidencias/frontend-25/P04-lista-servicos.png) | Lista conectada sem busca, filtro ou ordenação; relacionada a V01 e P04. |
+| **IMG04** | [Demonstração mobile — P06](evidencias/frontend-25/P06-demonstracao-mobile.png) | Visualização da demonstração em viewport móvel; relacionada a V02 e P06. |
+| **IMG05** | [Validação de login — P08](evidencias/frontend-25/P08-validacao-login.png) | Apresentação do formulário e do feedback de validação; relacionada a V04 e P08. |
+| **IMG06** | [Navegação mobile — #85](evidencias/frontend-25/navegacao-mobile.png) | Barra inferior de navegação; relacionada a V03 e à issue #85. |
+
+**Pendências de reprodução:** V06 (recuperação da API) e V07 (busca/filtro na demonstração) ainda não têm captura própria. Também faltam primeiro acesso sem backend, serviço sem coleta (P02) e identificação da data/commit real das seis imagens. As imagens são registros da interface antes das correções da #101.
+
+##### Registro de reprodução pessoal e rastreabilidade das capturas
+
+**Preenchimento pelo responsável, até 21/11/2026:** reproduzir cada cenário na própria máquina, verificar se a captura representa o resultado observado e anotar a **data/hora real**, o **commit efetivamente executado** (`git rev-parse HEAD`) e o arquivo da evidência. O commit `76b4658f` é referência da análise original, mas não deve ser usado automaticamente como versão dos prints posteriores.
+
+| Cenário | Evidência já disponível | Reprodução pessoal | Data/hora e commit da captura |
+| --- | --- | --- | --- |
+| V01 — Dashboard, indicadores e lista real | IMG02, IMG03 | Pendente de confirmação | A preencher após conferir |
+| V02 — Entrada/saída da demonstração | IMG04 (mobile) | Pendente de confirmação | A preencher após conferir |
+| V03 — Navegação desktop/mobile e Admin após login | IMG06 (mobile) | Pendente de confirmação | A preencher após conferir |
+| V04 — Login vazio, inválido e válido | IMG05 (validação) | Pendente de confirmação | A preencher após conferir |
+| V05 — Indisponibilidade do backend após carregamento | IMG01 | Pendente de confirmação | A preencher após conferir |
+| V06 — Recuperação após reinício do backend | Nenhuma captura específica | Pendente | A preencher após executar |
+| V07 — Busca e filtro na demonstração | Nenhuma captura específica | Pendente | A preencher após executar |
+
+Esta tabela é um **controle de validação**, não um registro de testes já realizados pelo responsável. Ao reproduzir um cenário, substituir a pendência pela situação real e incluir o link à captura correspondente, mantendo o histórico do teste automatizado separado do teste manual.
+
 
 ##### Referências de código (commit analisado)
 
@@ -318,6 +351,7 @@ Relacionar os dez princípios não significa que todos apresentem infrações, n
 | **C05** | [Login.tsx](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/pages/Login.tsx): atributos `required` e `type="email"`, validação nativa dos campos e alerta visual dos erros retornados pela API. |
 | **C06** | [AppLayout.tsx](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/components/layout/AppLayout.tsx) e [navigation.ts](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/navigation.ts): navegação compartilhada, item Admin condicional e indicação da página atual por `NavLink`. |
 | **C07** | [index.css](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/index.css): regras responsivas, barra de navegação inferior e estilos para indicação de rota ativa. |
+| **C08** | [PeriodSelector.tsx](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/components/common/PeriodSelector.tsx): seletor de período existente na versão analisada; funcionalidade identificada no código e explicitamente fora da avaliação prática da Rodada 1. |
 
 ##### Achados P01 a P08: avaliação e encaminhamento
 
@@ -389,7 +423,7 @@ Relacionar os dez princípios não significa que todos apresentem infrações, n
 - **Tela/componente:** formulário de login administrativo.
 - **Descrição:** campos obrigatórios e de e-mail usam validação nativa do navegador, enquanto os erros da API são apresentados em um alerta estilizado do GreenER. Isso resulta em feedback com apresentações distintas, embora a prevenção de envio vazio já exista. **Evidências:** C05 e V04.
 - **Heurísticas:** H4 e H5; relação com H9.
-- **Gravidade proposta:** **2 — menor (provisória)**, pela inconsistência de feedback. Não foi demonstrado impedimento para concluir o login.
+- **Gravidade proposta:** **2 — menor (provisória)**, pela inconsistência de feedback. O fluxo de login permanece disponível no recorte examinado.
 - **Encaminhamento:** [#101 — P08](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101). Padronizar mensagens de validação por campo no visual do aplicativo, com identificação textual, associação acessível e preservação da prevenção de erros.
 - **Situação:** **diferença confirmada no código; observação de validação nativa relatada**. Pendente teste completo por teclado e leitor de tela.
 
@@ -397,31 +431,31 @@ Relacionar os dez princípios não significa que todos apresentem infrações, n
 
 | Achado | Heurísticas principais | Gravidade proposta | Evidências | Encaminhamento | Estado da avaliação |
 | --- | --- | --- | --- | --- | --- |
-| P01 | H1, H9 | **3** | C01, V05 | #101 — P01 | Confirmado no código; reprodução relatada; pendente captura |
+| P01 | H1, H9 | **3** | C01, V05, IMG01 | #101 — P01 | Código confirmado; captura complementar anexada; primeiro acesso sem backend pendente |
 | P02 | H1, H9 | **2 (provisória)** | C01, C02 | #101 — P02 | Pendente reprodução visual |
-| P03 | H2, H4, H6 | **2** | C01–C03, V01–V02 | #101 — P03 | Confirmado no código; pendente checar precisão |
-| P04 | H7, H6 | **2 (provisória)** | C01, C04, V01 | #101 — P04 | Ausência de controles identificada; impacto pendente |
-| P05 | H3, H6 | **0 (apenas menu)** | C06, V03–V04 | #101 — P05; #78 | Item de menu identificado; página não avaliada |
-| P06 | H8, H1, H3 | **2 (provisória)** | C01, C03, V02 | #101 — P06 | Pendente revisão em celular físico |
-| P07 | H9, H1, H8 | **2 (provisória)** | C01 | #101 — P07 | Pendente reprodução/observação específica |
-| P08 | H4, H5, H9 | **2 (provisória)** | C05, V04 | #101 — P08 | Pendente acessibilidade manual |
+| P03 | H2, H4, H6 | **2** | C01–C03, V01–V02, IMG02 | #101 — P03 | Captura complementar anexada; pendente checar precisão |
+| P04 | H7, H6 | **2 (provisória)** | C01, C04, V01, IMG03 | #101 — P04 | Captura complementar anexada; impacto com usuários pendente |
+| P05 | H3, H6 | **0 (apenas menu)** | C06, V03–V04, IMG06 | #101 — P05; #78 | Navegação documentada; página Admin não avaliada |
+| P06 | H8, H1, H3 | **2 (provisória)** | C01, C03, V02, IMG04 | #101 — P06 | Captura móvel anexada; celular físico pendente |
+| P07 | H9, H1, H8 | **2 (provisória)** | C01, IMG01 | #101 — P07 | Captura de erro anexada; falha isolada dos indicadores ainda pendente |
+| P08 | H4, H5, H9 | **2 (provisória)** | C05, V04, IMG05 | #101 — P08 | Captura complementar anexada; acessibilidade manual pendente |
 
 **Encaminhamento geral:** os oito itens foram mapeados à [issue #101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101). A nota 0 de P05 justifica não priorizar uma correção adicional apenas na visibilidade do menu; isso **não** encerra a #78 nem a validação da área administrativa. Notas 2 e 3 permanecem propostas para revisão e priorização com a equipe. Nenhuma correção da #101 foi implementada nesta rodada documental.
 
 ##### Pendências e evidências a anexar
 
-- Reproduzir e fotografar o cenário de backend indisponível depois do carregamento (P01) e no primeiro acesso, sem dados previamente carregados.
+- Conferir a captura de erro do backend (IMG01) com a situação V05, testar o primeiro acesso sem dados previamente carregados e documentar a recuperação após religar a API (V06).
 - Verificar cards sem coleta válida e com coleta antiga (P02), comparando conteúdo, estado e data real.
 - Conferir valores numéricos brutos e precisão das unidades (P03).
 - Testar busca, seleção e identificação de serviços com tarefas reais, especialmente no crescimento da lista (P04).
 - Avaliar navegação com teclado, foco visível, leitura por tecnologia assistiva, zoom e celular físico; verificar o rótulo Metodologia na barra móvel.
 - Reproduzir e revisar isoladamente a mensagem dos indicadores (P07) e os cenários de validação do login (P08).
-- Salvar capturas em `docs/evidencias/` com identificação de cenário, versão e data. Não há imagens de antes/depois de correção, porque nenhuma melhoria foi implementada nesta etapa.
+- Conferir os seis arquivos vinculados no PR #167 e registrar a data, o commit da interface efetivamente capturada e eventuais cenários adicionais ainda sem imagem. As capturas de **depois** de cada correção serão adicionadas quando as melhorias da #101 forem implementadas e verificadas.
 - Confirmar as notas de gravidade com a equipe e registrar eventuais alterações e seus motivos.
 
 #### Rodada 2 — prevista até 20/11/2026
 
-Repetir a avaliação nas telas de ranking, comparação, mapa, detalhe do serviço e administração **somente após a implementação que permita avaliar os fluxos reais** na `develop`. Registrar data, commit, versão, problemas, gravidade, evidências e vínculo às melhorias. A criação de rotas provisórias na #85 não equivale à conclusão dessas telas. **Estado: pendente, sem resultados atribuídos nesta atualização.**
+Repetir a avaliação nas telas de ranking, comparação, mapa, detalhe do serviço e administração **somente após a implementação que permita avaliar os fluxos reais** na `develop`. Registrar data, commit, versão, problemas, gravidade, evidências e vínculo às melhorias. As rotas da #85 eram provisórias na versão de referência. **Estado: pendente, sem resultados atribuídos nesta atualização.**
 
 ### 5.3. Testes com usuários — Sprint 3
 
@@ -454,7 +488,7 @@ Não são apresentados neste documento resultados de participantes ou pontuaçõ
 
 As alterações devem ser identificadas conforme sua origem: correção observada no desenvolvimento ou nos testes, achado da avaliação heurística, sugestão da equipe ou evolução planejada do produto.
 
-Uma nova tela não deve ser apresentada automaticamente como correção decorrente da avaliação heurística.
+As evoluções de protótipo e as correções derivadas dos achados são registradas separadamente.
 
 ### Evoluções do protótipo e da documentação
 
@@ -482,7 +516,7 @@ Uma nova tela não deve ser apresentada automaticamente como correção decorren
 | Situação | Alteração implementada no código; validação funcional dos cenários não demonstrada por esta inspeção. |
 | Verificação a registrar | Autenticação válida, credenciais inválidas, falha de conexão, estado de carregamento e navegação por teclado. |
 
-O vínculo com H1/H5 retoma a observação já registrada na documentação. A comparação antes/depois é documental e de código; não substitui capturas ou execução dos cenários. Não foi atribuída uma data à avaliação heurística original.
+O vínculo com H1/H5 retoma a observação registrada anteriormente. A comparação usa documentação e código; a validação visual e funcional permanece no acompanhamento das evidências.
 
 ### Registro dos ajustes decorrentes da avaliação
 
@@ -496,11 +530,11 @@ Para cada ajuste relacionado a um achado de usabilidade, registrar:
 - Resultado da verificação.
 - Situação: pendente, implementado ou validado.
 
-O acompanhamento deve utilizar as atividades do projeto e evidências verificáveis. A prototipação do globo e do mapa não comprova, isoladamente, a resolução dos achados da avaliação anterior.
+O acompanhamento deve utilizar as atividades do projeto e evidências verificáveis. Os ajustes de usabilidade do globo e do mapa serão avaliados na implementação correspondente.
 
 ### Acompanhamento da Sprint 3 — P01 a P08
 
-A Rodada 1 de 13/11 registrou a avaliação e o encaminhamento dos achados na seção 5.2. O vínculo com a [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101) representa uma **recomendação ou demanda de melhoria**, não sua implementação. A atualização deste documento não modifica o frontend ou backend.
+A Rodada 1 de 13/11 registrou a avaliação e o encaminhamento dos achados na seção 5.2. O vínculo com a [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101) registra o encaminhamento para implementação. Esta entrega atualiza apenas a documentação de IHC.
 
 | Itens | Encaminhamento planejado | Situação documental em 13/11 |
 | --- | --- | --- |
@@ -510,7 +544,7 @@ A Rodada 1 de 13/11 registrou a avaliação e o encaminhamento dos achados na se
 | P05 | Item Admin visível após login, relacionado à #78 | Menu identificado; funcionalidade da página não homologada |
 | P06 e P08 | Demonstração e validação consistente no login | Registrados; validação manual e correções pendentes |
 
-Capturas **antes/depois** devem ser incluídas quando cada melhoria for de fato implementada e testada, com links às respectivas entregas. Não são declaradas correções, aceite final, E2E ou Axe aprovados nesta atualização documental.
+As [capturas complementares do PR #167](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167) documentam situações da interface na etapa de avaliação, **antes das melhorias**. As imagens comparativas **depois** de cada correção deverão ser adicionadas quando a #101 for implementada e testada, com links às entregas. Correções concluídas e resultados de novos testes serão registrados nas entregas correspondentes.
 
 ---
 
@@ -531,14 +565,14 @@ Capturas **antes/depois** devem ser incluídas quando cada melhoria for de fato 
 | Estado da atividade #23 no GitHub | Fechada como concluída em 20/10/2026, mas o corpo consultado ainda mantém “Resultados documentados” e “Alterações na interface baseadas nos resultados” desmarcados. |
 | Registro detalhado da avaliação heurística | Ainda há lacunas documentais na seção 5.2; o fechamento da issue não as comprova resolvidas. |
 | Apresentação da Sprint 2 | Agendada para 10/11/2026. |
-| Aceite formal da entrega | A registrar conforme o processo da equipe. |
+| Aceite formal da entrega | Apresentação realizada em 10/11 (ver sprints/sprint-2.md); notas formais ainda não divulgadas.|
 | Testes com usuários representativos | Previstos para a Sprint 3. |
 
-Os estados desta seção refletem somente a consulta de 08/11/2026 e devem ser atualizados quando houver integração, evidência de teste e aceite correspondentes. Uma issue aberta não prova ausência total de implementação, assim como código existente não comprova atendimento integral dos critérios.
+Esta seção preserva o registro da consulta de 08/11/2026; os resultados da Rodada 1 da Sprint 3 constam na seção 5.2.
 
 O globo com mapa constitui uma evolução do protótipo do Figma. Sua implementação na aplicação deverá ser acompanhada em atividade própria.
 
-A atividade #23 já está fechada no GitHub. É necessário reconciliar esse estado com os critérios ainda desmarcados e com as evidências documentais, sem presumir uma nova avaliação ou aceite. A apresentação agendada não equivale, por si só, ao aceite formal da entrega.
+A atividade #23 já está fechada no GitHub. É necessário reconciliar esse estado com os critérios ainda desmarcados e com as evidências documentais, sem presumir uma nova avaliação ou aceite. O aceite formal segue o processo da equipe.
 
 ---
 
@@ -557,6 +591,8 @@ A atividade #23 já está fechada no GitHub. É necessário reconciliar esse est
 - [10 heurísticas de usabilidade de Jakob Nielsen](https://www.nngroup.com/articles/ten-usability-heuristics/).
 - [Escala de gravidade de problemas de usabilidade — Nielsen Norman Group](https://www.nngroup.com/articles/how-to-rate-the-severity-of-usability-problems/).
 - [#81 — Avaliação heurística e avaliação com usuários](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81).
+- [PR #166 — Registro aprovado da Rodada 1](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/166).
+- [PR #167 — Capturas complementares da Rodada 1](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167).
 - [#85 — Navegação e rotas](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85).
 - [#101 — Melhorias de usabilidade P01 a P08](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101).
 - [#78 — Página de administração](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/78).
