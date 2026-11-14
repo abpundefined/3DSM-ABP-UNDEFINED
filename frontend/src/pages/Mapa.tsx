@@ -4,6 +4,7 @@ import FeedbackPanel from '../components/common/FeedbackPanel';
 import GloboInterativo from '../components/mapa/GloboInterativo';
 import PeriodSelector from '../components/common/PeriodSelector';
 import LegendaEmissao from '../components/mapa/LegendaEmissao';
+import LinhaDoTempo from '../components/mapa/LinhaDoTempo';
 import ListaSemCoordenadas from '../components/mapa/ListaSemCoordenadas';
 import MapaLeaflet, { type FocoDoMapa } from '../components/mapa/MapaLeaflet';
 import TabelaMapa from '../components/mapa/TabelaMapa';
@@ -12,7 +13,17 @@ import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import { mapaDemo } from '../mocks/mapa';
 import type { RespostaMapa } from '../types/mapa';
-import type { LocalNoGlobo } from '../utils/globo';
+import {
+  RAIOS_NO_GLOBO,
+  agruparPorLocal,
+  type LocalNoGlobo,
+} from '../utils/globo';
+import {
+  rotuloDoIntervalo,
+  somarNoMomento,
+  somasDosIntervalos,
+  type Momento,
+} from '../utils/linhaDoTempo';
 import { criarEscalaEmissao, maiorEmissao } from '../utils/mapaEscala';
 import '../components/mapa/mapa.css';
 
@@ -22,6 +33,7 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const visao: Visao = searchParams.get('visao') === 'mapa' ? 'mapa' : 'globo';
   const [foco, setFoco] = useState<FocoDoMapa | null>(null);
+  const [indice, setIndice] = useState<number | null>(null);
 
   const trocarVisao = (proxima: Visao, novoFoco: FocoDoMapa | null = null) => {
     setFoco(novoFoco);
@@ -46,12 +58,56 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
       servicoIds: local.servicos.map(({ servicoId }) => servicoId),
     });
 
-  const escala = useMemo(
+  const escalaDoPeriodo = useMemo(
     () =>
       criarEscalaEmissao(
         maiorEmissao(dados.servicos.map(({ totais }) => totais.emissaoGCo2e)),
       ),
     [dados.servicos],
+  );
+  const escalaDosIntervalos = useMemo(
+    () =>
+      criarEscalaEmissao(
+        maiorEmissao(
+          somasDosIntervalos(
+            dados.servicos.map((servico) => [servico]),
+            dados.intervalos.length,
+          ),
+        ),
+      ),
+    [dados.servicos, dados.intervalos.length],
+  );
+  const locais = useMemo(
+    () => agruparPorLocal(dados.servicos),
+    [dados.servicos],
+  );
+  const porIntervalo = indice !== null;
+  const escalaDoGlobo = useMemo(
+    () =>
+      criarEscalaEmissao(
+        maiorEmissao(
+          porIntervalo
+            ? somasDosIntervalos(
+                locais.map(({ servicos }) => servicos),
+                dados.intervalos.length,
+              )
+            : locais.map(({ totais }) => totais.emissaoGCo2e),
+        ),
+        RAIOS_NO_GLOBO,
+      ),
+    [dados.intervalos.length, locais, porIntervalo],
+  );
+  const rotulos = useMemo(
+    () =>
+      dados.intervalos.map((intervalo) =>
+        rotuloDoIntervalo(intervalo, dados.granularidade),
+      ),
+    [dados.intervalos, dados.granularidade],
+  );
+  const escala = porIntervalo ? escalaDosIntervalos : escalaDoPeriodo;
+  const momento = useMemo<Momento | null>(
+    () => (indice === null ? null : { indice, rotulo: rotulos[indice] }),
+    [indice, rotulos],
   );
   const referenciaEmissao = useMemo(
     () =>
@@ -97,17 +153,39 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
           </button>
         </div>
       </div>
+      {rotulos.length > 0 && dados.servicos.length > 0 && (
+        <LinhaDoTempo
+          rotulos={rotulos}
+          indice={indice}
+          emissaoNoMomento={somarNoMomento(dados.servicos, indice)}
+          onMudar={setIndice}
+        />
+      )}
       <div className="mapa-conteudo">
         {visao === 'globo' ? (
-          <GloboInterativo servicos={dados.servicos} onSelecionar={aproximar} />
+          <GloboInterativo
+            servicos={dados.servicos}
+            escala={escalaDoGlobo}
+            momento={momento}
+            onSelecionar={aproximar}
+          />
         ) : (
-          <MapaLeaflet servicos={dados.servicos} escala={escala} foco={foco} />
+          <MapaLeaflet
+            servicos={dados.servicos}
+            escala={escala}
+            momento={momento}
+            foco={foco}
+          />
         )}
         <aside
           className="mapa-laterais"
           aria-label="Legenda e serviços fora do mapa"
         >
-          <LegendaEmissao escala={escala} />
+          <LegendaEmissao
+            escala={visao === 'globo' ? escalaDoGlobo : escala}
+            porIntervalo={porIntervalo}
+            porLocal={visao === 'globo'}
+          />
           <ListaSemCoordenadas
             servicos={dados.semCoordenadas}
             referenciaEmissao={referenciaEmissao}

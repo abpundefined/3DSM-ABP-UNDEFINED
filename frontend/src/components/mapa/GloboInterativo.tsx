@@ -22,12 +22,9 @@ import {
   type LocalNoGlobo,
   type Rotacao,
 } from '../../utils/globo';
+import { somarNoMomento, type Momento } from '../../utils/linhaDoTempo';
 import { formatarEnergia } from '../../utils/mapaDados';
-import {
-  criarEscalaEmissao,
-  formatarEmissao,
-  maiorEmissao,
-} from '../../utils/mapaEscala';
+import { formatarEmissao, type EscalaEmissao } from '../../utils/mapaEscala';
 
 const TAMANHO = 520;
 const RAIO = 236;
@@ -42,22 +39,29 @@ const grade = geoGraticule10();
 
 type GloboInterativoProps = {
   servicos: ServicoNoMapa[];
+  escala: EscalaEmissao;
+  momento?: Momento | null;
   onSelecionar: (local: LocalNoGlobo) => void;
 };
 
 type Arrasto = { x: number; y: number; inicial: Rotacao; moveu: boolean };
 
-function descreverLocal(local: LocalNoGlobo) {
+function formatarEmissaoOuVazio(valor: number | null) {
+  return valor === null ? 'sem dados de emissão' : formatarEmissao(valor);
+}
+
+function descreverLocal(local: LocalNoGlobo, momento: Momento | null) {
   const nomes = local.servicos.map(({ nome }) => nome).join(', ');
-  const emissao =
-    local.totais.emissaoGCo2e === null
-      ? 'sem dados de emissão'
-      : formatarEmissao(local.totais.emissaoGCo2e);
-  return `${local.local}: ${nomes}. ${emissao}`;
+  const emissao = formatarEmissaoOuVazio(
+    somarNoMomento(local.servicos, momento?.indice ?? null),
+  );
+  return `${local.local}: ${nomes}. ${momento ? `Em ${momento.rotulo}, ${emissao}` : emissao}`;
 }
 
 export default function GloboInterativo({
   servicos,
+  escala,
+  momento = null,
   onSelecionar,
 }: GloboInterativoProps) {
   const [rotacao, setRotacao] = useState<Rotacao>(ROTACAO_INICIAL);
@@ -69,14 +73,9 @@ export default function GloboInterativo({
   const movimentoReduzido = usePrefersReducedMotion();
 
   const locais = useMemo(() => agruparPorLocal(servicos), [servicos]);
-  const escala = useMemo(
-    () =>
-      criarEscalaEmissao(
-        maiorEmissao(locais.map(({ totais }) => totais.emissaoGCo2e)),
-        { raioMinimo: 5, raioMaximo: 18 },
-      ),
-    [locais],
-  );
+  const indice = momento?.indice ?? null;
+  const emissaoDoLocal = (local: LocalNoGlobo) =>
+    somarNoMomento(local.servicos, indice);
 
   const projecao = useMemo(
     () =>
@@ -202,8 +201,7 @@ export default function GloboInterativo({
   const visiveis = locais
     .filter((local) => estaVisivel(rotacao, local.longitude, local.latitude))
     .sort(
-      (a, b) =>
-        escala.raio(b.totais.emissaoGCo2e) - escala.raio(a.totais.emissaoGCo2e),
+      (a, b) => escala.raio(emissaoDoLocal(b)) - escala.raio(emissaoDoLocal(a)),
     );
   const localEmDestaque = visiveis.find(({ chave }) => chave === destaque);
   const posicaoDoDestaque = localEmDestaque
@@ -241,7 +239,8 @@ export default function GloboInterativo({
           if (!ponto) {
             return null;
           }
-          const faixa = escala.faixa(local.totais.emissaoGCo2e);
+          const emissao = emissaoDoLocal(local);
+          const faixa = escala.faixa(emissao);
 
           return (
             <circle
@@ -249,10 +248,10 @@ export default function GloboInterativo({
               className={`globo-ponto ${faixa === null ? 'globo-ponto--sem-dados' : `globo-ponto--faixa-${faixa}`}`}
               cx={ponto[0]}
               cy={ponto[1]}
-              r={escala.raio(local.totais.emissaoGCo2e)}
+              r={escala.raio(emissao)}
               role="button"
               tabIndex={0}
-              aria-label={`Aproximar no mapa: ${descreverLocal(local)}`}
+              aria-label={`Aproximar no mapa: ${descreverLocal(local, momento)}`}
               onClick={() => clicarNoLocal(local)}
               onKeyDown={(evento) => {
                 if (evento.key === 'Enter' || evento.key === ' ') {
@@ -282,10 +281,10 @@ export default function GloboInterativo({
             {localEmDestaque.servicos.map(({ nome }) => nome).join(', ')}
           </span>
           <span>
-            {formatarEnergia(localEmDestaque.totais.energiaKwh)} ·{' '}
-            {localEmDestaque.totais.emissaoGCo2e === null
-              ? 'Sem dados'
-              : formatarEmissao(localEmDestaque.totais.emissaoGCo2e)}
+            {momento
+              ? `Em ${momento.rotulo}`
+              : formatarEnergia(localEmDestaque.totais.energiaKwh)}{' '}
+            · {formatarEmissaoOuVazio(emissaoDoLocal(localEmDestaque))}
           </span>
         </div>
       )}

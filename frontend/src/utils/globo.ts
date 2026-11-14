@@ -14,6 +14,7 @@ export type LocalNoGlobo = {
 
 export const ROTACAO_INICIAL: Rotacao = [55, -15, 0];
 export const LATITUDE_MAXIMA = 70;
+export const RAIOS_NO_GLOBO = { raioMinimo: 5, raioMaximo: 18 };
 
 function limitar(valor: number, minimo: number, maximo: number) {
   return Math.min(maximo, Math.max(minimo, valor));

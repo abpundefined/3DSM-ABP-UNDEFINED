@@ -233,6 +233,9 @@ test('arrastar e as setas do teclado giram o globo', async ({ page }) => {
   const svg = page.locator('.globo-svg');
   const inicial = await svg.getAttribute('data-rotacao');
 
+  await svg.evaluate((elemento) =>
+    elemento.scrollIntoView({ block: 'center' }),
+  );
   const caixa = await svg.boundingBox();
   if (!caixa) {
     throw new Error('Globo sem área visível.');
@@ -332,4 +335,83 @@ test('globo não tem violações do Axe no tema escuro', async ({ page }) => {
   await expect(pontosDoGlobo(page)).toHaveCount(4);
 
   await analisarAcessibilidade(page);
+});
+
+const momentoDaLinha = (page: Page) =>
+  page.locator('.linha-do-tempo-momento strong');
+
+test('linha do tempo mostra um intervalo e volta ao período inteiro', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const linha = page.getByRole('region', { name: 'Linha do tempo' });
+  const periodoInteiro = linha.getByRole('button', {
+    name: 'Ver período inteiro',
+  });
+
+  await expect(momentoDaLinha(page)).toHaveText('Período inteiro');
+  await expect(periodoInteiro).toBeDisabled();
+
+  await linha.getByRole('slider', { name: 'Intervalo exibido' }).fill('14');
+  await expect(momentoDaLinha(page)).toHaveText('11/11, 14:00');
+  await expect(
+    page.getByRole('region', { name: 'Emissão no intervalo' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /Brasil · São Paulo/ }),
+  ).toHaveAccessibleName(/Em 11\/11, 14:00/);
+  await analisarAcessibilidade(page);
+
+  await periodoInteiro.click();
+  await expect(momentoDaLinha(page)).toHaveText('Período inteiro');
+  await expect(
+    page.getByRole('region', { name: 'Emissão no período' }),
+  ).toBeVisible();
+});
+
+test('reproduzir avança os intervalos, pausa e para no último', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const linha = page.getByRole('region', { name: 'Linha do tempo' });
+
+  await linha.getByRole('button', { name: 'Reproduzir' }).click();
+  await expect(momentoDaLinha(page)).toHaveText('11/11, 00:00');
+  await page.clock.runFor(900);
+  await expect(momentoDaLinha(page)).toHaveText('11/11, 01:00');
+
+  await linha.getByRole('button', { name: 'Pausar' }).click();
+  await page.clock.runFor(3000);
+  await expect(momentoDaLinha(page)).toHaveText('11/11, 01:00');
+
+  await linha.getByRole('slider', { name: 'Intervalo exibido' }).fill('22');
+  await linha.getByRole('button', { name: 'Reproduzir' }).click();
+  await page.clock.runFor(900);
+  await expect(momentoDaLinha(page)).toHaveText('11/11, 23:00');
+  await expect(linha.getByRole('button', { name: 'Reproduzir' })).toBeVisible();
+  await page.clock.runFor(3000);
+  await expect(momentoDaLinha(page)).toHaveText('11/11, 23:00');
+});
+
+test('no mapa, o intervalo muda o marcador e entra no popup', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?visao=mapa');
+  const marcador = page.locator(
+    'path.mapa-marcador:not(.mapa-marcador--sem-dados)',
+  );
+  await expect(marcador).toHaveClass(/mapa-marcador--faixa-3/);
+
+  await page.getByRole('slider', { name: 'Intervalo exibido' }).fill('14');
+  await expect(marcador).toHaveClass(/mapa-marcador--faixa-2/);
+
+  await marcador.click({ force: true });
+  const popup = page.locator('.leaflet-popup-content');
+  await expect(popup).toContainText('Media CDN');
+  await expect(popup).toContainText('Em 11/11, 14:00');
+  await expect(popup).toContainText('0,35 gCO₂e');
 });

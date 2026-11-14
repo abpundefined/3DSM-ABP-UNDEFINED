@@ -11,6 +11,7 @@ import {
   limitesDosServicos,
   rotuloEstado,
 } from '../../utils/mapaDados';
+import { emissaoNoMomento, type Momento } from '../../utils/linhaDoTempo';
 import { formatarEmissao, type EscalaEmissao } from '../../utils/mapaEscala';
 
 const URL_DOS_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -33,8 +34,11 @@ export type FocoDoMapa = {
 type MapaLeafletProps = {
   servicos: ServicoNoMapa[];
   escala: EscalaEmissao;
+  momento?: Momento | null;
   foco?: FocoDoMapa | null;
 };
+
+type Marcador = { servico: ServicoNoMapa; camada: L.CircleMarker };
 
 function criarElemento<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -47,6 +51,23 @@ function criarElemento<K extends keyof HTMLElementTagNameMap>(
     elemento.textContent = texto;
   }
   return elemento;
+}
+
+function formatarEmissaoOuVazio(valor: number | null) {
+  return valor === null ? 'Sem dados' : formatarEmissao(valor);
+}
+
+function estilizar(
+  camada: L.CircleMarker,
+  valor: number | null,
+  escala: EscalaEmissao,
+) {
+  const faixa = escala.faixa(valor);
+  const classe = `mapa-marcador ${faixa === null ? 'mapa-marcador--sem-dados' : `mapa-marcador--faixa-${faixa}`}`;
+
+  camada.setRadius(escala.raio(valor));
+  camada.options.className = classe;
+  camada.getElement()?.setAttribute('class', `${classe} leaflet-interactive`);
 }
 
 function criarIconeDoGrupo(grupo: L.MarkerCluster) {
@@ -63,11 +84,15 @@ function criarIconeDoGrupo(grupo: L.MarkerCluster) {
 export default function MapaLeaflet({
   servicos,
   escala,
+  momento = null,
   foco = null,
 }: MapaLeafletProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
   const grupoRef = useRef<L.MarkerClusterGroup | null>(null);
+  const marcadoresRef = useRef<Marcador[]>([]);
+  const escalaRef = useRef(escala);
+  const momentoRef = useRef<Momento | null>(momento);
   const navigate = useNavigate();
   const { linkSearch } = usePeriod();
   const movimentoReduzido = usePrefersReducedMotion();
@@ -132,16 +157,19 @@ export default function MapaLeaflet({
       });
 
       const lista = criarElemento('dl', 'mapa-popup-dados');
-      for (const [rotulo, valor] of [
+      const linhas = [
         ['Estado', rotuloEstado(servico.estado)],
         ['Energia', formatarEnergia(servico.totais.energiaKwh)],
-        [
-          'Emissão',
-          servico.totais.emissaoGCo2e === null
-            ? 'Sem dados'
-            : formatarEmissao(servico.totais.emissaoGCo2e),
-        ],
-      ]) {
+        ['Emissão', formatarEmissaoOuVazio(servico.totais.emissaoGCo2e)],
+      ];
+      const atual = momentoRef.current;
+      if (atual) {
+        linhas.push([
+          `Em ${atual.rotulo}`,
+          formatarEmissaoOuVazio(emissaoNoMomento(servico, atual.indice)),
+        ]);
+      }
+      for (const [rotulo, valor] of linhas) {
         const linha = criarElemento('div', 'mapa-popup-linha');
         linha.append(criarElemento('dt', '', rotulo));
         linha.append(criarElemento('dd', '', valor));
@@ -159,19 +187,18 @@ export default function MapaLeaflet({
 
     grupo.clearLayers();
     const marcadores = new Map<number, L.CircleMarker>();
-    for (const servico of servicos) {
-      const emissao = servico.totais.emissaoGCo2e;
-      const faixa = escala.faixa(emissao);
-      const marcador = L.circleMarker([servico.latitude, servico.longitude], {
-        radius: escala.raio(emissao),
-        className: `mapa-marcador ${faixa === null ? 'mapa-marcador--sem-dados' : `mapa-marcador--faixa-${faixa}`}`,
+    const indice = momentoRef.current?.indice ?? null;
+    marcadoresRef.current = servicos.map((servico) => {
+      const camada = L.circleMarker([servico.latitude, servico.longitude], {
         weight: 2,
       });
-      marcador.bindTooltip(servico.nome, { direction: 'top', offset: [0, -6] });
-      marcador.bindPopup(() => criarPopup(servico), { maxWidth: 260 });
-      grupo.addLayer(marcador);
-      marcadores.set(servico.servicoId, marcador);
-    }
+      estilizar(camada, emissaoNoMomento(servico, indice), escalaRef.current);
+      camada.bindTooltip(servico.nome, { direction: 'top', offset: [0, -6] });
+      camada.bindPopup(() => criarPopup(servico), { maxWidth: 260 });
+      marcadores.set(servico.servicoId, camada);
+      return { servico, camada };
+    });
+    grupo.addLayers(marcadoresRef.current.map(({ camada }) => camada));
 
     if (foco) {
       const destino: L.LatLngTuple = [foco.latitude, foco.longitude];
@@ -208,7 +235,20 @@ export default function MapaLeaflet({
     } else {
       mapa.setView(VISTA_INICIAL, ZOOM_INICIAL, { animate: false });
     }
-  }, [escala, foco, linkSearch, movimentoReduzido, navigate, servicos]);
+  }, [foco, linkSearch, movimentoReduzido, navigate, servicos]);
+
+  useEffect(() => {
+    escalaRef.current = escala;
+    momentoRef.current = momento;
+    const indice = momento?.indice ?? null;
+
+    for (const { servico, camada } of marcadoresRef.current) {
+      estilizar(camada, emissaoNoMomento(servico, indice), escala);
+      if (camada.isPopupOpen()) {
+        camada.getPopup()?.update();
+      }
+    }
+  }, [escala, momento, servicos]);
 
   return (
     <div
