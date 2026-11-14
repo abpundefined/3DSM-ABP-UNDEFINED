@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import PeriodSelector from '../components/common/PeriodSelector';
+import LegendaEmissao from '../components/mapa/LegendaEmissao';
+import ListaSemCoordenadas from '../components/mapa/ListaSemCoordenadas';
 import MapaLeaflet from '../components/mapa/MapaLeaflet';
+import TabelaMapa from '../components/mapa/TabelaMapa';
 import useMapa, { type EstadoDoMapa } from '../hooks/useMapa';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
@@ -18,6 +21,15 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
         maiorEmissao(dados.servicos.map(({ totais }) => totais.emissaoGCo2e)),
       ),
     [dados.servicos],
+  );
+  const referenciaEmissao = useMemo(
+    () =>
+      maiorEmissao(
+        [...dados.servicos, ...dados.semCoordenadas].map(
+          ({ totais }) => totais.emissaoGCo2e,
+        ),
+      ),
+    [dados.servicos, dados.semCoordenadas],
   );
   const total = dados.servicos.length + dados.semCoordenadas.length;
 
@@ -36,7 +48,24 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
       <p className="mapa-resumo">
         {dados.servicos.length} de {total} serviços com localização no mapa
       </p>
-      <MapaLeaflet servicos={dados.servicos} escala={escala} />
+      <div className="mapa-conteudo">
+        <MapaLeaflet servicos={dados.servicos} escala={escala} />
+        <aside
+          className="mapa-laterais"
+          aria-label="Legenda e serviços fora do mapa"
+        >
+          <LegendaEmissao escala={escala} />
+          <ListaSemCoordenadas
+            servicos={dados.semCoordenadas}
+            referenciaEmissao={referenciaEmissao}
+          />
+        </aside>
+      </div>
+      <TabelaMapa
+        servicos={dados.servicos}
+        semCoordenadas={dados.semCoordenadas}
+        referenciaEmissao={referenciaEmissao}
+      />
     </section>
   );
 }

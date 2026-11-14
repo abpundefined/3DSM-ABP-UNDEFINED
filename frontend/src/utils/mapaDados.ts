@@ -2,6 +2,7 @@ import type {
   EstadoMonitoramento,
   RespostaMapa,
   ServicoNoMapa,
+  TotaisAmbientais,
 } from '../types/mapa';
 
 export type Limites = [[number, number], [number, number]];
@@ -120,4 +121,24 @@ export function limitesDosServicos(
     [Math.min(...latitudes), Math.min(...longitudes)],
     [Math.max(...latitudes), Math.max(...longitudes)],
   ];
+}
+
+export function ordenarPorEmissao<
+  T extends { nome: string; totais: TotaisAmbientais },
+>(servicos: T[]): T[] {
+  return [...servicos].sort((a, b) => {
+    const emissaoA = a.totais.emissaoGCo2e;
+    const emissaoB = b.totais.emissaoGCo2e;
+
+    if (emissaoA === emissaoB) {
+      return a.nome.localeCompare(b.nome, 'pt-BR');
+    }
+    if (emissaoA === null) {
+      return 1;
+    }
+    if (emissaoB === null) {
+      return -1;
+    }
+    return emissaoB - emissaoA;
+  });
 }

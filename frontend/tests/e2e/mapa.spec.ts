@@ -112,7 +112,7 @@ test('modo demonstração usa dados locais sem chamar a API', async ({
 
   await expect(page).toHaveTitle('Mapa de emissões · demonstração | GreenER');
   await expect(page.locator('.mapa-grupo').first()).toBeVisible();
-  await expect(page.getByLabel('Período')).toHaveCount(0);
+  await expect(page.getByLabel('Período', { exact: true })).toHaveCount(0);
   expect(chamadas).toEqual([]);
 });
 
@@ -120,6 +120,83 @@ test('mapa carregado não tem violações do Axe', async ({ page }) => {
   await simularMapa(page);
   await page.goto('/mapa');
   await expect(page.locator('.mapa-grupo').first()).toBeVisible();
+
+  const resultado = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(resultado.violations).toEqual([]);
+});
+
+test('legenda mostra as faixas de emissão com unidade', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+
+  const legenda = page.getByRole('region', { name: 'Emissão no período' });
+  await expect(legenda.getByRole('listitem')).toHaveCount(6);
+  await expect(legenda).toContainText('0 a 4 gCO₂e');
+  await expect(legenda).toContainText('16 a 20 gCO₂e');
+  await expect(legenda).toContainText('Sem dados no período');
+});
+
+test('lista os serviços sem coordenadas com link para o detalhe', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?periodo=7d');
+
+  const lista = page.getByRole('region', { name: 'Sem coordenadas (2)' });
+  await expect(lista.getByRole('link')).toHaveText([
+    'Email Worker',
+    'Legacy Batch',
+  ]);
+  await expect(lista).toContainText('Disponível · 0,62 gCO₂e');
+
+  await lista.getByRole('link', { name: 'Email Worker' }).click();
+  await expect(page).toHaveURL(/\/servicos\/9\?periodo=7d$/);
+});
+
+test('tabela alternativa tem todos os serviços, do maior ao menor emissor', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+
+  await page.getByText('Ver os dados do mapa em tabela').click();
+  const tabela = page.getByRole('table', {
+    name: /Serviços, localização e impacto ambiental/,
+  });
+  const linhas = tabela.locator('tbody tr');
+  await expect(linhas).toHaveCount(10);
+  await expect(linhas.first().getByRole('rowheader')).toHaveText(
+    'Video Processor',
+  );
+  await expect(linhas.first()).toContainText('13,3 gCO₂e');
+  await expect(linhas.last().getByRole('rowheader')).toHaveText(
+    'Notification Worker',
+  );
+  await expect(tabela.getByRole('row', { name: /Email Worker/ })).toContainText(
+    'Sem coordenadas',
+  );
+});
+
+test('página não tem rolagem horizontal em 375 px', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await page.getByText('Ver os dados do mapa em tabela').click();
+
+  const larguras = await page.evaluate(() => ({
+    pagina: document.documentElement.scrollWidth,
+    tela: document.documentElement.clientWidth,
+  }));
+  expect(larguras.pagina).toBe(larguras.tela);
+});
+
+test('tabela aberta não tem violações do Axe', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await page.getByText('Ver os dados do mapa em tabela').click();
+  await expect(page.locator('.mapa-tabela tbody tr')).toHaveCount(10);
 
   const resultado = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])

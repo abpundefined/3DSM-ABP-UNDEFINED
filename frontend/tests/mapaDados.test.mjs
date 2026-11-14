@@ -5,6 +5,7 @@ import {
   ehRespostaMapa,
   formatarEnergia,
   limitesDosServicos,
+  ordenarPorEmissao,
   rotuloEstado,
 } from '../src/utils/mapaDados.ts';
 
@@ -85,4 +86,25 @@ test('computes the bounds that contain every service', () => {
     ],
   );
   assert.equal(limitesDosServicos([]), null);
+});
+
+test('sorts services by emission, highest first and missing data last', () => {
+  const servico = (nome, emissaoGCo2e) => ({
+    nome,
+    totais: { energiaKwh: null, emissaoGCo2e },
+  });
+  const entrada = [
+    servico('Beta', 0.2),
+    servico('Sem dados B', null),
+    servico('Alfa', 0.9),
+    servico('Sem dados A', null),
+    servico('Gama', 0.2),
+    servico('Zero', 0),
+  ];
+
+  assert.deepEqual(
+    ordenarPorEmissao(entrada).map(({ nome }) => nome),
+    ['Alfa', 'Beta', 'Gama', 'Zero', 'Sem dados A', 'Sem dados B'],
+  );
+  assert.equal(entrada[0].nome, 'Beta');
 });
