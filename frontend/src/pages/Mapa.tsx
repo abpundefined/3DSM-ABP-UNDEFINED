@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
-import GloboInterativo from '../components/mapa/GloboInterativo';
+import GloboInterativo, {
+  type CentroDoGlobo,
+} from '../components/mapa/GloboInterativo';
 import PeriodSelector from '../components/common/PeriodSelector';
 import LegendaEmissao from '../components/mapa/LegendaEmissao';
 import LinhaDoTempo from '../components/mapa/LinhaDoTempo';
@@ -16,6 +18,7 @@ import type { RespostaMapa } from '../types/mapa';
 import {
   RAIOS_NO_GLOBO,
   agruparPorLocal,
+  centralizar,
   type LocalNoGlobo,
 } from '../utils/globo';
 import {
@@ -24,6 +27,7 @@ import {
   somasDosIntervalos,
   type Momento,
 } from '../utils/linhaDoTempo';
+import { filtrarPorRegiao, regioesDoMapa } from '../utils/mapaDados';
 import { criarEscalaEmissao, maiorEmissao } from '../utils/mapaEscala';
 import '../components/mapa/mapa.css';
 
@@ -35,20 +39,47 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
   const [foco, setFoco] = useState<FocoDoMapa | null>(null);
   const [indice, setIndice] = useState<number | null>(null);
 
-  const trocarVisao = (proxima: Visao, novoFoco: FocoDoMapa | null = null) => {
-    setFoco(novoFoco);
+  const regioes = useMemo(
+    () => regioesDoMapa(dados.servicos),
+    [dados.servicos],
+  );
+  const regiaoPedida = searchParams.get('regiao');
+  const regiao = regioes.find(({ codigo }) => codigo === regiaoPedida) ?? null;
+  const codigoDaRegiao = regiao?.codigo ?? null;
+  const servicos = useMemo(
+    () => filtrarPorRegiao(dados.servicos, codigoDaRegiao),
+    [codigoDaRegiao, dados.servicos],
+  );
+  const semCoordenadas = useMemo(
+    () => filtrarPorRegiao(dados.semCoordenadas, codigoDaRegiao),
+    [codigoDaRegiao, dados.semCoordenadas],
+  );
+
+  const atualizarParametro = (nome: string, valor: string | null) =>
     setSearchParams(
       (atuais) => {
         const parametros = new URLSearchParams(atuais);
-        if (proxima === 'mapa') {
-          parametros.set('visao', 'mapa');
+        if (valor === null) {
+          parametros.delete(nome);
         } else {
-          parametros.delete('visao');
+          parametros.set(nome, valor);
         }
         return parametros;
       },
       { replace: true },
     );
+
+  const trocarVisao = (proxima: Visao, novoFoco: FocoDoMapa | null = null) => {
+    setFoco(novoFoco);
+    atualizarParametro('visao', proxima === 'mapa' ? 'mapa' : null);
+  };
+
+  const entrarNoMapa = ({ latitude, longitude, zoom }: CentroDoGlobo) =>
+    trocarVisao('mapa', { latitude, longitude, servicoIds: [], zoom });
+
+  const trocarRegiao = (codigo: string) => {
+    setFoco(null);
+    atualizarParametro('regiao', codigo === '' ? null : codigo);
   };
 
   const aproximar = (local: LocalNoGlobo) =>
@@ -119,6 +150,9 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
     [dados.servicos, dados.semCoordenadas],
   );
   const total = dados.servicos.length + dados.semCoordenadas.length;
+  const rotacaoInicial = regiao
+    ? centralizar(servicos[0].longitude, servicos[0].latitude)
+    : undefined;
 
   if (total === 0) {
     return (
@@ -134,8 +168,26 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
     <section className="mapa-painel" aria-label="Mapa de emissões">
       <div className="mapa-barra">
         <p className="mapa-resumo">
-          {dados.servicos.length} de {total} serviços com localização no mapa
+          {regiao
+            ? `${servicos.length} ${servicos.length === 1 ? 'serviço' : 'serviços'} em ${regiao.local}`
+            : `${dados.servicos.length} de ${total} serviços com localização no mapa`}
         </p>
+        {regioes.length > 0 && (
+          <label className="mapa-regiao">
+            <span>Região</span>
+            <select
+              value={codigoDaRegiao ?? ''}
+              onChange={(evento) => trocarRegiao(evento.target.value)}
+            >
+              <option value="">Todas as regiões</option>
+              {regioes.map(({ codigo, local }) => (
+                <option key={codigo} value={codigo}>
+                  {local}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="mapa-visoes" role="group" aria-label="Visualização">
           <button
             type="button"
@@ -153,25 +205,28 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
           </button>
         </div>
       </div>
-      {rotulos.length > 0 && dados.servicos.length > 0 && (
+      {rotulos.length > 0 && servicos.length > 0 && (
         <LinhaDoTempo
           rotulos={rotulos}
           indice={indice}
-          emissaoNoMomento={somarNoMomento(dados.servicos, indice)}
+          emissaoNoMomento={somarNoMomento(servicos, indice)}
           onMudar={setIndice}
         />
       )}
       <div className="mapa-conteudo">
         {visao === 'globo' ? (
           <GloboInterativo
-            servicos={dados.servicos}
+            key={codigoDaRegiao ?? 'todas'}
+            servicos={servicos}
             escala={escalaDoGlobo}
             momento={momento}
+            rotacaoInicial={rotacaoInicial}
             onSelecionar={aproximar}
+            onEntrarNoMapa={entrarNoMapa}
           />
         ) : (
           <MapaLeaflet
-            servicos={dados.servicos}
+            servicos={servicos}
             escala={escala}
             momento={momento}
             foco={foco}
@@ -187,14 +242,14 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
             porLocal={visao === 'globo'}
           />
           <ListaSemCoordenadas
-            servicos={dados.semCoordenadas}
+            servicos={semCoordenadas}
             referenciaEmissao={referenciaEmissao}
           />
         </aside>
       </div>
       <TabelaMapa
-        servicos={dados.servicos}
-        semCoordenadas={dados.semCoordenadas}
+        servicos={servicos}
+        semCoordenadas={semCoordenadas}
         referenciaEmissao={referenciaEmissao}
       />
     </section>

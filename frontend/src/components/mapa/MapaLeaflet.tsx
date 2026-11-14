@@ -10,6 +10,7 @@ import {
   formatarEnergia,
   limitesDosServicos,
   rotuloEstado,
+  zoomMinimoDoMapa,
 } from '../../utils/mapaDados';
 import { emissaoNoMomento, type Momento } from '../../utils/linhaDoTempo';
 import { formatarEmissao, type EscalaEmissao } from '../../utils/mapaEscala';
@@ -18,8 +19,11 @@ const URL_DOS_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATRIBUICAO =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const VISTA_INICIAL: L.LatLngTuple = [20, 0];
+const LIMITES_DO_MUNDO: L.LatLngBoundsExpression = [
+  [-85.0511, -180],
+  [85.0511, 180],
+];
 const ZOOM_INICIAL = 2;
-const ZOOM_MINIMO = 0;
 const ZOOM_MAXIMO_AO_AJUSTAR = 6;
 const ZOOM_DE_CHEGADA = 4;
 const ZOOM_DO_FOCO = 8;
@@ -29,6 +33,7 @@ export type FocoDoMapa = {
   latitude: number;
   longitude: number;
   servicoIds: number[];
+  zoom?: number;
 };
 
 type MapaLeafletProps = {
@@ -106,16 +111,20 @@ export default function MapaLeaflet({
     const mapa = L.map(container, {
       center: VISTA_INICIAL,
       zoom: ZOOM_INICIAL,
-      minZoom: ZOOM_MINIMO,
-      worldCopyJump: true,
+      minZoom: zoomMinimoDoMapa(container.clientWidth, container.clientHeight),
+      maxBounds: LIMITES_DO_MUNDO,
+      maxBoundsViscosity: 1,
       zoomControl: false,
     });
     L.control
       .zoom({ zoomInTitle: 'Aproximar', zoomOutTitle: 'Afastar' })
       .addTo(mapa);
-    L.tileLayer(URL_DOS_TILES, { attribution: ATRIBUICAO, maxZoom: 18 }).addTo(
-      mapa,
-    );
+    L.tileLayer(URL_DOS_TILES, {
+      attribution: ATRIBUICAO,
+      maxZoom: 18,
+      noWrap: true,
+      bounds: LIMITES_DO_MUNDO,
+    }).addTo(mapa);
     mapa.attributionControl.setPrefix(false);
 
     const grupo = L.markerClusterGroup({
@@ -125,7 +134,12 @@ export default function MapaLeaflet({
     });
     grupo.addTo(mapa);
 
-    const observador = new ResizeObserver(() => mapa.invalidateSize());
+    const observador = new ResizeObserver(() => {
+      mapa.invalidateSize();
+      mapa.setMinZoom(
+        zoomMinimoDoMapa(container.clientWidth, container.clientHeight),
+      );
+    });
     observador.observe(container);
 
     mapaRef.current = mapa;
@@ -212,6 +226,10 @@ export default function MapaLeaflet({
         }
       };
 
+      if (foco.servicoIds.length === 0) {
+        mapa.setView(destino, foco.zoom ?? ZOOM_DE_CHEGADA, { animate: false });
+        return;
+      }
       if (movimentoReduzido) {
         mapa.setView(destino, ZOOM_DO_FOCO, { animate: false });
         abrirPopup();

@@ -1,6 +1,9 @@
-declare module 'world-atlas/land-110m.json' {
+declare module 'world-atlas/countries-110m.json' {
   import type { GeometryCollection, Topology } from 'topojson-specification';
 
-  const terra: Topology<{ land: GeometryCollection }>;
-  export default terra;
+  const mundo: Topology<{
+    countries: GeometryCollection;
+    land: GeometryCollection;
+  }>;
+  export default mundo;
 }

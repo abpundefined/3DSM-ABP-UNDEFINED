@@ -15,6 +15,10 @@ export type LocalNoGlobo = {
 export const ROTACAO_INICIAL: Rotacao = [55, -15, 0];
 export const LATITUDE_MAXIMA = 70;
 export const RAIOS_NO_GLOBO = { raioMinimo: 5, raioMaximo: 18 };
+export const ZOOM_MINIMO_DO_GLOBO = 1;
+export const ZOOM_DE_TRANSICAO = 3;
+
+export type Velocidade = [number, number];
 
 function limitar(valor: number, minimo: number, maximo: number) {
   return Math.min(maximo, Math.max(minimo, valor));
@@ -111,4 +115,75 @@ export function estaVisivel(
 ) {
   const centro: [number, number] = [-rotacao[0], -rotacao[1]];
   return geoDistance([longitude, latitude], centro) < Math.PI / 2;
+}
+
+export function girarComVelocidade(
+  rotacao: Rotacao,
+  velocidade: Velocidade,
+  intervaloMs: number,
+): Rotacao {
+  return [
+    normalizarLongitude(rotacao[0] + velocidade[0] * intervaloMs),
+    limitar(
+      rotacao[1] + velocidade[1] * intervaloMs,
+      -LATITUDE_MAXIMA,
+      LATITUDE_MAXIMA,
+    ),
+    rotacao[2],
+  ];
+}
+
+export function amortecer(
+  velocidade: Velocidade,
+  intervaloMs: number,
+  atritoMs: number,
+  minima: number,
+): Velocidade {
+  const fator = Math.exp(-intervaloMs / atritoMs);
+  const proxima: Velocidade = [velocidade[0] * fator, velocidade[1] * fator];
+  return Math.hypot(...proxima) < minima ? [0, 0] : proxima;
+}
+
+export function limitarVelocidade(
+  velocidade: Velocidade,
+  maxima: number,
+): Velocidade {
+  const modulo = Math.hypot(...velocidade);
+  return modulo <= maxima
+    ? velocidade
+    : [(velocidade[0] / modulo) * maxima, (velocidade[1] / modulo) * maxima];
+}
+
+export function aproximarZoom(
+  atual: number,
+  alvo: number,
+  intervaloMs: number,
+  suavizacaoMs: number,
+) {
+  const proximo =
+    atual + (alvo - atual) * (1 - Math.exp(-intervaloMs / suavizacaoMs));
+  return Math.abs(alvo - proximo) < 0.001 ? alvo : proximo;
+}
+
+export function limitarZoomDoGlobo(zoom: number) {
+  return limitar(zoom, ZOOM_MINIMO_DO_GLOBO, ZOOM_DE_TRANSICAO);
+}
+
+export function zoomPelaRoda(zoom: number, deslocamentoY: number) {
+  return limitarZoomDoGlobo(zoom * Math.exp(-deslocamentoY * 0.002));
+}
+
+export function centroDaRotacao(rotacao: Rotacao) {
+  return {
+    longitude: normalizarLongitude(-rotacao[0]),
+    latitude: -rotacao[1],
+  };
+}
+
+export function zoomEquivalenteNoMapa(raioEmPixels: number) {
+  return limitar(
+    Math.round(Math.log2((2 * Math.PI * raioEmPixels) / 256)),
+    2,
+    8,
+  );
 }

@@ -305,6 +305,32 @@
   gap: 12px;
 }
 
+.mapa-regiao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.mapa-regiao select {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.mapa-regiao select:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+}
+
 .mapa-visoes {
   display: inline-flex;
   padding: 3px;
@@ -387,8 +413,68 @@
 
 .globo-terra {
   fill: var(--globo-terra);
-  stroke: rgb(12 23 17 / 55%);
-  stroke-width: 0.5;
+  stroke: rgb(231 246 234 / 55%);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+
+.globo-fronteiras {
+  fill: none;
+  stroke: rgb(231 246 234 / 38%);
+  stroke-width: 0.6;
+  stroke-linejoin: round;
+}
+
+.globo-controles {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  overflow: hidden;
+  border: 2px solid rgb(0 0 0 / 20%);
+  border-radius: 6px;
+  background-clip: padding-box;
+}
+
+.globo-controles button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #ccc;
+  background: #fff;
+  color: #1b1b1b;
+  font:
+    700 20px/1 system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.globo-controles button:last-child {
+  border-bottom: 0;
+}
+
+.globo-controles button:hover:not(:disabled) {
+  background: #f1f4f2;
+}
+
+.globo-controles button:disabled {
+  color: #8a8f8c;
+  cursor: default;
+}
+
+.globo-controles button:focus-visible {
+  position: relative;
+  outline: 3px solid var(--green-forest);
+  outline-offset: -3px;
+}
+
+.globo-controles svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
 }
 
 .globo-ponto {
@@ -526,6 +612,15 @@
   .mapa-leaflet,
   .globo {
     height: 380px;
+  }
+
+  .mapa-regiao {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .mapa-regiao select {
+    flex: 1;
   }
 
   .linha-do-tempo {

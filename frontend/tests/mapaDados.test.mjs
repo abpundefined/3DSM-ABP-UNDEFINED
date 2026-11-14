@@ -3,10 +3,13 @@ import { test } from 'node:test';
 import { mapaDemo } from '../src/mocks/mapa.ts';
 import {
   ehRespostaMapa,
+  filtrarPorRegiao,
   formatarEnergia,
   limitesDosServicos,
   ordenarPorEmissao,
+  regioesDoMapa,
   rotuloEstado,
+  zoomMinimoDoMapa,
 } from '../src/utils/mapaDados.ts';
 
 const copia = () => structuredClone(mapaDemo);
@@ -107,4 +110,35 @@ test('sorts services by emission, highest first and missing data last', () => {
     ['Alfa', 'Beta', 'Gama', 'Zero', 'Sem dados A', 'Sem dados B'],
   );
   assert.equal(entrada[0].nome, 'Beta');
+});
+
+test('lists each monitored region once, sorted by location', () => {
+  assert.deepEqual(regioesDoMapa(copia().servicos), [
+    { codigo: 'br-sudeste', local: 'Brasil · São Paulo' },
+    { codigo: 'ca-central', local: 'Canadá · Toronto' },
+    { codigo: 'us-east', local: 'Estados Unidos · Ashburn' },
+    { codigo: 'eu-west', local: 'Irlanda · Dublin' },
+    { codigo: 'jp-east', local: 'Japão · Tóquio' },
+  ]);
+  assert.deepEqual(regioesDoMapa([]), []);
+});
+
+test('filters items by region and keeps all of them without a region', () => {
+  const { servicos, semCoordenadas } = copia();
+
+  assert.equal(filtrarPorRegiao(servicos, null), servicos);
+  assert.deepEqual(
+    filtrarPorRegiao(servicos, 'br-sudeste').map(({ nome }) => nome),
+    ['Auth Service', 'Catalog API', 'Billing Service'],
+  );
+  assert.deepEqual(filtrarPorRegiao(semCoordenadas, 'br-sudeste'), []);
+  assert.deepEqual(filtrarPorRegiao(servicos, 'inexistente'), []);
+});
+
+test('finds the smallest map zoom where the world covers the container', () => {
+  assert.equal(zoomMinimoDoMapa(910, 520), 2);
+  assert.equal(zoomMinimoDoMapa(340, 380), 1);
+  assert.equal(zoomMinimoDoMapa(1800, 520), 3);
+  assert.equal(zoomMinimoDoMapa(200, 200), 0);
+  assert.equal(zoomMinimoDoMapa(0, 0), 0);
 });

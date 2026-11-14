@@ -3,24 +3,37 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
 } from 'react';
 import { geoGraticule10, geoOrthographic, geoPath } from 'd3-geo';
-import { feature } from 'topojson-client';
-import terra from 'world-atlas/land-110m.json';
+import { feature, mesh } from 'topojson-client';
+import mundo from 'world-atlas/countries-110m.json';
 import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import type { ServicoNoMapa } from '../../types/mapa';
 import {
   ROTACAO_INICIAL,
+  ZOOM_DE_TRANSICAO,
+  ZOOM_MINIMO_DO_GLOBO,
   agruparPorLocal,
+  amortecer,
+  aproximarZoom,
   arrastar,
   centralizar,
+  centroDaRotacao,
   estaVisivel,
+  girarComVelocidade,
   interpolarRotacao,
+  limitarVelocidade,
+  limitarZoomDoGlobo,
+  normalizarLongitude,
   suavizar,
+  zoomEquivalenteNoMapa,
+  zoomPelaRoda,
   type LocalNoGlobo,
   type Rotacao,
+  type Velocidade,
 } from '../../utils/globo';
 import { somarNoMomento, type Momento } from '../../utils/linhaDoTempo';
 import { formatarEnergia } from '../../utils/mapaDados';
@@ -32,19 +45,45 @@ const GRAUS_POR_PIXEL = 0.35;
 const PASSO_DO_TECLADO = 12;
 const DURACAO_DO_ZOOM_MS = 900;
 const ZOOM_FINAL = 2.6;
+const PASSO_DO_BOTAO = 1.5;
 const LIMITE_DE_CLIQUE_PX = 4;
+const GIRO_AUTOMATICO = 0.006;
+const ESPERA_PARA_GIRAR_MS = 2500;
+const ATRITO_MS = 400;
+const VELOCIDADE_MINIMA = 0.002;
+const VELOCIDADE_MAXIMA = 0.5;
+const SUAVIZACAO_DO_ZOOM_MS = 140;
+const TEMPO_PARADO_MS = 100;
+const INTERVALO_MAXIMO_MS = 64;
 
-const continentes = feature(terra, terra.objects.land);
+const continentes = feature(mundo, mundo.objects.land);
+const fronteiras = mesh(mundo, mundo.objects.countries, (a, b) => a !== b);
 const grade = geoGraticule10();
+
+export type CentroDoGlobo = {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+};
 
 type GloboInterativoProps = {
   servicos: ServicoNoMapa[];
   escala: EscalaEmissao;
   momento?: Momento | null;
+  rotacaoInicial?: Rotacao;
   onSelecionar: (local: LocalNoGlobo) => void;
+  onEntrarNoMapa: (centro: CentroDoGlobo) => void;
 };
 
-type Arrasto = { x: number; y: number; inicial: Rotacao; moveu: boolean };
+type Arrasto = {
+  x: number;
+  y: number;
+  inicial: Rotacao;
+  moveu: boolean;
+  amostra: { tempo: number; rotacao: Rotacao };
+};
+
+type Pinca = { distancia: number; zoomInicial: number };
 
 function formatarEmissaoOuVazio(valor: number | null) {
   return valor === null ? 'sem dados de emissão' : formatarEmissao(valor);
@@ -58,19 +97,41 @@ function descreverLocal(local: LocalNoGlobo, momento: Momento | null) {
   return `${local.local}: ${nomes}. ${momento ? `Em ${momento.rotulo}, ${emissao}` : emissao}`;
 }
 
+function distanciaEntre(pontos: { x: number; y: number }[]) {
+  return Math.hypot(pontos[0].x - pontos[1].x, pontos[0].y - pontos[1].y);
+}
+
 export default function GloboInterativo({
   servicos,
   escala,
   momento = null,
+  rotacaoInicial = ROTACAO_INICIAL,
   onSelecionar,
+  onEntrarNoMapa,
 }: GloboInterativoProps) {
-  const [rotacao, setRotacao] = useState<Rotacao>(ROTACAO_INICIAL);
-  const [zoom, setZoom] = useState(1);
+  const [rotacao, setRotacao] = useState<Rotacao>(rotacaoInicial);
+  const [zoom, setZoom] = useState(ZOOM_MINIMO_DO_GLOBO);
+  const [zoomAlvo, setZoomAlvo] = useState(ZOOM_MINIMO_DO_GLOBO);
   const [destaque, setDestaque] = useState<string | null>(null);
-  const rotacaoRef = useRef<Rotacao>(ROTACAO_INICIAL);
-  const arrastoRef = useRef<Arrasto | null>(null);
-  const animacaoRef = useRef<number | null>(null);
+  const [giroEscolhido, setGiroEscolhido] = useState<boolean | null>(null);
   const movimentoReduzido = usePrefersReducedMotion();
+  const giroAtivo = giroEscolhido ?? !movimentoReduzido;
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const rotacaoRef = useRef<Rotacao>(rotacaoInicial);
+  const zoomRef = useRef(ZOOM_MINIMO_DO_GLOBO);
+  const zoomAlvoRef = useRef(ZOOM_MINIMO_DO_GLOBO);
+  const velocidadeRef = useRef<Velocidade>([0, 0]);
+  const arrastoRef = useRef<Arrasto | null>(null);
+  const pincaRef = useRef<Pinca | null>(null);
+  const ponteirosRef = useRef(new Map<number, { x: number; y: number }>());
+  const selecaoRef = useRef<number | null>(null);
+  const ultimaInteracaoRef = useRef(0);
+  const pausadoRef = useRef({ ponteiro: false, foco: false });
+  const entrouNoMapaRef = useRef(false);
+  const giroAtivoRef = useRef(giroAtivo);
+  const movimentoReduzidoRef = useRef(movimentoReduzido);
+  const aoEntrarNoMapaRef = useRef(onEntrarNoMapa);
 
   const locais = useMemo(() => agruparPorLocal(servicos), [servicos]);
   const indice = momento?.indice ?? null;
@@ -88,30 +149,142 @@ export default function GloboInterativo({
   );
   const caminho = geoPath(projecao);
 
-  useEffect(
-    () => () => {
-      if (animacaoRef.current !== null) {
-        cancelAnimationFrame(animacaoRef.current);
+  useEffect(() => {
+    giroAtivoRef.current = giroAtivo;
+    movimentoReduzidoRef.current = movimentoReduzido;
+    aoEntrarNoMapaRef.current = onEntrarNoMapa;
+  }, [giroAtivo, movimentoReduzido, onEntrarNoMapa]);
+
+  useEffect(() => {
+    const entrarNoMapa = () => {
+      if (entrouNoMapaRef.current) {
+        return;
       }
-    },
-    [],
-  );
+      entrouNoMapaRef.current = true;
+      const largura = svgRef.current?.getBoundingClientRect().width ?? TAMANHO;
+      const raioEmPixels = RAIO * zoomRef.current * (largura / TAMANHO);
+      aoEntrarNoMapaRef.current({
+        ...centroDaRotacao(rotacaoRef.current),
+        zoom: zoomEquivalenteNoMapa(raioEmPixels),
+      });
+    };
+
+    let quadroId = 0;
+    let anterior: number | null = null;
+    ultimaInteracaoRef.current = performance.now();
+
+    const quadro = (agora: number) => {
+      const intervalo =
+        anterior === null ? 0 : Math.min(INTERVALO_MAXIMO_MS, agora - anterior);
+      anterior = agora;
+
+      if (selecaoRef.current === null && !arrastoRef.current?.moveu) {
+        const velocidade = velocidadeRef.current;
+        const pausado =
+          pausadoRef.current.ponteiro ||
+          pausadoRef.current.foco ||
+          pincaRef.current !== null ||
+          agora - ultimaInteracaoRef.current < ESPERA_PARA_GIRAR_MS;
+
+        if (velocidade[0] !== 0 || velocidade[1] !== 0) {
+          rotacaoRef.current = girarComVelocidade(
+            rotacaoRef.current,
+            velocidade,
+            intervalo,
+          );
+          velocidadeRef.current = amortecer(
+            velocidade,
+            intervalo,
+            ATRITO_MS,
+            VELOCIDADE_MINIMA,
+          );
+          setRotacao(rotacaoRef.current);
+        } else if (giroAtivoRef.current && !pausado && intervalo > 0) {
+          rotacaoRef.current = girarComVelocidade(
+            rotacaoRef.current,
+            [GIRO_AUTOMATICO, 0],
+            intervalo,
+          );
+          setRotacao(rotacaoRef.current);
+        }
+
+        if (zoomRef.current !== zoomAlvoRef.current) {
+          zoomRef.current = movimentoReduzidoRef.current
+            ? zoomAlvoRef.current
+            : aproximarZoom(
+                zoomRef.current,
+                zoomAlvoRef.current,
+                intervalo,
+                SUAVIZACAO_DO_ZOOM_MS,
+              );
+          setZoom(zoomRef.current);
+        }
+        if (zoomRef.current >= ZOOM_DE_TRANSICAO - 0.02) {
+          entrarNoMapa();
+        }
+      }
+
+      quadroId = requestAnimationFrame(quadro);
+    };
+
+    quadroId = requestAnimationFrame(quadro);
+    return () => {
+      cancelAnimationFrame(quadroId);
+      if (selecaoRef.current !== null) {
+        cancelAnimationFrame(selecaoRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) {
+      return;
+    }
+
+    const aoRolar = (evento: WheelEvent) => {
+      if (selecaoRef.current !== null) {
+        return;
+      }
+      evento.preventDefault();
+      const fator = evento.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+      const proximo = zoomPelaRoda(zoomAlvoRef.current, evento.deltaY * fator);
+      ultimaInteracaoRef.current = evento.timeStamp;
+      zoomAlvoRef.current = proximo;
+      setZoomAlvo(proximo);
+    };
+
+    svg.addEventListener('wheel', aoRolar, { passive: false });
+    return () => svg.removeEventListener('wheel', aoRolar);
+  }, []);
+
+  function marcarInteracao(tempo: number) {
+    ultimaInteracaoRef.current = tempo;
+  }
 
   function girarPara(proxima: Rotacao) {
     rotacaoRef.current = proxima;
     setRotacao(proxima);
   }
 
+  function mudarZoom(proximo: number, tempo: number) {
+    marcarInteracao(tempo);
+    zoomAlvoRef.current = proximo;
+    setZoomAlvo(proximo);
+  }
+
   function selecionar(local: LocalNoGlobo) {
-    if (animacaoRef.current !== null) {
+    if (selecaoRef.current !== null) {
       return;
     }
+    velocidadeRef.current = [0, 0];
     if (movimentoReduzido) {
       onSelecionar(local);
       return;
     }
 
     const inicio = rotacaoRef.current;
+    const zoomInicial = zoomRef.current;
     const destino = centralizar(local.longitude, local.latitude);
     let comeco: number | null = null;
 
@@ -119,32 +292,77 @@ export default function GloboInterativo({
       comeco ??= agora;
       const progresso = Math.min(1, (agora - comeco) / DURACAO_DO_ZOOM_MS);
       const suave = suavizar(progresso);
+      const proximoZoom = zoomInicial + (ZOOM_FINAL - zoomInicial) * suave;
       girarPara(interpolarRotacao(inicio, destino, suave));
-      setZoom(1 + (ZOOM_FINAL - 1) * suave);
+      zoomRef.current = proximoZoom;
+      zoomAlvoRef.current = proximoZoom;
+      setZoom(proximoZoom);
 
       if (progresso < 1) {
-        animacaoRef.current = requestAnimationFrame(passo);
+        selecaoRef.current = requestAnimationFrame(passo);
       } else {
-        animacaoRef.current = null;
+        selecaoRef.current = null;
         onSelecionar(local);
       }
     };
-    animacaoRef.current = requestAnimationFrame(passo);
+    selecaoRef.current = requestAnimationFrame(passo);
   }
 
-  function iniciarArrasto(evento: PointerEvent<SVGSVGElement>) {
-    if (animacaoRef.current !== null || evento.button !== 0) {
+  function aoPressionar(evento: PointerEvent<SVGSVGElement>) {
+    if (selecaoRef.current !== null) {
       return;
     }
+    if (evento.pointerType === 'mouse' && evento.button !== 0) {
+      return;
+    }
+    marcarInteracao(evento.timeStamp);
+    velocidadeRef.current = [0, 0];
+    ponteirosRef.current.set(evento.pointerId, {
+      x: evento.clientX,
+      y: evento.clientY,
+    });
+
+    if (ponteirosRef.current.size === 2) {
+      evento.currentTarget.setPointerCapture(evento.pointerId);
+      pincaRef.current = {
+        distancia: distanciaEntre([...ponteirosRef.current.values()]),
+        zoomInicial: zoomAlvoRef.current,
+      };
+      if (arrastoRef.current) {
+        arrastoRef.current.moveu = true;
+      }
+      return;
+    }
+
     arrastoRef.current = {
       x: evento.clientX,
       y: evento.clientY,
       inicial: rotacaoRef.current,
       moveu: false,
+      amostra: { tempo: evento.timeStamp, rotacao: rotacaoRef.current },
     };
   }
 
-  function moverArrasto(evento: PointerEvent<SVGSVGElement>) {
+  function aoMover(evento: PointerEvent<SVGSVGElement>) {
+    if (!ponteirosRef.current.has(evento.pointerId)) {
+      return;
+    }
+    ponteirosRef.current.set(evento.pointerId, {
+      x: evento.clientX,
+      y: evento.clientY,
+    });
+    marcarInteracao(evento.timeStamp);
+
+    const pinca = pincaRef.current;
+    if (pinca) {
+      const distancia = distanciaEntre([...ponteirosRef.current.values()]);
+      mudarZoom(
+        limitarZoomDoGlobo(pinca.zoomInicial * (distancia / pinca.distancia)),
+        evento.timeStamp,
+      );
+      return;
+    }
+
     const arrasto = arrastoRef.current;
     if (!arrasto) {
       return;
@@ -159,36 +377,113 @@ export default function GloboInterativo({
       arrasto.moveu = true;
       evento.currentTarget.setPointerCapture(evento.pointerId);
     }
-    girarPara(arrastar(arrasto.inicial, dx, dy, GRAUS_POR_PIXEL));
+
+    const proxima = arrastar(
+      arrasto.inicial,
+      dx,
+      dy,
+      GRAUS_POR_PIXEL / zoomRef.current,
+    );
+    const decorrido = evento.timeStamp - arrasto.amostra.tempo;
+    if (decorrido > 0) {
+      const instantanea: Velocidade = [
+        normalizarLongitude(proxima[0] - arrasto.amostra.rotacao[0]) /
+          decorrido,
+        (proxima[1] - arrasto.amostra.rotacao[1]) / decorrido,
+      ];
+      const anterior = velocidadeRef.current;
+      velocidadeRef.current = limitarVelocidade(
+        [
+          anterior[0] * 0.4 + instantanea[0] * 0.6,
+          anterior[1] * 0.4 + instantanea[1] * 0.6,
+        ],
+        VELOCIDADE_MAXIMA,
+      );
+      arrasto.amostra = { tempo: evento.timeStamp, rotacao: proxima };
+    }
+    girarPara(proxima);
   }
 
-  function encerrarArrasto(evento: PointerEvent<SVGSVGElement>) {
+  function aoSoltar(evento: PointerEvent<SVGSVGElement>) {
     if (evento.currentTarget.hasPointerCapture(evento.pointerId)) {
       evento.currentTarget.releasePointerCapture(evento.pointerId);
     }
+    ponteirosRef.current.delete(evento.pointerId);
+    marcarInteracao(evento.timeStamp);
+
+    if (pincaRef.current) {
+      if (ponteirosRef.current.size < 2) {
+        pincaRef.current = null;
+        velocidadeRef.current = [0, 0];
+      }
+    } else {
+      const arrasto = arrastoRef.current;
+      const parado =
+        !arrasto?.moveu ||
+        evento.timeStamp - arrasto.amostra.tempo > TEMPO_PARADO_MS;
+      if (parado || movimentoReduzido) {
+        velocidadeRef.current = [0, 0];
+      }
+    }
+
     window.setTimeout(() => {
-      arrastoRef.current = null;
+      if (ponteirosRef.current.size === 0) {
+        arrastoRef.current = null;
+      }
     }, 0);
   }
 
-  function girarPeloTeclado(evento: KeyboardEvent<HTMLDivElement>) {
-    if (evento.target !== evento.currentTarget) {
+  function aoUsarTeclado(evento: KeyboardEvent<HTMLDivElement>) {
+    if (evento.target !== evento.currentTarget || selecaoRef.current !== null) {
+      return;
+    }
+
+    if (evento.key === '+' || evento.key === '=') {
+      evento.preventDefault();
+      mudarZoom(
+        limitarZoomDoGlobo(zoomAlvoRef.current * PASSO_DO_BOTAO),
+        evento.timeStamp,
+      );
+      return;
+    }
+    if (evento.key === '-') {
+      evento.preventDefault();
+      mudarZoom(
+        limitarZoomDoGlobo(zoomAlvoRef.current / PASSO_DO_BOTAO),
+        evento.timeStamp,
+      );
       return;
     }
 
     const deslocamentos: Record<string, [number, number]> = {
       ArrowLeft: [PASSO_DO_TECLADO, 0],
       ArrowRight: [-PASSO_DO_TECLADO, 0],
-      ArrowUp: [0, PASSO_DO_TECLADO],
-      ArrowDown: [0, -PASSO_DO_TECLADO],
+      ArrowUp: [0, -PASSO_DO_TECLADO],
+      ArrowDown: [0, PASSO_DO_TECLADO],
     };
     const deslocamento = deslocamentos[evento.key];
-    if (!deslocamento || animacaoRef.current !== null) {
+    if (!deslocamento) {
       return;
     }
 
     evento.preventDefault();
-    girarPara(arrastar(rotacaoRef.current, ...deslocamento, 1));
+    marcarInteracao(evento.timeStamp);
+    if (movimentoReduzido) {
+      girarPara(
+        arrastar(rotacaoRef.current, deslocamento[0], -deslocamento[1], 1),
+      );
+      return;
+    }
+    velocidadeRef.current = [
+      velocidadeRef.current[0] + deslocamento[0] / ATRITO_MS,
+      velocidadeRef.current[1] + deslocamento[1] / ATRITO_MS,
+    ];
+  }
+
+  function aoSairDoFoco(evento: FocusEvent<HTMLDivElement>) {
+    if (!evento.currentTarget.contains(evento.relatedTarget)) {
+      pausadoRef.current.foco = false;
+    }
   }
 
   function clicarNoLocal(local: LocalNoGlobo) {
@@ -215,16 +510,28 @@ export default function GloboInterativo({
       aria-label="Globo com os serviços monitorados"
       aria-describedby="globo-instrucoes"
       tabIndex={0}
-      onKeyDown={girarPeloTeclado}
+      onKeyDown={aoUsarTeclado}
+      onPointerEnter={() => {
+        pausadoRef.current.ponteiro = true;
+      }}
+      onPointerLeave={() => {
+        pausadoRef.current.ponteiro = false;
+      }}
+      onFocus={(evento) => {
+        pausadoRef.current.foco = !evento.target.closest('.globo-controles');
+      }}
+      onBlur={aoSairDoFoco}
     >
       <svg
+        ref={svgRef}
         className="globo-svg"
         viewBox={`0 0 ${TAMANHO} ${TAMANHO}`}
         data-rotacao={rotacao.map((valor) => valor.toFixed(1)).join(',')}
-        onPointerDown={iniciarArrasto}
-        onPointerMove={moverArrasto}
-        onPointerUp={encerrarArrasto}
-        onPointerCancel={encerrarArrasto}
+        data-zoom={zoom.toFixed(2)}
+        onPointerDown={aoPressionar}
+        onPointerMove={aoMover}
+        onPointerUp={aoSoltar}
+        onPointerCancel={aoSoltar}
       >
         <g aria-hidden="true">
           <path
@@ -233,6 +540,7 @@ export default function GloboInterativo({
           />
           <path className="globo-grade" d={caminho(grade) ?? ''} />
           <path className="globo-terra" d={caminho(continentes) ?? ''} />
+          <path className="globo-fronteiras" d={caminho(fronteiras) ?? ''} />
         </g>
         {visiveis.map((local) => {
           const ponto = projecao([local.longitude, local.latitude]);
@@ -267,6 +575,55 @@ export default function GloboInterativo({
           );
         })}
       </svg>
+      <div className="globo-controles">
+        <button
+          type="button"
+          aria-label="Aproximar"
+          title="Aproximar"
+          onClick={(evento) =>
+            mudarZoom(
+              limitarZoomDoGlobo(zoomAlvoRef.current * PASSO_DO_BOTAO),
+              evento.timeStamp,
+            )
+          }
+        >
+          <span aria-hidden="true">+</span>
+        </button>
+        <button
+          type="button"
+          aria-label="Afastar"
+          title="Afastar"
+          disabled={zoomAlvo <= ZOOM_MINIMO_DO_GLOBO}
+          onClick={(evento) =>
+            mudarZoom(
+              limitarZoomDoGlobo(zoomAlvoRef.current / PASSO_DO_BOTAO),
+              evento.timeStamp,
+            )
+          }
+        >
+          <span aria-hidden="true">−</span>
+        </button>
+        <button
+          type="button"
+          aria-label={giroAtivo ? 'Pausar rotação' : 'Girar o globo'}
+          title={giroAtivo ? 'Pausar rotação' : 'Girar o globo'}
+          onClick={(evento) => {
+            marcarInteracao(evento.timeStamp);
+            setGiroEscolhido(!giroAtivo);
+          }}
+        >
+          {giroAtivo ? (
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="4" y="3" width="3" height="10" rx="1" />
+              <rect x="9" y="3" width="3" height="10" rx="1" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M5 3.5v9a.5.5 0 0 0 .77.42l7-4.5a.5.5 0 0 0 0-.84l-7-4.5A.5.5 0 0 0 5 3.5Z" />
+            </svg>
+          )}
+        </button>
+      </div>
       {localEmDestaque && posicaoDoDestaque && (
         <div
           className="globo-dica"
@@ -289,8 +646,8 @@ export default function GloboInterativo({
         </div>
       )}
       <p id="globo-instrucoes" className="globo-instrucoes">
-        Arraste ou use as setas do teclado para girar. Clique em um ponto para
-        aproximar no mapa.
+        Arraste para girar e use a roda do mouse ou os botões + e − para
+        aproximar até entrar no mapa. Clique em um ponto para ir direto a ele.
       </p>
     </div>
   );

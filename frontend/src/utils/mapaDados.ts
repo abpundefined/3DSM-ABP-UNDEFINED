@@ -7,6 +7,11 @@ import type {
 
 export type Limites = [[number, number], [number, number]];
 
+export type RegiaoDoMapa = {
+  codigo: string;
+  local: string;
+};
+
 const ESTADOS: readonly EstadoMonitoramento[] = [
   'DISPONIVEL',
   'INDISPONIVEL',
@@ -121,6 +126,34 @@ export function limitesDosServicos(
     [Math.min(...latitudes), Math.min(...longitudes)],
     [Math.max(...latitudes), Math.max(...longitudes)],
   ];
+}
+
+export function zoomMinimoDoMapa(largura: number, altura: number) {
+  const lado = Math.max(largura, altura);
+  return lado > 256 ? Math.ceil(Math.log2(lado / 256)) : 0;
+}
+
+export function regioesDoMapa(servicos: ServicoNoMapa[]): RegiaoDoMapa[] {
+  const regioes = new Map<string, RegiaoDoMapa>();
+
+  for (const { regiaoCodigo, local } of servicos) {
+    if (!regioes.has(regiaoCodigo)) {
+      regioes.set(regiaoCodigo, { codigo: regiaoCodigo, local });
+    }
+  }
+
+  return [...regioes.values()].sort((a, b) =>
+    a.local.localeCompare(b.local, 'pt-BR'),
+  );
+}
+
+export function filtrarPorRegiao<T extends { regiaoCodigo: string }>(
+  itens: T[],
+  regiao: string | null,
+): T[] {
+  return regiao === null
+    ? itens
+    : itens.filter(({ regiaoCodigo }) => regiaoCodigo === regiao);
 }
 
 export function ordenarPorEmissao<

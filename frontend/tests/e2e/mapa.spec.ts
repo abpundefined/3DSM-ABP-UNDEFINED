@@ -227,12 +227,15 @@ test('abre no globo com um ponto por local visível', async ({ page }) => {
   ).toHaveAccessibleName(/Auth Service, Catalog API, Billing Service/);
 });
 
-test('arrastar e as setas do teclado giram o globo', async ({ page }) => {
-  await simularMapa(page);
-  await page.goto('/mapa');
-  const svg = page.locator('.globo-svg');
-  const inicial = await svg.getAttribute('data-rotacao');
+const longitudeDoGlobo = async (page: Page) =>
+  Number(
+    (await page.locator('.globo-svg').getAttribute('data-rotacao'))?.split(
+      ',',
+    )[0],
+  );
 
+async function centroDoGlobo(page: Page) {
+  const svg = page.locator('.globo-svg');
   await svg.evaluate((elemento) =>
     elemento.scrollIntoView({ block: 'center' }),
   );
@@ -240,25 +243,217 @@ test('arrastar e as setas do teclado giram o globo', async ({ page }) => {
   if (!caixa) {
     throw new Error('Globo sem área visível.');
   }
-  await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(
-    caixa.x + caixa.width / 2 + 80,
-    caixa.y + caixa.height / 2,
-    { steps: 6 },
-  );
-  await page.mouse.up();
-  await expect(svg).not.toHaveAttribute('data-rotacao', inicial ?? '');
+  return { x: caixa.x + caixa.width / 2, y: caixa.y + caixa.height / 2 };
+}
 
-  const depoisDoArrasto = await svg.getAttribute('data-rotacao');
-  const longitude = Number(depoisDoArrasto?.split(',')[0]);
+test('arrastar gira o globo e a inércia continua o giro até parar', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const svg = page.locator('.globo-svg');
+  const inicial = await longitudeDoGlobo(page);
+  const centro = await centroDoGlobo(page);
+
+  await page.mouse.move(centro.x, centro.y);
+  await svg.evaluate(async (elemento, { x, y }) => {
+    const disparar = (tipo: string, deslocamento: number) =>
+      elemento.dispatchEvent(
+        new PointerEvent(tipo, {
+          bubbles: true,
+          pointerId: 1,
+          pointerType: 'mouse',
+          isPrimary: true,
+          button: 0,
+          buttons: tipo === 'pointerup' ? 0 : 1,
+          clientX: x + deslocamento,
+          clientY: y,
+        }),
+      );
+    disparar('pointerdown', 0);
+    for (let passo = 1; passo <= 6; passo += 1) {
+      await new Promise((resolver) => setTimeout(resolver, 16));
+      disparar('pointermove', passo * 20);
+    }
+    disparar('pointerup', 120);
+  }, centro);
+  const aoSoltar = await longitudeDoGlobo(page);
+  expect(aoSoltar).not.toBe(inicial);
+
+  let anterior = '';
+  await expect
+    .poll(
+      async () => {
+        const atual = (await svg.getAttribute('data-rotacao')) ?? '';
+        const parado = atual === anterior;
+        anterior = atual;
+        return parado;
+      },
+      { intervals: [250], timeout: 8000 },
+    )
+    .toBe(true);
+  expect(Math.abs((await longitudeDoGlobo(page)) - aoSoltar)).toBeGreaterThan(
+    1,
+  );
+});
+
+test('as setas do teclado giram o globo suavemente', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const globo = page.getByRole('group', {
+    name: 'Globo com os serviços monitorados',
+  });
+  await globo.focus();
+  const inicial = await longitudeDoGlobo(page);
+
+  await globo.press('ArrowLeft');
+  await expect
+    .poll(async () => (await longitudeDoGlobo(page)) - inicial)
+    .toBeGreaterThan(10);
+  expect((await longitudeDoGlobo(page)) - inicial).toBeLessThan(13);
+});
+
+test('com movimento reduzido, o globo não gira sozinho e as setas giram 12 graus', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const svg = page.locator('.globo-svg');
+  await page.mouse.move(0, 0);
+
+  await expect(
+    page.getByRole('button', { name: 'Girar o globo' }),
+  ).toBeVisible();
+  await page.waitForTimeout(3500);
+  await expect(svg).toHaveAttribute('data-rotacao', '55.0,-15.0,0.0');
+
   await page
     .getByRole('group', { name: 'Globo com os serviços monitorados' })
     .press('ArrowLeft');
-  await expect(svg).toHaveAttribute(
-    'data-rotacao',
-    new RegExp(`^${(longitude + 12).toFixed(1)},`),
+  await expect(svg).toHaveAttribute('data-rotacao', '67.0,-15.0,0.0');
+});
+
+test('o globo gira sozinho devagar e o botão pausa a rotação', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await page.mouse.move(0, 0);
+  const inicial = await longitudeDoGlobo(page);
+
+  await expect
+    .poll(() => longitudeDoGlobo(page), { timeout: 8000 })
+    .toBeGreaterThan(inicial + 3);
+
+  await page.getByRole('button', { name: 'Pausar rotação' }).click();
+  await page.mouse.move(0, 0);
+  const pausado = await longitudeDoGlobo(page);
+  await page.waitForTimeout(3500);
+  expect(await longitudeDoGlobo(page)).toBe(pausado);
+
+  await page.getByRole('button', { name: 'Girar o globo' }).click();
+  await page.mouse.move(0, 0);
+  await expect
+    .poll(() => longitudeDoGlobo(page), { timeout: 8000 })
+    .toBeGreaterThan(pausado + 3);
+});
+
+test('os botões + e − aproximam o globo e o terceiro + entra no mapa', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?periodo=7d');
+  const svg = page.locator('.globo-svg');
+  const aproximar = page.getByRole('button', {
+    name: 'Aproximar',
+    exact: true,
+  });
+  const afastar = page.getByRole('button', { name: 'Afastar', exact: true });
+
+  await expect(afastar).toBeDisabled();
+  await aproximar.click();
+  await expect(svg).toHaveAttribute('data-zoom', '1.50');
+  await expect(afastar).toBeEnabled();
+  await afastar.click();
+  await expect(svg).toHaveAttribute('data-zoom', '1.00');
+  await expect(afastar).toBeDisabled();
+
+  await aproximar.click();
+  await aproximar.click();
+  await expect(svg).toHaveAttribute('data-zoom', '2.25');
+  await aproximar.click();
+  await expect(page).toHaveURL(/periodo=7d&visao=mapa$/);
+  await expect(page.locator('.leaflet-container')).toBeVisible();
+});
+
+test('a roda do mouse aproxima o globo até entrar no mapa', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const svg = page.locator('.globo-svg');
+  const centro = await centroDoGlobo(page);
+  await page.mouse.move(centro.x, centro.y);
+
+  await page.mouse.wheel(0, -400);
+  await expect
+    .poll(async () => Number(await svg.getAttribute('data-zoom')))
+    .toBeGreaterThan(1.2);
+  await expect(page).not.toHaveURL(/visao=mapa/);
+
+  for (let passo = 0; passo < 10; passo += 1) {
+    await page.mouse.wheel(0, -400);
+  }
+  await expect(page).toHaveURL(/visao=mapa/);
+  await expect(page.locator('.leaflet-container')).toBeVisible();
+});
+
+test('o mapa não repete o mundo nem passa dos limites ao afastar', async ({
+  page,
+}) => {
+  const tiles: string[] = [];
+  page.on('request', (requisicao) => {
+    const url = requisicao.url();
+    if (url.startsWith('https://tile.openstreetmap.org/')) {
+      tiles.push(url);
+    }
+  });
+  await simularMapa(page);
+  await page.goto('/mapa?visao=mapa');
+  const afastar = page.locator('.leaflet-control-zoom-out');
+
+  for (let passo = 0; passo < 6; passo += 1) {
+    if (
+      await afastar.evaluate((botao) =>
+        botao.classList.contains('leaflet-disabled'),
+      )
+    ) {
+      break;
+    }
+    await afastar.click();
+  }
+  await expect(afastar).toHaveClass(/leaflet-disabled/);
+
+  expect(tiles.length).toBeGreaterThan(0);
+  const coordenadas = tiles.map((url) =>
+    url
+      .replace('https://tile.openstreetmap.org/', '')
+      .replace('.png', '')
+      .split('/')
+      .map(Number),
   );
+  for (const [z, x, y] of coordenadas) {
+    expect(x).toBeGreaterThanOrEqual(0);
+    expect(x).toBeLessThan(2 ** z);
+    expect(y).toBeGreaterThanOrEqual(0);
+    expect(y).toBeLessThan(2 ** z);
+  }
+
+  const menorZoom = Math.min(...coordenadas.map(([z]) => z));
+  const caixa = await page.locator('.leaflet-container').boundingBox();
+  expect(256 * 2 ** menorZoom).toBeGreaterThanOrEqual(caixa?.width ?? 0);
+  expect(256 * 2 ** menorZoom).toBeGreaterThanOrEqual(caixa?.height ?? 0);
 });
 
 test('dica mostra os serviços e o impacto do local', async ({ page }) => {
@@ -414,4 +609,59 @@ test('no mapa, o intervalo muda o marcador e entra no popup', async ({
   await expect(popup).toContainText('Media CDN');
   await expect(popup).toContainText('Em 11/11, 14:00');
   await expect(popup).toContainText('0,35 gCO₂e');
+});
+
+test('filtro por região centraliza o globo e filtra a lista e a tabela', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?periodo=7d');
+  const regiao = page.getByLabel('Região');
+
+  await regiao.selectOption({ label: 'Brasil · São Paulo' });
+  await expect(page).toHaveURL(/periodo=7d&regiao=br-sudeste$/);
+  await expect(page.locator('.mapa-resumo')).toHaveText(
+    '3 serviços em Brasil · São Paulo',
+  );
+  await expect(pontosDoGlobo(page)).toHaveCount(1);
+  await expect(page.locator('.globo-svg')).toHaveAttribute(
+    'data-rotacao',
+    '46.6,23.6,0.0',
+  );
+  await expect(
+    page.getByRole('region', { name: 'Sem coordenadas (0)' }),
+  ).toBeVisible();
+  await page.getByText('Ver os dados do mapa em tabela').click();
+  await expect(page.locator('.mapa-tabela tbody tr')).toHaveCount(3);
+  await analisarAcessibilidade(page);
+
+  await regiao.selectOption({ label: 'Todas as regiões' });
+  await expect(page).toHaveURL(/\/mapa\?periodo=7d$/);
+  await expect(pontosDoGlobo(page)).toHaveCount(4);
+  await expect(page.locator('.mapa-tabela tbody tr')).toHaveCount(10);
+});
+
+test('no mapa, a região da URL enquadra só os marcadores dela', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?visao=mapa&regiao=jp-east');
+
+  await expect(page.getByLabel('Região')).toHaveValue('jp-east');
+  await expect(page.locator('path.mapa-marcador')).toHaveCount(1);
+  await page.locator('path.mapa-marcador').click({ force: true });
+  await expect(page.locator('.leaflet-popup-content')).toContainText(
+    'Media CDN',
+  );
+});
+
+test('região inexistente na URL mostra todas as regiões', async ({ page }) => {
+  await simularMapa(page);
+  await page.goto('/mapa?regiao=inexistente');
+
+  await expect(page.getByLabel('Região')).toHaveValue('');
+  await expect(page.locator('.mapa-resumo')).toHaveText(
+    '8 de 10 serviços com localização no mapa',
+  );
+  await expect(pontosDoGlobo(page)).toHaveCount(4);
 });

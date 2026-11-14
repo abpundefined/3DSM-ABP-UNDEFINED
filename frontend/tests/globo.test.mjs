@@ -3,13 +3,23 @@ import { test } from 'node:test';
 import { mapaDemo } from '../src/mocks/mapa.ts';
 import {
   LATITUDE_MAXIMA,
+  ZOOM_DE_TRANSICAO,
+  ZOOM_MINIMO_DO_GLOBO,
   agruparPorLocal,
+  amortecer,
+  aproximarZoom,
   arrastar,
   centralizar,
+  centroDaRotacao,
   estaVisivel,
+  girarComVelocidade,
   interpolarRotacao,
+  limitarVelocidade,
+  limitarZoomDoGlobo,
   normalizarLongitude,
   suavizar,
+  zoomEquivalenteNoMapa,
+  zoomPelaRoda,
 } from '../src/utils/globo.ts';
 
 const perto = (a, b) => Math.abs(a - b) < 1e-9;
@@ -84,4 +94,53 @@ test('detects whether a point is on the visible side of the globe', () => {
 
   assert.equal(estaVisivel(sobreSaoPaulo, -46.6333, -23.5505), true);
   assert.equal(estaVisivel(sobreSaoPaulo, 139.6503, 35.6762), false);
+});
+
+test('rotates by a velocity and keeps the latitude within the range', () => {
+  assert.deepEqual(girarComVelocidade([170, 0, 0], [0.5, 0], 40), [-170, 0, 0]);
+  assert.deepEqual(girarComVelocidade([0, 60, 0], [0, 1, 0], 100), [
+    0,
+    LATITUDE_MAXIMA,
+    0,
+  ]);
+});
+
+test('slows the inertia down and stops it below the minimum speed', () => {
+  const metade = amortecer([1, -0.5], Math.LN2 * 100, 100, 0.01);
+
+  assert.ok(perto(metade[0], 0.5));
+  assert.ok(perto(metade[1], -0.25));
+  assert.deepEqual(amortecer([0.012, 0], 100, 100, 0.01), [0, 0]);
+});
+
+test('caps the drag speed keeping its direction', () => {
+  assert.deepEqual(limitarVelocidade([0.3, 0.4], 1), [0.3, 0.4]);
+  const limitada = limitarVelocidade([3, 4], 1);
+  assert.ok(perto(limitada[0], 0.6));
+  assert.ok(perto(limitada[1], 0.8));
+});
+
+test('eases the zoom toward the target and snaps when close', () => {
+  const proximo = aproximarZoom(1, 2, 100, 100);
+
+  assert.ok(perto(proximo, 2 - Math.exp(-1)));
+  assert.equal(aproximarZoom(1.9995, 2, 16, 100), 2);
+  assert.equal(aproximarZoom(1, 2, 0, 100), 1);
+});
+
+test('zooms with the wheel within the globe limits', () => {
+  assert.ok(zoomPelaRoda(1, -100) > 1);
+  assert.equal(zoomPelaRoda(1, 500), ZOOM_MINIMO_DO_GLOBO);
+  assert.equal(zoomPelaRoda(2.5, -2000), ZOOM_DE_TRANSICAO);
+  assert.equal(limitarZoomDoGlobo(0.4), ZOOM_MINIMO_DO_GLOBO);
+});
+
+test('finds the globe center and the equivalent map zoom', () => {
+  assert.deepEqual(centroDaRotacao([46.6333, 23.5505, 0]), {
+    longitude: -46.6333,
+    latitude: -23.5505,
+  });
+  assert.equal(zoomEquivalenteNoMapa(236 * 3), 4);
+  assert.equal(zoomEquivalenteNoMapa(10), 2);
+  assert.equal(zoomEquivalenteNoMapa(100000), 8);
 });
