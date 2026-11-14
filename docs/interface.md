@@ -265,7 +265,7 @@ Os registros deste trecho representam a situação da Sprint 2. O levantamento d
 
 - **Atividade:** [#81 — Avaliação heurística e avaliação com usuários](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81).
 - **Encaminhamento das melhorias:** [#101 — Melhorias de usabilidade (P01 a P08)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101).
-- **Responsável pela documentação:** Thales Cambraia Dias. O levantamento foi preparado com auxílio do Codex a partir da leitura do código e de uma navegação automatizada local relatada na sessão. As classificações propostas foram submetidas à revisão da equipe.
+- **Responsável pela documentação:** Thales Cambraia Dias. O levantamento foi preparado com auxílio do Codex a partir da leitura do código e de uma navegação automatizada local relatada na sessão. As classificações propostas foram revisadas no PR #166.
 - **Versão de referência:** branch `develop`, commit [`76b4658f2e122d683018012bdcc41ead2988451f`](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/76b4658f2e122d683018012bdcc41ead2988451f). Esse commit delimita a versão analisada.
 - **Ambiente informado pelo Codex:** Windows, frontend, API e PostgreSQL locais via Docker; endereço `http://localhost:5173`; navegador automatizado, tema claro. O relato indica inspeção aproximadamente entre 21h33 e 21h36 de 13/11/2026 (horário de Brasília).
 - **Telas incluídas no relato:** dashboard conectado (`/`), modo de demonstração (`/?demo=1`), login (`/login`), menu superior em 1440 × 900 px e barra inferior em 375 × 812 px. A visualização móvel foi simulada no navegador, não em um aparelho físico.
@@ -316,7 +316,7 @@ As imagens abaixo foram adicionadas à branch `thalestcd-patch-2` no [PR #167 �
 | --- | --- | --- |
 | **IMG01** | [Erro de backend — P01/P07](evidencias/frontend-25/P01-P07-erro-backend.png) | Mensagens de indisponibilidade do dashboard; complemento visual do relato V05, associado a P01 e P07. |
 | **IMG02** | [Indicadores — P03](evidencias/frontend-25/P03-indicadores.png) | Apresentação de valores e unidades no dashboard; relacionada a V01 e P03. |
-| **IMG03** | [Lista de serviços — P04](evidencias/frontend-25/P04-lista-servicos.png) | Controles visíveis na lista conectada; relacionada a V01 e P04. |
+| **IMG03** | [Lista de serviços — P04](evidencias/frontend-25/P04-lista-servicos.png) | Lista conectada sem busca, filtro ou ordenação; relacionada a V01 e P04. |
 | **IMG04** | [Demonstração mobile — P06](evidencias/frontend-25/P06-demonstracao-mobile.png) | Visualização da demonstração em viewport móvel; relacionada a V02 e P06. |
 | **IMG05** | [Validação de login — P08](evidencias/frontend-25/P08-validacao-login.png) | Apresentação do formulário e do feedback de validação; relacionada a V04 e P08. |
 | **IMG06** | [Navegação mobile — #85](evidencias/frontend-25/navegacao-mobile.png) | Barra inferior de navegação; relacionada a V03 e à issue #85. |
@@ -565,7 +565,7 @@ As [capturas complementares do PR #167](https://github.com/abpundefined/3DSM-ABP
 | Estado da atividade #23 no GitHub | Fechada como concluída em 20/10/2026, mas o corpo consultado ainda mantém “Resultados documentados” e “Alterações na interface baseadas nos resultados” desmarcados. |
 | Registro detalhado da avaliação heurística | Ainda há lacunas documentais na seção 5.2; o fechamento da issue não as comprova resolvidas. |
 | Apresentação da Sprint 2 | Agendada para 10/11/2026. |
-| Aceite formal da entrega | Registrado conforme o processo da equipe. |
+| Aceite formal da entrega | Apresentação realizada em 10/11 (ver sprints/sprint-2.md); notas formais ainda não divulgadas.|
 | Testes com usuários representativos | Previstos para a Sprint 3. |
 
 Esta seção preserva o registro da consulta de 08/11/2026; os resultados da Rodada 1 da Sprint 3 constam na seção 5.2.
