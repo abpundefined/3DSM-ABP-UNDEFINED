@@ -101,7 +101,11 @@
   color: #132017;
 }
 :root[data-theme='dark'] .button--accent {
-  color: #281637;
+  background: #8bd49a;
+  color: #0f1e17;
+}
+:root[data-theme='dark'] .button--accent:hover {
+  background: #a6e0b2;
 }
 :root[data-theme='dark'] .login-story {
   background: #173d24;
@@ -124,25 +128,24 @@
 :root[data-theme='dark'] .demo-toolbar,
 :root[data-theme='dark'] .demo-panel,
 :root[data-theme='dark'] .live-dashboard-toolbar,
-:root[data-theme='dark'] .chart-data {
-  border-color: var(--border);
-  background: var(--surface);
-}
 :root[data-theme='dark'] .demo-toolbar--active {
-  border-color: #594365;
-  background: #2b2131;
+  border-color: #3d5a45;
+  background: #18291e;
 }
 :root[data-theme='dark'] .demo-toolbar--active .demo-toolbar-icon {
-  background: #43304e;
-  color: #e0b9f3;
+  background: #23402c;
+  color: #a6e0b2;
 }
 :root[data-theme='dark'] .demo-toolbar--active strong {
-  color: #edddf5;
+  color: #e7f6ea;
 }
 :root[data-theme='dark'] .button--demo-exit {
-  border-color: #594365;
-  color: #edddf5;
-  background: #302537;
+  border-color: #3d5a45;
+  color: #e7f6ea;
+  background: #1d3324;
+}
+:root[data-theme='dark'] .button--demo-exit:hover {
+  background: #26422f;
 }
 :root[data-theme='dark'] .button--demo-exit:hover {
   background: #43304e;

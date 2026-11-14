@@ -51,25 +51,24 @@
   padding: 10px 15px;
 }
 .demo-toolbar--active {
-  background: #fbf6ff;
-  border-color: #e5cfef;
+  background: #f1f7ee;
+  border-color: #c9dcc0;
 }
 .demo-toolbar--active .demo-toolbar-icon {
-  background: #f1e3fa;
-  color: #65327b;
+  background: #dfeedb;
+  color: #1d5a2c;
 }
 .demo-toolbar--active strong {
-  color: #512b66;
+  color: #123a1f;
 }
 .button--demo-exit {
   background: #fff;
-  color: #512b66;
-  border-color: #d8bbeb;
+  color: #123a1f;
+  border-color: #b7d1ad;
 }
 .button--demo-exit:hover {
-  background: #f1e3fa;
+  background: #eef4e8;
 }
-.demo-chart-grid,
 .demo-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 335px;
