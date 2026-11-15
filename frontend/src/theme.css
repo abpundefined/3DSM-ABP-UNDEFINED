@@ -207,6 +207,9 @@
 :root[data-theme='dark'] .ranking-track {
   background: #29382e;
 }
+:root[data-theme='dark'] .live-refresh-error {
+  color: #e3d5a9;
+}
 :root[data-theme='dark'] .ranking-insight {
   border-color: #625638;
   color: #e3d5a9;
