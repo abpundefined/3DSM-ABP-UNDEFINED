@@ -56,8 +56,8 @@
   --login-input-border: #46564a;
   --login-lock-background: rgb(20 83 45 / 30%);
   --login-accent: #8bd49a;
-  --login-button-background: #3a8b4e;
-  --login-button-hover: #317641;
+  --login-button-background: #317641;
+  --login-button-hover: #29663a;
   --login-button-text: #fff;
   --login-divider: rgb(255 255 255 / 10%);
   --login-alert-background: #302b1d;
@@ -96,6 +96,9 @@
 :root[data-theme='dark'] .guide-icon {
   background: #293a2e;
 }
+:root[data-theme='dark'] .button--primary {
+  color: #132017;
+}
 :root[data-theme='dark'] .button--primary:hover {
   background: #72bd82;
   color: #132017;
@@ -128,6 +131,10 @@
 :root[data-theme='dark'] .demo-toolbar,
 :root[data-theme='dark'] .demo-panel,
 :root[data-theme='dark'] .live-dashboard-toolbar,
+:root[data-theme='dark'] .chart-data {
+  border-color: var(--border);
+  background: var(--surface);
+}
 :root[data-theme='dark'] .demo-toolbar--active {
   border-color: #3d5a45;
   background: #18291e;
@@ -146,9 +153,6 @@
 }
 :root[data-theme='dark'] .button--demo-exit:hover {
   background: #26422f;
-}
-:root[data-theme='dark'] .button--demo-exit:hover {
-  background: #43304e;
 }
 :root[data-theme='dark'] .chart-switch,
 :root[data-theme='dark'] .service-table thead {
@@ -202,6 +206,9 @@
 }
 :root[data-theme='dark'] .ranking-track {
   background: #29382e;
+}
+:root[data-theme='dark'] .live-refresh-error {
+  color: #e3d5a9;
 }
 :root[data-theme='dark'] .ranking-insight {
   border-color: #625638;

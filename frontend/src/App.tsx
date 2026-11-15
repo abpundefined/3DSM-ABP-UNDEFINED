@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router';
 import AppLayout from './components/layout/AppLayout';
 import FeedbackPanel from './components/common/FeedbackPanel';
+import RequireAuth from './components/common/RequireAuth';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Login = lazy(() => import('./pages/Login'));
@@ -39,7 +40,14 @@ export default function App() {
           <Route path="comparar" element={<Comparacao />} />
           <Route path="mapa" element={<Mapa />} />
           <Route path="servicos/:id" element={<ServicoDetalhe />} />
-          <Route path="admin" element={<Admin />} />
+          <Route
+            path="admin"
+            element={
+              <RequireAuth>
+                <Admin />
+              </RequireAuth>
+            }
+          />
           <Route path="metodologia" element={<Metodologia />} />
           <Route path="*" element={<NotFound />} />
         </Route>

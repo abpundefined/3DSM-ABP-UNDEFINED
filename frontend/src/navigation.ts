@@ -3,6 +3,7 @@ import type { IconName } from './components/common/Icon';
 export interface NavItem {
   to: string;
   label: string;
+  shortLabel?: string;
   icon: IconName;
 }
 
@@ -14,7 +15,12 @@ const publicItems: NavItem[] = [
   { to: '/metodologia', label: 'Metodologia', icon: 'book' },
 ];
 
-const adminItem: NavItem = { to: '/admin', label: 'Admin', icon: 'shield' };
+const adminItem: NavItem = {
+  to: '/admin',
+  label: 'Administração',
+  shortLabel: 'Admin',
+  icon: 'shield',
+};
 
 export function getNavItems(isAuthenticated: boolean): NavItem[] {
   return isAuthenticated ? [...publicItems, adminItem] : publicItems;

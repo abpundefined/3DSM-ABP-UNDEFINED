@@ -6,7 +6,6 @@ const pages = [
   { path: '/comparar', heading: 'Comparar serviços' },
   { path: '/mapa', heading: 'Mapa de emissões' },
   { path: '/servicos/7', heading: 'Serviço 7' },
-  { path: '/admin', heading: 'Administração' },
   { path: '/metodologia', heading: 'Como calculamos' },
 ];
 
@@ -46,11 +45,11 @@ test('menu leva a todas as páginas e marca a página atual', async ({
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   }
   await expect(
-    menu.getByRole('link', { name: 'Admin', exact: true }),
+    menu.getByRole('link', { name: 'Administração', exact: true }),
   ).toHaveCount(0);
 });
 
-test('Admin aparece no menu só para usuário autenticado', async ({
+test('Administração aparece no menu só para usuário autenticado', async ({
   page,
 }, testInfo) => {
   const menuName =
@@ -62,7 +61,7 @@ test('Admin aparece no menu só para usuário autenticado', async ({
   });
   await page.goto('/metodologia');
   const menu = page.getByRole('navigation', { name: menuName });
-  await menu.getByRole('link', { name: 'Admin', exact: true }).click();
+  await menu.getByRole('link', { name: 'Administração', exact: true }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Administração' }),

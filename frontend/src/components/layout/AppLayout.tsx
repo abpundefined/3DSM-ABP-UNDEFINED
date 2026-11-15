@@ -130,9 +130,10 @@ export default function AppLayout() {
             key={item.to}
             to={{ pathname: item.to, search: linkSearch }}
             end={item.to === '/'}
+            aria-label={item.shortLabel ? item.label : undefined}
           >
             <Icon name={item.icon} />
-            <span>{item.label}</span>
+            <span>{item.shortLabel ?? item.label}</span>
           </NavLink>
         ))}
       </nav>
