@@ -128,6 +128,10 @@
 :root[data-theme='dark'] .demo-toolbar,
 :root[data-theme='dark'] .demo-panel,
 :root[data-theme='dark'] .live-dashboard-toolbar,
+:root[data-theme='dark'] .chart-data {
+  border-color: var(--border);
+  background: var(--surface);
+}
 :root[data-theme='dark'] .demo-toolbar--active {
   border-color: #3d5a45;
   background: #18291e;
@@ -146,9 +150,6 @@
 }
 :root[data-theme='dark'] .button--demo-exit:hover {
   background: #26422f;
-}
-:root[data-theme='dark'] .button--demo-exit:hover {
-  background: #43304e;
 }
 :root[data-theme='dark'] .chart-switch,
 :root[data-theme='dark'] .service-table thead {
