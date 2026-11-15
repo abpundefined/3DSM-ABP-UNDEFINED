@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -133,8 +134,6 @@ export default function GloboInterativo({
   onSelecionar,
   onEntrarNoMapa,
 }: GloboInterativoProps) {
-  const [rotacao, setRotacao] = useState<Rotacao>(rotacaoInicial);
-  const [zoom, setZoom] = useState(zoomInicial);
   const [zoomAlvo, setZoomAlvo] = useState(ZOOM_MINIMO_DO_GLOBO);
   const [destaque, setDestaque] = useState<string | null>(null);
   const [giroEscolhido, setGiroEscolhido] = useState<boolean | null>(null);
@@ -142,6 +141,25 @@ export default function GloboInterativo({
   const giroAtivo = giroEscolhido ?? !movimentoReduzido;
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const camadasRef = useRef<{
+    estrelas: SVGGElement | null;
+    halo: SVGCircleElement | null;
+    oceano: SVGPathElement | null;
+    grade: SVGPathElement | null;
+    terra: SVGPathElement | null;
+    fronteiras: SVGPathElement | null;
+    luz: SVGPathElement | null;
+  }>({
+    estrelas: null,
+    halo: null,
+    oceano: null,
+    grade: null,
+    terra: null,
+    fronteiras: null,
+    luz: null,
+  });
+  const dicaRef = useRef<HTMLDivElement>(null);
+  const destaqueRef = useRef<string | null>(null);
   const rotacaoRef = useRef<Rotacao>(rotacaoInicial);
   const zoomRef = useRef(zoomInicial);
   const zoomAlvoRef = useRef(ZOOM_MINIMO_DO_GLOBO);
@@ -158,31 +176,98 @@ export default function GloboInterativo({
   const giroAtivoRef = useRef(giroAtivo);
   const movimentoReduzidoRef = useRef(movimentoReduzido);
   const aoEntrarNoMapaRef = useRef(onEntrarNoMapa);
+  const desenharRef = useRef(() => {});
 
   const idDosGradientes = useId();
   const idDaLuz = `${idDosGradientes}-luz`;
   const idDoHalo = `${idDosGradientes}-halo`;
   const locais = useMemo(() => agruparPorLocal(servicos), [servicos]);
+  const locaisRef = useRef(locais);
   const indice = momento?.indice ?? null;
   const emissaoDoLocal = (local: LocalNoGlobo) =>
     somarNoMomento(local.servicos, indice);
 
-  const projecao = useMemo(
-    () =>
-      geoOrthographic()
-        .scale(RAIO * zoom)
-        .translate([TAMANHO / 2, TAMANHO / 2])
-        .rotate(rotacao)
-        .clipAngle(90),
-    [rotacao, zoom],
-  );
-  const caminho = geoPath(projecao);
+  function desenhar() {
+    const svg = svgRef.current;
+    const camadas = camadasRef.current;
+    if (!svg) {
+      return;
+    }
+
+    const rotacao = rotacaoRef.current;
+    const zoom = zoomRef.current;
+    const projecao = geoOrthographic()
+      .scale(RAIO * zoom)
+      .translate([TAMANHO / 2, TAMANHO / 2])
+      .rotate(rotacao)
+      .clipAngle(90);
+    const caminho = geoPath(projecao);
+    const esfera = caminho({ type: 'Sphere' }) ?? '';
+
+    svg.dataset.rotacao = rotacao.map((valor) => valor.toFixed(1)).join(',');
+    svg.dataset.zoom = zoom.toFixed(2);
+    camadas.halo?.setAttribute('r', String(RAIO * zoom * 1.12));
+    camadas.oceano?.setAttribute('d', esfera);
+    camadas.luz?.setAttribute('d', esfera);
+    camadas.grade?.setAttribute('d', caminho(grade) ?? '');
+    camadas.terra?.setAttribute('d', caminho(continentes) ?? '');
+    camadas.fronteiras?.setAttribute('d', caminho(fronteiras) ?? '');
+
+    const deslocamento = rotacao[0] * PARALAXE_DAS_ESTRELAS;
+    camadas.estrelas?.querySelectorAll('circle').forEach((circulo, posicao) => {
+      const x =
+        (((estrelas[posicao].x + deslocamento) % TAMANHO) + TAMANHO) % TAMANHO;
+      circulo.setAttribute('cx', String(x));
+    });
+
+    const posicoes = new Map<string, [number, number] | null>();
+    for (const local of locaisRef.current) {
+      const ponto = estaVisivel(rotacao, local.longitude, local.latitude)
+        ? projecao([local.longitude, local.latitude])
+        : null;
+      posicoes.set(local.chave, ponto);
+    }
+    svg
+      .querySelectorAll<SVGCircleElement>('[data-local]')
+      .forEach((circulo) => {
+        const ponto = posicoes.get(circulo.dataset.local ?? '');
+        if (ponto) {
+          circulo.setAttribute('cx', String(ponto[0]));
+          circulo.setAttribute('cy', String(ponto[1]));
+          circulo.style.removeProperty('display');
+        } else {
+          circulo.style.display = 'none';
+        }
+      });
+
+    const pontoDaDica = destaqueRef.current
+      ? posicoes.get(destaqueRef.current)
+      : null;
+    pausadoRef.current.destaque = Boolean(pontoDaDica);
+    const dica = dicaRef.current;
+    if (dica) {
+      if (pontoDaDica) {
+        dica.style.left = `${(pontoDaDica[0] / TAMANHO) * 100}%`;
+        dica.style.top = `${(pontoDaDica[1] / TAMANHO) * 100}%`;
+        dica.style.removeProperty('display');
+      } else {
+        dica.style.display = 'none';
+      }
+    }
+  }
+
+  useLayoutEffect(() => {
+    locaisRef.current = locais;
+    destaqueRef.current = destaque;
+    desenhar();
+  });
 
   useEffect(() => {
     giroAtivoRef.current = giroAtivo;
     movimentoReduzidoRef.current = movimentoReduzido;
     aoEntrarNoMapaRef.current = onEntrarNoMapa;
-  }, [giroAtivo, movimentoReduzido, onEntrarNoMapa]);
+    desenharRef.current = desenhar;
+  });
 
   useEffect(() => {
     const entrarNoMapa = () => {
@@ -208,6 +293,7 @@ export default function GloboInterativo({
       anterior = agora;
 
       if (selecaoRef.current === null && !arrastoRef.current?.moveu) {
+        let mudou = false;
         const velocidade = velocidadeRef.current;
         const pausado =
           pausadoRef.current.destaque ||
@@ -231,7 +317,7 @@ export default function GloboInterativo({
             direcaoDoGiroRef.current = Math.sign(velocidade[0]);
           }
           forcaDoGiroRef.current = 0;
-          setRotacao(rotacaoRef.current);
+          mudou = true;
         } else if (giroAtivoRef.current && !pausado && intervalo > 0) {
           forcaDoGiroRef.current = Math.min(
             1,
@@ -243,7 +329,7 @@ export default function GloboInterativo({
             [GIRO_AUTOMATICO * direcaoDoGiroRef.current * forca, 0],
             intervalo,
           );
-          setRotacao(rotacaoRef.current);
+          mudou = true;
         } else {
           forcaDoGiroRef.current = 0;
         }
@@ -257,7 +343,10 @@ export default function GloboInterativo({
                 intervalo,
                 SUAVIZACAO_DO_ZOOM_MS,
               );
-          setZoom(zoomRef.current);
+          mudou = true;
+        }
+        if (mudou) {
+          desenharRef.current();
         }
         if (zoomRef.current >= ZOOM_DE_TRANSICAO - 0.02) {
           entrarNoMapa();
@@ -304,7 +393,7 @@ export default function GloboInterativo({
 
   function girarPara(proxima: Rotacao) {
     rotacaoRef.current = proxima;
-    setRotacao(proxima);
+    desenhar();
   }
 
   function mudarZoom(proximo: number, tempo: number) {
@@ -333,10 +422,9 @@ export default function GloboInterativo({
       const progresso = Math.min(1, (agora - comeco) / DURACAO_DO_ZOOM_MS);
       const suave = suavizar(progresso);
       const proximoZoom = zoomInicial + (ZOOM_FINAL - zoomInicial) * suave;
-      girarPara(interpolarRotacao(inicio, destino, suave));
       zoomRef.current = proximoZoom;
       zoomAlvoRef.current = proximoZoom;
-      setZoom(proximoZoom);
+      girarPara(interpolarRotacao(inicio, destino, suave));
 
       if (progresso < 1) {
         selecaoRef.current = requestAnimationFrame(passo);
@@ -533,20 +621,10 @@ export default function GloboInterativo({
     selecionar(local);
   }
 
-  const visiveis = locais
-    .filter((local) => estaVisivel(rotacao, local.longitude, local.latitude))
-    .sort(
-      (a, b) => escala.raio(emissaoDoLocal(b)) - escala.raio(emissaoDoLocal(a)),
-    );
-  const localEmDestaque = visiveis.find(({ chave }) => chave === destaque);
-  const posicaoDoDestaque = localEmDestaque
-    ? projecao([localEmDestaque.longitude, localEmDestaque.latitude])
-    : null;
-  const temDestaque = localEmDestaque !== undefined;
-
-  useEffect(() => {
-    pausadoRef.current.destaque = temDestaque;
-  }, [temDestaque]);
+  const ordenados = [...locais].sort(
+    (a, b) => escala.raio(emissaoDoLocal(b)) - escala.raio(emissaoDoLocal(a)),
+  );
+  const localEmDestaque = locais.find(({ chave }) => chave === destaque);
 
   return (
     <div
@@ -567,8 +645,6 @@ export default function GloboInterativo({
         ref={svgRef}
         className="globo-svg"
         viewBox={`0 0 ${TAMANHO} ${TAMANHO}`}
-        data-rotacao={rotacao.map((valor) => valor.toFixed(1)).join(',')}
-        data-zoom={zoom.toFixed(2)}
         onPointerDown={aoPressionar}
         onPointerMove={aoMover}
         onPointerUp={aoSoltar}
@@ -588,16 +664,15 @@ export default function GloboInterativo({
           </radialGradient>
         </defs>
         <g aria-hidden="true">
-          <g className="globo-estrelas">
+          <g
+            className="globo-estrelas"
+            ref={(elemento) => {
+              camadasRef.current.estrelas = elemento;
+            }}
+          >
             {estrelas.map((estrela, posicao) => (
               <circle
                 key={posicao}
-                cx={
-                  (((estrela.x + rotacao[0] * PARALAXE_DAS_ESTRELAS) %
-                    TAMANHO) +
-                    TAMANHO) %
-                  TAMANHO
-                }
                 cy={estrela.y}
                 r={estrela.raio}
                 opacity={estrela.opacidade}
@@ -606,29 +681,46 @@ export default function GloboInterativo({
           </g>
           <circle
             className="globo-halo"
+            ref={(elemento) => {
+              camadasRef.current.halo = elemento;
+            }}
             cx={TAMANHO / 2}
             cy={TAMANHO / 2}
-            r={RAIO * zoom * 1.12}
             fill={`url(#${idDoHalo})`}
           />
           <path
             className="globo-oceano"
-            d={caminho({ type: 'Sphere' }) ?? ''}
+            ref={(elemento) => {
+              camadasRef.current.oceano = elemento;
+            }}
           />
-          <path className="globo-grade" d={caminho(grade) ?? ''} />
-          <path className="globo-terra" d={caminho(continentes) ?? ''} />
-          <path className="globo-fronteiras" d={caminho(fronteiras) ?? ''} />
+          <path
+            className="globo-grade"
+            ref={(elemento) => {
+              camadasRef.current.grade = elemento;
+            }}
+          />
+          <path
+            className="globo-terra"
+            ref={(elemento) => {
+              camadasRef.current.terra = elemento;
+            }}
+          />
+          <path
+            className="globo-fronteiras"
+            ref={(elemento) => {
+              camadasRef.current.fronteiras = elemento;
+            }}
+          />
           <path
             className="globo-luz"
-            d={caminho({ type: 'Sphere' }) ?? ''}
+            ref={(elemento) => {
+              camadasRef.current.luz = elemento;
+            }}
             fill={`url(#${idDaLuz})`}
           />
         </g>
-        {visiveis.map((local) => {
-          const ponto = projecao([local.longitude, local.latitude]);
-          if (!ponto) {
-            return null;
-          }
+        {ordenados.map((local) => {
           const emissao = emissaoDoLocal(local);
           const faixa = escala.faixa(emissao);
           const raio = escala.raio(emissao);
@@ -638,8 +730,7 @@ export default function GloboInterativo({
               <circle
                 key={`${local.chave}-pulso`}
                 className={`globo-pulso globo-ponto--faixa-${faixa}`}
-                cx={ponto[0]}
-                cy={ponto[1]}
+                data-local={local.chave}
                 r={raio}
                 aria-hidden="true"
               />
@@ -647,8 +738,7 @@ export default function GloboInterativo({
             <circle
               key={local.chave}
               className={`globo-ponto ${faixa === null ? 'globo-ponto--sem-dados' : `globo-ponto--faixa-${faixa}`}`}
-              cx={ponto[0]}
-              cy={ponto[1]}
+              data-local={local.chave}
               r={raio}
               role="button"
               tabIndex={0}
@@ -704,15 +794,8 @@ export default function GloboInterativo({
           )}
         </button>
       </ControlesDeZoom>
-      {localEmDestaque && posicaoDoDestaque && (
-        <div
-          className="globo-dica"
-          style={{
-            left: `${(posicaoDoDestaque[0] / TAMANHO) * 100}%`,
-            top: `${(posicaoDoDestaque[1] / TAMANHO) * 100}%`,
-          }}
-          aria-hidden="true"
-        >
+      {localEmDestaque && (
+        <div className="globo-dica" ref={dicaRef} aria-hidden="true">
           <strong>{localEmDestaque.local}</strong>
           <span>
             {localEmDestaque.servicos.map(({ nome }) => nome).join(', ')}
