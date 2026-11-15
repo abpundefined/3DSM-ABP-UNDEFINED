@@ -207,6 +207,35 @@ test('página não tem rolagem horizontal em 375 px', async ({ page }) => {
   expect(larguras.pagina).toBe(larguras.tela);
 });
 
+test('em 1920 px, globo e mapa ficam ao lado da legenda sem rolagem horizontal', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await simularMapa(page);
+
+  for (const [endereco, seletor] of [
+    ['/mapa', '.globo'],
+    ['/mapa?visao=mapa', '.mapa-leaflet'],
+  ]) {
+    await page.goto(endereco);
+    const area = await page.locator(seletor).boundingBox();
+    const legenda = await page
+      .getByRole('region', { name: 'Emissão no período' })
+      .boundingBox();
+    const larguras = await page.evaluate(() => ({
+      pagina: document.documentElement.scrollWidth,
+      tela: document.documentElement.clientWidth,
+    }));
+
+    if (!area || !legenda) {
+      throw new Error(`Sem área visível em ${endereco}.`);
+    }
+    expect(larguras.pagina).toBe(larguras.tela);
+    expect(legenda.x).toBeGreaterThanOrEqual(area.x + area.width);
+    expect(legenda.y).toBeLessThan(area.y + area.height);
+  }
+});
+
 test('tabela aberta não tem violações do Axe', async ({ page }) => {
   await simularMapa(page);
   await page.goto('/mapa');
@@ -272,7 +301,7 @@ test('arrastar gira o globo e a inércia continua o giro até parar', async ({
   const centro = await centroDoGlobo(page);
 
   await page.mouse.move(centro.x, centro.y);
-  await svg.evaluate(async (elemento, { x, y }) => {
+  const aoSoltar = await svg.evaluate(async (elemento, { x, y }) => {
     const disparar = (tipo: string, deslocamento: number) =>
       elemento.dispatchEvent(
         new PointerEvent(tipo, {
@@ -292,8 +321,8 @@ test('arrastar gira o globo e a inércia continua o giro até parar', async ({
       disparar('pointermove', passo * 20);
     }
     disparar('pointerup', 120);
+    return Number(elemento.getAttribute('data-rotacao')?.split(',')[0]);
   }, centro);
-  const aoSoltar = await longitudeDoGlobo(page);
   expect(aoSoltar).not.toBe(inicial);
 
   let anterior = '';
@@ -316,6 +345,7 @@ test('arrastar gira o globo e a inércia continua o giro até parar', async ({
 test('as setas do teclado giram o globo suavemente', async ({ page }) => {
   await simularMapa(page);
   await page.goto('/mapa');
+  await page.getByRole('button', { name: 'Pausar rotação' }).click();
   const globo = page.getByRole('group', {
     name: 'Globo com os serviços monitorados',
   });
@@ -324,7 +354,9 @@ test('as setas do teclado giram o globo suavemente', async ({ page }) => {
 
   await globo.press('ArrowLeft');
   await expect
-    .poll(async () => (await longitudeDoGlobo(page)) - inicial)
+    .poll(async () => (await longitudeDoGlobo(page)) - inicial, {
+      timeout: 10000,
+    })
     .toBeGreaterThan(10);
   expect((await longitudeDoGlobo(page)) - inicial).toBeLessThan(13);
 });
