@@ -1740,3 +1740,80 @@ h1 {
   color: var(--login-alert-text);
   font-size: 14px;
 }
+
+.admin-form {
+  display: grid;
+  gap: 22px;
+  max-width: 640px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.admin-form h2 {
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.admin-form-meta,
+.admin-field-hint {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-field label {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.admin-field input {
+  max-width: 220px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.admin-field input[aria-invalid='true'] {
+  border-color: var(--login-alert-border);
+}
+
+.admin-field-error {
+  margin: 0;
+  color: var(--login-alert-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.admin-save-status {
+  margin: 0;
+  color: var(--green-forest);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-save-error {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--login-alert-border);
+  border-radius: 9px;
+  background: var(--login-alert-background);
+  color: var(--login-alert-text);
+}
