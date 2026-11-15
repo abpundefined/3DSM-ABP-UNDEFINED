@@ -26,13 +26,14 @@ As páginas são carregadas com `lazy`. Enquanto seu arquivo JavaScript chega, `
 
 ### Rotas
 
-| URL                    | Página    | Comportamento nesta entrega                                                                                     |
-| ---------------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
-| `/`                    | Dashboard | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                                 |
-| `/login`               | Login     | Formulário visual com validação e mostrar/ocultar senha. Enviar informa que o acesso ainda não está disponível. |
-| Qualquer outro caminho | NotFound  | Mensagem de página não encontrada e retorno ao dashboard.                                                       |
+| URL                    | Página        | Comportamento nesta entrega                                                                            |
+| ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------ |
+| `/`                    | Dashboard     | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                        |
+| `/login`               | Login         | Formulário com validação e mostrar/ocultar senha. Envia `POST /auth/login` e volta à página de origem. |
+| `/admin`               | Administração | Exige login. Lê e salva os intervalos de coleta e de descoberta.                                       |
+| Qualquer outro caminho | NotFound      | Mensagem de página não encontrada e retorno ao dashboard.                                              |
 
-O formulário não faz requisição, autentica, guarda credenciais ou cria token. Sua mensagem prévia deixa a indisponibilidade clara. A #15 deverá conectar o envio ao contrato `username`/`password`, tratar HTTP 401, sessão e proteção de configuração. Não há cadastro ou recuperação de senha previstos no contrato atual.
+O login envia `POST /auth/login` e guarda o JWT no `AuthProvider`. A rota `/admin` passa por `RequireAuth`: sem sessão, leva ao login e, depois de entrar, volta para a página pedida. A página lê `GET /configuracao` e salva com `PUT /configuracao` (Bearer token), valida os limites do backend (coleta de 10 a 3600 s, descoberta de 10 a 86400 s, inteiros) com mensagens no padrão do app e mostra salvando, sucesso e erro. Resposta 401 encerra a sessão e leva ao login com o aviso de sessão expirada. Os novos intervalos valem a partir do próximo ciclo do monitoramento. Não há cadastro ou recuperação de senha previstos no contrato atual.
 
 O dashboard oferece agora uma [demonstração opcional com gráficos e dados fictícios](frontend-demo.md), acessível por `/?demo=1`. O aviso de demonstração e a data simulada distinguem essa prévia do monitoramento real.
 
