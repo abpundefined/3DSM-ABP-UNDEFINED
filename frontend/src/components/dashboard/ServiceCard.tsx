@@ -1,56 +1,21 @@
+import { useRef } from 'react';
 import { formatServiceLocation, toFiniteNumber } from '../../utils/formatters';
+import {
+  formatServiceMetric,
+  formatServiceStatus,
+} from '../../utils/serviceDetail';
 import Icon from '../common/Icon';
-import type { BackendService, LiveService } from './liveTypes';
+import type { LiveService } from './liveTypes';
 
-function formatMetric(
-  value: number | string | null | undefined,
-  suffix: string,
-  digits = 2,
-) {
-  const numericValue = toFiniteNumber(value);
-  if (numericValue == null) {
-    return '—';
-  }
-
-  return `${new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(numericValue)} ${suffix}`;
-}
-
-function statusFor(service: BackendService) {
-  switch (service.estadoAtual) {
-    case 'DISPONIVEL':
-      return { className: 'active', label: 'Ativo', icon: 'check' as const };
-    case 'SEM_METRICAS':
-      return {
-        className: 'noMetrics',
-        label: 'Sem métricas',
-        icon: 'info' as const,
-      };
-    case 'REMOVIDO':
-      return {
-        className: 'unavailable',
-        label: 'Removido',
-        icon: 'alert' as const,
-      };
-    case 'INDISPONIVEL':
-      return {
-        className: 'unavailable',
-        label: 'Indisponível',
-        icon: 'alert' as const,
-      };
-    default:
-      return {
-        className: 'unavailable',
-        label: 'Desconhecido',
-        icon: 'info' as const,
-      };
-  }
-}
-
-export default function ServiceCard({ service }: { service: LiveService }) {
-  const status = statusFor(service);
+export default function ServiceCard({
+  service,
+  onSelect,
+}: {
+  service: LiveService;
+  onSelect?: (service: LiveService, triggerElement: HTMLElement | null) => void;
+}) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const status = formatServiceStatus(service.estadoAtual);
   const metrics = service.latestCollection;
   const location = formatServiceLocation(
     service.localizacao,
@@ -63,11 +28,41 @@ export default function ServiceCard({ service }: { service: LiveService }) {
     toFiniteNumber(service.emissaoGCo2e);
   const nameId = `service-card-${service.id}`;
 
+  const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!onSelect) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a')) {
+      return;
+    }
+
+    onSelect(service, triggerRef.current);
+  };
+
   return (
-    <article className="service-card" aria-labelledby={nameId}>
+    <article
+      className={`service-card${onSelect ? ' service-card--interactive' : ''}`}
+      aria-labelledby={nameId}
+      onClick={handleCardClick}
+    >
       <header className="service-card-header">
         <div>
-          <h3 id={nameId}>{service.nome}</h3>
+          <h3 id={nameId}>
+            {onSelect ? (
+              <button
+                ref={triggerRef}
+                type="button"
+                className="service-card-title-button"
+                onClick={() => onSelect(service, triggerRef.current)}
+              >
+                {service.nome}
+              </button>
+            ) : (
+              service.nome
+            )}
+          </h3>
           <p className="service-card-location">{location.area}</p>
           <p className="service-card-city">
             {location.city ?? 'Cidade não informada'}
@@ -82,12 +77,12 @@ export default function ServiceCard({ service }: { service: LiveService }) {
       <dl className="service-card-impact">
         <div>
           <dt>Energia</dt>
-          <dd>{formatMetric(energyKwh, 'kWh', 4)}</dd>
+          <dd>{formatServiceMetric(energyKwh, 'kWh', 4)}</dd>
         </div>
         <div>
           <dt>Emissões</dt>
           <dd>
-            {formatMetric(
+            {formatServiceMetric(
               emissionsGCo2e === null ? null : emissionsGCo2e / 1000,
               'kgCO₂e',
               4,
@@ -99,19 +94,19 @@ export default function ServiceCard({ service }: { service: LiveService }) {
       <dl className="service-card-metrics">
         <div>
           <dt>CPU</dt>
-          <dd>{formatMetric(metrics?.cpuPercent, '%', 1)}</dd>
+          <dd>{formatServiceMetric(metrics?.cpuPercent, '%', 1)}</dd>
         </div>
         <div>
           <dt>Memória</dt>
-          <dd>{formatMetric(metrics?.memoryGb, 'GB')}</dd>
+          <dd>{formatServiceMetric(metrics?.memoryGb, 'GB')}</dd>
         </div>
         <div>
           <dt>Disco</dt>
-          <dd>{formatMetric(metrics?.diskGb, 'GB')}</dd>
+          <dd>{formatServiceMetric(metrics?.diskGb, 'GB')}</dd>
         </div>
         <div>
           <dt>Rede</dt>
-          <dd>{formatMetric(metrics?.networkGb, 'GB')}</dd>
+          <dd>{formatServiceMetric(metrics?.networkGb, 'GB')}</dd>
         </div>
       </dl>
     </article>

@@ -4,6 +4,7 @@ import { toFiniteNumber } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 import ServiceCard from './ServiceCard';
+import ServiceQuickDrawer from './ServiceQuickDrawer';
 import type {
   BackendCollection,
   BackendService,
@@ -105,6 +106,10 @@ function normalizeCollection(
 
   return {
     ...collection,
+    intervaloColetaSegundos: toFiniteNumber(collection.intervaloColetaSegundos),
+    intensidadeCarbonoGCo2ePorKwh: toFiniteNumber(
+      collection.intensidadeCarbonoGCo2ePorKwh,
+    ),
     energiaKwh: toFiniteNumber(collection.energiaKwh),
     emissaoGCo2e: toFiniteNumber(collection.emissaoGCo2e),
   };
@@ -138,6 +143,11 @@ export default function LiveDashboard({
   const [collectionIntervalSeconds, setCollectionIntervalSeconds] = useState<
     number | null
   >(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
+    null,
+  );
+  const [drawerReturnFocusEl, setDrawerReturnFocusEl] =
+    useState<HTMLElement | null>(null);
   const activeRequest = useRef<object | null>(null);
 
   const refresh = useCallback(
@@ -295,6 +305,23 @@ export default function LiveDashboard({
     .filter((date) => Number.isFinite(date.getTime()))
     .sort((left, right) => right.getTime() - left.getTime())[0];
 
+  const selectedService =
+    selectedServiceId === null
+      ? null
+      : (services.find((service) => service.id === selectedServiceId) ?? null);
+
+  const handleSelectService = useCallback(
+    (service: LiveService, triggerElement: HTMLElement | null) => {
+      setDrawerReturnFocusEl(triggerElement);
+      setSelectedServiceId(service.id);
+    },
+    [],
+  );
+
+  const handleCloseDrawer = useCallback(() => {
+    setSelectedServiceId(null);
+  }, []);
+
   return (
     <>
       <div className="live-dashboard-toolbar">
@@ -423,7 +450,10 @@ export default function LiveDashboard({
             >
               {services.map((service) => (
                 <li key={service.id}>
-                  <ServiceCard service={service} />
+                  <ServiceCard
+                    service={service}
+                    onSelect={handleSelectService}
+                  />
                 </li>
               ))}
             </ul>
@@ -435,6 +465,12 @@ export default function LiveDashboard({
           </>
         )}
       </section>
+      <ServiceQuickDrawer
+        service={selectedService}
+        collectionIntervalSeconds={collectionIntervalSeconds}
+        returnFocusTo={drawerReturnFocusEl}
+        onClose={handleCloseDrawer}
+      />
     </>
   );
 }
