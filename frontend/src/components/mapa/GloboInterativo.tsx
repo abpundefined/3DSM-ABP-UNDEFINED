@@ -38,16 +38,23 @@ import {
   type Rotacao,
   type Velocidade,
 } from '../../utils/globo';
-import { somarNoMomento, type Momento } from '../../utils/linhaDoTempo';
+import {
+  ordenarPorEmissaoNoMomento,
+  somarNoMomento,
+  type Momento,
+} from '../../utils/linhaDoTempo';
 import { formatarEnergia } from '../../utils/mapaDados';
 import { formatarEmissao, type EscalaEmissao } from '../../utils/mapaEscala';
 import ControlesDeZoom from './ControlesDeZoom';
+import ListaDeLocais from './ListaDeLocais';
 
 const TAMANHO = 520;
 const RAIO = 236;
 const GRAUS_POR_PIXEL = 0.35;
 const PASSO_DO_TECLADO = 12;
 const DURACAO_DO_ZOOM_MS = 900;
+const DURACAO_DO_FOCO_MS = 650;
+const LARGURA_PARA_LISTA_ABERTA = '(min-width: 961px)';
 const ZOOM_FINAL = 2.6;
 const PASSO_DO_BOTAO = 1.5;
 const LIMITE_DE_CLIQUE_PX = 4;
@@ -137,6 +144,9 @@ export default function GloboInterativo({
   const [zoomAlvo, setZoomAlvo] = useState(ZOOM_MINIMO_DO_GLOBO);
   const [destaque, setDestaque] = useState<string | null>(null);
   const [giroEscolhido, setGiroEscolhido] = useState<boolean | null>(null);
+  const [listaAberta, setListaAberta] = useState(
+    () => window.matchMedia(LARGURA_PARA_LISTA_ABERTA).matches,
+  );
   const movimentoReduzido = usePrefersReducedMotion();
   const giroAtivo = giroEscolhido ?? !movimentoReduzido;
 
@@ -168,6 +178,8 @@ export default function GloboInterativo({
   const pincaRef = useRef<Pinca | null>(null);
   const ponteirosRef = useRef(new Map<number, { x: number; y: number }>());
   const selecaoRef = useRef<number | null>(null);
+  const focoRef = useRef<number | null>(null);
+  const desenhoPendenteRef = useRef<number | null>(null);
   const ultimaInteracaoRef = useRef(0);
   const pausadoRef = useRef({ destaque: false, foco: false });
   const direcaoDoGiroRef = useRef(1);
@@ -184,6 +196,10 @@ export default function GloboInterativo({
   const locais = useMemo(() => agruparPorLocal(servicos), [servicos]);
   const locaisRef = useRef(locais);
   const indice = momento?.indice ?? null;
+  const locaisPorEmissao = useMemo(
+    () => ordenarPorEmissaoNoMomento(locais, indice),
+    [locais, indice],
+  );
   const emissaoDoLocal = (local: LocalNoGlobo) =>
     somarNoMomento(local.servicos, indice);
 
@@ -246,9 +262,12 @@ export default function GloboInterativo({
     pausadoRef.current.destaque = Boolean(pontoDaDica);
     const dica = dicaRef.current;
     if (dica) {
-      if (pontoDaDica) {
-        dica.style.left = `${(pontoDaDica[0] / TAMANHO) * 100}%`;
-        dica.style.top = `${(pontoDaDica[1] / TAMANHO) * 100}%`;
+      if (pontoDaDica && dica.parentElement) {
+        const caixaDoSvg = svg.getBoundingClientRect();
+        const caixaDoGlobo = dica.parentElement.getBoundingClientRect();
+        const proporcao = caixaDoSvg.width / TAMANHO;
+        dica.style.left = `${caixaDoSvg.left - caixaDoGlobo.left + pontoDaDica[0] * proporcao}px`;
+        dica.style.top = `${caixaDoSvg.top - caixaDoGlobo.top + pontoDaDica[1] * proporcao}px`;
         dica.style.removeProperty('display');
       } else {
         dica.style.display = 'none';
@@ -292,7 +311,11 @@ export default function GloboInterativo({
         anterior === null ? 0 : Math.min(INTERVALO_MAXIMO_MS, agora - anterior);
       anterior = agora;
 
-      if (selecaoRef.current === null && !arrastoRef.current?.moveu) {
+      if (
+        selecaoRef.current === null &&
+        focoRef.current === null &&
+        !arrastoRef.current?.moveu
+      ) {
         let mudou = false;
         const velocidade = velocidadeRef.current;
         const pausado =
@@ -362,6 +385,12 @@ export default function GloboInterativo({
       if (selecaoRef.current !== null) {
         cancelAnimationFrame(selecaoRef.current);
       }
+      if (focoRef.current !== null) {
+        cancelAnimationFrame(focoRef.current);
+      }
+      if (desenhoPendenteRef.current !== null) {
+        cancelAnimationFrame(desenhoPendenteRef.current);
+      }
     };
   }, []);
 
@@ -393,7 +422,12 @@ export default function GloboInterativo({
 
   function girarPara(proxima: Rotacao) {
     rotacaoRef.current = proxima;
-    desenhar();
+    if (desenhoPendenteRef.current === null) {
+      desenhoPendenteRef.current = requestAnimationFrame(() => {
+        desenhoPendenteRef.current = null;
+        desenhar();
+      });
+    }
   }
 
   function mudarZoom(proximo: number, tempo: number) {
@@ -402,10 +436,44 @@ export default function GloboInterativo({
     setZoomAlvo(proximo);
   }
 
+  function cancelarFoco() {
+    if (focoRef.current !== null) {
+      cancelAnimationFrame(focoRef.current);
+      focoRef.current = null;
+    }
+  }
+
+  function focarLocal(local: LocalNoGlobo | null, tempo: number) {
+    marcarInteracao(tempo);
+    setDestaque(local?.chave ?? null);
+    if (!local || selecaoRef.current !== null) {
+      return;
+    }
+
+    cancelarFoco();
+    velocidadeRef.current = [0, 0];
+    const destino = centralizar(local.longitude, local.latitude);
+    if (movimentoReduzido) {
+      girarPara(destino);
+      return;
+    }
+
+    const inicio = rotacaoRef.current;
+    let comeco: number | null = null;
+    const passo = (agora: number) => {
+      comeco ??= agora;
+      const progresso = Math.min(1, (agora - comeco) / DURACAO_DO_FOCO_MS);
+      girarPara(interpolarRotacao(inicio, destino, suavizar(progresso)));
+      focoRef.current = progresso < 1 ? requestAnimationFrame(passo) : null;
+    };
+    focoRef.current = requestAnimationFrame(passo);
+  }
+
   function selecionar(local: LocalNoGlobo) {
     if (selecaoRef.current !== null) {
       return;
     }
+    cancelarFoco();
     velocidadeRef.current = [0, 0];
     if (movimentoReduzido) {
       onSelecionar(local);
@@ -444,6 +512,7 @@ export default function GloboInterativo({
       return;
     }
     marcarInteracao(evento.timeStamp);
+    cancelarFoco();
     velocidadeRef.current = [0, 0];
     ponteirosRef.current.set(evento.pointerId, {
       x: evento.clientX,
@@ -758,6 +827,15 @@ export default function GloboInterativo({
           ];
         })}
       </svg>
+      <ListaDeLocais
+        locais={locaisPorEmissao}
+        escala={escala}
+        indice={indice}
+        aberta={listaAberta}
+        onAlternar={() => setListaAberta((aberta) => !aberta)}
+        onDestacar={focarLocal}
+        onSelecionar={selecionar}
+      />
       <ControlesDeZoom
         onAproximar={(evento) =>
           mudarZoom(
@@ -810,7 +888,8 @@ export default function GloboInterativo({
       )}
       <p id="globo-instrucoes" className="globo-instrucoes">
         Arraste para girar e use a roda do mouse ou os botões + e − para
-        aproximar até entrar no mapa. Clique em um ponto para ir direto a ele.
+        aproximar até entrar no mapa. Clique em um ponto ou em um local da lista
+        para ir direto a ele.
       </p>
     </div>
   );

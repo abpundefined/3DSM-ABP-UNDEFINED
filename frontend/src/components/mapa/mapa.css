@@ -377,6 +377,7 @@
   place-items: center;
   height: 520px;
   overflow: hidden;
+  container-type: inline-size;
   border-radius: 12px;
   background:
     radial-gradient(
@@ -586,6 +587,136 @@
 
 .globo-dica strong {
   font-size: 0.85rem;
+}
+
+.globo-locais {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  left: 16px;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  max-width: 210px;
+  max-height: calc(100% - 64px);
+}
+
+.globo-locais button {
+  border: 0;
+  background: transparent;
+  color: #e7f6ea;
+  font: inherit;
+  text-align: left;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 85%);
+  cursor: pointer;
+}
+
+.globo-locais button:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #8bd49a;
+  outline-offset: 2px;
+}
+
+.globo-locais-alternar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.globo-locais-alternar svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform 0.2s ease;
+}
+
+.globo-locais-alternar[aria-expanded='false'] svg {
+  transform: rotate(-90deg);
+}
+
+.globo-locais-lista {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.globo-locais-lista[hidden] {
+  display: none;
+}
+
+.globo-locais-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr);
+  column-gap: 8px;
+  width: 100%;
+  padding: 4px 2px;
+}
+
+.globo-locais-cor {
+  grid-row: span 2;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.4em;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(231 246 234 / 45%);
+}
+
+.globo-locais-cor--faixa-1 {
+  background: var(--globo-faixa-1);
+}
+.globo-locais-cor--faixa-2 {
+  background: var(--globo-faixa-2);
+}
+.globo-locais-cor--faixa-3 {
+  background: var(--globo-faixa-3);
+}
+.globo-locais-cor--faixa-4 {
+  background: var(--globo-faixa-4);
+}
+.globo-locais-cor--faixa-5 {
+  background: var(--globo-faixa-5);
+}
+.globo-locais-cor--sem-dados {
+  background: var(--globo-sem-dados);
+}
+
+.globo-locais-nome {
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.globo-locais-dados {
+  grid-column: 2;
+  color: #b9c6bc;
+  font-size: 0.75rem;
+}
+
+.globo-locais-item:hover .globo-locais-nome,
+.globo-locais-item:focus-visible .globo-locais-nome {
+  text-decoration: underline;
+}
+
+@container (max-width: 760px) {
+  .globo-locais {
+    right: 60px;
+    left: 10px;
+    max-width: none;
+    max-height: calc(100% - 80px);
+  }
+
+  .globo-locais-lista {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgb(12 23 17 / 90%);
+  }
 }
 
 .globo-instrucoes {

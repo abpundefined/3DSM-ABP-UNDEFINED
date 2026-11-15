@@ -267,7 +267,9 @@ test('abre no globo com um ponto por local visível', async ({ page }) => {
   ).toHaveAttribute('aria-pressed', 'true');
   await expect(pontosDoGlobo(page)).toHaveCount(4);
   await expect(
-    page.getByRole('button', { name: /Brasil · São Paulo/ }),
+    page.getByRole('button', {
+      name: /^Aproximar no mapa: Brasil · São Paulo/,
+    }),
   ).toHaveAccessibleName(/Auth Service, Catalog API, Billing Service/);
 });
 
@@ -321,9 +323,13 @@ test('arrastar gira o globo e a inércia continua o giro até parar', async ({
       disparar('pointermove', passo * 20);
     }
     disparar('pointerup', 120);
+    await new Promise((resolver) => requestAnimationFrame(resolver));
     return Number(elemento.getAttribute('data-rotacao')?.split(',')[0]);
   }, centro);
   expect(aoSoltar).not.toBe(inicial);
+  await expect
+    .poll(() => longitudeDoGlobo(page), { timeout: 10000 })
+    .not.toBe(aoSoltar);
 
   let anterior = '';
   await expect
@@ -516,7 +522,11 @@ test('dica mostra os serviços e o impacto do local', async ({ page }) => {
   await simularMapa(page);
   await page.goto('/mapa');
 
-  await page.getByRole('button', { name: /Estados Unidos · Ashburn/ }).focus();
+  await page
+    .getByRole('button', {
+      name: /^Aproximar no mapa: Estados Unidos · Ashburn/,
+    })
+    .focus();
   const dica = page.locator('.globo-dica');
   await expect(dica).toContainText('Estados Unidos · Ashburn');
   await expect(dica).toContainText('Search API, Video Processor');
@@ -530,7 +540,9 @@ test('selecionar um local aproxima no mapa e abre o serviço', async ({
   await simularMapa(page);
   await page.goto('/mapa?periodo=7d');
 
-  await page.getByRole('button', { name: /Canadá · Toronto/ }).press('Enter');
+  await page
+    .getByRole('button', { name: /^Aproximar no mapa: Canadá · Toronto/ })
+    .press('Enter');
   await expect(page).toHaveURL(/visao=mapa/);
   await expect(
     page.getByRole('button', { name: 'Mapa', exact: true }),
@@ -546,7 +558,9 @@ test('com animação, o clique no globo também chega ao mapa', async ({
   await simularMapa(page);
   await page.goto('/mapa');
 
-  await page.getByRole('button', { name: /Canadá · Toronto/ }).click();
+  await page
+    .getByRole('button', { name: /^Aproximar no mapa: Canadá · Toronto/ })
+    .click();
   await expect(page.locator('.leaflet-popup-content')).toContainText(
     'Reports Engine',
     { timeout: 10_000 },
@@ -610,7 +624,9 @@ test('linha do tempo mostra um intervalo e volta ao período inteiro', async ({
     page.getByRole('region', { name: 'Emissão no intervalo' }),
   ).toBeVisible();
   await expect(
-    page.getByRole('button', { name: /Brasil · São Paulo/ }),
+    page.getByRole('button', {
+      name: /^Aproximar no mapa: Brasil · São Paulo/,
+    }),
   ).toHaveAccessibleName(/Em 11\/11, 14:00/);
   await analisarAcessibilidade(page);
 
@@ -804,4 +820,110 @@ test('o mapa usa o estilo vetorial claro também no modo escuro', async ({
     'rgb(144, 82, 3)',
   );
   expect(estilos).toEqual(['https://tiles.openfreemap.org/styles/positron']);
+});
+
+test('com o globo girando, o menu troca de página normalmente', async ({
+  page,
+  isMobile,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const inicial = await longitudeDoGlobo(page);
+  await expect
+    .poll(() => longitudeDoGlobo(page), { timeout: 12000 })
+    .toBeGreaterThan(inicial + 1);
+
+  const menu = isMobile
+    ? page.getByRole('navigation', { name: 'Navegação inferior' })
+    : page.getByRole('navigation', { name: 'Navegação principal' });
+  await menu.getByRole('link', { name: 'Ranking' }).click();
+
+  await expect(page).toHaveURL(/\/ranking/);
+  await expect(page.locator('.globo-svg')).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(
+    'Mapa de emissões',
+  );
+});
+
+const listaDeLocais = (page: Page) => page.locator('.globo-locais-item');
+
+async function abrirListaDeLocais(page: Page) {
+  const alternar = page.getByRole('button', { name: /^Locais \(/ });
+  if ((await alternar.getAttribute('aria-expanded')) === 'false') {
+    await alternar.click();
+  }
+  await expect(alternar).toHaveAttribute('aria-expanded', 'true');
+}
+
+test('a lista de locais mostra todos os locais da maior para a menor emissão', async ({
+  page,
+  isMobile,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const alternar = page.getByRole('button', { name: 'Locais (5)' });
+
+  await expect(alternar).toHaveAttribute(
+    'aria-expanded',
+    isMobile ? 'false' : 'true',
+  );
+  await abrirListaDeLocais(page);
+  await expect(listaDeLocais(page)).toHaveCount(5);
+  await expect(page.locator('.globo-locais-nome')).toHaveText([
+    'Estados Unidos · Ashburn',
+    'Japão · Tóquio',
+    'Brasil · São Paulo',
+    'Canadá · Toronto',
+    'Irlanda · Dublin',
+  ]);
+  await expect(listaDeLocais(page).nth(2)).toContainText('3 serviços');
+  await expect(listaDeLocais(page).nth(4)).toContainText('sem dados');
+  await analisarAcessibilidade(page);
+
+  await alternar.click();
+  await expect(alternar).toHaveAttribute('aria-expanded', 'false');
+  await expect(listaDeLocais(page).first()).toBeHidden();
+});
+
+test('passar o mouse num local da lista gira o globo até ele e mostra a dica', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await abrirListaDeLocais(page);
+  const toquio = page.getByRole('button', {
+    name: /^Aproximar no mapa: Japão/,
+  });
+  await expect(toquio).toBeHidden();
+
+  await listaDeLocais(page).filter({ hasText: 'Japão · Tóquio' }).hover();
+
+  await expect(toquio).toBeVisible();
+  await expect(page.locator('.globo-svg')).toHaveAttribute(
+    'data-rotacao',
+    '-139.7,-35.7,0.0',
+  );
+  await expect(page.locator('.globo-dica')).toContainText('Media CDN');
+});
+
+test('Enter num local da lista entra no mapa naquele ponto', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await simularMapa(page);
+  await page.goto('/mapa');
+  await abrirListaDeLocais(page);
+  const toronto = listaDeLocais(page).filter({ hasText: 'Canadá · Toronto' });
+
+  await toronto.focus();
+  await expect(page.locator('.globo-svg')).toHaveAttribute(
+    'data-rotacao',
+    /^79\.4,-43\.\d,0\.0$/,
+  );
+  await toronto.press('Enter');
+
+  await expect(page).toHaveURL(/visao=mapa/);
+  await expect(page.locator('.leaflet-popup-content')).toContainText(
+    'Reports Engine',
+  );
 });

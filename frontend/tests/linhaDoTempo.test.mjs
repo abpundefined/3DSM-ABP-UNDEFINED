@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   emissaoNoMomento,
+  ordenarPorEmissaoNoMomento,
   proximoIndice,
   rotuloDoIntervalo,
   somarNoMomento,
@@ -65,4 +66,28 @@ test('advances the interval and restarts after the last one', () => {
   assert.equal(proximoIndice(0, 3), 1);
   assert.equal(proximoIndice(2, 3), 0);
   assert.equal(proximoIndice(null, 0), null);
+});
+
+test('orders locations by emission at the moment, leaving missing data last', () => {
+  const grupos = [
+    { local: 'Irlanda · Dublin', servicos: [servico(null, [null, null])] },
+    { local: 'Japão · Tóquio', servicos: [servico(0.4, [0.1, 0.3])] },
+    { local: 'Canadá · Toronto', servicos: [servico(0.4, [0.2, 0.2])] },
+    { local: 'Brasil · São Paulo', servicos: [servico(0.9, [0.5, 0.4])] },
+  ];
+  const nomes = (lista) => lista.map(({ local }) => local);
+
+  assert.deepEqual(nomes(ordenarPorEmissaoNoMomento(grupos, null)), [
+    'Brasil · São Paulo',
+    'Canadá · Toronto',
+    'Japão · Tóquio',
+    'Irlanda · Dublin',
+  ]);
+  assert.deepEqual(nomes(ordenarPorEmissaoNoMomento(grupos, 1)), [
+    'Brasil · São Paulo',
+    'Japão · Tóquio',
+    'Canadá · Toronto',
+    'Irlanda · Dublin',
+  ]);
+  assert.equal(grupos[0].local, 'Irlanda · Dublin');
 });

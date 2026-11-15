@@ -78,3 +78,23 @@ export function proximoIndice(indice: number | null, total: number) {
 
   return indice + 1;
 }
+
+export function ordenarPorEmissaoNoMomento<
+  T extends { local: string; servicos: ServicoNoMapa[] },
+>(grupos: T[], indice: number | null): T[] {
+  return [...grupos].sort((a, b) => {
+    const emissaoA = somarNoMomento(a.servicos, indice);
+    const emissaoB = somarNoMomento(b.servicos, indice);
+
+    if (emissaoA === emissaoB) {
+      return a.local.localeCompare(b.local, 'pt-BR');
+    }
+    if (emissaoA === null) {
+      return 1;
+    }
+    if (emissaoB === null) {
+      return -1;
+    }
+    return emissaoB - emissaoA;
+  });
+}
