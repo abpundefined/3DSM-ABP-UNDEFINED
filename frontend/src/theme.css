@@ -215,6 +215,20 @@
   color: #e3d5a9;
   background: #302b1d;
 }
+:root[data-theme='dark'] .service-drawer-backdrop {
+  background: rgb(6 12 8 / 72%);
+}
+:root[data-theme='dark'] .service-drawer-cancel {
+  border-color: var(--border);
+  background: #222f26;
+  color: var(--text);
+}
+:root[data-theme='dark'] .service-drawer-cancel:hover {
+  background: #2b3b30;
+}
+:root[data-theme='dark'] .service-drawer-close:hover {
+  background: #253429;
+}
 
 @media (max-width: 600px) {
   .header-inner nav {

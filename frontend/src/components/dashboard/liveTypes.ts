@@ -18,10 +18,12 @@ export type BackendService = {
 
 export type BackendCollection = {
   iniciadaEm: string;
+  intervaloColetaSegundos?: number | null;
   cpuPercent: number | null;
   memoryGb: number | null;
   diskGb: number | null;
   networkGb: number | null;
+  intensidadeCarbonoGCo2ePorKwh?: number | string | null;
   energiaKwh: number | string | null;
   emissaoGCo2e: number | string | null;
 };
