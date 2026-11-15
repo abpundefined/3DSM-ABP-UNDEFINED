@@ -39,6 +39,7 @@ da aplicação.
 - `/`: dashboard público conectado ao backend para exibir serviços e coletas recentes.
 - `/?demo=1`: demonstração opcional com gráficos e serviços fictícios para avaliação visual. Também pode ser aberta pelo botão **Ver demonstração**.
 - `/login`: formulário administrativo; o acesso ainda está indisponível. Não envia nem armazena credenciais.
+- `/mapa`: mapa de emissões por região (#96), com os dados do `GET /mapa` (#95). Detalhes em [Mapa de emissões](#mapa-de-emissões).
 - Outros endereços: página 404 com retorno ao dashboard.
 
 React Router usa `BrowserRouter`, `Routes`, `Outlet` e links de navegação.
@@ -87,6 +88,31 @@ serviço na rede dos containers. O Dockerfile inicia o Vite com
 `--host 0.0.0.0`, e o frontend fica disponível em http://localhost:5173.
 Assim, `/api/servicos` é encaminhado para `http://backend:3000/servicos`.
 Fora do Docker, o destino padrão continua sendo `http://localhost:3000`.
+
+## Mapa de emissões
+
+A página `/mapa` abre num globo (d3-geo e `world-atlas`, com fronteiras dos
+países). Ele gira devagar sozinho e pode ser pausado; arrastar, as setas, a roda
+do mouse e os botões + e − giram e aproximam. Aproximar até o fim ou clicar num
+ponto entra no mapa (Leaflet com agrupamento de marcadores); afastar no zoom
+mínimo volta ao globo. O tamanho e a cor dos pontos seguem a emissão (área
+proporcional, 5 faixas com contraste validado), explicados na legenda.
+
+- **URL:** `?visao=mapa` e `?regiao=<código>` ficam na URL junto com o período,
+  para recarregar ou compartilhar a mesma tela. `?demo=1` usa dados fictícios.
+- **Linha do tempo:** reproduz a `serie` intervalo a intervalo, com escala fixa
+  durante a reprodução. Só começa quando a pessoa aperta Reproduzir.
+- **Acessibilidade:** com "reduzir movimento" no sistema, não há rotação, inércia
+  nem animações. O globo funciona pelo teclado, e a tabela "Ver os dados do mapa
+  em tabela" traz os mesmos dados.
+- **Fundo do mapa:** tiles vetoriais do [OpenFreeMap](https://openfreemap.org)
+  (estilo claro, gratuito e sem chave), desenhados com MapLibre e com os nomes
+  em português (`name:pt`). O MapLibre só é baixado ao abrir a visão de mapa
+  (cerca de 290 KB comprimidos, mais 150 KB do worker). Sem WebGL ou com o
+  OpenFreeMap fora do ar, o mapa usa as imagens do OpenStreetMap, com os nomes
+  no idioma local. A atribuição aparece no canto do mapa.
+- **Testes:** `tests/e2e/mapa.spec.ts` simula o `GET /mapa` e o estilo do mapa,
+  sem depender da rede.
 
 ## Serviço HTTP
 
