@@ -133,6 +133,10 @@ export function girarComVelocidade(
   ];
 }
 
+export function tempoComAtrito(intervaloMs: number, atritoMs: number) {
+  return atritoMs * (1 - Math.exp(-intervaloMs / atritoMs));
+}
+
 export function amortecer(
   velocidade: Velocidade,
   intervaloMs: number,

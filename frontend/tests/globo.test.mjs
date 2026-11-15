@@ -18,6 +18,7 @@ import {
   limitarZoomDoGlobo,
   normalizarLongitude,
   suavizar,
+  tempoComAtrito,
   zoomEquivalenteNoMapa,
   zoomPelaRoda,
 } from '../src/utils/globo.ts';
@@ -143,4 +144,18 @@ test('finds the globe center and the equivalent map zoom', () => {
   assert.equal(zoomEquivalenteNoMapa(236 * 3), 4);
   assert.equal(zoomEquivalenteNoMapa(10), 2);
   assert.equal(zoomEquivalenteNoMapa(100000), 8);
+});
+
+test('glides the same distance whatever the frame rate', () => {
+  const percorrer = (intervalo) => {
+    let total = 0;
+    for (let tempo = 0; tempo < 4000; tempo += intervalo) {
+      total += tempoComAtrito(intervalo, 400) * Math.exp(-tempo / 400);
+    }
+    return total * 0.03;
+  };
+
+  assert.ok(Math.abs(percorrer(16) - 12) < 0.01);
+  assert.ok(Math.abs(percorrer(200) - 12) < 0.01);
+  assert.equal(tempoComAtrito(0, 400), 0);
 });

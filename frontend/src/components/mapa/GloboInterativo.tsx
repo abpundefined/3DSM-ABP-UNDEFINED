@@ -30,6 +30,7 @@ import {
   limitarZoomDoGlobo,
   normalizarLongitude,
   suavizar,
+  tempoComAtrito,
   zoomEquivalenteNoMapa,
   zoomPelaRoda,
   type LocalNoGlobo,
@@ -218,7 +219,7 @@ export default function GloboInterativo({
           rotacaoRef.current = girarComVelocidade(
             rotacaoRef.current,
             velocidade,
-            intervalo,
+            tempoComAtrito(intervalo, ATRITO_MS),
           );
           velocidadeRef.current = amortecer(
             velocidade,
