@@ -13,6 +13,7 @@ function readStoredToken() {
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(readStoredToken);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
 
   const login = useCallback((newToken: string) => {
     try {
@@ -21,20 +22,31 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       // Sem armazenamento, a sessão vale apenas enquanto a página estiver aberta.
     }
     setToken(newToken);
+    setSessionMessage(null);
   }, []);
 
-  const logout = useCallback(() => {
+  const endSession = useCallback((message: string | null) => {
     try {
       window.localStorage.removeItem(TOKEN_STORAGE_KEY);
     } catch {
       // O token em memória é descartado mesmo sem acesso ao armazenamento.
     }
     setToken(null);
+    setSessionMessage(message);
   }, []);
 
+  const logout = useCallback(() => endSession(null), [endSession]);
+
   const value = useMemo(
-    () => ({ token, isAuthenticated: token !== null, login, logout }),
-    [token, login, logout],
+    () => ({
+      token,
+      isAuthenticated: token !== null,
+      sessionMessage,
+      login,
+      logout,
+      expireSession: endSession,
+    }),
+    [token, sessionMessage, login, logout, endSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
