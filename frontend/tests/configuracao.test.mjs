@@ -4,6 +4,7 @@ import {
   toIntervalPayload,
   validateIntervals,
 } from '../src/utils/configuracao.ts';
+import { readLoginRedirect } from '../src/utils/login-redirect.ts';
 
 const values = (coleta, descoberta) => ({
   intervaloColetaSegundos: coleta,
@@ -39,4 +40,15 @@ test('converte o formulário no corpo do PUT /configuracao', () => {
     intervaloColetaSegundos: 60,
     intervaloDescobertaSegundos: 300,
   });
+});
+
+test('lê o destino e a mensagem do redirecionamento para o login', () => {
+  assert.deepEqual(readLoginRedirect({ from: '/admin', message: 'Entre.' }), {
+    from: '/admin',
+    message: 'Entre.',
+  });
+  assert.deepEqual(readLoginRedirect(null), { from: '/', message: '' });
+  assert.equal(readLoginRedirect({ from: '//site-externo.com' }).from, '/');
+  assert.equal(readLoginRedirect({ from: 'https://site.com' }).from, '/');
+  assert.equal(readLoginRedirect({ message: 42 }).message, '');
 });
