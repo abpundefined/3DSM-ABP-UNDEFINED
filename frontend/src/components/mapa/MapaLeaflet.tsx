@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import L from './leaflet';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import usePeriod from '../../hooks/usePeriod';
 import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
+import { ESTILO_DO_MAPA } from '../../utils/estiloDoMapa';
 import type { ServicoNoMapa } from '../../types/mapa';
 import {
   formatarEnergia,
@@ -14,11 +15,14 @@ import {
 } from '../../utils/mapaDados';
 import { emissaoNoMomento, type Momento } from '../../utils/linhaDoTempo';
 import { formatarEmissao, type EscalaEmissao } from '../../utils/mapaEscala';
+import ControlesDeZoom from './ControlesDeZoom';
 
 const URL_DOS_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATRIBUICAO =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const ATRIBUICAO_VETORIAL = `<a href="https://openfreemap.org">OpenFreeMap</a> · &copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> · ${ATRIBUICAO}`;
 const VISTA_INICIAL: L.LatLngTuple = [20, 0];
+const ZOOM_MAXIMO = 18;
 const LIMITES_DO_MUNDO: L.LatLngBoundsExpression = [
   [-85.0511, -180],
   [85.0511, 180],
@@ -28,6 +32,8 @@ const ZOOM_MAXIMO_AO_AJUSTAR = 6;
 const ZOOM_DE_CHEGADA = 4;
 const ZOOM_DO_FOCO = 8;
 const DURACAO_DO_VOO_S = 1.2;
+const ROLAGEM_PARA_O_GLOBO = 300;
+const ESPERA_DA_ROLAGEM_MS = 500;
 
 export type FocoDoMapa = {
   latitude: number;
@@ -41,7 +47,10 @@ type MapaLeafletProps = {
   escala: EscalaEmissao;
   momento?: Momento | null;
   foco?: FocoDoMapa | null;
+  onVoltarAoGlobo?: (centro: { latitude: number; longitude: number }) => void;
 };
+
+type EstadoDoZoom = { atual: number; minimo: number; maximo: number };
 
 type Marcador = { servico: ServicoNoMapa; camada: L.CircleMarker };
 
@@ -91,6 +100,7 @@ export default function MapaLeaflet({
   escala,
   momento = null,
   foco = null,
+  onVoltarAoGlobo,
 }: MapaLeafletProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
@@ -98,6 +108,8 @@ export default function MapaLeaflet({
   const marcadoresRef = useRef<Marcador[]>([]);
   const escalaRef = useRef(escala);
   const momentoRef = useRef<Momento | null>(momento);
+  const aoVoltarRef = useRef(onVoltarAoGlobo);
+  const [zoom, setZoom] = useState<EstadoDoZoom | null>(null);
   const navigate = useNavigate();
   const { linkSearch } = usePeriod();
   const movimentoReduzido = usePrefersReducedMotion();
@@ -112,19 +124,11 @@ export default function MapaLeaflet({
       center: VISTA_INICIAL,
       zoom: ZOOM_INICIAL,
       minZoom: zoomMinimoDoMapa(container.clientWidth, container.clientHeight),
+      maxZoom: ZOOM_MAXIMO,
       maxBounds: LIMITES_DO_MUNDO,
       maxBoundsViscosity: 1,
       zoomControl: false,
     });
-    L.control
-      .zoom({ zoomInTitle: 'Aproximar', zoomOutTitle: 'Afastar' })
-      .addTo(mapa);
-    L.tileLayer(URL_DOS_TILES, {
-      attribution: ATRIBUICAO,
-      maxZoom: 18,
-      noWrap: true,
-      bounds: LIMITES_DO_MUNDO,
-    }).addTo(mapa);
     mapa.attributionControl.setPrefix(false);
 
     const grupo = L.markerClusterGroup({
@@ -133,6 +137,45 @@ export default function MapaLeaflet({
       iconCreateFunction: criarIconeDoGrupo,
     });
     grupo.addTo(mapa);
+
+    const atualizarZoom = () =>
+      setZoom({
+        atual: mapa.getZoom(),
+        minimo: mapa.getMinZoom(),
+        maximo: mapa.getMaxZoom(),
+      });
+    mapa.on('zoomend moveend zoomlevelschange', atualizarZoom);
+
+    const voltarAoGlobo = () => {
+      const centro = mapa.getCenter();
+      aoVoltarRef.current?.({ latitude: centro.lat, longitude: centro.lng });
+    };
+    const noZoomMinimo = () => mapa.getZoom() <= mapa.getMinZoom();
+    let rolagemAcumulada = 0;
+    let temporizadorDaRolagem = 0;
+    const aoRolar = (evento: WheelEvent) => {
+      if (!noZoomMinimo() || evento.deltaY <= 0) {
+        rolagemAcumulada = 0;
+        return;
+      }
+      const fator = evento.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+      rolagemAcumulada += evento.deltaY * fator;
+      window.clearTimeout(temporizadorDaRolagem);
+      temporizadorDaRolagem = window.setTimeout(() => {
+        rolagemAcumulada = 0;
+      }, ESPERA_DA_ROLAGEM_MS);
+      if (rolagemAcumulada >= ROLAGEM_PARA_O_GLOBO) {
+        rolagemAcumulada = 0;
+        voltarAoGlobo();
+      }
+    };
+    const aoTeclar = (evento: KeyboardEvent) => {
+      if ((evento.key === '-' || evento.key === '_') && noZoomMinimo()) {
+        voltarAoGlobo();
+      }
+    };
+    container.addEventListener('wheel', aoRolar);
+    container.addEventListener('keydown', aoTeclar);
 
     const observador = new ResizeObserver(() => {
       mapa.invalidateSize();
@@ -146,6 +189,9 @@ export default function MapaLeaflet({
     grupoRef.current = grupo;
 
     return () => {
+      window.clearTimeout(temporizadorDaRolagem);
+      container.removeEventListener('wheel', aoRolar);
+      container.removeEventListener('keydown', aoTeclar);
       observador.disconnect();
       mapa.remove();
       mapaRef.current = null;
@@ -256,6 +302,55 @@ export default function MapaLeaflet({
   }, [foco, linkSearch, movimentoReduzido, navigate, servicos]);
 
   useEffect(() => {
+    const mapa = mapaRef.current;
+    if (!mapa) {
+      return;
+    }
+
+    const controle = new AbortController();
+    let camada: L.Layer | null = null;
+    const usarImagens = () => {
+      camada = L.tileLayer(URL_DOS_TILES, {
+        attribution: ATRIBUICAO,
+        maxZoom: ZOOM_MAXIMO,
+        noWrap: true,
+        bounds: LIMITES_DO_MUNDO,
+      }).addTo(mapa);
+    };
+
+    import('./camadaVetorial')
+      .then(({ criarCamadaVetorial }) =>
+        criarCamadaVetorial(
+          ESTILO_DO_MAPA,
+          ATRIBUICAO_VETORIAL,
+          controle.signal,
+        ),
+      )
+      .then((vetorial) => {
+        if (controle.signal.aborted) {
+          return;
+        }
+        camada = vetorial.addTo(mapa);
+      })
+      .catch(() => {
+        if (!controle.signal.aborted) {
+          usarImagens();
+        }
+      });
+
+    return () => {
+      controle.abort();
+      if (camada) {
+        mapa.removeLayer(camada);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    aoVoltarRef.current = onVoltarAoGlobo;
+  }, [onVoltarAoGlobo]);
+
+  useEffect(() => {
     escalaRef.current = escala;
     momentoRef.current = momento;
     const indice = momento?.indice ?? null;
@@ -268,12 +363,37 @@ export default function MapaLeaflet({
     }
   }, [escala, momento, servicos]);
 
+  const noMinimo = zoom !== null && zoom.atual <= zoom.minimo;
+  const podeVoltar = noMinimo && onVoltarAoGlobo !== undefined;
+
   return (
-    <div
-      ref={containerRef}
-      className="mapa-leaflet"
-      role="region"
-      aria-label="Mapa dos serviços monitorados"
-    />
+    <div className="mapa-leaflet-area">
+      <div
+        ref={containerRef}
+        className="mapa-leaflet"
+        role="region"
+        aria-label="Mapa dos serviços monitorados"
+      />
+      {zoom && (
+        <ControlesDeZoom
+          onAproximar={() => mapaRef.current?.zoomIn()}
+          onAfastar={() => {
+            const mapa = mapaRef.current;
+            if (!mapa) {
+              return;
+            }
+            if (podeVoltar) {
+              const centro = mapa.getCenter();
+              onVoltarAoGlobo({ latitude: centro.lat, longitude: centro.lng });
+            } else {
+              mapa.zoomOut();
+            }
+          }}
+          aproximarDesabilitado={zoom.atual >= zoom.maximo}
+          afastarDesabilitado={noMinimo && !podeVoltar}
+          rotuloAfastar={podeVoltar ? 'Voltar ao globo' : 'Afastar'}
+        />
+      )}
+    </div>
   );
 }

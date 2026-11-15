@@ -14,6 +14,7 @@
   --globo-faixa-4: #ffd29c;
   --globo-faixa-5: #ffefdc;
   --globo-sem-dados: #8a948d;
+  --mapa-fundo: #f2f3f0;
   display: grid;
   gap: 24px;
 }
@@ -43,7 +44,7 @@
   height: 520px;
   border-radius: 12px;
   overflow: hidden;
-  background: #aad3df;
+  background: var(--mapa-fundo);
 }
 
 .mapa-leaflet:focus-visible {
@@ -209,6 +210,12 @@
 .mapa-legenda-cor--sem-dados {
   border: 1px dashed var(--text-muted);
   background: var(--mapa-sem-dados);
+}
+
+[data-theme='dark'] .mapa-lateral:not(.mapa-lateral--globo) .mapa-legenda-cor {
+  margin: 3px;
+  border: 0;
+  box-shadow: 0 0 0 3px var(--mapa-fundo);
 }
 
 .mapa-lateral--globo .mapa-legenda-cor {
@@ -418,6 +425,52 @@
   stroke-linejoin: round;
 }
 
+.globo-estrelas circle {
+  fill: #e7f6ea;
+}
+
+.globo-halo,
+.globo-luz,
+.globo-estrelas,
+.globo-pulso {
+  pointer-events: none;
+}
+
+.globo-pulso {
+  fill-opacity: 0;
+  stroke: currentColor;
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: globo-pulso 2.4s ease-out infinite;
+}
+
+.globo-pulso.globo-ponto--faixa-4 {
+  color: var(--globo-faixa-4);
+}
+
+.globo-pulso.globo-ponto--faixa-5 {
+  color: var(--globo-faixa-5);
+}
+
+@keyframes globo-pulso {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globo-pulso {
+    display: none;
+  }
+}
+
 .globo-fronteiras {
   fill: none;
   stroke: rgb(231 246 234 / 38%);
@@ -425,8 +478,13 @@
   stroke-linejoin: round;
 }
 
-.globo-controles {
+.mapa-leaflet-area {
+  position: relative;
+}
+
+.controles-zoom {
   position: absolute;
+  z-index: 1;
   top: 12px;
   right: 12px;
   display: grid;
@@ -436,7 +494,7 @@
   background-clip: padding-box;
 }
 
-.globo-controles button {
+.controles-zoom button {
   display: grid;
   place-items: center;
   width: 34px;
@@ -452,26 +510,26 @@
   cursor: pointer;
 }
 
-.globo-controles button:last-child {
+.controles-zoom button:last-child {
   border-bottom: 0;
 }
 
-.globo-controles button:hover:not(:disabled) {
+.controles-zoom button:hover:not(:disabled) {
   background: #f1f4f2;
 }
 
-.globo-controles button:disabled {
+.controles-zoom button:disabled {
   color: #8a8f8c;
   cursor: default;
 }
 
-.globo-controles button:focus-visible {
+.controles-zoom button:focus-visible {
   position: relative;
   outline: 3px solid var(--green-forest);
   outline-offset: -3px;
 }
 
-.globo-controles svg {
+.controles-zoom svg {
   width: 14px;
   height: 14px;
   fill: currentColor;

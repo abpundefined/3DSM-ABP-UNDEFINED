@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import GloboInterativo, {
+  ZOOM_DE_RETORNO,
   type CentroDoGlobo,
 } from '../components/mapa/GloboInterativo';
 import PeriodSelector from '../components/common/PeriodSelector';
@@ -20,6 +21,7 @@ import {
   agruparPorLocal,
   centralizar,
   type LocalNoGlobo,
+  type Rotacao,
 } from '../utils/globo';
 import {
   rotuloDoIntervalo,
@@ -37,6 +39,7 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const visao: Visao = searchParams.get('visao') === 'mapa' ? 'mapa' : 'globo';
   const [foco, setFoco] = useState<FocoDoMapa | null>(null);
+  const [retornoAoGlobo, setRetornoAoGlobo] = useState<Rotacao | null>(null);
   const [indice, setIndice] = useState<number | null>(null);
 
   const regioes = useMemo(
@@ -71,14 +74,27 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
 
   const trocarVisao = (proxima: Visao, novoFoco: FocoDoMapa | null = null) => {
     setFoco(novoFoco);
+    setRetornoAoGlobo(null);
     atualizarParametro('visao', proxima === 'mapa' ? 'mapa' : null);
   };
 
   const entrarNoMapa = ({ latitude, longitude, zoom }: CentroDoGlobo) =>
     trocarVisao('mapa', { latitude, longitude, servicoIds: [], zoom });
 
+  const voltarAoGlobo = ({
+    latitude,
+    longitude,
+  }: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    trocarVisao('globo');
+    setRetornoAoGlobo(centralizar(longitude, latitude));
+  };
+
   const trocarRegiao = (codigo: string) => {
     setFoco(null);
+    setRetornoAoGlobo(null);
     atualizarParametro('regiao', codigo === '' ? null : codigo);
   };
 
@@ -150,7 +166,7 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
     [dados.servicos, dados.semCoordenadas],
   );
   const total = dados.servicos.length + dados.semCoordenadas.length;
-  const rotacaoInicial = regiao
+  const rotacaoDaRegiao = regiao
     ? centralizar(servicos[0].longitude, servicos[0].latitude)
     : undefined;
 
@@ -220,7 +236,8 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
             servicos={servicos}
             escala={escalaDoGlobo}
             momento={momento}
-            rotacaoInicial={rotacaoInicial}
+            rotacaoInicial={retornoAoGlobo ?? rotacaoDaRegiao}
+            zoomInicial={retornoAoGlobo ? ZOOM_DE_RETORNO : undefined}
             onSelecionar={aproximar}
             onEntrarNoMapa={entrarNoMapa}
           />
@@ -230,6 +247,7 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
             escala={escala}
             momento={momento}
             foco={foco}
+            onVoltarAoGlobo={voltarAoGlobo}
           />
         )}
         <aside

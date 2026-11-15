@@ -2,9 +2,24 @@ import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mapaDemo } from '../../src/mocks/mapa';
 
+const estiloDeTeste = {
+  version: 8,
+  sources: {},
+  layers: [
+    {
+      id: 'fundo',
+      type: 'background',
+      paint: { 'background-color': '#dfe8e1' },
+    },
+  ],
+};
+
 async function bloquearTiles(page: Page) {
   await page.route('https://tile.openstreetmap.org/**', (route) =>
     route.abort(),
+  );
+  await page.route('https://tiles.openfreemap.org/**', (route) =>
+    route.fulfill({ json: estiloDeTeste }),
   );
 }
 
@@ -251,6 +266,7 @@ test('arrastar gira o globo e a inércia continua o giro até parar', async ({
 }) => {
   await simularMapa(page);
   await page.goto('/mapa');
+  await page.getByRole('button', { name: 'Pausar rotação' }).click();
   const svg = page.locator('.globo-svg');
   const inicial = await longitudeDoGlobo(page);
   const centro = await centroDoGlobo(page);
@@ -343,7 +359,7 @@ test('o globo gira sozinho devagar e o botão pausa a rotação', async ({
   const inicial = await longitudeDoGlobo(page);
 
   await expect
-    .poll(() => longitudeDoGlobo(page), { timeout: 8000 })
+    .poll(() => longitudeDoGlobo(page), { timeout: 12000 })
     .toBeGreaterThan(inicial + 3);
 
   await page.getByRole('button', { name: 'Pausar rotação' }).click();
@@ -355,7 +371,7 @@ test('o globo gira sozinho devagar e o botão pausa a rotação', async ({
   await page.getByRole('button', { name: 'Girar o globo' }).click();
   await page.mouse.move(0, 0);
   await expect
-    .poll(() => longitudeDoGlobo(page), { timeout: 8000 })
+    .poll(() => longitudeDoGlobo(page), { timeout: 12000 })
     .toBeGreaterThan(pausado + 3);
 });
 
@@ -409,9 +425,28 @@ test('a roda do mouse aproxima o globo até entrar no mapa', async ({
   await expect(page.locator('.leaflet-container')).toBeVisible();
 });
 
-test('o mapa não repete o mundo nem passa dos limites ao afastar', async ({
+async function afastarAteOMinimo(page: Page) {
+  const afastar = page.getByRole('button', { name: 'Afastar', exact: true });
+  const voltar = page.getByRole('button', { name: 'Voltar ao globo' });
+  const mapa = page.locator('.leaflet-container');
+
+  for (let passo = 0; passo < 10; passo += 1) {
+    await page.waitForTimeout(250);
+    await expect(mapa).not.toHaveClass(/leaflet-zoom-anim/);
+    if (await voltar.isVisible()) {
+      return;
+    }
+    await afastar.click({ timeout: 2000 }).catch(() => undefined);
+  }
+  await expect(voltar).toBeVisible();
+}
+
+test('sem o estilo vetorial, o mapa usa imagens sem repetir o mundo', async ({
   page,
 }) => {
+  await page.route('https://tiles.openfreemap.org/**', (route) =>
+    route.fulfill({ status: 503 }),
+  );
   const tiles: string[] = [];
   page.on('request', (requisicao) => {
     const url = requisicao.url();
@@ -421,21 +456,10 @@ test('o mapa não repete o mundo nem passa dos limites ao afastar', async ({
   });
   await simularMapa(page);
   await page.goto('/mapa?visao=mapa');
-  const afastar = page.locator('.leaflet-control-zoom-out');
+  await afastarAteOMinimo(page);
 
-  for (let passo = 0; passo < 6; passo += 1) {
-    if (
-      await afastar.evaluate((botao) =>
-        botao.classList.contains('leaflet-disabled'),
-      )
-    ) {
-      break;
-    }
-    await afastar.click();
-  }
-  await expect(afastar).toHaveClass(/leaflet-disabled/);
-
-  expect(tiles.length).toBeGreaterThan(0);
+  await expect.poll(() => tiles.length).toBeGreaterThan(0);
+  await expect(page.locator('.maplibregl-canvas')).toHaveCount(0);
   const coordenadas = tiles.map((url) =>
     url
       .replace('https://tile.openstreetmap.org/', '')
@@ -568,6 +592,7 @@ test('linha do tempo mostra um intervalo e volta ao período inteiro', async ({
 test('reproduzir avança os intervalos, pausa e para no último', async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await simularMapa(page);
   await page.goto('/mapa');
@@ -664,4 +689,87 @@ test('região inexistente na URL mostra todas as regiões', async ({ page }) => 
     '8 de 10 serviços com localização no mapa',
   );
   await expect(pontosDoGlobo(page)).toHaveCount(4);
+});
+
+test('depois de girar com a mão, o globo volta a girar sozinho', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+  const svg = page.locator('.globo-svg');
+  const centro = await centroDoGlobo(page);
+
+  await page.mouse.move(centro.x, centro.y);
+  await page.mouse.down();
+  await page.mouse.move(centro.x - 60, centro.y, { steps: 4 });
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  const depoisDoArrasto = await longitudeDoGlobo(page);
+
+  await expect
+    .poll(() => longitudeDoGlobo(page), { timeout: 10000 })
+    .not.toBe(depoisDoArrasto);
+  const retomado = await longitudeDoGlobo(page);
+  await expect
+    .poll(() => longitudeDoGlobo(page), { timeout: 5000 })
+    .not.toBe(retomado);
+  await expect(svg).toBeVisible();
+});
+
+test('no zoom mínimo do mapa, o − e a roda do mouse voltam ao globo', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa?periodo=7d&visao=mapa');
+
+  await afastarAteOMinimo(page);
+  await page.getByRole('button', { name: 'Voltar ao globo' }).click();
+  await expect(page).toHaveURL(/\/mapa\?periodo=7d$/);
+  const svg = page.locator('.globo-svg');
+  await expect
+    .poll(async () => Number(await svg.getAttribute('data-zoom')))
+    .toBe(1);
+
+  await page.getByRole('button', { name: 'Mapa', exact: true }).click();
+  await afastarAteOMinimo(page);
+  const mapa = page.getByRole('region', {
+    name: 'Mapa dos serviços monitorados',
+  });
+  const caixa = await mapa.boundingBox();
+  if (!caixa) {
+    throw new Error('Mapa sem área visível.');
+  }
+  await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+  for (let passo = 0; passo < 3; passo += 1) {
+    await page.mouse.wheel(0, 400);
+  }
+  await expect(page).not.toHaveURL(/visao=mapa/);
+  await expect(page.locator('.globo-svg')).toBeVisible();
+});
+
+test('o mapa usa o estilo vetorial claro também no modo escuro', async ({
+  page,
+}) => {
+  const estilos: string[] = [];
+  page.on('request', (requisicao) => {
+    if (requisicao.url().startsWith('https://tiles.openfreemap.org/')) {
+      estilos.push(requisicao.url());
+    }
+  });
+  await simularMapa(page);
+  await page.goto('/mapa?visao=mapa');
+
+  await expect(page.locator('.maplibregl-canvas')).toHaveCount(1);
+  await expect(page.locator('.leaflet-control-attribution')).toContainText(
+    'OpenFreeMap',
+  );
+
+  await page.getByRole('button', { name: 'Modo escuro' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('.maplibregl-canvas')).toHaveCount(1);
+  await expect(page.locator('.mapa-marcador--faixa-3')).toHaveCSS(
+    'fill',
+    'rgb(144, 82, 3)',
+  );
+  expect(estilos).toEqual(['https://tiles.openfreemap.org/styles/positron']);
 });
