@@ -1,6 +1,5 @@
 export type IntervalField =
-  | 'intervaloColetaSegundos'
-  | 'intervaloDescobertaSegundos';
+  'intervaloColetaSegundos' | 'intervaloDescobertaSegundos';
 export type IntervalValues = Record<IntervalField, string>;
 export type IntervalErrors = Partial<Record<IntervalField, string>>;
 
