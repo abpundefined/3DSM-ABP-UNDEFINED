@@ -32,20 +32,20 @@ A tabela abaixo lista os 51 itens que compõem o escopo devedor da Sprint 3:
 
 | Issue | Item | SP | Responsável | Epic | Situação |
 | :---: | :--- | :---: | :--- | :--- | :---: |
-| [#79](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/79) | [TASK] Repository para ServicosService | 5 | Pedro Gomes | #37 | Backlog |
+| [#79](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/79) | [TASK] Repository para ServicosService | 5 | Pedro Gomes | #37 | Done |
 | [#84](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/84) | [TASK] Periodização no backend (PeriodoDto) | 3 | Marcus Nascimento | #35 | Done |
-| [#85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) | [TASK] Navegação, rotas e biblioteca de gráficos | 2 | Nadla Ferreira | #35 | Backlog |
-| [#86](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/86) | [TASK] Seletor de período compartilhado (frontend) | 5 | Nadla Ferreira | #35 | Backlog |
-| [#88](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/88) | [TASK] Endpoint GET /ranking | 3 | Marcus Nascimento | #35 | Backlog |
+| [#85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) | [TASK] Navegação, rotas e biblioteca de gráficos | 2 | Nadla Ferreira | #35 | Done |
+| [#86](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/86) | [TASK] Seletor de período compartilhado (frontend) | 5 | Nadla Ferreira | #35 | Done |
+| [#88](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/88) | [TASK] Endpoint GET /ranking | 3 | Marcus Nascimento | #35 | Done |
 | [#91](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/91) | [TASK] Página de ranking | 6 | Nadla Ferreira | #35 | Backlog |
 | [#93](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/93) | [TASK] Endpoint GET /comparacao | 5 | Pedro Gomes | #35 | Backlog |
 | [#94](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/94) | [TASK] Página de comparação | 6 | Thales Cambraia | #35 | Backlog |
-| [#95](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/95) | [TASK] Endpoint GET /mapa | 5 | Israel Lemes | #35 | Backlog |
-| [#96](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/96) | [TASK] Mapa animado no frontend | 9 | Israel Lemes | #35 | Backlog |
+| [#95](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/95) | [TASK] Endpoint GET /mapa | 5 | Israel Lemes | #35 | Done |
+| [#96](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/96) | [TASK] Mapa animado no frontend | 9 | Israel Lemes | #35 | Done |
 | [#98](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/98) | [TASK] Endpoint GET /servicos/:id/historico | 3 | Marcus Nascimento | #33 | Backlog |
 | [#99](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/99) | [TASK] Página de detalhe do serviço | 7 | Rainan Reis | #33 | Backlog |
 | [#80](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/80) | [TASK] Paginação do GET /coletas | 3 | Pedro Gomes | #33 | Backlog |
-| [#78](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/78) | [PBI] Página de administração dos intervalos (frontend) | 5 | Nadla Ferreira | #36 | Backlog |
+| [#78](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/78) | [PBI] Página de administração dos intervalos (frontend) | 5 | Nadla Ferreira | #36 | Done |
 | [#81](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81) | [PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06) | 8 | Thales Cambraia | #37 | Backlog |
 | [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101) | [PBI-26] Melhorias de usabilidade (P01 a P08) | 8 | Thales Cambraia | #37 | Backlog |
 | [#103](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/103) | [TASK] Cobertura de 80% em todos os services e repositories | 3 | Marcus Nascimento | #37 | Backlog |
@@ -136,5 +136,5 @@ O acompanhamento diário da queima de Story Points inicia-se em **11/11/2026** c
 
 ### Regras de Processo e Fechamento
 1. **Fluxo Contínuo de PRs:** submeter PRs pequenos e contínuos logo após a conclusão das tarefas, evitando acúmulo no final do ciclo;
-2. **Critérios de Qualidade (DoD):** todo PR deve conter testes unitários/E2E com cobertura, passar nos jobs de lint/typecheck/build no GitHub Actions e receber aprovação de ao menos um revisor;
+2. **Critérios de Qualidade (DoD):** adotar **TDD (Test-Driven Development)** no desenvolvimento de funcionalidades e correções (testes unitários e/ou E2E com Axe escritos antes ou guiando a implementação, com cobertura verificada), passar nos jobs de lint, formatação (`format:check`), typecheck, testes e build no GitHub Actions e receber aprovação de ao menos um revisor;
 3. **Baixa de Pontos:** exclusivamente após o merge na `develop` e o fechamento da issue correspondente no GitHub.

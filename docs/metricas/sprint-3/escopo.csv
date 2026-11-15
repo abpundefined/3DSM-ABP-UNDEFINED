@@ -1,18 +1,18 @@
 issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_comprovado,fechado_em,pendencia
-79,[TASK] Repository para ServicosService,5,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+79,[TASK] Repository para ServicosService,5,PedrinhoDBR,Done,CLOSED,sim,2026-11-14T00:58:51Z,
 84,[TASK] Periodização no backend (PeriodoDto),3,MarcusVRDN,Done,CLOSED,sim,2026-11-12T12:45:48Z,
-85,"[TASK] Navegação, rotas e biblioteca de gráficos",2,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-86,[TASK] Seletor de período compartilhado (frontend),5,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-88,[TASK] Endpoint GET /ranking,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+85,"[TASK] Navegação, rotas e biblioteca de gráficos",2,NadlaFernandes,Done,CLOSED,sim,2026-11-13T00:13:27Z,
+86,[TASK] Seletor de período compartilhado (frontend),5,NadlaFernandes,Done,CLOSED,sim,2026-11-14T01:00:00Z,
+88,[TASK] Endpoint GET /ranking,3,MarcusVRDN,Done,CLOSED,sim,2026-11-15T03:02:33Z,
 91,[TASK] Página de ranking,6,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 93,[TASK] Endpoint GET /comparacao,5,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 94,[TASK] Página de comparação,6,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-95,[TASK] Endpoint GET /mapa,5,Israelisl,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-96,[TASK] Mapa animado no frontend,9,Israelisl,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+95,[TASK] Endpoint GET /mapa,5,Israelisl,Done,CLOSED,sim,2026-11-14T00:58:07Z,
+96,[TASK] Mapa animado no frontend,9,Israelisl,Done,CLOSED,sim,2026-11-15T03:01:24Z,
 98,[TASK] Endpoint GET /servicos/:id/historico,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 99,[TASK] Página de detalhe do serviço,7,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 80,[TASK] Paginação do GET /coletas,3,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-78,[PBI] Página de administração dos intervalos (frontend),5,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+78,[PBI] Página de administração dos intervalos (frontend),5,NadlaFernandes,Done,CLOSED,sim,2026-11-15T17:28:22Z,
 81,[PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06),8,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 101,[PBI-26] Melhorias de usabilidade (P01 a P08),8,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 103,[TASK] Cobertura de 80% em todos os services e repositories,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
