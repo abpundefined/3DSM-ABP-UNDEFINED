@@ -96,6 +96,9 @@
 :root[data-theme='dark'] .guide-icon {
   background: #293a2e;
 }
+:root[data-theme='dark'] .button--primary {
+  color: #132017;
+}
 :root[data-theme='dark'] .button--primary:hover {
   background: #72bd82;
   color: #132017;
