@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import Icon from '../components/common/Icon';
 import useAuth from '../hooks/useAuth';
 import usePageTitle from '../hooks/usePageTitle';
 import { ApiError, apiRequest } from '../services/api';
+import { readLoginRedirect } from '../utils/login-redirect';
 
 interface LoginResponse {
   accessToken: string;
@@ -12,12 +13,14 @@ interface LoginResponse {
 export default function Login() {
   usePageTitle('Entrar');
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirect = readLoginRedirect(location.state);
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(redirect.message);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,7 +41,7 @@ export default function Login() {
       }
 
       login(response.accessToken);
-      navigate('/');
+      navigate(redirect.from, { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         setErrorMessage(error.message);

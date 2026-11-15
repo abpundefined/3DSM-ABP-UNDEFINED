@@ -6,7 +6,6 @@ const pages = [
   { path: '/comparar', heading: 'Comparar serviços' },
   { path: '/mapa', heading: 'Mapa de emissões' },
   { path: '/servicos/7', heading: 'Serviço 7' },
-  { path: '/admin', heading: 'Administração' },
   { path: '/metodologia', heading: 'Como calculamos' },
 ];
 
