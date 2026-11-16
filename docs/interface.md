@@ -552,7 +552,7 @@ Preencher **uma cópia desta ficha por participante** depois de obter o consenti
 
 #### 5.3.5. Questionário SUS — System Usability Scale
 
-Aplicar **após as tarefas na aplicação**, sem orientar as respostas. O participante deve considerar sua experiência com a **interface do GreenER efetivamente testada**, não as explicações do aplicador. Os itens abaixo seguem o sentido da escala SUS tradicional em uma redação operacional em português; referência de adaptação brasileira: [Lourenço, Valentim e Lopes (2022)](https://doi.org/10.5294/aqui.2022.22.2.8). Para uma pesquisa formal com instrumento validado, utilizar integralmente a versão validada escolhida, sem combinações de traduções.
+Aplicar **após as tarefas na aplicação**, sem orientar as respostas. O participante deve considerar sua experiência com a **interface do GreenER efetivamente testada**, não as explicações do aplicador. Os itens abaixo seguem o sentido da escala SUS tradicional em uma redação operacional em português; referência de adaptação brasileira: [Lourenço, Carmona e Lopes (2022)](https://doi.org/10.5294/aqui.2022.22.2.8). Para uma pesquisa formal com instrumento validado, utilizar integralmente a versão validada escolhida, sem combinações de traduções.
 
 **Escala para todas as afirmações:** 1 = discordo totalmente; 2 = discordo; 3 = nem concordo nem discordo; 4 = concordo; 5 = concordo totalmente.
 
@@ -578,7 +578,7 @@ Aplicar **após as tarefas na aplicação**, sem orientar as respostas. O partic
 
 **Respostas incompletas:** solicitar ao participante, sem indução, que confira se deseja preencher o item omitido; se permanecer incompleto, não calcular um escore SUS individual com essa ficha. **Protótipo Figma:** observações podem ser registradas separadamente, mas não devem ser misturadas no mesmo escore da aplicação.
 
-Referência complementar de método e cálculo: [System Usability Scale — estudo sobre pontuação e interpretação](https://doi.org/10.1080/10447318.2026.2625260).
+Referência complementar de método e cálculo: [Lewis (2018), The System Usability Scale: Past, Present, and Future](https://doi.org/10.1080/10447318.2018.1455307).
 
 #### 5.3.6. Consolidação dos resultados — preencher somente após 16 e 17/11
 
