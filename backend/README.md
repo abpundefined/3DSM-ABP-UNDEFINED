@@ -78,5 +78,29 @@ npm.cmd run lint
 - `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se algum arquivo de `src/modules/calculos/*.service.ts` ou de `src/common/regras/` ficar abaixo de 80% em linhas, ramificações, funções ou instruções (`coverageThreshold` no `package.json`). **É o comando executado no CI**: rode-o antes de abrir um PR, principalmente se alterar cálculo ou classificação de estados. O relatório fica em `backend/coverage/`, ignorado pelo Git.
 - O `npm run lint` verifica problemas sem alterar arquivos; use `npm run lint:fix` para corrigir automaticamente.
 
-O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado. O `test:e2e` padrão do Nest não é a mesma suíte desse Compose isolado.
+### Testes E2E de API (`npm run test:e2e`)
+
+Sobem a aplicação inteira (`AppModule`) contra um PostgreSQL real e chamam as rotas por HTTP com Supertest: login, `GET /configuracao` e `PUT /configuracao` (com e sem token), `POST /servicos/sync`, um ciclo do monitoramento, `GET /servicos`, a última coleta válida, `GET /indicadores`, `GET /ranking`, `GET /comparacao` e `GET /mapa`, incluindo os casos de 400, 401 e 404.
+
+- O script confere o banco, aplica `prisma migrate deploy` e roda o Jest com `test/jest-e2e.json`.
+- O banco precisa ter o nome terminado em `_e2e`: os testes apagam todas as tabelas no início e no fim. Com outro nome, o script para antes de qualquer migração.
+- A API de descoberta, a de métricas e a de carbono são simuladas por um servidor local na porta 45999 (`test/e2e/apis-simuladas.ts`); nenhuma chamada sai para a internet.
+- As variáveis da aplicação (URLs externas, `JWT_SECRET` e administrador) são definidas pelos próprios testes em `test/e2e/ambiente.ts`, antes do `.env`; só `DATABASE_URL` vem de fora.
+- O agendamento automático do monitoramento fica desligado; o teste dispara um ciclo e espera ele terminar, para o resultado não depender de tempo.
+- O Jest usa `--experimental-vm-modules` porque o `@nestjs/config` é distribuído apenas como ESM.
+- No CI, o job `backend-e2e` roda a mesma suíte com o serviço `postgres:17`, partindo de um banco vazio.
+
+Para rodar na máquina, com o PostgreSQL do Compose em execução e os valores de `DB_USER`, `DB_PASS` e `DB_PORT` do `.env` da raiz:
+
+```powershell
+docker compose exec postgres createdb -U <DB_USER> greener_e2e
+cd backend
+$env:DATABASE_URL="postgresql://<DB_USER>:<DB_PASS>@localhost:<DB_PORT>/greener_e2e?schema=public"
+npm.cmd run test:e2e
+Remove-Item Env:DATABASE_URL
+```
+
+O `createdb` só é necessário na primeira vez. No Git Bash, use `DATABASE_URL="..." npm run test:e2e` na mesma linha.
+
+O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado.
 
