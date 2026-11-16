@@ -38,7 +38,7 @@ A tabela abaixo lista os 51 itens que compõem o escopo devedor da Sprint 3:
 | [#86](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/86) | [TASK] Seletor de período compartilhado (frontend) | 5 | Nadla Ferreira | #35 | Done |
 | [#88](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/88) | [TASK] Endpoint GET /ranking | 3 | Marcus Nascimento | #35 | Done |
 | [#91](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/91) | [TASK] Página de ranking | 6 | Nadla Ferreira | #35 | Backlog |
-| [#93](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/93) | [TASK] Endpoint GET /comparacao | 5 | Pedro Gomes | #35 | Backlog |
+| [#93](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/93) | [TASK] Endpoint GET /comparacao | 5 | Pedro Gomes | #35 | Done |
 | [#94](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/94) | [TASK] Página de comparação | 6 | Thales Cambraia | #35 | Backlog |
 | [#95](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/95) | [TASK] Endpoint GET /mapa | 5 | Israel Lemes | #35 | Done |
 | [#96](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/96) | [TASK] Mapa animado no frontend | 9 | Israel Lemes | #35 | Done |
@@ -136,5 +136,9 @@ O acompanhamento diário da queima de Story Points inicia-se em **11/11/2026** c
 
 ### Regras de Processo e Fechamento
 1. **Fluxo Contínuo de PRs:** submeter PRs pequenos e contínuos logo após a conclusão das tarefas, evitando acúmulo no final do ciclo;
-2. **Critérios de Qualidade (DoD):** adotar **TDD (Test-Driven Development)** no desenvolvimento de funcionalidades e correções (testes unitários e/ou E2E com Axe escritos antes ou guiando a implementação, com cobertura verificada), passar nos jobs de lint, formatação (`format:check`), typecheck, testes e build no GitHub Actions e receber aprovação de ao menos um revisor;
-3. **Baixa de Pontos:** exclusivamente após o merge na `develop` e o fechamento da issue correspondente no GitHub.
+2. **Critérios de Qualidade (DoD):** todo PR deve conter testes unitários/E2E com cobertura, passar nos jobs de lint/typecheck/build no GitHub Actions e receber aprovação de ao menos um revisor;
+3. **TDD (a partir de 14/11):** Regras de negócio novas, a partir de 14/11, são desenvolvidas com TDD: o commit de teste precede o da implementação;
+4. **Baixa de Pontos:** exclusivamente após o merge na `develop` e o fechamento da issue correspondente no GitHub.
+
+### Alterações no Planejamento
+- **14/11:** adoção de TDD nos itens ainda não iniciados, conforme orientação do professor de TP.
