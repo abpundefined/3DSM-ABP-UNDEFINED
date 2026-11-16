@@ -7,6 +7,7 @@ import {
 } from "../coletas/dto/create-coleta.dto";
 import { MonitoramentoService } from "../monitoramento/monitoramento.service";
 import type { ConfiguracaoService } from "../configuracao/configuracao.service";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import type { ServicosRepository } from "./servicos.repository";
 import { ServicosService } from "./servicos.service";
 
@@ -48,6 +49,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
   let services: StoredService[];
   let collections: StoredCollection[];
   let servicosService: ServicosService;
+  let registro: RegistroIntegracoesService;
   let monitoramentoService: MonitoramentoService;
   let fetchMock: jest.SpiedFunction<typeof fetch>;
   let registrarColeta: jest.Mock;
@@ -159,9 +161,11 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     const config = {
       get: jest.fn((key: string) => configValues[key]),
     } as unknown as ConfigService;
+    registro = new RegistroIntegracoesService();
     servicosService = new ServicosService(
       repository as unknown as ServicosRepository,
       config,
+      registro,
     );
     registrarColeta = jest.fn((data: CreateColetaDto) => {
       const estadoColeta =
@@ -659,6 +663,35 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     },
   );
 
+  it("registra no agregador o resultado da descoberta", async () => {
+    fetchMock.mockResolvedValueOnce(
+      Response.json([externalService("billing-api")]),
+    );
+
+    await servicosService.discoverServices();
+
+    expect(registro.obter("agregador")).toMatchObject({
+      sucesso: true,
+      mensagemErro: null,
+    });
+  });
+
+  it("registra a falha do agregador sem alterar o erro original", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 503, statusText: "Service Unavailable" }),
+    );
+
+    await expect(servicosService.discoverServices()).rejects.toThrow(
+      "Falha ao consultar serviços externos: 503 Service Unavailable",
+    );
+
+    expect(registro.obter("agregador")).toMatchObject({
+      sucesso: false,
+      mensagemErro:
+        "Falha ao consultar serviços externos: 503 Service Unavailable",
+    });
+  });
+
   it("delega a verificação do schema para o repository", async () => {
     await servicosService.verificarSchema();
 
@@ -683,6 +716,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
       {
         get: jest.fn().mockReturnValue(undefined),
       } as unknown as ConfigService,
+      registro,
     );
 
     await expect(semUrl.discoverServices()).rejects.toThrow(

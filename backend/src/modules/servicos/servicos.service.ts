@@ -4,6 +4,7 @@ import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import { comTimeout } from "../../common/utils/com-timeout";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosRepository } from "./servicos.repository";
 
 const DISCOVERY_FETCH_TIMEOUT_MS = 8000;
@@ -28,9 +29,14 @@ export class ServicosService {
   constructor(
     private readonly servicosRepository: ServicosRepository,
     private readonly configService: ConfigService,
+    private readonly registro: RegistroIntegracoesService,
   ) {}
 
-  async discoverServices() {
+  discoverServices() {
+    return this.registro.medir("agregador", () => this.consultarAgregador());
+  }
+
+  private async consultarAgregador() {
     const baseUrl = this.configService.get<string>("METRICS_API_URL");
     if (!baseUrl) {
       throw new Error("METRICS_API_URL não configurada.");
