@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotImplementedException,
   NotFoundException,
 } from "@nestjs/common";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
@@ -14,6 +15,8 @@ import {
 } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
+import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
+import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
 import {
   ContagemPorEstado,
   IndicadoresRepository,
@@ -63,6 +66,15 @@ export interface VariacaoIndicador {
 @Injectable()
 export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
+
+  obterSerieTemporal(
+    query: SerieTemporalQueryDto,
+  ): Promise<SerieTemporalResponseDto> {
+    void query;
+    throw new NotImplementedException(
+      "A consulta da série temporal ainda não foi implementada.",
+    );
+  }
 
   async obterHistoricoServico(
     id: string,
