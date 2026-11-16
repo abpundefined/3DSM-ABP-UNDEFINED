@@ -17,6 +17,7 @@ src/
   modules/coletas/           controller, service, repository e DTOs
   modules/indicadores/       agregados ambientais e contagem por estado
   modules/mapa/              serviços no mapa com a série de emissão do período
+  modules/simulacao/         simulação da emissão do serviço em outra região
 prisma/
   schema.prisma
   migrations/
@@ -53,6 +54,7 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
 - `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. `mes-anterior` inclui a comparação `variacao` com o mês calendário anterior.
 - `GET /mapa`: serviços com coordenadas, totais e série de emissão por hora (até 48 horas) ou por dia, além da lista `semCoordenadas`. Aceita os mesmos parâmetros de período de `GET /indicadores`.
+- `GET /servicos/:id/simulacao-regiao`: emissão estimada do serviço em cada região monitorada (energia do período × intensidade média da região), com a diferença em g e em % e a região de menor emissão. Aceita os mesmos parâmetros de período; serviço inexistente retorna 404.
 
 Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas` e `POST /servicos/sync` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
 
