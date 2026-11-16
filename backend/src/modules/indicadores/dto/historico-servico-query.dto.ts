@@ -9,6 +9,6 @@ export class HistoricoServicoQueryDto extends PeriodoDto {
       "Granularidade do histórico. Se omitida, será calculada automaticamente: hora até 48 horas e dia acima disso.",
   })
   @IsOptional()
-  @IsIn(["hora", "dia"])
+  @IsIn(["hora", "dia"], { message: "granularidade deve ser hora ou dia" })
   granularidade?: "hora" | "dia";
 }

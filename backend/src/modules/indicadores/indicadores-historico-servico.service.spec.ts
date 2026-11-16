@@ -66,10 +66,10 @@ describe("IndicadoresService.obterHistoricoServico", () => {
       obterSerieTemporal.mockResolvedValue([
         {
           inicio: new Date("2026-11-10T10:00:00.000Z"),
-          energia: 0.1,
-          emissao: 8.5,
-          mediaCpu: 12,
-          mediaMemoria: 256,
+          energiaKwh: 0.1,
+          emissaoGCo2e: 8.5,
+          cpuMedia: 12,
+          memoriaMediaMb: 256,
           coletas: 1,
           ativo: 1,
           indisponivel: 0,
@@ -77,10 +77,10 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         },
         {
           inicio: new Date("2026-11-10T12:00:00.000Z"),
-          energia: 0.2,
-          emissao: 17,
-          mediaCpu: 24,
-          mediaMemoria: 512,
+          energiaKwh: 0.2,
+          emissaoGCo2e: 17,
+          cpuMedia: 24,
+          memoriaMediaMb: 512,
           coletas: 2,
           ativo: 0,
           indisponivel: 1,
@@ -93,21 +93,41 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         fim: "2026-11-10T12:00:00.000Z",
       });
 
-      expect(resultado).toEqual(
-        expect.arrayContaining([
-          {
-            inicio: "2026-11-10T11:00:00.000Z",
-            energia: null,
-            emissao: null,
-            mediaCpu: null,
-            mediaMemoria: null,
-            coletas: null,
-            ativo: 0,
-            indisponivel: 0,
-            semMetricas: 0,
-          },
-        ]),
-      );
+      expect(resultado).toEqual([
+        {
+          inicio: "2026-11-10T10:00:00.000Z",
+          energiaKwh: 0.1,
+          emissaoGCo2e: 8.5,
+          cpuMedia: 12,
+          memoriaMediaMb: 256,
+          coletas: 1,
+          ativo: 1,
+          indisponivel: 0,
+          semMetricas: 0,
+        },
+        {
+          inicio: "2026-11-10T11:00:00.000Z",
+          energiaKwh: null,
+          emissaoGCo2e: null,
+          cpuMedia: null,
+          memoriaMediaMb: null,
+          coletas: null,
+          ativo: 0,
+          indisponivel: 0,
+          semMetricas: 0,
+        },
+        {
+          inicio: "2026-11-10T12:00:00.000Z",
+          energiaKwh: 0.2,
+          emissaoGCo2e: 17,
+          cpuMedia: 24,
+          memoriaMediaMb: 512,
+          coletas: 2,
+          ativo: 0,
+          indisponivel: 1,
+          semMetricas: 0,
+        },
+      ]);
     });
   });
 });

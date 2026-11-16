@@ -21,10 +21,10 @@ import {
 
 export interface ItemHistoricoServico {
   inicio: string;
-  energia: number | null;
-  emissao: number | null;
-  mediaCpu: number | null;
-  mediaMemoria: number | null;
+  energiaKwh: number | null;
+  emissaoGCo2e: number | null;
+  cpuMedia: number | null;
+  memoriaMediaMb: number | null;
   coletas: number | null;
   ativo: number;
   indisponivel: number;
@@ -93,10 +93,10 @@ export class IndicadoresService {
 
       return {
         inicio: intervalo.toISOString(),
-        energia: ponto?.energia ?? null,
-        emissao: ponto?.emissao ?? null,
-        mediaCpu: ponto?.mediaCpu ?? null,
-        mediaMemoria: ponto?.mediaMemoria ?? null,
+        energiaKwh: ponto?.energiaKwh ?? null,
+        emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
+        cpuMedia: ponto?.cpuMedia ?? null,
+        memoriaMediaMb: ponto?.memoriaMediaMb ?? null,
         coletas: ponto?.coletas ?? null,
         ativo: ponto?.ativo ?? 0,
         indisponivel: ponto?.indisponivel ?? 0,

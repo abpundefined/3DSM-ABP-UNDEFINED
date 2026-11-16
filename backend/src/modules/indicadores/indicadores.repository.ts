@@ -32,10 +32,10 @@ export interface ContagemPorEstado {
 
 export interface PontoHistoricoServico {
   inicio: Date;
-  energia: number | null;
-  emissao: number | null;
-  mediaCpu: number | null;
-  mediaMemoria: number | null;
+  energiaKwh: number | null;
+  emissaoGCo2e: number | null;
+  cpuMedia: number | null;
+  memoriaMediaMb: number | null;
   coletas: number;
   ativo: number;
   indisponivel: number;
@@ -82,10 +82,10 @@ export class IndicadoresRepository {
           ${unidade}::text,
           c."iniciadaEm" AT TIME ZONE ${fuso}::text
         ) AT TIME ZONE ${fuso}::text AS "inicio",
-        SUM(c."energiaKwh") AS "energia",
-        SUM(c."emissaoGCo2e") AS "emissao",
-        AVG(c."cpuPercent") AS "mediaCpu",
-        AVG(c."memoryGb") * 1024 AS "mediaMemoria",
+        SUM(c."energiaKwh") FILTER (WHERE c."estadoCalculo" = 'CONCLUIDO') AS "energiaKwh",
+        SUM(c."emissaoGCo2e") FILTER (WHERE c."estadoCalculo" = 'CONCLUIDO') AS "emissaoGCo2e",
+        AVG(c."cpuPercent") AS "cpuMedia",
+        AVG(c."memoryGb") * 1024 AS "memoriaMediaMb",
         COUNT(*) AS "coletas",
         SUM(CASE WHEN c."estadoColeta" = 'SUCESSO' THEN 1 ELSE 0 END) AS "ativo",
         SUM(CASE WHEN c."estadoColeta" = 'FALHA' THEN 1 ELSE 0 END) AS "indisponivel",

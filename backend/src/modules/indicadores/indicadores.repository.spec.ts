@@ -42,10 +42,10 @@ describe("IndicadoresRepository", () => {
       const queryRaw = jest.fn().mockResolvedValue([
         {
           inicio,
-          energia: 1.25,
-          emissao: 12.5,
-          mediaCpu: 24,
-          mediaMemoria: 512,
+          energiaKwh: 1.25,
+          emissaoGCo2e: 12.5,
+          cpuMedia: 24,
+          memoriaMediaMb: 512,
           coletas: 3n,
           ativo: 1n,
           indisponivel: 1n,
@@ -61,10 +61,10 @@ describe("IndicadoresRepository", () => {
       ).resolves.toEqual([
         {
           inicio,
-          energia: 1.25,
-          emissao: 12.5,
-          mediaCpu: 24,
-          mediaMemoria: 512,
+          energiaKwh: 1.25,
+          emissaoGCo2e: 12.5,
+          cpuMedia: 24,
+          memoriaMediaMb: 512,
           coletas: 3,
           ativo: 1,
           indisponivel: 1,
@@ -78,10 +78,14 @@ describe("IndicadoresRepository", () => {
       ];
       const sql = partes.join("?");
       expect(valores).toEqual([unidade, fuso, fuso, 7, inicio, fim]);
-      expect(sql).toContain('SUM(c."energiaKwh") AS "energia"');
-      expect(sql).toContain('SUM(c."emissaoGCo2e") AS "emissao"');
-      expect(sql).toContain('AVG(c."cpuPercent") AS "mediaCpu"');
-      expect(sql).toContain('AVG(c."memoryGb") * 1024 AS "mediaMemoria"');
+      expect(sql).toContain(
+        'SUM(c."energiaKwh") FILTER (WHERE c."estadoCalculo" = \'CONCLUIDO\') AS "energiaKwh"',
+      );
+      expect(sql).toContain(
+        'SUM(c."emissaoGCo2e") FILTER (WHERE c."estadoCalculo" = \'CONCLUIDO\') AS "emissaoGCo2e"',
+      );
+      expect(sql).toContain('AVG(c."cpuPercent") AS "cpuMedia"');
+      expect(sql).toContain('AVG(c."memoryGb") * 1024 AS "memoriaMediaMb"');
       expect(sql).toContain('COUNT(*) AS "coletas"');
       expect(sql).toContain(`c."estadoColeta" = 'SUCESSO'`);
       expect(sql).toContain(`c."estadoColeta" = 'FALHA'`);
