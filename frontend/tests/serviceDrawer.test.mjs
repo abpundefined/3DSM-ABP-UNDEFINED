@@ -86,10 +86,39 @@ test('monta resumo completo de métricas atuais para o painel lateral', () => {
   assert.equal(summary.disk, '15,00 GB');
   assert.equal(summary.network, '0,50 GB');
   assert.equal(summary.carbonIntensity, '125,4 gCO₂e/kWh');
-  assert.equal(summary.energy, '1,2346 kWh');
-  assert.equal(summary.emissionsKg, '1,2346 kgCO₂e');
-  assert.equal(summary.emissionsG, '1.234,57 gCO₂e');
+  assert.equal(summary.energy, '1,23 kWh');
+  assert.equal(summary.emissions, '1,23 kgCO₂e');
+  assert.equal('emissionsKg' in summary, false);
+  assert.equal('emissionsG' in summary, false);
   assert.equal(summary.collectionInterval, '45 s');
+});
+
+test('exibe energia em Wh e emissão em gCO₂e para coletas curtas', () => {
+  const summary = buildServiceDrawerSummary(
+    {
+      id: 14,
+      idExterno: 'worker-api',
+      nome: 'Worker API',
+      regiaoCodigo: 'br-sudeste',
+      localizacao: null,
+      estadoAtual: 'DISPONIVEL',
+      latestCollection: {
+        iniciadaEm: '2026-11-15T14:00:00.000Z',
+        intervaloColetaSegundos: 30,
+        cpuPercent: 12,
+        memoryGb: 1.2,
+        diskGb: 8,
+        networkGb: 0.1,
+        intensidadeCarbonoGCo2ePorKwh: 85,
+        energiaKwh: 0.00025,
+        emissaoGCo2e: 0.021,
+      },
+    },
+    30,
+  );
+
+  assert.equal(summary.energy, '0,25 Wh');
+  assert.equal(summary.emissions, '0,02 gCO₂e');
 });
 
 test('mantém dados ausentes explícitos no painel lateral sem inventar valores', () => {
@@ -113,7 +142,6 @@ test('mantém dados ausentes explícitos no painel lateral sem inventar valores'
   assert.equal(summary.network, '—');
   assert.equal(summary.carbonIntensity, '—');
   assert.equal(summary.energy, '—');
-  assert.equal(summary.emissionsKg, '—');
-  assert.equal(summary.emissionsG, '—');
+  assert.equal(summary.emissions, '—');
   assert.equal(summary.collectionInterval, 'Não informado');
 });
