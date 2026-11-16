@@ -6,6 +6,7 @@
 > **Responsável pela documentação:** Thales Cambraia Dias  
 > **Sprint de referência:** Sprint 2 (histórico) e Sprint 3 (Rodada 1 de IHC)  
 > **Atualização da documentação:** 13/11/2026 (Rodada 1 e referências às capturas complementares)  
+> **Complemento da Sprint 3:** 15/11/2026 (roteiro de testes com usuários na seção 5.3; aplicação prevista para 16 e 17/11)  
 > **Registro anterior:** revisão da Sprint 2 em 08/11/2026  
 > **Código consultado na Sprint 2:** `afe3865fa0833ce0a33ffa3d337362738a7e769a` — branch `develop`  
 > **Código de referência da Rodada 1:** `76b4658f2e122d683018012bdcc41ead2988451f` — branch `develop`  
@@ -459,28 +460,151 @@ Repetir a avaliação nas telas de ranking, comparação, mapa, detalhe do servi
 
 ### 5.3. Testes com usuários — Sprint 3
 
-O planejamento inicial registra até **5 usuários representativos**; a [issue #81](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81) prevê efetivamente **3 a 5 participantes**, entre estudantes e profissionais de TI. Essa etapa é distinta das verificações internas e não possui resultados apresentados neste documento.
+> **Atividade:** [#81 — Avaliação heurística e avaliação com usuários (IHC05/IHC06)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81)  
+> **Responsável pelo roteiro:** Thales Cambraia Dias  
+> **Roteiro preparado em:** 15/11/2026, para revisão da equipe antes da aplicação  
+> **Aplicação planejada:** 16 e 17/11/2026  
+> **Participantes previstos:** 3 a 5 pessoas, identificadas somente por U01 a U05  
+> **Estado:** roteiro preparado; testes, respostas e resultados ainda **não realizados nem registrados** nesta versão.
 
-#### 📋 Roteiro proposto
+#### 5.3.1. Objetivo e escopo
 
-1. Localizar o serviço com maior consumo de energia no período disponível.
-2. Selecionar dois serviços e comparar suas emissões estimadas.
-3. Identificar um serviço indisponível e consultar suas informações.
-4. Avaliar a navegação geográfica no protótipo do Figma ou na aplicação, conforme sua disponibilidade na etapa do teste.
-5. Retornar ao dashboard e localizar a indicação de atualização dos dados e a diferença entre dados reais e modo de demonstração.
+Avaliar se usuários representativos, como estudantes e profissionais de TI, conseguem localizar informações de consumo de energia e emissões estimadas, identificar o estado dos serviços, compreender a exploração geográfica e reconhecer quando o dashboard exibe dados conectados ou fictícios. A avaliação procura identificar dificuldades reais de navegação e compreensão para orientar as melhorias da [issue #101 — P01 a P08](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101) ou novas issues, quando necessário.
 
-O roteiro completo é **proposta a validar antes da aplicação**. As tarefas 2 e 4 dependem de telas novas ou de protótipo navegável; se não estiverem disponíveis na data, o aplicador deve adequar a tarefa e registrar o ambiente utilizado, sem declarar o comportamento do protótipo como resultado do sistema implementado.
+O estudo é **formativo e exploratório**, com uma amostra pequena de 3 a 5 participantes; os resultados descrevem o grupo testado e não devem ser generalizados como estatística de todos os usuários. O roteiro não substitui a avaliação heurística da seção 5.2 nem os testes automatizados do frontend.
 
-#### Métricas previstas
+**Estado das funcionalidades considerado no planejamento (consulta à `develop` em 15/11):**
 
-- Taxa de sucesso por tarefa.
-- Tempo de execução.
-- Necessidade de assistência.
-- Dificuldades e erros observados.
-- Comentários dos participantes.
-- Questionário SUS ao final do teste.
+| Recurso | Condição observada para planejar os testes | Decisão para aplicação |
+| --- | --- | --- |
+| Dashboard conectado (`/`) | Indicadores, lista de serviços e informação de atualização disponíveis quando a API responde. | Usar para T03 e T05; preparar dados e backend estáveis. |
+| Dashboard de demonstração (`/?demo=1`) | Tabela de serviços fictícios com energia/emissões e gráfico **Top 5 serviços** que permite ordenar por energia ou emissões. | Usar como cenário padronizado para T01 e T02, sem tratar os dados como reais. |
+| Comparação (`/comparar`) | Página provisória, sem ferramenta final de comparação. | **Não** apresentar a comparação funcional como pronta. T02 usa a leitura de dois valores na demonstração ou um protótipo identificado. |
+| Ranking (`/ranking`) | Página provisória; o gráfico de ranking funcional está na demonstração do dashboard. | T01 usa o **Top 5** da demonstração, não a rota `/ranking`. |
+| Globo e mapa (`/mapa`) | Funcionalidade integrada pelo [PR #170](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/170). | Priorizar a aplicação em modo demonstração (`/mapa?demo=1`); verificar o fluxo antes da sessão. |
+| Detalhe do serviço | Painel lateral dos cards integrado pelo [PR #173](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/173); a página `/servicos/:id` ainda é provisória. | T03 verifica os dados disponíveis no painel lateral, sem exigir histórico ainda inexistente. |
 
-Não são apresentados neste documento resultados de participantes ou pontuações SUS. O total de participantes é apenas planejamento, não atividade já executada. Os resultados devem ser registrados sem nomes, e-mails ou dados pessoais, na seção de testes após aplicação em 16 e 17/11, com sucesso, tempo, dificuldades e questionário SUS.
+**Importante:** essa matriz registra o estado usado para **planejar** o teste, não o resultado de uma nova avaliação funcional. Antes da aplicação, conferir se a versão em execução mantém esses comportamentos. Caso uma tela mude, registrar a versão e adaptar o roteiro **antes de iniciar a primeira sessão**; aplicar o mesmo cenário aos demais participantes, sempre que possível.
+
+#### 5.3.2. Preparação do ambiente e procedimento
+
+1. Selecionar 3 a 5 participantes de forma voluntária, preferencialmente com perfis próximos às personas da seção 1; usar apenas códigos U01, U02 etc., sem nomes, e-mails ou outros dados pessoais no relatório.
+2. Registrar **data, dispositivo, navegador, resolução aproximada, versão/commit** da aplicação e se o cenário utiliza frontend conectado, demonstração ou Figma. O commit é obtido com `git rev-parse HEAD` na cópia efetivamente executada, não com o commit histórico da Rodada 1.
+3. Abrir antecipadamente `/`, `/?demo=1` e `/mapa?demo=1`; verificar se o backend está acessível quando necessário e se há serviço **indisponível** com informações consultáveis para T03. Não alterar o ambiente durante uma sessão sem registrar o motivo.
+4. Para as tarefas com dados fictícios, utilizar o mesmo conjunto e período exibidos na demonstração para todos os participantes. Para T03/T05, garantir a disponibilidade do cenário conectado. Se não houver serviço indisponível ou backend funcional, marcar a tarefa **NE (não executada)**; não improvisar respostas nem contabilizar como falha do participante.
+5. Entregar uma tarefa por vez, ler a instrução neutra e iniciar o cronômetro ao terminar a leitura. Evitar apontar botões, menus ou respostas. O participante pode pensar em voz alta, se desejar.
+6. Encerrar a contagem ao atingir o critério de sucesso, quando a pessoa desistir ou quando atingir o tempo de referência. Se houver ajuda do aplicador, registrar a intervenção separadamente; não considerar a execução **autônoma** como sucesso.
+7. Ao final das tarefas na **aplicação**, aplicar o questionário SUS individualmente. Quando alguma tarefa for realizada **somente no Figma**, registrar essa etapa em separado e não misturar a avaliação do protótipo com o escore SUS da aplicação.
+
+**Abertura sugerida ao participante:**
+
+> Vamos avaliar a facilidade de uso do GreenER, e não o seu desempenho. Você terá cinco atividades para tentar realizar na interface. Pode falar o que estiver pensando e avisar quando encontrar uma dificuldade. Não precisa adivinhar respostas. Você pode desistir de uma tarefa a qualquer momento. Não vamos registrar seu nome ou dados de identificação. Você concorda em participar voluntariamente?
+
+Registrar apenas **consentimento verbal: sim/não** na ficha do participante. Em caso negativo, não realizar o teste. Não fotografar nem gravar participantes sem autorização específica; capturas de interface, se usadas, devem ocultar dados pessoais. Os seis prints da Rodada 1 (PR #167) são evidências anteriores e **não comprovam** a execução dos testes com usuários.
+
+#### 5.3.3. Roteiro de tarefas e critérios de sucesso
+
+As cinco tarefas retomam o roteiro proposto nesta seção, agora com instruções, objetivos observáveis e tempo de referência. A meta de tempo serve para padronizar a sessão; **não representa tempo já medido**.
+
+| ID | Instrução a ser lida ao participante | Critério de sucesso autônomo | Cenário e tempo de referência |
+| --- | --- | --- | --- |
+| **T01 — Maior consumo** | “No exemplo apresentado, descubra qual serviço tem o maior consumo de energia e me diga o nome dele.” | Acessa o **Top 5 serviços**, seleciona a ordenação **Energia (kWh)** e identifica o serviço no topo, sem ajuda. | Dashboard de demonstração (`/?demo=1`); **3 min**. |
+| **T02 — Comparação de emissões** | “Escolha dois serviços exibidos e me diga qual deles apresenta maior emissão estimada de CO₂e.” | Localiza os valores de emissões dos dois serviços na tabela demonstrativa, compara os valores com a mesma unidade e indica corretamente qual é maior, sem ajuda. **Não** exige selecionar dois itens em `/comparar`, pois essa função ainda não está implementada. | Tabela de serviços da demonstração (`/?demo=1`); **3 min**. |
+| **T03 — Serviço indisponível** | “Encontre um serviço indisponível e consulte os detalhes que o sistema mostra sobre ele.” | Identifica um card com o estado **Indisponível**, abre o painel lateral e aponta ao menos duas informações apresentadas nele (por exemplo, localização e última coleta/ausência de coleta), sem inventar dados ausentes. | Dashboard conectado (`/`) com serviço indisponível previamente disponível; **3 min**. |
+| **T04 — Navegação geográfica** | “Abra a visualização geográfica, encontre uma região com serviços e mostre como consultar as informações de um deles.” | Acessa a visualização de globo/mapa, localiza uma região com serviços e abre as informações de um serviço pela interação oferecida, sem ajuda. | Aplicação (`/mapa?demo=1`), com dados fictícios identificados; **4 min**. |
+| **T05 — Atualização e demonstração** | “Volte ao dashboard, encontre a indicação de atualização dos dados e mostre como perceber se está vendo dados conectados ou de demonstração.” | Encontra a referência de última atualização no dashboard conectado e reconhece o aviso de **dados fictícios** ao entrar na demonstração, sem ajuda. | Dashboard conectado (`/`) e demonstração (`/?demo=1`); **3 min**. |
+
+**Critério de correção:** o aplicador deve conferir as respostas de T01 e T02 diretamente no conjunto de dados exibido **naquela sessão**, e não preencher previamente nomes ou valores presumidos. Em T03, não exigir um campo que a API não retornou; a pessoa pode identificar legitimamente a ausência de informações. Em T04, se o mapa não carregar por indisponibilidade externa, registrar falha do ambiente, não do participante.
+
+**Contingência de protótipo:** se a aplicação não oferecer a navegação necessária de T04, pode-se usar o Figma para uma **observação qualitativa separada**, identificada como “protótipo”, sem pontuar o comportamento como funcionalidade do frontend. Se não houver protótipo navegável equivalente, registrar **NE**. A T02 pode ser avaliada na demonstração mesmo sem página dedicada de comparação; caso a tabela não esteja disponível na aplicação testada, registrar **NE** ou uma observação separada no Figma, sem misturar os resultados.
+
+**Duração planejada:** até **16 minutos** de tarefas (3 + 3 + 3 + 4 + 3), mais aproximadamente 5 minutos de introdução e 5 minutos para o SUS e comentários. A duração real da sessão será registrada após a aplicação.
+
+#### 5.3.4. Registro por participante — ficha a reproduzir para U01 a U05
+
+Preencher **uma cópia desta ficha por participante** depois de obter o consentimento. Não criar registros fictícios. Campos vazios indicam que o teste ainda não ocorreu.
+
+| Identificação da sessão | Preenchimento |
+| --- | --- |
+| Código do participante | U__ |
+| Data e horário | A preencher |
+| Perfil geral (opcional, sem identificação) | Estudante / profissional de TI / outro |
+| Participação voluntária (consentimento verbal) | Sim / Não |
+| Versão/commit executado | A preencher |
+| Ambiente e endereço testado | Local/online; URL(s) e modo(s) usados |
+| Dispositivo, navegador e resolução | A preencher |
+| Aplicador | A preencher |
+
+| Tarefa | Resultado (S / A / N / NE) | Tempo real (mm:ss) | Ajuda/intervenção? | Dificuldades, erros e comentários | Ambiente (app/demo/Figma) |
+| --- | --- | --- | --- | --- | --- |
+| T01 | — | — | — | — | — |
+| T02 | — | — | — | — | — |
+| T03 | — | — | — | — | — |
+| T04 | — | — | — | — | — |
+| T05 | — | — | — | — | — |
+
+**Legenda de resultados:** **S** = sucesso sem assistência; **A** = concluiu com ajuda; **N** = não concluiu, desistiu ou ultrapassou o limite; **NE** = não executada por limitação do ambiente ou indisponibilidade da função. Marcar os tempos somente nas tarefas realizadas; para **NE**, indicar “não aplicável” e o motivo. Registrar a ajuda prestada mesmo quando o participante concluir a tarefa.
+
+**Observações finais do participante:** a preencher.  
+**Problemas técnicos do ambiente e eventuais desvios do roteiro:** a preencher.  
+**Respostas SUS (Q01 a Q10):** registrar abaixo, caso o questionário seja aplicado.  
+**Pontuação SUS individual:** a calcular após obter as dez respostas.
+
+#### 5.3.5. Questionário SUS — System Usability Scale
+
+Aplicar **após as tarefas na aplicação**, sem orientar as respostas. O participante deve considerar sua experiência com a **interface do GreenER efetivamente testada**, não as explicações do aplicador. Os itens abaixo seguem o sentido da escala SUS tradicional em uma redação operacional em português; referência de adaptação brasileira: [Lourenço, Valentim e Lopes (2022)](https://doi.org/10.5294/aqui.2022.22.2.8). Para uma pesquisa formal com instrumento validado, utilizar integralmente a versão validada escolhida, sem combinações de traduções.
+
+**Escala para todas as afirmações:** 1 = discordo totalmente; 2 = discordo; 3 = nem concordo nem discordo; 4 = concordo; 5 = concordo totalmente.
+
+| Item | Afirmação sobre o GreenER | Resposta (1–5) |
+| --- | --- | --- |
+| **Q01** | Eu gostaria de utilizar o GreenER frequentemente. | — |
+| **Q02** | Achei o GreenER mais complexo do que seria necessário. | — |
+| **Q03** | Considerei o GreenER fácil de usar. | — |
+| **Q04** | Acredito que precisaria da ajuda de alguém com conhecimento técnico para utilizar o GreenER. | — |
+| **Q05** | Percebi que as diferentes funções do GreenER funcionam de maneira integrada. | — |
+| **Q06** | Notei inconsistências em excesso na interface do GreenER. | — |
+| **Q07** | Imagino que a maioria das pessoas aprenderia rapidamente a utilizar o GreenER. | — |
+| **Q08** | Achei o GreenER complicado ou trabalhoso de utilizar. | — |
+| **Q09** | Senti confiança ao utilizar o GreenER. | — |
+| **Q10** | Precisei aprender muitas coisas antes de conseguir utilizar o GreenER. | — |
+
+**Cálculo do SUS por participante, após as respostas:**
+
+1. Para os itens ímpares (Q01, Q03, Q05, Q07, Q09), calcular **resposta − 1**.
+2. Para os itens pares (Q02, Q04, Q06, Q08, Q10), calcular **5 − resposta**.
+3. Somar as dez contribuições (resultado de **0 a 40**) e multiplicar por **2,5**, obtendo uma pontuação de **0 a 100**.
+4. Calcular a **média aritmética** dos escores válidos somente entre participantes que avaliaram a mesma versão/condição da aplicação. O SUS é um índice de percepção de usabilidade, **não** uma porcentagem de tarefas concluídas.
+
+**Respostas incompletas:** solicitar ao participante, sem indução, que confira se deseja preencher o item omitido; se permanecer incompleto, não calcular um escore SUS individual com essa ficha. **Protótipo Figma:** observações podem ser registradas separadamente, mas não devem ser misturadas no mesmo escore da aplicação.
+
+Referência complementar de método e cálculo: [System Usability Scale — estudo sobre pontuação e interpretação](https://doi.org/10.1080/10447318.2026.2625260).
+
+#### 5.3.6. Consolidação dos resultados — preencher somente após 16 e 17/11
+
+A tabela abaixo é **modelo vazio**, não comprovação de testes já aplicados.
+
+| Participante | Data | Tarefas executadas (de 5) | Sucessos autônomos (S) | Com ajuda (A) | Não concluídas (N) | Não executadas (NE) | SUS (0–100) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| U01 | — | — | — | — | — | — | — |
+| U02 | — | — | — | — | — | — | — |
+| U03 | — | — | — | — | — | — | — |
+| U04 (se participar) | — | — | — | — | — | — | — |
+| U05 (se participar) | — | — | — | — | — | — | — |
+
+**Indicadores a apurar após o teste:**
+
+- **Taxa de sucesso autônomo por tarefa:** quantidade de **S** dividida pela quantidade de participantes que **executaram a tarefa** (S + A + N), multiplicada por 100. Excluir **NE** do denominador e informar o número de casos considerados.
+- **Tempo por tarefa:** apresentar os tempos reais observados, preferencialmente mediana e faixa mínima–máxima; não contabilizar **NE** como tempo zero.
+- **Assistência:** contar ocorrências **A**, detalhando que tipo de ajuda foi solicitada ou oferecida.
+- **Dificuldades e erros:** agrupar observações semelhantes sem apagar casos individuais relevantes.
+- **SUS:** pontuações individuais válidas e média, com indicação do número de respondentes; não interpretar uma amostra de 3 a 5 pessoas como avaliação estatisticamente representativa.
+
+**Encaminhamento dos achados:** ao consolidar as sessões, relacionar cada problema à tela, tarefa, evidência observável e heurística aplicável; indicar se ele já corresponde a P01–P08 da [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101), se exige nova issue ou se não é prioritário (com justificativa). Evitar declarar qualquer melhoria concluída sem código e validação correspondentes. Os resultados e a eventual reavaliação das telas novas serão acrescentados **após a aplicação**, conforme a #81.
+
+**Organização documental:** a issue #81 menciona a seção 5.2 para os resultados, mas neste documento a **5.2 é a avaliação heurística** e a **5.3 é reservada aos testes com usuários**. Os resultados devem ser mantidos na seção 5.3 para não misturar métodos, com remissão na 5.2 ou ajuste na issue se a equipe aprovar.
+
+**Checklist antes da aplicação (16/11):** confirmar com a equipe o roteiro, as cinco tarefas, os dados de teste e os tempos; conferir o ambiente de demonstração e a API; verificar funcionamento do globo/mapa; imprimir ou duplicar a ficha; preparar o questionário SUS. **Nenhum participante nem resultado é declarado como testado nesta atualização.**
 
 ---
 
