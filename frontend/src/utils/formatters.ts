@@ -89,3 +89,24 @@ export function formatServiceLocation(
     city: knownLocationPart(location.cidade),
   };
 }
+
+const numero = (valor: number, casas: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  }).format(valor);
+
+export function formatEnergy(kwh: number | null): string {
+  if (kwh === null) return '—';
+  if (kwh === 0) return '0 Wh';
+  if (kwh >= 1) return `${numero(kwh, 2)} kWh`;
+  const wh = kwh * 1000;
+  return wh < 0.01 ? '< 0,01 Wh' : `${numero(wh, 2)} Wh`;
+}
+
+export function formatEmission(gCo2e: number | null): string {
+  if (gCo2e === null) return '—';
+  if (gCo2e === 0) return '0 gCO₂e';
+  if (gCo2e >= 1000) return `${numero(gCo2e / 1000, 2)} kgCO₂e`;
+  return gCo2e < 0.01 ? '< 0,01 gCO₂e' : `${numero(gCo2e, 2)} gCO₂e`;
+}
