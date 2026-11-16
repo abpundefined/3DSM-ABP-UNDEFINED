@@ -10,5 +10,6 @@ import { RankingService } from "./ranking.service";
   imports: [DatabaseModule],
   controllers: [IndicadoresController, RankingController],
   providers: [IndicadoresService, IndicadoresRepository, RankingService],
+  exports: [IndicadoresService],
 })
 export class IndicadoresModule {}
