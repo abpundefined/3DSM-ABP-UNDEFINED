@@ -15,8 +15,8 @@ describe("IndicadoresService", () => {
     somarImpactoNoPeriodo: jest.fn(),
     contarServicosPorEstado: jest.fn(),
     buscarUltimaColetaEm: jest.fn(),
-    listarServicosParaRanking: jest.fn(),
-    obterSerieTemporal: jest.fn(),
+    obterAgregacaoSerieTemporal: jest.fn(),
+    obterSerieAgrupadaPorServico: jest.fn(),
   };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
@@ -228,9 +228,10 @@ describe("IndicadoresService", () => {
     function consulta(
       fim: string,
       opcoes: Partial<SerieTemporalQueryDto> = {},
+      inicioConsulta = inicio,
     ) {
       return Object.assign(new SerieTemporalQueryDto(), {
-        inicio,
+        inicio: inicioConsulta,
         fim,
         ...opcoes,
       });
@@ -251,10 +252,8 @@ describe("IndicadoresService", () => {
     }
 
     beforeEach(() => {
-      repository.listarServicosParaRanking
-        .mockReset()
-        .mockResolvedValue([servicos[0]]);
-      repository.obterSerieTemporal.mockReset().mockResolvedValue([]);
+      repository.obterAgregacaoSerieTemporal.mockReset().mockResolvedValue([]);
+      repository.obterSerieAgrupadaPorServico.mockReset().mockResolvedValue([]);
     });
 
     it.each([
@@ -267,8 +266,7 @@ describe("IndicadoresService", () => {
 
         await service.obterSerieTemporal(query);
 
-        expect(repository.obterSerieTemporal).toHaveBeenCalledWith(
-          "7",
+        expect(repository.obterAgregacaoSerieTemporal).toHaveBeenCalledWith(
           new Date(inicio),
           new Date(fim),
           granularidade,
@@ -282,8 +280,7 @@ describe("IndicadoresService", () => {
 
       await service.obterSerieTemporal(query);
 
-      expect(repository.obterSerieTemporal).toHaveBeenCalledWith(
-        "7",
+      expect(repository.obterAgregacaoSerieTemporal).toHaveBeenCalledWith(
         new Date(inicio),
         new Date(fim),
         "dia",
@@ -292,13 +289,13 @@ describe("IndicadoresService", () => {
 
     it("preenche lacunas da série global com métricas nulas", async () => {
       const fim = "2026-11-01T12:00:00.000Z";
-      repository.obterSerieTemporal.mockResolvedValue([
+      repository.obterAgregacaoSerieTemporal.mockResolvedValue([
         ponto("2026-11-01T10:00:00.000Z", 0.1, 10),
         ponto("2026-11-01T12:00:00.000Z", 0.3, 30),
       ]);
 
       const resultado = await service.obterSerieTemporal(
-        consulta(fim, { granularidade: "hora" }),
+        consulta(fim, { granularidade: "hora" }, "2026-11-01T10:00:00.000Z"),
       );
 
       expect(resultado.global).toEqual([
@@ -322,20 +319,30 @@ describe("IndicadoresService", () => {
 
     it("inclui séries por serviço com lacunas preenchidas quando solicitado", async () => {
       const fim = "2026-11-01T12:00:00.000Z";
-      repository.listarServicosParaRanking.mockResolvedValue(servicos);
-      repository.obterSerieTemporal.mockImplementation((id: string) =>
-        Promise.resolve(
-          id === "7"
-            ? [
-                ponto("2026-11-01T10:00:00.000Z", 0.1, 10),
-                ponto("2026-11-01T12:00:00.000Z", 0.3, 30),
-              ]
-            : [ponto("2026-11-01T11:00:00.000Z", 0.2, 20)],
-        ),
-      );
+      repository.obterSerieAgrupadaPorServico.mockResolvedValue([
+        {
+          servicoId: 7,
+          nome: servicos[0].nome,
+          ...ponto("2026-11-01T10:00:00.000Z", 0.1, 10),
+        },
+        {
+          servicoId: 7,
+          nome: servicos[0].nome,
+          ...ponto("2026-11-01T12:00:00.000Z", 0.3, 30),
+        },
+        {
+          servicoId: 8,
+          nome: servicos[1].nome,
+          ...ponto("2026-11-01T11:00:00.000Z", 0.2, 20),
+        },
+      ]);
 
       const resultado = await service.obterSerieTemporal(
-        consulta(fim, { granularidade: "hora", porServico: true }),
+        consulta(
+          fim,
+          { granularidade: "hora", porServico: true },
+          "2026-11-01T10:00:00.000Z",
+        ),
       );
 
       expect(resultado.servicos).toEqual([
@@ -382,10 +389,8 @@ describe("IndicadoresService", () => {
           ],
         },
       ]);
-      expect(repository.obterSerieTemporal).toHaveBeenCalledTimes(2);
-      expect(repository.obterSerieTemporal).toHaveBeenCalledWith(
-        "8",
-        new Date(inicio),
+      expect(repository.obterSerieAgrupadaPorServico).toHaveBeenCalledWith(
+        new Date("2026-11-01T10:00:00.000Z"),
         new Date(fim),
         "hora",
       );

@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  NotImplementedException,
   NotFoundException,
 } from "@nestjs/common";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
@@ -70,10 +69,76 @@ export class IndicadoresService {
   obterSerieTemporal(
     query: SerieTemporalQueryDto,
   ): Promise<SerieTemporalResponseDto> {
-    void query;
-    throw new NotImplementedException(
-      "A consulta da série temporal ainda não foi implementada.",
-    );
+    const { inicio, fim } = converterPeriodo(query);
+    const granularidade =
+      query.granularidade ?? escolherGranularidade(inicio, fim);
+    const intervalos = gerarIntervalos(inicio, fim, granularidade);
+
+    return Promise.all([
+      this.indicadoresRepository.obterAgregacaoSerieTemporal(
+        inicio,
+        fim,
+        granularidade,
+      ),
+      query.porServico
+        ? this.indicadoresRepository.obterSerieAgrupadaPorServico(
+            inicio,
+            fim,
+            granularidade,
+          )
+        : Promise.resolve([]),
+    ]).then(([agregacao, seriePorServico]) => {
+      const agregacaoPorInicio = new Map(
+        agregacao.map((ponto) => [ponto.inicio.getTime(), ponto]),
+      );
+      const servicosPorId = new Map<
+        number,
+        {
+          servicoId: number;
+          nome: string;
+          pontos: Map<number, (typeof seriePorServico)[number]>;
+        }
+      >();
+
+      for (const ponto of seriePorServico) {
+        let servico = servicosPorId.get(ponto.servicoId);
+        if (!servico) {
+          servico = {
+            servicoId: ponto.servicoId,
+            nome: ponto.nome,
+            pontos: new Map(),
+          };
+          servicosPorId.set(ponto.servicoId, servico);
+        }
+        servico.pontos.set(ponto.inicio.getTime(), ponto);
+      }
+
+      return {
+        periodo: { inicio: inicio.toISOString(), fim: fim.toISOString() },
+        granularidade,
+        intervalos: intervalos.map((intervalo) => intervalo.toISOString()),
+        global: intervalos.map((intervalo) => {
+          const ponto = agregacaoPorInicio.get(intervalo.getTime());
+          return {
+            inicio: intervalo.toISOString(),
+            energiaKwh: ponto?.energiaKwh ?? null,
+            emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
+          };
+        }),
+        servicos: Array.from(servicosPorId.values()).map((servico) => ({
+          servicoId: servico.servicoId,
+          nome: servico.nome,
+          serie: intervalos.map((intervalo) => {
+            const ponto = servico.pontos.get(intervalo.getTime());
+            return {
+              inicio: intervalo.toISOString(),
+              energiaKwh: ponto?.energiaKwh ?? null,
+              emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
+            };
+          }),
+        })),
+      };
+    });
   }
 
   async obterHistoricoServico(
