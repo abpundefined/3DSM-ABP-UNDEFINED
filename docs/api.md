@@ -26,6 +26,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
 | GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
+| GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
 
@@ -183,6 +184,24 @@ Exemplo de resposta:
 
 `energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
 
+## Comparação de serviços
+
+`GET /comparacao?servicos=1,2,3` aceita os mesmos parâmetros de período de
+`GET /indicadores`. A lista deve ter de 2 a 5 IDs internos inteiros positivos e
+distintos. Uma lista inválida retorna 400; IDs inexistentes retornam 404.
+
+Os totais e a série consideram apenas coletas com `estadoCalculo = CONCLUIDO`,
+com limites de período inclusivos. A média de memória converte `memoryGb` em MB
+multiplicando por 1024. Quando uma métrica não possui valores, seu total é
+`null`; um serviço sem coletas tem `coletasValidas = 0`.
+
+Todos os serviços recebem os mesmos intervalos, inclusive os sem dados, que
+aparecem com energia e emissão `null`. Até 48 horas, os intervalos começam na
+hora UTC; acima disso, começam no dia de calendário de `America/Sao_Paulo`.
+O instante do início de cada intervalo é apresentado em ISO 8601 UTC. Um
+intervalo nas extremidades pode começar antes do período solicitado, mas
+somente coletas dentro do período são somadas.
+
 ## Mapa
 
 `GET /mapa` alimenta o mapa animado. Aceita os mesmos parâmetros e regras de `GET /indicadores` (`periodo` ou `inicio` e `fim`; sem parâmetros, as últimas 24 horas) e considera apenas coletas com `estadoCalculo = CONCLUIDO`, com `inicio` e `fim` inclusivos para `iniciadaEm`.
@@ -247,5 +266,3 @@ Nas rotas de coletas, o filtro retorna:
 ## Integrações e endpoints futuros
 
 A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
-
-Ranking e comparação permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.
