@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ehRespostaRanking } from '../src/utils/ranking.ts';
+import {
+  consultaDoRanking,
+  ehRespostaRanking,
+  lerMetrica,
+  escreverMetrica,
+} from '../src/utils/ranking.ts';
 
 const item = {
   posicao: 1,
@@ -43,4 +48,45 @@ test('recusa resposta fora do contrato', () => {
   ]) {
     assert.equal(ehRespostaRanking(invalida), false);
   }
+});
+
+test('lê a métrica da URL e usa energia quando ela falta ou é inválida', () => {
+  assert.equal(lerMetrica(new URLSearchParams('metrica=emissao')), 'emissao');
+  assert.equal(lerMetrica(new URLSearchParams('metrica=energia')), 'energia');
+  assert.equal(lerMetrica(new URLSearchParams()), 'energia');
+  assert.equal(lerMetrica(new URLSearchParams('metrica=toString')), 'energia');
+});
+
+test('grava a métrica na URL sem perder o período', () => {
+  const params = new URLSearchParams('periodo=7d');
+
+  assert.equal(
+    escreverMetrica(params, 'emissao').toString(),
+    'periodo=7d&metrica=emissao',
+  );
+  assert.equal(
+    escreverMetrica(
+      new URLSearchParams('periodo=7d&metrica=emissao'),
+      'energia',
+    ).toString(),
+    'periodo=7d',
+  );
+  assert.equal(params.toString(), 'periodo=7d');
+});
+
+test('monta a consulta do GET /ranking com o período, a métrica e o limite', () => {
+  assert.equal(consultaDoRanking('', 'energia'), '?metrica=energia&limite=10');
+  assert.equal(
+    consultaDoRanking('?periodo=7d', 'emissao'),
+    '?periodo=7d&metrica=emissao&limite=10',
+  );
+  const personalizado = new URLSearchParams(
+    consultaDoRanking(
+      '?inicio=2026-11-01T00%3A00%3A00.000-03%3A00&fim=2026-11-07T23%3A59%3A59.999-03%3A00',
+      'energia',
+    ),
+  );
+  assert.equal(personalizado.get('inicio'), '2026-11-01T00:00:00.000-03:00');
+  assert.equal(personalizado.get('fim'), '2026-11-07T23:59:59.999-03:00');
+  assert.equal(personalizado.get('metrica'), 'energia');
 });

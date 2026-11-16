@@ -1,5 +1,8 @@
 import type { MetricaRanking, RespostaRanking } from '../types/ranking';
 
+export const LIMITE_DO_RANKING = 10;
+export const METRICA_PADRAO: MetricaRanking = 'energia';
+
 export const METRICAS: Record<
   MetricaRanking,
   { rotulo: string; nome: string; unidade: string }
@@ -50,4 +53,34 @@ export function ehRespostaRanking(valor: unknown): valor is RespostaRanking {
     Array.isArray(valor.semDados) &&
     valor.semDados.every(ehServico)
   );
+}
+
+export function lerMetrica(params: URLSearchParams): MetricaRanking {
+  const metrica = params.get('metrica');
+  return ehMetrica(metrica) ? metrica : METRICA_PADRAO;
+}
+
+export function escreverMetrica(
+  params: URLSearchParams,
+  metrica: MetricaRanking,
+): URLSearchParams {
+  const proximos = new URLSearchParams(params);
+
+  if (metrica === METRICA_PADRAO) {
+    proximos.delete('metrica');
+  } else {
+    proximos.set('metrica', metrica);
+  }
+
+  return proximos;
+}
+
+export function consultaDoRanking(
+  apiQuery: string,
+  metrica: MetricaRanking,
+): string {
+  const params = new URLSearchParams(apiQuery);
+  params.set('metrica', metrica);
+  params.set('limite', String(LIMITE_DO_RANKING));
+  return `?${params}`;
 }
