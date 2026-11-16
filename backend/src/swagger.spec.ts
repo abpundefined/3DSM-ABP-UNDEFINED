@@ -24,6 +24,7 @@ jest.mock("./modules/servicos/servicos.service", () => ({
 import { INestApplication } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { Server } from "node:http";
 import * as request from "supertest";
 import { AppController } from "./app.controller";
@@ -42,6 +43,8 @@ import { MapaController } from "./modules/mapa/mapa.controller";
 import { MapaService } from "./modules/mapa/mapa.service";
 import { ServicosController } from "./modules/servicos/servicos.controller";
 import { ServicosService } from "./modules/servicos/servicos.service";
+import { OPCOES_LIMITE_LOGIN } from "./modules/auth/limite-login";
+import { configurarSeguranca } from "./seguranca";
 import { configurarSwagger } from "./swagger";
 
 describe("Swagger", () => {
@@ -49,6 +52,7 @@ describe("Swagger", () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
+      imports: [ThrottlerModule.forRoot(OPCOES_LIMITE_LOGIN)],
       controllers: [
         AppController,
         AuthController,
@@ -72,6 +76,7 @@ describe("Swagger", () => {
       ],
     }).compile();
     app = module.createNestApplication();
+    configurarSeguranca(app, ["http://localhost:5173"]);
     configurarSwagger(app);
     await app.init();
   });
@@ -172,6 +177,7 @@ describe("Swagger", () => {
     expect(rankingSchema).toHaveProperty("properties.metrica");
     expect(rankingSchema).toHaveProperty("properties.itens");
     expect(rankingSchema).toHaveProperty("properties.semDados");
+    expect(document.paths["/auth/login"].post.responses["429"]).toBeDefined();
     expect(document.components.schemas.LoginDto.required).toEqual(
       expect.arrayContaining(["email", "senha"]),
     );
