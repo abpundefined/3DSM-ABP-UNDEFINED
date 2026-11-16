@@ -11,6 +11,7 @@ import { ConfiguracaoModule } from "./modules/configuracao/configuracao.module";
 import { IndicadoresModule } from "./modules/indicadores/indicadores.module";
 import { MapaModule } from "./modules/mapa/mapa.module";
 import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
+import { SimulacaoModule } from "./modules/simulacao/simulacao.module";
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
     IndicadoresModule,
     MapaModule,
     ComparacaoModule,
+    SimulacaoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
