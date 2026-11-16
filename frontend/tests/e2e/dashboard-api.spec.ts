@@ -107,8 +107,8 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(billing).toContainText('2,75 GB');
   await expect(billing).toContainText('15,00 GB');
   await expect(billing).toContainText('0,50 GB');
-  await expect(billing).toContainText('1,2346 kWh');
-  await expect(billing).toContainText('1,2346 kgCO₂e');
+  await expect(billing).toContainText('1,23 kWh');
+  await expect(billing).toContainText('1,23 kgCO₂e');
 
   const payment = cards.getByRole('article', { name: 'Payment API' });
   await expect(payment).toContainText('Indisponível');
@@ -116,8 +116,8 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(payment).toContainText('Cidade não informada');
   await expect(payment.getByText('—', { exact: true })).toHaveCount(6);
   const indicators = page.getByLabel('Indicadores gerais');
-  await expect(indicators).toContainText('3,7500');
-  await expect(indicators).toContainText('2,3450');
+  await expect(indicators).toContainText('3,75');
+  await expect(indicators).toContainText('2,35');
   await expect(indicators.getByText('Serviços ativos')).toBeVisible();
   await expect(indicators.getByText('Serviços indisponíveis')).toBeVisible();
   await expect(indicators.getByText('1', { exact: true })).toHaveCount(2);
@@ -168,7 +168,7 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
 
   const indicators = page.getByLabel('Indicadores gerais');
   await expect(page.getByRole('alert')).toContainText(
-    'Não foi possível carregar os indicadores',
+    'Não foi possível atualizar os indicadores',
   );
   await expect(indicators.getByText('—', { exact: true })).toHaveCount(4);
   await expect(
@@ -177,16 +177,17 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
 
   indicatorsFail = false;
   await page.getByRole('button', { name: 'Atualizar agora' }).click();
-  await expect(indicators).toContainText('2,0000');
+  await expect(indicators).toContainText('2,00');
   await expect(indicators).toContainText('2 sem métricas · 3 removidos');
   await expect(page.getByRole('alert')).toHaveCount(0);
 
   indicatorsFail = true;
   await page.getByRole('button', { name: 'Atualizar agora' }).click();
   await expect(page.getByRole('alert')).toContainText(
-    'Não foi possível carregar os indicadores',
+    'Não foi possível atualizar os indicadores',
   );
-  await expect(indicators.getByText('—', { exact: true })).toHaveCount(4);
+  await expect(indicators).toContainText('2,00');
+  await expect(indicators).toContainText('Últimos dados válidos');
   await expect(page.getByText('Billing API')).toBeVisible();
 });
 
@@ -213,7 +214,7 @@ test('indicadores continuam disponíveis quando a consulta de serviços falha', 
     }),
   );
   await page.goto('/');
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('5,0000');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('5,00');
   await expect(page.getByLabel('Indicadores gerais')).toContainText(
     '0 sem métricas · 4 removidos',
   );
@@ -260,7 +261,7 @@ test('os cards não esperam a resposta lenta dos indicadores', async ({
   } finally {
     releaseIndicators();
   }
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('0,0000');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('0 Wh');
 });
 
 test('resposta inválida dos indicadores é sinalizada sem ocultar os serviços', async ({
@@ -282,7 +283,7 @@ test('resposta inválida dos indicadores é sinalizada sem ocultar os serviços'
   );
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText(
-    'Não foi possível carregar os indicadores',
+    'Não foi possível atualizar os indicadores',
   );
   await expect(
     page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
