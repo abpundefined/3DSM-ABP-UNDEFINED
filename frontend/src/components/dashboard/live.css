@@ -276,12 +276,6 @@
 .service-drawer-impact-grid dd {
   color: var(--green-forest);
 }
-.service-drawer-subvalue {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
 .service-drawer-footer {
   display: flex;
   flex-wrap: wrap;

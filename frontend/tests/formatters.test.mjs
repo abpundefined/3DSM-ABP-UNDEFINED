@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  formatEmission,
+  formatEnergy,
   formatRegionName,
   formatServiceLocation,
   toFiniteNumber,
@@ -76,4 +78,23 @@ test('falls back to the region code when the location is absent', () => {
     area: 'Localização não informada',
     city: null,
   });
+});
+
+test('formatEnergy trata nulo, zero, valores muito pequenos, Wh e kWh', () => {
+  assert.equal(formatEnergy(null), '—');
+  assert.equal(formatEnergy(0), '0 Wh');
+  assert.equal(formatEnergy(0.000001), '< 0,01 Wh');
+  assert.equal(formatEnergy(0.00045), '0,45 Wh');
+  assert.equal(formatEnergy(0.5), '500,00 Wh');
+  assert.equal(formatEnergy(1), '1,00 kWh');
+  assert.equal(formatEnergy(1.234567), '1,23 kWh');
+});
+
+test('formatEmission trata nulo, zero, valores muito pequenos, gCO₂e e kgCO₂e', () => {
+  assert.equal(formatEmission(null), '—');
+  assert.equal(formatEmission(0), '0 gCO₂e');
+  assert.equal(formatEmission(0.004), '< 0,01 gCO₂e');
+  assert.equal(formatEmission(12.345), '12,35 gCO₂e');
+  assert.equal(formatEmission(1000), '1,00 kgCO₂e');
+  assert.equal(formatEmission(1234.567), '1,23 kgCO₂e');
 });

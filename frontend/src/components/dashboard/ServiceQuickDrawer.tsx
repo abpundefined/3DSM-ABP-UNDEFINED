@@ -133,9 +133,9 @@ export default function ServiceQuickDrawer({
         >
           <section
             className="service-drawer-section"
-            aria-label="Impacto ambiental atual"
+            aria-label="Impacto ambiental da última coleta"
           >
-            <h3>Impacto ambiental atual</h3>
+            <h3>Última coleta</h3>
             <dl className="service-drawer-impact-grid">
               <div>
                 <dt>Energia</dt>
@@ -143,12 +143,7 @@ export default function ServiceQuickDrawer({
               </div>
               <div>
                 <dt>CO₂e emitido</dt>
-                <dd>{summary.emissionsKg}</dd>
-                {summary.emissionsG !== '—' && (
-                  <dd className="service-drawer-subvalue">
-                    {summary.emissionsG}
-                  </dd>
-                )}
+                <dd>{summary.emissions}</dd>
               </div>
               <div>
                 <dt>Intensidade de carbono</dt>

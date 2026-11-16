@@ -114,8 +114,10 @@ test('clique no card abre painel lateral com dados atuais, foco acessível, Esc 
   await expect(drawer).toContainText('Uso de rede (tráfego acumulado)');
   await expect(drawer).toContainText('0,50 GB');
   await expect(drawer).toContainText('125,4 gCO₂e/kWh');
-  await expect(drawer).toContainText('1,2346 kWh');
-  await expect(drawer).toContainText('1,2346 kgCO₂e');
+  await expect(drawer).toContainText('Última coleta');
+  await expect(drawer).toContainText('1,23 kWh');
+  await expect(drawer).toContainText('1,23 kgCO₂e');
+  await expect(drawer).not.toContainText('1.234,57 gCO₂e');
   await expect(drawer).toContainText('45 s');
 
   const axeLight = await new AxeBuilder({ page })

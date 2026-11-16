@@ -2,7 +2,12 @@ import type {
   BackendService,
   LiveService,
 } from '../components/dashboard/liveTypes';
-import { formatServiceLocation, toFiniteNumber } from './formatters.ts';
+import {
+  formatEmission,
+  formatEnergy,
+  formatServiceLocation,
+  toFiniteNumber,
+} from './formatters.ts';
 
 export type ServiceStatusPresentation = {
   className: 'active' | 'noMetrics' | 'unavailable';
@@ -25,12 +30,10 @@ export type ServiceDrawerSummary = {
   network: string;
   carbonIntensity: string;
   energy: string;
-  emissionsKg: string;
-  emissionsG: string;
+  emissions: string;
   collectionInterval: string;
 };
 
-/** Formats a numeric telemetry value in pt-BR with explicit fallback. */
 export function formatServiceMetric(
   value: number | string | null | undefined,
   suffix: string,
@@ -47,7 +50,6 @@ export function formatServiceMetric(
   }).format(numericValue)} ${suffix}`;
 }
 
-/** Maps a backend service monitoring state to label, tone class and icon. */
 export function formatServiceStatus(
   estadoAtual: BackendService['estadoAtual'],
 ): ServiceStatusPresentation {
@@ -73,7 +75,6 @@ export function formatServiceStatus(
   }
 }
 
-/** Formats the collection interval from telemetry or configuration fallback. */
 export function formatCollectionInterval(
   collectionInterval: number | string | null | undefined,
   fallbackInterval: number | string | null | undefined,
@@ -87,7 +88,6 @@ export function formatCollectionInterval(
   return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(resolved)} s`;
 }
 
-/** Builds the route path to a service's dedicated history page. */
 export function buildServiceHistoryPath(serviceId: number): string {
   return `/servicos/${serviceId}`;
 }
@@ -105,7 +105,6 @@ function formatCollectedTimestamp(isoDate: string | undefined): string {
   return parsed.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
-/** Builds the complete telemetry summary shown in the quick detail drawer. */
 export function buildServiceDrawerSummary(
   service: LiveService,
   fallbackCollectionIntervalSeconds: number | null,
@@ -143,13 +142,8 @@ export function buildServiceDrawerSummary(
       'gCO₂e/kWh',
       1,
     ),
-    energy: formatServiceMetric(energyKwh, 'kWh', 4),
-    emissionsKg: formatServiceMetric(
-      emissionsGCo2e === null ? null : emissionsGCo2e / 1000,
-      'kgCO₂e',
-      4,
-    ),
-    emissionsG: formatServiceMetric(emissionsGCo2e, 'gCO₂e', 2),
+    energy: formatEnergy(energyKwh),
+    emissions: formatEmission(emissionsGCo2e),
     collectionInterval: formatCollectionInterval(
       metrics?.intervaloColetaSegundos,
       fallbackCollectionIntervalSeconds,
