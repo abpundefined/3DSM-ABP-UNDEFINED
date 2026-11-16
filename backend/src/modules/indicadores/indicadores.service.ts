@@ -19,6 +19,7 @@ import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
 import {
   ContagemPorEstado,
   IndicadoresRepository,
+  PontoSerieTemporalPorServico,
 } from "./indicadores.repository";
 
 export interface ItemHistoricoServico {
@@ -81,13 +82,16 @@ export class IndicadoresService {
         granularidade,
       ),
       query.porServico
+        ? this.indicadoresRepository.listarServicosParaRanking()
+        : Promise.resolve([]),
+      query.porServico
         ? this.indicadoresRepository.obterSerieAgrupadaPorServico(
             inicio,
             fim,
             granularidade,
           )
         : Promise.resolve([]),
-    ]).then(([agregacao, seriePorServico]) => {
+    ]).then(([agregacao, servicos, seriePorServico]) => {
       const agregacaoPorInicio = new Map(
         agregacao.map((ponto) => [ponto.inicio.getTime(), ponto]),
       );
@@ -96,21 +100,27 @@ export class IndicadoresService {
         {
           servicoId: number;
           nome: string;
-          pontos: Map<number, (typeof seriePorServico)[number]>;
+          pontos: Map<number, PontoSerieTemporalPorServico>;
         }
       >();
 
-      for (const ponto of seriePorServico) {
-        let servico = servicosPorId.get(ponto.servicoId);
-        if (!servico) {
-          servico = {
-            servicoId: ponto.servicoId,
-            nome: ponto.nome,
-            pontos: new Map(),
-          };
-          servicosPorId.set(ponto.servicoId, servico);
+      for (const servico of servicos) {
+        if (servico.estadoAtual === "REMOVIDO") {
+          continue;
         }
-        servico.pontos.set(ponto.inicio.getTime(), ponto);
+
+        servicosPorId.set(servico.id, {
+          servicoId: servico.id,
+          nome: servico.nome,
+          pontos: new Map(),
+        });
+      }
+
+      for (const ponto of seriePorServico) {
+        const servico = servicosPorId.get(ponto.servicoId);
+        if (servico) {
+          servico.pontos.set(ponto.inicio.getTime(), ponto);
+        }
       }
 
       return {

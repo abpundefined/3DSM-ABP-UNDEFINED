@@ -17,6 +17,7 @@ describe("IndicadoresService", () => {
     buscarUltimaColetaEm: jest.fn(),
     obterAgregacaoSerieTemporal: jest.fn(),
     obterSerieAgrupadaPorServico: jest.fn(),
+    listarServicosParaRanking: jest.fn(),
   };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
@@ -223,6 +224,8 @@ describe("IndicadoresService", () => {
     const servicos = [
       { id: 7, nome: "api", estadoAtual: "DISPONIVEL" },
       { id: 8, nome: "worker", estadoAtual: "DISPONIVEL" },
+      { id: 9, nome: "Serviço B", estadoAtual: "DISPONIVEL" },
+      { id: 10, nome: "Removido", estadoAtual: "REMOVIDO" },
     ];
 
     function consulta(
@@ -319,6 +322,7 @@ describe("IndicadoresService", () => {
 
     it("inclui séries por serviço com lacunas preenchidas quando solicitado", async () => {
       const fim = "2026-11-01T12:00:00.000Z";
+      repository.listarServicosParaRanking.mockResolvedValue(servicos);
       repository.obterSerieAgrupadaPorServico.mockResolvedValue([
         {
           servicoId: 7,
@@ -380,6 +384,27 @@ describe("IndicadoresService", () => {
               inicio: "2026-11-01T11:00:00.000Z",
               energiaKwh: 0.2,
               emissaoGCo2e: 20,
+            },
+            {
+              inicio: "2026-11-01T12:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+          ],
+        },
+        {
+          servicoId: 9,
+          nome: "Serviço B",
+          serie: [
+            {
+              inicio: "2026-11-01T10:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+            {
+              inicio: "2026-11-01T11:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
             },
             {
               inicio: "2026-11-01T12:00:00.000Z",

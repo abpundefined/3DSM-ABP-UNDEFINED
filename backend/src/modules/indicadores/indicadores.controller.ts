@@ -2,7 +2,6 @@ import { Controller, Get, Query } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiExtraModels,
-  ApiNotImplementedResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
@@ -139,9 +138,6 @@ export class IndicadoresController {
   @ApiQuery({ name: "porServico", required: false, type: Boolean })
   @ApiOkResponse({ type: SerieTemporalResponseDto })
   @ApiBadRequestResponse({ description: "Período ou granularidade inválidos." })
-  @ApiNotImplementedResponse({
-    description: "A consulta da série temporal ainda não foi implementada.",
-  })
   obterSerie(@Query() query: SerieTemporalQueryDto) {
     return this.indicadoresService.obterSerieTemporal(query);
   }
