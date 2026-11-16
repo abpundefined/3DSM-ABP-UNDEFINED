@@ -1,0 +1,111 @@
+.simulador {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.simulador h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.simulador-resumo,
+.simulador-sem-energia,
+.simulador-resultado p {
+  margin: 0;
+}
+
+.simulador-sem-energia {
+  color: var(--text-muted);
+}
+
+.simulador-regioes {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.simulador-regioes legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.simulador-regiao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.simulador-regiao:has(input:focus-visible) {
+  outline: 2px solid var(--green-forest);
+  outline-offset: 2px;
+}
+
+.simulador-regiao--selecionada {
+  border-color: var(--green-forest);
+  background: var(--soft-green);
+}
+
+.simulador-regiao--sem-dados {
+  cursor: not-allowed;
+}
+
+.simulador-regiao-nome {
+  flex: 1 1 180px;
+  font-weight: 600;
+}
+
+.simulador-regiao-intensidade {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.simulador-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.simulador-tag .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.simulador-tag--melhor {
+  border-color: var(--green-forest);
+  font-weight: 600;
+}
+
+.simulador-resultado {
+  display: grid;
+  gap: 4px;
+  min-height: 1.5em;
+}
+
+.simulador-nota {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.simulador-nota .icon {
+  flex: none;
+}

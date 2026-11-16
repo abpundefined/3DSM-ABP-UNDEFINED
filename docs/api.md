@@ -28,6 +28,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
 | GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
 | GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
+| GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
 
@@ -278,6 +279,48 @@ Exemplo de resposta (`periodo=24h`, encurtado):
 ```
 
 `energiaKwh` é expresso em kWh e `emissaoGCo2e` em gramas de CO₂e. `local` junta país e cidade (ou região, sem cidade); sem nenhum dos dois, vem `Localização não informada`.
+
+## Simulação de região
+
+`GET /servicos/:id/simulacao-regiao` alimenta a seção "E se rodasse em outra região?" do detalhe do serviço. Aceita os mesmos parâmetros de período de `GET /indicadores` (sem parâmetros, as últimas 24 horas). `id` que não seja um inteiro positivo dentro do limite do banco (1 a 2147483647) retorna 400, sem consultar o banco; serviço inexistente retorna 404.
+
+Regra (função pura `simularRegioes`, em `backend/src/common/regras/simulacao-regiao.ts`):
+
+- energia do período: soma de `energiaKwh` das coletas do serviço com `estadoCalculo = CONCLUIDO` e `iniciadaEm` entre `inicio` e `fim` (inclusivos);
+- intensidade de cada região: média de `intensidadeCarbonoGCo2ePorKwh` das coletas do período com intensidade informada, agrupadas por `regiaoCodigoNaColeta`; `amostrasIntensidade` é a quantidade de coletas usadas;
+- regiões listadas: as que têm pelo menos um serviço cadastrado;
+- emissão estimada = energia do período × intensidade da região; a da região atual usa a mesma regra, para a comparação ser justa;
+- `diferencaGCo2e` = estimada − atual (negativo é redução) e `diferencaPercentual` = diferença ÷ atual × 100;
+- região sem intensidade no período fica com estimativa e diferenças nulas e vai para o fim da lista; sem energia no período, nenhuma estimativa é feita e `melhorRegiaoCodigo` é nulo; com emissão atual zero, o percentual é nulo;
+- `melhorRegiaoCodigo` é a região de menor intensidade; no empate, prefere a atual e depois o código em ordem alfabética.
+
+```json
+{
+  "periodo": { "inicio": "2026-11-15T16:47:55.142Z", "fim": "2026-11-16T16:47:55.142Z" },
+  "servico": { "servicoId": 1, "nome": "api", "regiaoCodigo": "us-east" },
+  "energiaKwh": 1,
+  "coletasConsideradas": 2,
+  "emissaoAtualGCo2e": 396.67,
+  "melhorRegiaoCodigo": "br-sudeste",
+  "regioes": [
+    {
+      "codigo": "br-sudeste",
+      "pais": "Brasil",
+      "regiao": "Sudeste",
+      "cidade": "São Paulo",
+      "intensidadeGCo2ePorKwh": 100,
+      "amostrasIntensidade": 1,
+      "emissaoEstimadaGCo2e": 100,
+      "diferencaGCo2e": -296.67,
+      "diferencaPercentual": -74.79,
+      "atual": false,
+      "menorEmissao": true
+    }
+  ]
+}
+```
+
+É uma estimativa: considera a mesma carga em todas as regiões e não leva em conta latência, custo ou disponibilidade.
 
 ## Erros
 
