@@ -3,28 +3,8 @@ jest.mock("../../database/prisma.service", () => ({
 }));
 
 import { NotFoundException } from "@nestjs/common";
-import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
 import { IndicadoresService } from "./indicadores.service";
-
-type PontoHistorico = {
-  inicio: string;
-  energia: number | null;
-  emissao: number | null;
-  mediaCpu: number | null;
-  mediaMemoria: number | null;
-  coletas: number | null;
-  ativo: number;
-  indisponivel: number;
-  semMetricas: number;
-};
-
-type IndicadoresServiceComHistorico = IndicadoresService & {
-  obterHistoricoServico(
-    id: string,
-    query: HistoricoServicoQueryDto,
-  ): Promise<PontoHistorico[]>;
-};
 
 describe("IndicadoresService.obterHistoricoServico", () => {
   const buscarServicoPorId = jest.fn();
@@ -35,7 +15,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
   };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
-  ) as IndicadoresServiceComHistorico;
+  );
 
   beforeEach(() => {
     jest.resetAllMocks();

@@ -7,7 +7,6 @@ import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import {
   escolherGranularidade,
   gerarIntervalos,
-  Granularidade,
 } from "../../common/utils/intervalos-periodo";
 import {
   converterPeriodo,
@@ -20,29 +19,7 @@ import {
   IndicadoresRepository,
 } from "./indicadores.repository";
 
-interface PontoHistoricoRepositorio {
-  inicio: Date;
-  energia: number | null;
-  emissao: number | null;
-  mediaCpu: number | null;
-  mediaMemoria: number | null;
-  coletas: number | null;
-  ativo: number;
-  indisponivel: number;
-  semMetricas: number;
-}
-
-interface IndicadoresRepositoryHistorico {
-  buscarServicoPorId(id: string): Promise<{ id: number } | null>;
-  obterSerieTemporal(
-    id: string,
-    inicio: Date,
-    fim: Date,
-    granularidade: Granularidade,
-  ): Promise<PontoHistoricoRepositorio[]>;
-}
-
-export interface PontoHistoricoServico {
+export interface ItemHistoricoServico {
   inicio: string;
   energia: number | null;
   emissao: number | null;
@@ -90,10 +67,8 @@ export class IndicadoresService {
   async obterHistoricoServico(
     id: string,
     query: HistoricoServicoQueryDto,
-  ): Promise<PontoHistoricoServico[]> {
-    const repository = this.indicadoresRepository as IndicadoresRepository &
-      IndicadoresRepositoryHistorico;
-    const servico = await repository.buscarServicoPorId(id);
+  ): Promise<ItemHistoricoServico[]> {
+    const servico = await this.indicadoresRepository.buscarServicoPorId(id);
 
     if (!servico) {
       throw new NotFoundException(`Serviço ${id} não encontrado.`);
@@ -103,7 +78,7 @@ export class IndicadoresService {
     const granularidade =
       query.granularidade ?? escolherGranularidade(inicio, fim);
     const intervalos = gerarIntervalos(inicio, fim, granularidade);
-    const serie = await repository.obterSerieTemporal(
+    const serie = await this.indicadoresRepository.obterSerieTemporal(
       id,
       inicio,
       fim,
