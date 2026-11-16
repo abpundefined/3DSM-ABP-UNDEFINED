@@ -37,7 +37,7 @@ O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobresc
 ```json
 {
   "email": "admin@greener.local",
-  "senha": "troque-esta-senha"
+  "senha": "SenhaLocal#2026"
 }
 ```
 
@@ -49,7 +49,9 @@ Resposta de sucesso:
 }
 ```
 
-O administrador inicial é criado no boot quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão definidos e o e-mail ainda não existe. Configure essas variáveis no `.env` lido pelo backend. Alterar as variáveis depois da criação não troca a senha armazenada. Use os valores de exemplo apenas em desenvolvimento local e defina um `JWT_SECRET` forte.
+O administrador inicial é criado no boot quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão definidos e o e-mail ainda não existe. Configure essas variáveis no `.env` lido pelo backend. Alterar as variáveis depois da criação não troca a senha armazenada. O backend não inicia se `JWT_SECRET` tiver menos de 32 caracteres, se `ADMIN_PASSWORD` tiver menos de 12 ou se algum dos dois mantiver o valor do `.env.example`.
+
+`POST /auth/login` aceita até 5 tentativas por minuto. A 6ª tentativa na mesma janela retorna HTTP 429 com a mensagem "Muitas tentativas de login. Aguarde um minuto e tente novamente.". A senha aceita no máximo 128 caracteres; acima disso, a resposta é HTTP 400.
 
 `GET /configuracao` retorna `intervaloDescobertaSegundos`, `intervaloColetaSegundos`, `atualizadaEm` e `padrao`. Para atualizar, envie `PUT /configuracao` com os dois campos inteiros; o intervalo de descoberta aceita de 10 a 86400 segundos e o de coleta de 10 a 3600 segundos:
 

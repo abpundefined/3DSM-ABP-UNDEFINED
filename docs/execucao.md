@@ -29,12 +29,21 @@ DATABASE_URL=postgresql://greener:troque_senha_local@127.0.0.1:5433/greener?sche
 METRICS_API_URL=https://metrics.unilaunch.org
 CARBON_API_URL=https://carbon.unilaunch.org
 METRICS_POLL_INTERVAL_MS=30000
-JWT_SECRET=defina_um_valor_local
+JWT_SECRET=<valor gerado pelo comando abaixo>
 JWT_EXPIRES_IN=3600
 ADMIN_NOME=Administrador
 ADMIN_EMAIL=admin@greener.local
-ADMIN_PASSWORD=troque-esta-senha
+ADMIN_PASSWORD=SenhaLocal#2026
+CORS_ORIGIN=http://localhost:5173
 ```
+
+Gere o `JWT_SECRET` com:
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+O backend valida o ambiente no boot e não inicia se `JWT_SECRET` tiver menos de 32 caracteres ou se `JWT_SECRET` ou `ADMIN_PASSWORD` mantiverem os valores do `.env.example`. Quando definida, `ADMIN_PASSWORD` precisa de pelo menos 12 caracteres. A mensagem de erro lista cada variável inválida.
 
 | Variável | Uso atual |
 | --- | --- |
@@ -45,8 +54,9 @@ ADMIN_PASSWORD=troque-esta-senha
 | `METRICS_API_URL` | Agregador consumido por descoberta e coleta. |
 | `METRICS_POLL_INTERVAL_MS` | Frequência do ciclo de monitoramento, em milissegundos. O padrão é 30000. Não confundir com o intervalo da medição retornado pela API. |
 | `CARBON_API_URL` | URL base da API de intensidade de carbono. |
-| `JWT_SECRET`, `JWT_EXPIRES_IN` | Segredo de assinatura e duração do JWT. Configure um segredo local forte; não use o placeholder em produção. |
-| `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Dados usados para criar o administrador inicial se o e-mail ainda não existir. Os valores do exemplo são somente para desenvolvimento local. |
+| `JWT_SECRET`, `JWT_EXPIRES_IN` | Segredo de assinatura e duração do JWT. Obrigatório, com pelo menos 32 caracteres e diferente do `.env.example`. |
+| `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Dados usados para criar o administrador inicial se o e-mail ainda não existir. `ADMIN_PASSWORD` precisa de pelo menos 12 caracteres e não pode ser o valor do `.env.example`. |
+| `CORS_ORIGIN` | Origens autorizadas a chamar a API diretamente pelo navegador, separadas por vírgula. Sem valor, apenas `http://localhost:5173`. Requisições feitas pelo proxy do frontend não dependem dessa lista. |
 
 No Compose, o backend usa `postgres:5432` e o proxy do frontend usa `http://backend:3000`. A URL com `127.0.0.1:5433` é para processos que rodam no host. Caracteres reservados nas credenciais de uma URL precisam de codificação adequada.
 
@@ -57,18 +67,18 @@ No boot, o `AdminSeedService` cria o administrador configurado quando `ADMIN_EMA
 Com os valores **locais de exemplo** acima, abra `http://localhost:5173/login` e informe:
 
 - E-mail: `admin@greener.local`
-- Senha: `troque-esta-senha`
+- Senha: `SenhaLocal#2026`
 
 Troque esses placeholders por credenciais próprias antes de iniciar o ambiente. O endpoint do backend é `POST /auth/login` e recebe `{ "email": "...", "senha": "..." }`. A tela encaminha a requisição pelo proxy do frontend, salva o `accessToken` retornado e redireciona para `/dashboard`. O dashboard continua público. A API de configuração está disponível em `/configuracao`; ainda não há uma tela administrativa para editar esses valores.
 
 Para validar o endpoint diretamente, com o backend ativo:
 
 ```powershell
-$body = @{ email = "admin@greener.local"; senha = "troque-esta-senha" } | ConvertTo-Json
+$body = @{ email = "admin@greener.local"; senha = "SenhaLocal#2026" } | ConvertTo-Json
 Invoke-RestMethod -Method Post -Uri http://localhost:3000/auth/login -ContentType "application/json" -Body $body
 ```
 
-Uma resposta bem-sucedida contém `accessToken`. Credenciais inválidas retornam HTTP 401.
+Uma resposta bem-sucedida contém `accessToken`. Credenciais inválidas retornam HTTP 401. A partir da 6ª tentativa no mesmo minuto, o endpoint retorna HTTP 429 até a janela expirar.
 
 ```powershell
 docker compose config --quiet
@@ -130,7 +140,7 @@ npm.cmd run dev
 
 O frontend nativo encaminha `/api/...` para `http://localhost:3000`, removendo `/api`. As opções `API_PROXY_TARGET` e `API_PROXY_REWRITE` são descritas em [frontend/README.md](../frontend/README.md).
 
-Para a execução nativa, configure também `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_NOME`, `ADMIN_EMAIL` e `ADMIN_PASSWORD` em `backend/.env`. O backend não lê o `.env` da raiz nesse modo. O seed cria a conta no primeiro boot se o e-mail ainda não existir; alterar as variáveis não redefine a senha de uma conta já criada.
+Para a execução nativa, configure também `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `CORS_ORIGIN` em `backend/.env`. O backend não lê o `.env` da raiz nesse modo. O seed cria a conta no primeiro boot se o e-mail ainda não existir; alterar as variáveis não redefine a senha de uma conta já criada.
 
 ## Verificações
 

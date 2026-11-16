@@ -7,6 +7,7 @@ Os documentos distinguem implementação atual, evidência disponível e planeja
 | [Execução](execucao.md) | Docker completo, desenvolvimento nativo, ambiente, migrações e verificação. |
 | [API implementada](api.md) | Rotas atuais, payloads, unidades, erros e limitações. |
 | [Arquitetura atual](arquitetura.md) | Componentes existentes, fluxo e melhorias necessárias. |
+| [Segurança](seguranca.md) | Controles implementados no backend, como verificá-los e limitações conhecidas. |
 | [Plano de entregas](plano-de-entregas.md) | Distribuição dos 27 critérios/100 pontos; situação separada da previsão. |
 | [DoD](definicao-de-pronto.md) | Revisão, homologação e registro de aceite antes de Done. |
 | [Sprint 1](sprints/sprint-1.md) | Baseline, responsáveis, contribuições e registros de fechamento. |
