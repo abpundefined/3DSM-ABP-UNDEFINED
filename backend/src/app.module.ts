@@ -10,6 +10,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { ConfiguracaoModule } from "./modules/configuracao/configuracao.module";
 import { IndicadoresModule } from "./modules/indicadores/indicadores.module";
 import { MapaModule } from "./modules/mapa/mapa.module";
+import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MapaModule } from "./modules/mapa/mapa.module";
     ConfiguracaoModule,
     IndicadoresModule,
     MapaModule,
+    ComparacaoModule,
   ],
   controllers: [AppController],
   providers: [AppService],
