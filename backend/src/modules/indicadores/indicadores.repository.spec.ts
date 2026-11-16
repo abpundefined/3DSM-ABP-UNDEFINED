@@ -6,6 +6,98 @@ import { IndicadoresRepository } from "./indicadores.repository";
 import { PrismaService } from "../../database/prisma.service";
 
 describe("IndicadoresRepository", () => {
+  it("busca serviço por ID selecionando apenas o identificador", async () => {
+    const findUnique = jest.fn().mockResolvedValue({ id: 7 });
+    const repository = new IndicadoresRepository({
+      servico: { findUnique },
+    } as unknown as PrismaService);
+
+    await expect(repository.buscarServicoPorId("7")).resolves.toEqual({
+      id: 7,
+    });
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { id: 7 },
+      select: { id: true },
+    });
+  });
+
+  it("não consulta o banco para um ID inválido", async () => {
+    const findUnique = jest.fn();
+    const repository = new IndicadoresRepository({
+      servico: { findUnique },
+    } as unknown as PrismaService);
+
+    await expect(repository.buscarServicoPorId("7abc")).resolves.toBeNull();
+    expect(findUnique).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["hora", "hour", "UTC"],
+    ["dia", "day", "America/Sao_Paulo"],
+  ] as const)(
+    "agrupa série temporal por %s e converte as contagens bigint",
+    async (granularidade, unidade, fuso) => {
+      const inicio = new Date("2026-11-07T12:00:00.000Z");
+      const fim = new Date("2026-11-08T12:00:00.000Z");
+      const queryRaw = jest.fn().mockResolvedValue([
+        {
+          inicio,
+          energiaKwh: 1.25,
+          emissaoGCo2e: 12.5,
+          cpuMedia: 24,
+          memoriaMediaMb: 512,
+          coletas: 3n,
+          ativo: 1n,
+          indisponivel: 1n,
+          semMetricas: 1n,
+        },
+      ]);
+      const repository = new IndicadoresRepository({
+        $queryRaw: queryRaw,
+      } as unknown as PrismaService);
+
+      await expect(
+        repository.obterSerieTemporal("7", inicio, fim, granularidade),
+      ).resolves.toEqual([
+        {
+          inicio,
+          energiaKwh: 1.25,
+          emissaoGCo2e: 12.5,
+          cpuMedia: 24,
+          memoriaMediaMb: 512,
+          coletas: 3,
+          ativo: 1,
+          indisponivel: 1,
+          semMetricas: 1,
+        },
+      ]);
+
+      const [partes, ...valores] = queryRaw.mock.calls[0] as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      const sql = partes.join("?");
+      expect(valores).toEqual([unidade, fuso, fuso, 7, inicio, fim]);
+      expect(sql).toContain(
+        'SUM(c."energiaKwh") FILTER (WHERE c."estadoCalculo" = \'CONCLUIDO\') AS "energiaKwh"',
+      );
+      expect(sql).toContain(
+        'SUM(c."emissaoGCo2e") FILTER (WHERE c."estadoCalculo" = \'CONCLUIDO\') AS "emissaoGCo2e"',
+      );
+      expect(sql).toContain('AVG(c."cpuPercent") AS "cpuMedia"');
+      expect(sql).toContain('AVG(c."memoryGb") * 1024 AS "memoriaMediaMb"');
+      expect(sql).toContain('COUNT(*) AS "coletas"');
+      expect(sql).toContain(`c."estadoColeta" = 'SUCESSO'`);
+      expect(sql).toContain(`c."estadoColeta" = 'FALHA'`);
+      expect(sql).toContain(`c."estadoColeta" = 'SEM_METRICAS'`);
+      expect(sql).toContain('c."servicoId" = ?');
+      expect(sql).toContain('c."iniciadaEm" >= ?');
+      expect(sql).toContain('c."iniciadaEm" <= ?');
+      expect(sql).toContain("GROUP BY 1");
+      expect(sql).toContain("ORDER BY 1");
+    },
+  );
+
   it("soma apenas coletas calculadas dentro do período solicitado", async () => {
     const inicio = new Date("2026-11-07T12:00:00.000Z");
     const fim = new Date("2026-11-08T12:00:00.000Z");

@@ -19,6 +19,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais ou os valores padrão; público. |
 | PUT | `/configuracao` | 200, objeto | Atualiza os intervalos; aplicado pelo monitoramento a partir do próximo ciclo. Requer JWT Bearer. |
 | GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
+| GET | `/servicos/:id/historico` | 200, array | Retorna a série temporal de um serviço por hora ou dia. |
 | POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo; requer JWT Bearer. |
 | POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO; requer JWT Bearer. |
 | GET | `/coletas` | 200, array | Consulta histórico. |
@@ -29,6 +30,35 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
+
+## Histórico temporal de serviço
+
+`GET /servicos/:id/historico` retorna os intervalos do serviço identificado pelo `id` interno. Os parâmetros de período são:
+
+| Query | Formato |
+| --- | --- |
+| `periodo` | Opcional: `24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`. |
+| `inicio` | Início inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `fim` para um período customizado. |
+| `fim` | Fim inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `inicio` para um período customizado. |
+| `granularidade` | Opcional: `hora` ou `dia`. Se omitida, usa hora para períodos de até 48 horas e dia acima disso. |
+
+Sem `periodo`, `inicio` ou `fim`, considera as últimas 24 horas. Períodos predefinidos usam o mesmo comportamento de `GET /indicadores`; se `periodo` for omitido, `inicio` e `fim` devem ser fornecidos juntos. Datas inválidas, período incompleto ou granularidade diferente de `hora` e `dia` retornam 400. Serviço inexistente retorna 404.
+
+Cada item do array de resposta contém:
+
+| Campo | Tipo / significado |
+| --- | --- |
+| `inicio` | Data e hora do início do intervalo, em ISO 8601 UTC. |
+| `energiaKwh` | Número ou `null`; energia em kWh. |
+| `emissaoGCo2e` | Número ou `null`; emissão em gramas de CO₂e. |
+| `cpuMedia` | Número ou `null`; média de CPU. |
+| `memoriaMediaMb` | Número ou `null`; média de memória em MB. |
+| `coletas` | Contagem numérica de coletas; `null` quando não há dados no intervalo. |
+| `ativo` | Contagem numérica de coletas bem-sucedidas; zero em intervalos vazios. |
+| `indisponivel` | Contagem numérica de coletas com falha; zero em intervalos vazios. |
+| `semMetricas` | Contagem numérica de coletas sem métricas; zero em intervalos vazios. |
+
+Intervalos sem dados são incluídos na série. Neles, as métricas e `coletas` vêm como `null`; as contagens de estado vêm como zero. Os valores de energia e emissão são somados apenas para coletas com `estadoCalculo = CONCLUIDO`.
 
 ## Login e configuração administrativa
 

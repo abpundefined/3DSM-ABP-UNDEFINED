@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import { PrismaService } from "../../database/prisma.service";
+import {
+  Granularidade,
+  parametrosDeTruncamento,
+} from "../../common/utils/intervalos-periodo";
 
 export interface ImpactoPorServico {
   servicoId: number;
@@ -26,9 +30,82 @@ export interface ContagemPorEstado {
   quantidade: number;
 }
 
+export interface PontoHistoricoServico {
+  inicio: Date;
+  energiaKwh: number | null;
+  emissaoGCo2e: number | null;
+  cpuMedia: number | null;
+  memoriaMediaMb: number | null;
+  coletas: number;
+  ativo: number;
+  indisponivel: number;
+  semMetricas: number;
+}
+
+interface PontoHistoricoServicoRaw extends Omit<
+  PontoHistoricoServico,
+  "coletas" | "ativo" | "indisponivel" | "semMetricas"
+> {
+  coletas: bigint;
+  ativo: bigint;
+  indisponivel: bigint;
+  semMetricas: bigint;
+}
+
 @Injectable()
 export class IndicadoresRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  buscarServicoPorId(id: string): Promise<{ id: number } | null> {
+    const servicoId = Number(id);
+    if (!Number.isSafeInteger(servicoId) || servicoId < 1) {
+      return Promise.resolve(null);
+    }
+
+    return this.prisma.servico.findUnique({
+      where: { id: servicoId },
+      select: { id: true },
+    });
+  }
+
+  async obterSerieTemporal(
+    id: string,
+    dataInicio: Date,
+    dataFim: Date,
+    granularidade: Granularidade,
+  ): Promise<PontoHistoricoServico[]> {
+    const servicoId = Number(id);
+    const { unidade, fuso } = parametrosDeTruncamento(granularidade);
+    const pontos = await this.prisma.$queryRaw<PontoHistoricoServicoRaw[]>`
+      SELECT
+        date_trunc(
+          ${unidade}::text,
+          c."iniciadaEm" AT TIME ZONE ${fuso}::text
+        ) AT TIME ZONE ${fuso}::text AS "inicio",
+        SUM(c."energiaKwh") FILTER (WHERE c."estadoCalculo" = 'CONCLUIDO') AS "energiaKwh",
+        SUM(c."emissaoGCo2e") FILTER (WHERE c."estadoCalculo" = 'CONCLUIDO') AS "emissaoGCo2e",
+        AVG(c."cpuPercent") AS "cpuMedia",
+        AVG(c."memoryGb") * 1024 AS "memoriaMediaMb",
+        COUNT(*) AS "coletas",
+        SUM(CASE WHEN c."estadoColeta" = 'SUCESSO' THEN 1 ELSE 0 END) AS "ativo",
+        SUM(CASE WHEN c."estadoColeta" = 'FALHA' THEN 1 ELSE 0 END) AS "indisponivel",
+        SUM(CASE WHEN c."estadoColeta" = 'SEM_METRICAS' THEN 1 ELSE 0 END) AS "semMetricas"
+      FROM "Coleta" c
+      WHERE c."servicoId" = ${servicoId}
+        AND c."iniciadaEm" >= ${dataInicio}
+        AND c."iniciadaEm" <= ${dataFim}
+      GROUP BY 1
+      ORDER BY 1
+    `;
+
+    return pontos.map((ponto) => ({
+      ...ponto,
+      coletas: Number(ponto.coletas),
+      ativo: Number(ponto.ativo),
+      indisponivel: Number(ponto.indisponivel),
+      semMetricas: Number(ponto.semMetricas),
+    }));
+  }
 
   async somarImpactoNoPeriodo(
     inicio: Date,
