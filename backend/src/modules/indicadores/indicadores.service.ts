@@ -1,11 +1,58 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
-import { intervaloMesCalendarioAnterior } from "./date-conversion.helper";
+import {
+  escolherGranularidade,
+  gerarIntervalos,
+  Granularidade,
+} from "../../common/utils/intervalos-periodo";
+import {
+  converterPeriodo,
+  intervaloMesCalendarioAnterior,
+} from "./date-conversion.helper";
+import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import {
   ContagemPorEstado,
   IndicadoresRepository,
 } from "./indicadores.repository";
+
+interface PontoHistoricoRepositorio {
+  inicio: Date;
+  energia: number | null;
+  emissao: number | null;
+  mediaCpu: number | null;
+  mediaMemoria: number | null;
+  coletas: number | null;
+  ativo: number;
+  indisponivel: number;
+  semMetricas: number;
+}
+
+interface IndicadoresRepositoryHistorico {
+  buscarServicoPorId(id: string): Promise<{ id: number } | null>;
+  obterSerieTemporal(
+    id: string,
+    inicio: Date,
+    fim: Date,
+    granularidade: Granularidade,
+  ): Promise<PontoHistoricoRepositorio[]>;
+}
+
+export interface PontoHistoricoServico {
+  inicio: string;
+  energia: number | null;
+  emissao: number | null;
+  mediaCpu: number | null;
+  mediaMemoria: number | null;
+  coletas: number | null;
+  ativo: number;
+  indisponivel: number;
+  semMetricas: number;
+}
 
 export interface ResumoServicos {
   monitorados: number;
@@ -39,6 +86,49 @@ export interface VariacaoIndicador {
 @Injectable()
 export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
+
+  async obterHistoricoServico(
+    id: string,
+    query: HistoricoServicoQueryDto,
+  ): Promise<PontoHistoricoServico[]> {
+    const repository = this.indicadoresRepository as IndicadoresRepository &
+      IndicadoresRepositoryHistorico;
+    const servico = await repository.buscarServicoPorId(id);
+
+    if (!servico) {
+      throw new NotFoundException(`Serviço ${id} não encontrado.`);
+    }
+
+    const { inicio, fim } = converterPeriodo(query);
+    const granularidade =
+      query.granularidade ?? escolherGranularidade(inicio, fim);
+    const intervalos = gerarIntervalos(inicio, fim, granularidade);
+    const serie = await repository.obterSerieTemporal(
+      id,
+      inicio,
+      fim,
+      granularidade,
+    );
+    const seriePorInicio = new Map(
+      serie.map((ponto) => [ponto.inicio.getTime(), ponto]),
+    );
+
+    return intervalos.map((intervalo) => {
+      const ponto = seriePorInicio.get(intervalo.getTime());
+
+      return {
+        inicio: intervalo.toISOString(),
+        energia: ponto?.energia ?? null,
+        emissao: ponto?.emissao ?? null,
+        mediaCpu: ponto?.mediaCpu ?? null,
+        mediaMemoria: ponto?.mediaMemoria ?? null,
+        coletas: ponto?.coletas ?? null,
+        ativo: ponto?.ativo ?? 0,
+        indisponivel: ponto?.indisponivel ?? 0,
+        semMetricas: ponto?.semMetricas ?? 0,
+      };
+    });
+  }
 
   async obter(
     inicio: Date,

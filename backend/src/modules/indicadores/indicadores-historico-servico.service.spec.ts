@@ -9,29 +9,29 @@ import { IndicadoresService } from "./indicadores.service";
 
 type PontoHistorico = {
   inicio: string;
-  energiaKwh: number | null;
-  emissaoGCo2e: number | null;
-  cpuMedia: number | null;
-  memoriaMediaMb: number | null;
-};
-
-type ResultadoHistorico = {
-  serie: PontoHistorico[];
+  energia: number | null;
+  emissao: number | null;
+  mediaCpu: number | null;
+  mediaMemoria: number | null;
+  coletas: number | null;
+  ativo: number;
+  indisponivel: number;
+  semMetricas: number;
 };
 
 type IndicadoresServiceComHistorico = IndicadoresService & {
   obterHistoricoServico(
     id: string,
     query: HistoricoServicoQueryDto,
-  ): Promise<ResultadoHistorico>;
+  ): Promise<PontoHistorico[]>;
 };
 
 describe("IndicadoresService.obterHistoricoServico", () => {
   const buscarServicoPorId = jest.fn();
-  const obterHistoricoServico = jest.fn();
+  const obterSerieTemporal = jest.fn();
   const repository = {
     buscarServicoPorId,
-    obterHistoricoServico,
+    obterSerieTemporal,
   };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
@@ -40,7 +40,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
   beforeEach(() => {
     jest.resetAllMocks();
     buscarServicoPorId.mockResolvedValue({ id: 7, nome: "api" });
-    obterHistoricoServico.mockResolvedValue([]);
+    obterSerieTemporal.mockResolvedValue([]);
   });
 
   describe("serviço inexistente", () => {
@@ -54,7 +54,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
 
       await expect(resultado).rejects.toBeInstanceOf(NotFoundException);
       await expect(resultado).rejects.toMatchObject({ status: 404 });
-      expect(obterHistoricoServico).not.toHaveBeenCalled();
+      expect(obterSerieTemporal).not.toHaveBeenCalled();
     });
   });
 
@@ -70,7 +70,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           fim,
         });
 
-        expect(obterHistoricoServico).toHaveBeenCalledWith(
+        expect(obterSerieTemporal).toHaveBeenCalledWith(
           "7",
           new Date("2026-11-10T12:00:00.000Z"),
           new Date(fim),
@@ -83,20 +83,28 @@ describe("IndicadoresService.obterHistoricoServico", () => {
   describe("preenchimento de gaps", () => {
     it("preenche as métricas do intervalo ausente com null", async () => {
       buscarServicoPorId.mockResolvedValue({ id: 7, nome: "api" });
-      obterHistoricoServico.mockResolvedValue([
+      obterSerieTemporal.mockResolvedValue([
         {
           inicio: new Date("2026-11-10T10:00:00.000Z"),
-          energiaKwh: 0.1,
-          emissaoGCo2e: 8.5,
-          cpuMedia: 12,
-          memoriaMediaMb: 256,
+          energia: 0.1,
+          emissao: 8.5,
+          mediaCpu: 12,
+          mediaMemoria: 256,
+          coletas: 1,
+          ativo: 1,
+          indisponivel: 0,
+          semMetricas: 0,
         },
         {
           inicio: new Date("2026-11-10T12:00:00.000Z"),
-          energiaKwh: 0.2,
-          emissaoGCo2e: 17,
-          cpuMedia: 24,
-          memoriaMediaMb: 512,
+          energia: 0.2,
+          emissao: 17,
+          mediaCpu: 24,
+          mediaMemoria: 512,
+          coletas: 2,
+          ativo: 0,
+          indisponivel: 1,
+          semMetricas: 0,
         },
       ]);
 
@@ -105,14 +113,18 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         fim: "2026-11-10T12:00:00.000Z",
       });
 
-      expect(resultado.serie).toEqual(
+      expect(resultado).toEqual(
         expect.arrayContaining([
           {
             inicio: "2026-11-10T11:00:00.000Z",
-            energiaKwh: null,
-            emissaoGCo2e: null,
-            cpuMedia: null,
-            memoriaMediaMb: null,
+            energia: null,
+            emissao: null,
+            mediaCpu: null,
+            mediaMemoria: null,
+            coletas: null,
+            ativo: 0,
+            indisponivel: 0,
+            semMetricas: 0,
           },
         ]),
       );
