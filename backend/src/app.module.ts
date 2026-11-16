@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { validarAmbiente } from "./config/validar-ambiente";
 import { DatabaseModule } from "./database/database.module";
 import { ColetasModule } from "./modules/coletas/coletas.module";
 import { ServicosModule } from "./modules/servicos/servicos.module";
@@ -17,6 +18,7 @@ import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env", ".env.local"],
+      validate: validarAmbiente,
     }),
     DatabaseModule,
     ColetasModule,

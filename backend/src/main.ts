@@ -2,6 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { configurarSeguranca, lerOrigensPermitidas } from "./seguranca";
 import { configurarSwagger } from "./swagger";
 
 async function bootstrap() {
@@ -17,7 +18,7 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+  configurarSeguranca(app, lerOrigensPermitidas(process.env.CORS_ORIGIN));
   app.enableShutdownHooks();
 
   configurarSwagger(app);
