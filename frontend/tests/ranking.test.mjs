@@ -3,8 +3,11 @@ import { test } from 'node:test';
 import {
   consultaDoRanking,
   ehRespostaRanking,
-  lerMetrica,
   escreverMetrica,
+  formatarPeriodoConsiderado,
+  fraseDeIntensidade,
+  lerMetrica,
+  resumoDoRanking,
 } from '../src/utils/ranking.ts';
 
 const item = {
@@ -89,4 +92,70 @@ test('monta a consulta do GET /ranking com o período, a métrica e o limite', (
   assert.equal(personalizado.get('inicio'), '2026-11-01T00:00:00.000-03:00');
   assert.equal(personalizado.get('fim'), '2026-11-07T23:59:59.999-03:00');
   assert.equal(personalizado.get('metrica'), 'energia');
+});
+
+const servico = (nome, energiaKwh, emissaoGCo2e) => ({
+  ...item,
+  nome,
+  energiaKwh,
+  emissaoGCo2e,
+});
+
+test('resume quem lidera o ranking e a parte dele no total', () => {
+  const itens = [
+    servico('Video Processor', 0.03, 12),
+    servico('Media CDN', 0.02, 9),
+    servico('Search API', 0.01, 3),
+  ];
+
+  assert.equal(
+    resumoDoRanking(itens, 'energia'),
+    'Video Processor lidera em energia: 30,00 Wh, 50% do total dos 3 serviços do ranking.',
+  );
+  assert.equal(
+    resumoDoRanking(itens, 'emissao'),
+    'Video Processor lidera em emissão: 12,00 gCO₂e, 50% do total dos 3 serviços do ranking.',
+  );
+  assert.equal(
+    resumoDoRanking([itens[0]], 'energia'),
+    'Video Processor é o único serviço com coletas no período: 30,00 Wh de energia.',
+  );
+  assert.equal(resumoDoRanking([], 'energia'), null);
+});
+
+test('não calcula porcentagem quando o total é zero', () => {
+  assert.equal(
+    resumoDoRanking([servico('A', 0, 0), servico('B', 0, 0)], 'emissao'),
+    'Os serviços do ranking não registraram emissão no período.',
+  );
+});
+
+test('compara a emissão por kWh quando a diferença é relevante', () => {
+  assert.equal(
+    fraseDeIntensidade([
+      servico('Media CDN', 0.01, 4.71),
+      servico('Search API', 0.02, 7.68),
+      servico('Reports Engine', 0.01, 0.41),
+    ]),
+    'Por kWh consumido, Media CDN emite 11,5 vezes mais CO₂e que Reports Engine. A emissão depende da intensidade de carbono da energia na região onde cada serviço roda.',
+  );
+});
+
+test('não compara intensidade sem diferença relevante ou sem dois serviços', () => {
+  assert.equal(
+    fraseDeIntensidade([servico('A', 0.01, 3), servico('B', 0.02, 5)]),
+    null,
+  );
+  assert.equal(fraseDeIntensidade([servico('A', 0.01, 3)]), null);
+  assert.equal(
+    fraseDeIntensidade([servico('A', 0, 3), servico('B', 0.02, 0)]),
+    null,
+  );
+});
+
+test('mostra o período considerado no horário de São Paulo', () => {
+  assert.equal(
+    formatarPeriodoConsiderado(resposta.periodo),
+    '11/11/2026, 00:00 a 11/11/2026, 23:59',
+  );
 });

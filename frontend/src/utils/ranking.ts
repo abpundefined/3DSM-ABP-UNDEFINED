@@ -1,7 +1,14 @@
-import type { MetricaRanking, RespostaRanking } from '../types/ranking';
+import type {
+  ItemRanking,
+  MetricaRanking,
+  RespostaRanking,
+} from '../types/ranking';
+import type { PeriodoConsultado } from '../types/mapa';
+import { formatEmission, formatEnergy } from './formatters.ts';
 
 export const LIMITE_DO_RANKING = 10;
 export const METRICA_PADRAO: MetricaRanking = 'energia';
+const DIFERENCA_RELEVANTE = 2;
 
 export const METRICAS: Record<
   MetricaRanking,
@@ -10,6 +17,15 @@ export const METRICAS: Record<
   energia: { rotulo: 'Energia (kWh)', nome: 'energia', unidade: 'kWh' },
   emissao: { rotulo: 'Emissão (gCO₂e)', nome: 'emissão', unidade: 'gCO₂e' },
 };
+
+const porcentagem = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 1,
+});
+const dataHora = new Intl.DateTimeFormat('pt-BR', {
+  timeZone: 'America/Sao_Paulo',
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
 
 function ehObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null;
@@ -83,4 +99,71 @@ export function consultaDoRanking(
   params.set('metrica', metrica);
   params.set('limite', String(LIMITE_DO_RANKING));
   return `?${params}`;
+}
+
+export function valorDaMetrica(
+  item: Pick<ItemRanking, 'energiaKwh' | 'emissaoGCo2e'>,
+  metrica: MetricaRanking,
+) {
+  return metrica === 'emissao' ? item.emissaoGCo2e : item.energiaKwh;
+}
+
+export function formatarValor(valor: number, metrica: MetricaRanking) {
+  return metrica === 'emissao' ? formatEmission(valor) : formatEnergy(valor);
+}
+
+export function resumoDoRanking(
+  itens: ItemRanking[],
+  metrica: MetricaRanking,
+): string | null {
+  const lider = itens.at(0);
+  if (!lider) {
+    return null;
+  }
+
+  const { nome } = METRICAS[metrica];
+  const valor = formatarValor(valorDaMetrica(lider, metrica), metrica);
+  if (itens.length === 1) {
+    return `${lider.nome} é o único serviço com coletas no período: ${valor} de ${nome}.`;
+  }
+
+  const total = itens.reduce(
+    (soma, item) => soma + valorDaMetrica(item, metrica),
+    0,
+  );
+  if (total === 0) {
+    return `Os serviços do ranking não registraram ${nome} no período.`;
+  }
+
+  const parte = (valorDaMetrica(lider, metrica) / total) * 100;
+  return `${lider.nome} lidera em ${nome}: ${valor}, ${porcentagem.format(parte)}% do total dos ${itens.length} serviços do ranking.`;
+}
+
+export function fraseDeIntensidade(itens: ItemRanking[]): string | null {
+  const intensidades = itens
+    .filter(
+      ({ energiaKwh, emissaoGCo2e }) => energiaKwh > 0 && emissaoGCo2e > 0,
+    )
+    .map(({ nome, energiaKwh, emissaoGCo2e }) => ({
+      nome,
+      porKwh: emissaoGCo2e / energiaKwh,
+    }))
+    .toSorted((a, b) => b.porKwh - a.porKwh);
+
+  const maior = intensidades.at(0);
+  const menor = intensidades.at(-1);
+  if (!maior || !menor || maior === menor) {
+    return null;
+  }
+
+  const vezes = maior.porKwh / menor.porKwh;
+  if (vezes < DIFERENCA_RELEVANTE) {
+    return null;
+  }
+
+  return `Por kWh consumido, ${maior.nome} emite ${porcentagem.format(vezes)} vezes mais CO₂e que ${menor.nome}. A emissão depende da intensidade de carbono da energia na região onde cada serviço roda.`;
+}
+
+export function formatarPeriodoConsiderado({ inicio, fim }: PeriodoConsultado) {
+  return `${dataHora.format(new Date(inicio))} a ${dataHora.format(new Date(fim))}`;
 }
