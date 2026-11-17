@@ -84,7 +84,7 @@ npm.cmd run lint
 
 ### Testes E2E de API (`npm run test:e2e`)
 
-Sobem a aplicação inteira (`AppModule`) contra um PostgreSQL real e chamam as rotas por HTTP com Supertest: login, `GET /configuracao` e `PUT /configuracao` (com e sem token), `POST /servicos/sync`, um ciclo do monitoramento, `GET /servicos`, a última coleta válida, `GET /indicadores`, `GET /ranking`, `GET /comparacao` e `GET /mapa`, incluindo os casos de 400, 401 e 404.
+Sobem a aplicação inteira (`AppModule`) contra um PostgreSQL real e chamam as rotas por HTTP com Supertest: login, `GET /configuracao` e `PUT /configuracao` (com e sem token), `POST /servicos/sync`, um ciclo do monitoramento, `GET /servicos`, a última coleta válida, `GET /indicadores`, `GET /ranking`, `GET /comparacao`, `GET /mapa` e `GET /saude` (com e sem token e com o agregador simulado fora do ar), incluindo os casos de 400, 401 e 404.
 
 - O script confere o banco, aplica `prisma migrate deploy` e roda o Jest com `test/jest-e2e.json`.
 - O banco precisa ter o nome terminado em `_e2e`: os testes apagam todas as tabelas no início e no fim. Com outro nome, o script para antes de qualquer migração.

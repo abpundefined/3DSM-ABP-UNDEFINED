@@ -27,6 +27,7 @@ export interface CenarioExterno {
   metricas: Record<string, Metricas | number>;
   intensidades: Record<string, number>;
   intervaloColetaSegundos: number;
+  statusDescoberta?: number;
 }
 
 export interface ApisSimuladas {
@@ -50,7 +51,9 @@ export async function iniciarApisSimuladas(
     requisicoes.push(caminho);
 
     if (caminho === "/services") {
-      return responder(res, 200, { services: cenario.servicos });
+      return cenario.statusDescoberta
+        ? responder(res, cenario.statusDescoberta, { error: "simulado" })
+        : responder(res, 200, { services: cenario.servicos });
     }
 
     const metricas = /^\/metrics\/([^/]+)$/.exec(caminho);
