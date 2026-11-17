@@ -1,0 +1,58 @@
+.ranking-metricas {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.ranking-metricas button {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.ranking-metricas button[aria-pressed='true'] {
+  color: var(--green-forest);
+  background: var(--soft-green);
+}
+.ranking-metricas button:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+}
+.ranking-conteudo {
+  display: grid;
+  gap: 18px;
+}
+.ranking-bloco {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.ranking-bloco h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+.ranking-bloco h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 650;
+}
+.ranking-resumo {
+  margin: 4px 0 14px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.ranking-bloco .recharts-bar-rectangle {
+  cursor: pointer;
+}

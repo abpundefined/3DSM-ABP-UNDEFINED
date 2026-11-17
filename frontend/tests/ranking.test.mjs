@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  abreviarNome,
   consultaDoRanking,
   ehRespostaRanking,
   escreverMetrica,
+  formatarNumero,
   formatarPeriodoConsiderado,
   fraseDeIntensidade,
   lerMetrica,
@@ -158,4 +160,18 @@ test('mostra o período considerado no horário de São Paulo', () => {
     formatarPeriodoConsiderado(resposta.periodo),
     '11/11/2026, 00:00 a 11/11/2026, 23:59',
   );
+});
+
+test('formata os números dos eixos com até 3 algarismos significativos', () => {
+  assert.equal(formatarNumero(0.034688), '0,0347');
+  assert.equal(formatarNumero(13.32), '13,3');
+  assert.equal(formatarNumero(1234), '1.230');
+  assert.equal(formatarNumero(0), '0');
+});
+
+test('abrevia nomes longos no eixo e mantém os curtos', () => {
+  assert.equal(abreviarNome('Media CDN'), 'Media CDN');
+  assert.equal(abreviarNome('Notification Worker'), 'Notification Work…');
+  assert.equal(abreviarNome('Serviço de relatórios'), 'Serviço de relató…');
+  assert.equal(abreviarNome('Notification Worke'), 'Notification Worke');
 });

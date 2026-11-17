@@ -9,6 +9,7 @@ import { formatEmission, formatEnergy } from './formatters.ts';
 export const LIMITE_DO_RANKING = 10;
 export const METRICA_PADRAO: MetricaRanking = 'energia';
 const DIFERENCA_RELEVANTE = 2;
+const TAMANHO_DO_NOME_NO_EIXO = 18;
 
 export const METRICAS: Record<
   MetricaRanking,
@@ -20,6 +21,9 @@ export const METRICAS: Record<
 
 const porcentagem = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 1,
+});
+const numeroCurto = new Intl.NumberFormat('pt-BR', {
+  maximumSignificantDigits: 3,
 });
 const dataHora = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
@@ -166,4 +170,14 @@ export function fraseDeIntensidade(itens: ItemRanking[]): string | null {
 
 export function formatarPeriodoConsiderado({ inicio, fim }: PeriodoConsultado) {
   return `${dataHora.format(new Date(inicio))} a ${dataHora.format(new Date(fim))}`;
+}
+
+export function formatarNumero(valor: number) {
+  return numeroCurto.format(valor);
+}
+
+export function abreviarNome(nome: string) {
+  return nome.length <= TAMANHO_DO_NOME_NO_EIXO
+    ? nome
+    : `${nome.slice(0, TAMANHO_DO_NOME_NO_EIXO - 1).trimEnd()}…`;
 }

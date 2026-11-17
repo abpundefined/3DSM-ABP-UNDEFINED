@@ -32,6 +32,8 @@
   --login-alert-border: #a17b1b;
   --login-alert-text: #6a5010;
   --radius: 16px;
+  --chart-energia: var(--green-forest);
+  --chart-emissao: #a65f00;
 }
 
 html,
