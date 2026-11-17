@@ -423,6 +423,59 @@ describe("IndicadoresService", () => {
         "hora",
       );
     });
+
+    it("mantém o serviço removido que tem dados no período, como no ranking e no mapa", async () => {
+      const fim = "2026-11-01T11:00:00.000Z";
+      repository.listarServicosParaRanking.mockResolvedValue(servicos);
+      repository.obterSerieAgrupadaPorServico.mockResolvedValue([
+        {
+          servicoId: 10,
+          nome: "Removido",
+          ...ponto("2026-11-01T10:00:00.000Z", 0.5, 40),
+        },
+      ]);
+
+      const resultado = await service.obterSerieTemporal(
+        consulta(
+          fim,
+          { granularidade: "hora", porServico: true },
+          "2026-11-01T10:00:00.000Z",
+        ),
+      );
+
+      expect(resultado.servicos.map((servico) => servico.servicoId)).toEqual([
+        7, 8, 9, 10,
+      ]);
+      expect(resultado.servicos[3].serie).toEqual([
+        {
+          inicio: "2026-11-01T10:00:00.000Z",
+          energiaKwh: 0.5,
+          emissaoGCo2e: 40,
+        },
+        {
+          inicio: "2026-11-01T11:00:00.000Z",
+          energiaKwh: null,
+          emissaoGCo2e: null,
+        },
+      ]);
+    });
+
+    it("descarta o serviço removido sem dados no período", async () => {
+      const fim = "2026-11-01T11:00:00.000Z";
+      repository.listarServicosParaRanking.mockResolvedValue(servicos);
+
+      const resultado = await service.obterSerieTemporal(
+        consulta(
+          fim,
+          { granularidade: "hora", porServico: true },
+          "2026-11-01T10:00:00.000Z",
+        ),
+      );
+
+      expect(resultado.servicos.map((servico) => servico.servicoId)).toEqual([
+        7, 8, 9,
+      ]);
+    });
   });
 
   describe("obterMatrizHorarios", () => {
