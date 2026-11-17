@@ -44,7 +44,7 @@ export class ServicosController {
           emissaoGCo2e: { type: "number", nullable: true },
           cpuMedia: { type: "number", nullable: true },
           memoriaMediaMb: { type: "number", nullable: true },
-          coletas: { type: "number" },
+          coletas: { type: "number", nullable: true },
           ativo: { type: "number" },
           indisponivel: { type: "number" },
           semMetricas: { type: "number" },

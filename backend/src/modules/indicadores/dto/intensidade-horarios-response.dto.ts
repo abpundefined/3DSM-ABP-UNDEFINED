@@ -9,10 +9,22 @@ export class MatrizCelulaDto {
 }
 
 export class MelhorJanelaDto {
-  @ApiProperty({ type: Number, minimum: 0, maximum: 6 })
+  @ApiProperty({
+    type: Number,
+    minimum: 0,
+    maximum: 6,
+    description:
+      "Dia da semana no fuso America/Sao_Paulo: 0 = domingo, 6 = sábado.",
+  })
   diaSemana!: number;
 
-  @ApiProperty({ type: Number, minimum: 0, maximum: 21 })
+  @ApiProperty({
+    type: Number,
+    minimum: 0,
+    maximum: 23,
+    description:
+      "Hora de início da janela de 3 horas; a janela pode atravessar a meia-noite.",
+  })
   horaInicio!: number;
 
   @ApiProperty({ type: Number })
