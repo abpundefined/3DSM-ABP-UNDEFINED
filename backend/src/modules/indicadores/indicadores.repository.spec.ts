@@ -162,6 +162,32 @@ describe("IndicadoresRepository", () => {
     expect(sql).toContain('ORDER BY c."servicoId", 3');
   });
 
+  it("agrega intensidade por dia e hora no fuso e região solicitados", async () => {
+    const inicio = new Date("2026-11-07T12:00:00.000Z");
+    const fim = new Date("2026-11-08T12:00:00.000Z");
+    const queryRaw = jest.fn().mockResolvedValue([]);
+    const repository = new IndicadoresRepository({
+      $queryRaw: queryRaw,
+    } as unknown as PrismaService);
+
+    await repository.obterDadosMatrizIntensidade(inicio, fim, "BR-SE");
+
+    const [partes, ...valores] = queryRaw.mock.calls[0] as [
+      TemplateStringsArray,
+      ...unknown[],
+    ];
+    const sql = partes.join("?");
+    expect(valores).toEqual([inicio, fim, "BR-SE", "BR-SE"]);
+    expect(sql).toContain(`EXTRACT(DOW FROM c."iniciadaEm" AT TIME ZONE`);
+    expect(sql).toContain(`EXTRACT(HOUR FROM c."iniciadaEm" AT TIME ZONE`);
+    expect(sql).toContain(
+      `AVG(c."intensidadeCarbonoGCo2ePorKwh")::double precision AS "media"`,
+    );
+    expect(sql).toContain(`c."estadoCalculo" = 'CONCLUIDO'`);
+    expect(sql).toContain(`c."regiaoCodigoNaColeta" = ?`);
+    expect(sql).toContain("GROUP BY 1, 2");
+  });
+
   it("soma apenas coletas calculadas dentro do período solicitado", async () => {
     const inicio = new Date("2026-11-07T12:00:00.000Z");
     const fim = new Date("2026-11-08T12:00:00.000Z");

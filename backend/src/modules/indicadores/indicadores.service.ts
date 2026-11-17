@@ -13,6 +13,7 @@ import {
   intervaloMesCalendarioAnterior,
 } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
+import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
@@ -66,6 +67,90 @@ export interface VariacaoIndicador {
 @Injectable()
 export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
+
+  async obterMatrizHorarios(query: IntensidadeHorariosQueryDto) {
+    const consulta =
+      query.inicio === undefined &&
+      query.fim === undefined &&
+      query.periodo === undefined
+        ? { ...query, periodo: PeriodoPredefinido.ULTIMOS_30_DIAS }
+        : query;
+    const { inicio, fim } = converterPeriodo(consulta);
+    const dados = await this.indicadoresRepository.obterDadosMatrizIntensidade(
+      inicio,
+      fim,
+      query.regiao,
+    );
+    const matriz = Array.from({ length: 7 }, () =>
+      Array.from({ length: 24 }, () => ({
+        media: null as number | null,
+        quantidadeAmostras: null as number | null,
+      })),
+    );
+
+    for (const dado of dados) {
+      matriz[dado.diaSemana][dado.hora] = {
+        media: dado.media,
+        quantidadeAmostras: dado.quantidadeAmostras,
+      };
+    }
+
+    let melhorJanela: {
+      diaSemana: number;
+      horaInicio: number;
+      mediaJanela: number;
+    } | null = null;
+
+    const horasNaSemana = matriz.length * matriz[0].length;
+
+    for (
+      let indiceInicio = 0;
+      indiceInicio < horasNaSemana;
+      indiceInicio += 1
+    ) {
+      const indicesJanela = [
+        indiceInicio % horasNaSemana,
+        (indiceInicio + 1) % horasNaSemana,
+        (indiceInicio + 2) % horasNaSemana,
+      ];
+      const horas = indicesJanela.map(
+        (indice) => matriz[Math.floor(indice / 24)][indice % 24],
+      );
+
+      if (
+        horas.some(
+          (hora) =>
+            hora.media === null ||
+            hora.quantidadeAmostras === null ||
+            hora.quantidadeAmostras === 0,
+        )
+      ) {
+        continue;
+      }
+
+      const totalAmostras = horas.reduce(
+        (total, hora) => total + hora.quantidadeAmostras!,
+        0,
+      );
+      const intensidadePonderada = horas.reduce(
+        (total, hora) => total + hora.media! * hora.quantidadeAmostras!,
+        0,
+      );
+      const mediaJanela = intensidadePonderada / totalAmostras;
+      const diaSemana = Math.floor(indiceInicio / 24);
+      const horaInicio = indiceInicio % 24;
+
+      if (melhorJanela === null || mediaJanela < melhorJanela.mediaJanela) {
+        melhorJanela = { diaSemana, horaInicio, mediaJanela };
+      }
+    }
+
+    return {
+      fusoHorario: "America/Sao_Paulo",
+      matriz,
+      melhorJanela,
+    };
+  }
 
   obterSerieTemporal(
     query: SerieTemporalQueryDto,

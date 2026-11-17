@@ -37,6 +37,7 @@ import { ConfiguracaoController } from "./modules/configuracao/configuracao.cont
 import { ConfiguracaoService } from "./modules/configuracao/configuracao.service";
 import { IndicadoresController } from "./modules/indicadores/indicadores.controller";
 import { IndicadoresService } from "./modules/indicadores/indicadores.service";
+import { IntensidadeController } from "./modules/indicadores/intensidade.controller";
 import { RankingController } from "./modules/indicadores/ranking.controller";
 import { RankingService } from "./modules/indicadores/ranking.service";
 import { MapaController } from "./modules/mapa/mapa.controller";
@@ -59,6 +60,7 @@ describe("Swagger", () => {
         ColetasController,
         ConfiguracaoController,
         IndicadoresController,
+        IntensidadeController,
         RankingController,
         MapaController,
         ServicosController,
@@ -138,6 +140,7 @@ describe("Swagger", () => {
       ["/coletas/{id}", "get"],
       ["/coletas/servico/{servicoId}/ultima-valida", "get"],
       ["/indicadores", "get"],
+      ["/intensidade/horarios", "get"],
       ["/ranking", "get"],
       ["/mapa", "get"],
       ["/configuracao", "get"],
@@ -167,6 +170,40 @@ describe("Swagger", () => {
         expect.objectContaining({ name: "metrica" }),
         expect.objectContaining({ name: "limite" }),
       ]),
+    );
+    expect(document.paths["/intensidade/horarios"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "regiao" }),
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+      ]),
+    );
+    const intensidadeResponseSchema =
+      document.components.schemas.IntensidadeHorariosResponseDto;
+    expect(intensidadeResponseSchema.properties).toHaveProperty("fusoHorario");
+    expect(intensidadeResponseSchema.properties).toHaveProperty("matriz");
+    expect(intensidadeResponseSchema.properties).toHaveProperty("melhorJanela");
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "type",
+      "array",
+    );
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "items.type",
+      "array",
+    );
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "items.items.$ref",
+      "#/components/schemas/MatrizCelulaDto",
+    );
+    const intensidadeSchema =
+      document.paths["/intensidade/horarios"].get.responses["200"].content?.[
+        "application/json"
+      ].schema;
+    expect(intensidadeSchema).toEqual(
+      expect.objectContaining({
+        $ref: "#/components/schemas/IntensidadeHorariosResponseDto",
+      }),
     );
     const rankingSchema =
       document.paths["/ranking"].get.responses["200"].content?.[
