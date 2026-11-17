@@ -4,6 +4,7 @@ jest.mock("../../database/prisma.service", () => ({
 
 import { BadRequestException } from "@nestjs/common";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
+import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
 import { IndicadoresService } from "./indicadores.service";
 
@@ -14,6 +15,9 @@ describe("IndicadoresService", () => {
     somarImpactoNoPeriodo: jest.fn(),
     contarServicosPorEstado: jest.fn(),
     buscarUltimaColetaEm: jest.fn(),
+    obterAgregacaoSerieTemporal: jest.fn(),
+    obterSerieAgrupadaPorServico: jest.fn(),
+    listarServicosParaRanking: jest.fn(),
   };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
@@ -213,5 +217,208 @@ describe("IndicadoresService", () => {
     await expect(service.obter(inicioPadrao, agora)).rejects.toThrow(
       "conexão perdida",
     );
+  });
+
+  describe("obterSerieTemporal", () => {
+    const inicio = "2026-11-01T00:00:00.000Z";
+    const servicos = [
+      { id: 7, nome: "api", estadoAtual: "DISPONIVEL" },
+      { id: 8, nome: "worker", estadoAtual: "DISPONIVEL" },
+      { id: 9, nome: "Serviço B", estadoAtual: "DISPONIVEL" },
+      { id: 10, nome: "Removido", estadoAtual: "REMOVIDO" },
+    ];
+
+    function consulta(
+      fim: string,
+      opcoes: Partial<SerieTemporalQueryDto> = {},
+      inicioConsulta = inicio,
+    ) {
+      return Object.assign(new SerieTemporalQueryDto(), {
+        inicio: inicioConsulta,
+        fim,
+        ...opcoes,
+      });
+    }
+
+    function ponto(instante: string, energiaKwh: number, emissaoGCo2e: number) {
+      return {
+        inicio: new Date(instante),
+        energiaKwh,
+        emissaoGCo2e,
+        cpuMedia: null,
+        memoriaMediaMb: null,
+        coletas: 1,
+        ativo: 1,
+        indisponivel: 0,
+        semMetricas: 0,
+      };
+    }
+
+    beforeEach(() => {
+      repository.obterAgregacaoSerieTemporal.mockReset().mockResolvedValue([]);
+      repository.obterSerieAgrupadaPorServico.mockReset().mockResolvedValue([]);
+    });
+
+    it.each([
+      ["2026-11-03T00:00:00.000Z", "hora"],
+      ["2026-11-03T00:00:00.001Z", "dia"],
+    ] as const)(
+      "seleciona granularidade automática para período com fim %s",
+      async (fim, granularidade) => {
+        const query = consulta(fim);
+
+        await service.obterSerieTemporal(query);
+
+        expect(repository.obterAgregacaoSerieTemporal).toHaveBeenCalledWith(
+          new Date(inicio),
+          new Date(fim),
+          granularidade,
+        );
+      },
+    );
+
+    it("repassa ao repository as datas e a granularidade informadas", async () => {
+      const fim = "2026-11-01T03:00:00.000Z";
+      const query = consulta(fim, { granularidade: "dia" });
+
+      await service.obterSerieTemporal(query);
+
+      expect(repository.obterAgregacaoSerieTemporal).toHaveBeenCalledWith(
+        new Date(inicio),
+        new Date(fim),
+        "dia",
+      );
+    });
+
+    it("preenche lacunas da série global com métricas nulas", async () => {
+      const fim = "2026-11-01T12:00:00.000Z";
+      repository.obterAgregacaoSerieTemporal.mockResolvedValue([
+        ponto("2026-11-01T10:00:00.000Z", 0.1, 10),
+        ponto("2026-11-01T12:00:00.000Z", 0.3, 30),
+      ]);
+
+      const resultado = await service.obterSerieTemporal(
+        consulta(fim, { granularidade: "hora" }, "2026-11-01T10:00:00.000Z"),
+      );
+
+      expect(resultado.global).toEqual([
+        {
+          inicio: "2026-11-01T10:00:00.000Z",
+          energiaKwh: 0.1,
+          emissaoGCo2e: 10,
+        },
+        {
+          inicio: "2026-11-01T11:00:00.000Z",
+          energiaKwh: null,
+          emissaoGCo2e: null,
+        },
+        {
+          inicio: "2026-11-01T12:00:00.000Z",
+          energiaKwh: 0.3,
+          emissaoGCo2e: 30,
+        },
+      ]);
+    });
+
+    it("inclui séries por serviço com lacunas preenchidas quando solicitado", async () => {
+      const fim = "2026-11-01T12:00:00.000Z";
+      repository.listarServicosParaRanking.mockResolvedValue(servicos);
+      repository.obterSerieAgrupadaPorServico.mockResolvedValue([
+        {
+          servicoId: 7,
+          nome: servicos[0].nome,
+          ...ponto("2026-11-01T10:00:00.000Z", 0.1, 10),
+        },
+        {
+          servicoId: 7,
+          nome: servicos[0].nome,
+          ...ponto("2026-11-01T12:00:00.000Z", 0.3, 30),
+        },
+        {
+          servicoId: 8,
+          nome: servicos[1].nome,
+          ...ponto("2026-11-01T11:00:00.000Z", 0.2, 20),
+        },
+      ]);
+
+      const resultado = await service.obterSerieTemporal(
+        consulta(
+          fim,
+          { granularidade: "hora", porServico: true },
+          "2026-11-01T10:00:00.000Z",
+        ),
+      );
+
+      expect(resultado.servicos).toEqual([
+        {
+          servicoId: 7,
+          nome: "api",
+          serie: [
+            {
+              inicio: "2026-11-01T10:00:00.000Z",
+              energiaKwh: 0.1,
+              emissaoGCo2e: 10,
+            },
+            {
+              inicio: "2026-11-01T11:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+            {
+              inicio: "2026-11-01T12:00:00.000Z",
+              energiaKwh: 0.3,
+              emissaoGCo2e: 30,
+            },
+          ],
+        },
+        {
+          servicoId: 8,
+          nome: "worker",
+          serie: [
+            {
+              inicio: "2026-11-01T10:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+            {
+              inicio: "2026-11-01T11:00:00.000Z",
+              energiaKwh: 0.2,
+              emissaoGCo2e: 20,
+            },
+            {
+              inicio: "2026-11-01T12:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+          ],
+        },
+        {
+          servicoId: 9,
+          nome: "Serviço B",
+          serie: [
+            {
+              inicio: "2026-11-01T10:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+            {
+              inicio: "2026-11-01T11:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+            {
+              inicio: "2026-11-01T12:00:00.000Z",
+              energiaKwh: null,
+              emissaoGCo2e: null,
+            },
+          ],
+        },
+      ]);
+      expect(repository.obterSerieAgrupadaPorServico).toHaveBeenCalledWith(
+        new Date("2026-11-01T10:00:00.000Z"),
+        new Date(fim),
+        "hora",
+      );
+    });
   });
 });

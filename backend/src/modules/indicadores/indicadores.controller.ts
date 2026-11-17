@@ -2,6 +2,7 @@ import { Controller, Get, Query } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiExtraModels,
+  ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiResponse,
@@ -11,6 +12,8 @@ import {
 import { IndicadoresRespostaDto } from "../../common/swagger/respostas.dto";
 import * as DateConversionHelper from "./date-conversion.helper";
 import { PeriodoDto, PeriodoPredefinido } from "./dto/periodo.dto";
+import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
+import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
 import { IndicadoresService } from "./indicadores.service";
 
 @ApiTags("Indicadores")
@@ -106,5 +109,36 @@ export class IndicadoresController {
     const { inicio, fim } = DateConversionHelper.converterPeriodo(query);
 
     return this.indicadoresService.obter(inicio, fim, query.periodo);
+  }
+
+  @Get("serie")
+  @ApiOperation({
+    summary: "Consultar série temporal de energia e emissão",
+    description:
+      "Retorna os indicadores globais no período e, opcionalmente, as séries por serviço.",
+  })
+  @ApiQuery({
+    name: "periodo",
+    required: false,
+    enum: PeriodoPredefinido,
+  })
+  @ApiQuery({
+    name: "inicio",
+    required: false,
+    type: String,
+    format: "date-time",
+  })
+  @ApiQuery({
+    name: "fim",
+    required: false,
+    type: String,
+    format: "date-time",
+  })
+  @ApiQuery({ name: "granularidade", required: false, enum: ["hora", "dia"] })
+  @ApiQuery({ name: "porServico", required: false, type: Boolean })
+  @ApiOkResponse({ type: SerieTemporalResponseDto })
+  @ApiBadRequestResponse({ description: "Período ou granularidade inválidos." })
+  obterSerie(@Query() query: SerieTemporalQueryDto) {
+    return this.indicadoresService.obterSerieTemporal(query);
   }
 }

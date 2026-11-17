@@ -42,6 +42,17 @@ export interface PontoHistoricoServico {
   semMetricas: number;
 }
 
+export interface PontoSerieTemporal {
+  inicio: Date;
+  energiaKwh: number | null;
+  emissaoGCo2e: number | null;
+}
+
+export interface PontoSerieTemporalPorServico extends PontoSerieTemporal {
+  servicoId: number;
+  nome: string;
+}
+
 interface PontoHistoricoServicoRaw extends Omit<
   PontoHistoricoServico,
   "coletas" | "ativo" | "indisponivel" | "semMetricas"
@@ -66,6 +77,57 @@ export class IndicadoresRepository {
       where: { id: servicoId },
       select: { id: true },
     });
+  }
+
+  obterAgregacaoSerieTemporal(
+    dataInicio: Date,
+    dataFim: Date,
+    granularidade: Granularidade,
+  ): Promise<PontoSerieTemporal[]> {
+    const { unidade, fuso } = parametrosDeTruncamento(granularidade);
+
+    return this.prisma.$queryRaw<PontoSerieTemporal[]>`
+      SELECT
+        date_trunc(
+          ${unidade}::text,
+          c."iniciadaEm" AT TIME ZONE ${fuso}::text
+        ) AT TIME ZONE ${fuso}::text AS "inicio",
+        SUM(c."energiaKwh") AS "energiaKwh",
+        SUM(c."emissaoGCo2e") AS "emissaoGCo2e"
+      FROM "Coleta" c
+      WHERE c."estadoCalculo" = 'CONCLUIDO'
+        AND c."iniciadaEm" >= ${dataInicio}
+        AND c."iniciadaEm" <= ${dataFim}
+      GROUP BY 1
+      ORDER BY 1
+    `;
+  }
+
+  obterSerieAgrupadaPorServico(
+    dataInicio: Date,
+    dataFim: Date,
+    granularidade: Granularidade,
+  ): Promise<PontoSerieTemporalPorServico[]> {
+    const { unidade, fuso } = parametrosDeTruncamento(granularidade);
+
+    return this.prisma.$queryRaw<PontoSerieTemporalPorServico[]>`
+      SELECT
+        c."servicoId" AS "servicoId",
+        s."nome" AS "nome",
+        date_trunc(
+          ${unidade}::text,
+          c."iniciadaEm" AT TIME ZONE ${fuso}::text
+        ) AT TIME ZONE ${fuso}::text AS "inicio",
+        SUM(c."energiaKwh") AS "energiaKwh",
+        SUM(c."emissaoGCo2e") AS "emissaoGCo2e"
+      FROM "Coleta" c
+      INNER JOIN "Servico" s ON s."id" = c."servicoId"
+      WHERE c."estadoCalculo" = 'CONCLUIDO'
+        AND c."iniciadaEm" >= ${dataInicio}
+        AND c."iniciadaEm" <= ${dataFim}
+      GROUP BY c."servicoId", s."nome", 3
+      ORDER BY c."servicoId", 3
+    `;
   }
 
   async obterSerieTemporal(

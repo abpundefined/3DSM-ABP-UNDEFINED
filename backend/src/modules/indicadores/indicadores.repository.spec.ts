@@ -98,6 +98,70 @@ describe("IndicadoresRepository", () => {
     },
   );
 
+  it.each([
+    ["hora", "hour", "UTC"],
+    ["dia", "day", "America/Sao_Paulo"],
+  ] as const)(
+    "agrega globalmente energia e emissão por %s",
+    async (granularidade, unidade, fuso) => {
+      const inicio = new Date("2026-11-07T12:00:00.000Z");
+      const fim = new Date("2026-11-08T12:00:00.000Z");
+      const ponto = {
+        inicio,
+        energiaKwh: 1.25,
+        emissaoGCo2e: 12.5,
+      };
+      const queryRaw = jest.fn().mockResolvedValue([ponto]);
+      const repository = new IndicadoresRepository({
+        $queryRaw: queryRaw,
+      } as unknown as PrismaService);
+
+      await expect(
+        repository.obterAgregacaoSerieTemporal(inicio, fim, granularidade),
+      ).resolves.toEqual([ponto]);
+
+      const [partes, ...valores] = queryRaw.mock.calls[0] as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      const sql = partes.join("?");
+      expect(valores).toEqual([unidade, fuso, fuso, inicio, fim]);
+      expect(sql).toContain(`c."estadoCalculo" = 'CONCLUIDO'`);
+      expect(sql).toContain('SUM(c."energiaKwh") AS "energiaKwh"');
+      expect(sql).toContain('SUM(c."emissaoGCo2e") AS "emissaoGCo2e"');
+      expect(sql).toContain(`c."iniciadaEm" >= ?`);
+      expect(sql).toContain(`c."iniciadaEm" <= ?`);
+      expect(sql).toContain("GROUP BY 1");
+      expect(sql).toContain("ORDER BY 1");
+    },
+  );
+
+  it("agrega a série por serviço com nome, métricas e intervalos", async () => {
+    const inicio = new Date("2026-11-07T12:00:00.000Z");
+    const fim = new Date("2026-11-08T12:00:00.000Z");
+    const queryRaw = jest.fn().mockResolvedValue([]);
+    const repository = new IndicadoresRepository({
+      $queryRaw: queryRaw,
+    } as unknown as PrismaService);
+
+    await repository.obterSerieAgrupadaPorServico(inicio, fim, "hora");
+
+    const [partes, ...valores] = queryRaw.mock.calls[0] as [
+      TemplateStringsArray,
+      ...unknown[],
+    ];
+    const sql = partes.join("?");
+    expect(valores).toEqual(["hour", "UTC", "UTC", inicio, fim]);
+    expect(sql).toContain('c."servicoId" AS "servicoId"');
+    expect(sql).toContain('s."nome" AS "nome"');
+    expect(sql).toContain(`INNER JOIN "Servico" s`);
+    expect(sql).toContain(`c."estadoCalculo" = 'CONCLUIDO'`);
+    expect(sql).toContain(`c."iniciadaEm" >= ?`);
+    expect(sql).toContain(`c."iniciadaEm" <= ?`);
+    expect(sql).toContain('GROUP BY c."servicoId", s."nome", 3');
+    expect(sql).toContain('ORDER BY c."servicoId", 3');
+  });
+
   it("soma apenas coletas calculadas dentro do período solicitado", async () => {
     const inicio = new Date("2026-11-07T12:00:00.000Z");
     const fim = new Date("2026-11-08T12:00:00.000Z");

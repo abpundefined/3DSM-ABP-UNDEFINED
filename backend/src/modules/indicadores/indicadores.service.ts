@@ -14,9 +14,12 @@ import {
 } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
+import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
+import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
 import {
   ContagemPorEstado,
   IndicadoresRepository,
+  PontoSerieTemporalPorServico,
 } from "./indicadores.repository";
 
 export interface ItemHistoricoServico {
@@ -63,6 +66,90 @@ export interface VariacaoIndicador {
 @Injectable()
 export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
+
+  obterSerieTemporal(
+    query: SerieTemporalQueryDto,
+  ): Promise<SerieTemporalResponseDto> {
+    const { inicio, fim } = converterPeriodo(query);
+    const granularidade =
+      query.granularidade ?? escolherGranularidade(inicio, fim);
+    const intervalos = gerarIntervalos(inicio, fim, granularidade);
+
+    return Promise.all([
+      this.indicadoresRepository.obterAgregacaoSerieTemporal(
+        inicio,
+        fim,
+        granularidade,
+      ),
+      query.porServico
+        ? this.indicadoresRepository.listarServicosParaRanking()
+        : Promise.resolve([]),
+      query.porServico
+        ? this.indicadoresRepository.obterSerieAgrupadaPorServico(
+            inicio,
+            fim,
+            granularidade,
+          )
+        : Promise.resolve([]),
+    ]).then(([agregacao, servicos, seriePorServico]) => {
+      const agregacaoPorInicio = new Map(
+        agregacao.map((ponto) => [ponto.inicio.getTime(), ponto]),
+      );
+      const servicosPorId = new Map<
+        number,
+        {
+          servicoId: number;
+          nome: string;
+          pontos: Map<number, PontoSerieTemporalPorServico>;
+        }
+      >();
+
+      for (const servico of servicos) {
+        if (servico.estadoAtual === "REMOVIDO") {
+          continue;
+        }
+
+        servicosPorId.set(servico.id, {
+          servicoId: servico.id,
+          nome: servico.nome,
+          pontos: new Map(),
+        });
+      }
+
+      for (const ponto of seriePorServico) {
+        const servico = servicosPorId.get(ponto.servicoId);
+        if (servico) {
+          servico.pontos.set(ponto.inicio.getTime(), ponto);
+        }
+      }
+
+      return {
+        periodo: { inicio: inicio.toISOString(), fim: fim.toISOString() },
+        granularidade,
+        intervalos: intervalos.map((intervalo) => intervalo.toISOString()),
+        global: intervalos.map((intervalo) => {
+          const ponto = agregacaoPorInicio.get(intervalo.getTime());
+          return {
+            inicio: intervalo.toISOString(),
+            energiaKwh: ponto?.energiaKwh ?? null,
+            emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
+          };
+        }),
+        servicos: Array.from(servicosPorId.values()).map((servico) => ({
+          servicoId: servico.servicoId,
+          nome: servico.nome,
+          serie: intervalos.map((intervalo) => {
+            const ponto = servico.pontos.get(intervalo.getTime());
+            return {
+              inicio: intervalo.toISOString(),
+              energiaKwh: ponto?.energiaKwh ?? null,
+              emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
+            };
+          }),
+        })),
+      };
+    });
+  }
 
   async obterHistoricoServico(
     id: string,
