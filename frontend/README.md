@@ -18,17 +18,18 @@ bloqueado pela política local. Em outros terminais, `npm` também funciona.
 
 ## Comandos
 
-| Comando                    | Finalidade                                             |
-| -------------------------- | ------------------------------------------------------ |
-| `npm.cmd run dev`          | Desenvolvimento com atualização automática             |
-| `npm.cmd run build`        | Verificar TypeScript e gerar `dist/`                   |
-| `npm.cmd run preview`      | Conferir o build em http://localhost:4173              |
-| `npm.cmd run lint`         | Verificar problemas de código                          |
-| `npm.cmd run format`       | Aplicar Prettier aos arquivos do frontend              |
-| `npm.cmd run format:check` | Conferir formatação                                    |
-| `npm.cmd test`             | Executar os testes do serviço HTTP                     |
-| `npm.cmd run test:e2e`     | Gerar o build e testar as páginas em desktop e celular |
-| `npm.cmd run test:e2e:dev` | Testar as páginas em desenvolvimento                   |
+| Comando                     | Finalidade                                             |
+| --------------------------- | ------------------------------------------------------ |
+| `npm.cmd run dev`           | Desenvolvimento com atualização automática             |
+| `npm.cmd run build`         | Verificar TypeScript e gerar `dist/`                   |
+| `npm.cmd run preview`       | Conferir o build em http://localhost:4173              |
+| `npm.cmd run lint`          | Verificar problemas de código                          |
+| `npm.cmd run format`        | Aplicar Prettier aos arquivos do frontend              |
+| `npm.cmd run format:check`  | Conferir formatação                                    |
+| `npm.cmd test`              | Executar testes utilitários e de componentes/hooks     |
+| `npm.cmd run test:coverage` | Gerar cobertura dos testes Vitest em `coverage/`       |
+| `npm.cmd run test:e2e`      | Gerar o build e testar as páginas em desktop e celular |
+| `npm.cmd run test:e2e:dev`  | Testar as páginas em desenvolvimento                   |
 
 Execute `build` antes de `preview`. O comando `test:e2e` gera um build atualizado
 automaticamente. Preview é uma conferência local, não a configuração de publicação
@@ -124,6 +125,15 @@ Falhas HTTP lançam `ApiError`, com o status e uma mensagem genérica.
 Falhas de rede, cancelamento e JSON inválido são propagados para a tela
 tratar. O tipo `T` ajuda no TypeScript, mas não valida o JSON em execução.
 Para enviar JSON, informe `Content-Type` e serialize o corpo explicitamente.
+
+## Testes de componentes e hooks
+
+`npm.cmd test` executa os testes existentes com Node e os testes React com
+Vitest e Testing Library. Para gerar o relatório de cobertura localmente, rode
+`npm.cmd run test:coverage`; o CI publica `frontend-coverage` como artefato.
+Ranking e comparação ainda são páginas em construção: os testes verificam o
+conteúdo disponível, e estados de carregamento, vazio e erro dependem da
+implementação dessas páginas.
 
 ## Testes de navegador
 
