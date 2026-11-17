@@ -493,5 +493,32 @@ describe("IndicadoresService", () => {
         mediaJanela: 20,
       });
     });
+
+    it("calcula a melhor janela de três horas atravessando a virada da semana", async () => {
+      repository.obterDadosMatrizIntensidade.mockResolvedValue(
+        Array.from({ length: 7 }, (_, diaSemana) =>
+          Array.from({ length: 24 }, (_, hora) => ({
+            diaSemana,
+            hora,
+            media:
+              (diaSemana === 0 && hora === 23) ||
+              (diaSemana === 1 && (hora === 0 || hora === 1))
+                ? 35
+                : 90,
+            quantidadeAmostras: 1,
+          })),
+        ).flat(),
+      );
+
+      const resultado = await service.obterMatrizHorarios(
+        new IntensidadeHorariosQueryDto(),
+      );
+
+      expect(resultado.melhorJanela).toEqual({
+        diaSemana: 0,
+        horaInicio: 23,
+        mediaJanela: 35,
+      });
+    });
   });
 });

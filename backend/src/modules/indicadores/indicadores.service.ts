@@ -101,34 +101,47 @@ export class IndicadoresService {
       mediaJanela: number;
     } | null = null;
 
-    for (let diaSemana = 0; diaSemana < matriz.length; diaSemana += 1) {
-      for (let horaInicio = 0; horaInicio <= 21; horaInicio += 1) {
-        const horas = matriz[diaSemana].slice(horaInicio, horaInicio + 3);
+    const horasNaSemana = matriz.length * matriz[0].length;
 
-        if (
-          horas.some(
-            (hora) =>
-              hora.media === null ||
-              hora.quantidadeAmostras === null ||
-              hora.quantidadeAmostras === 0,
-          )
-        ) {
-          continue;
-        }
+    for (
+      let indiceInicio = 0;
+      indiceInicio < horasNaSemana;
+      indiceInicio += 1
+    ) {
+      const indicesJanela = [
+        indiceInicio % horasNaSemana,
+        (indiceInicio + 1) % horasNaSemana,
+        (indiceInicio + 2) % horasNaSemana,
+      ];
+      const horas = indicesJanela.map(
+        (indice) => matriz[Math.floor(indice / 24)][indice % 24],
+      );
 
-        const totalAmostras = horas.reduce(
-          (total, hora) => total + hora.quantidadeAmostras!,
-          0,
-        );
-        const intensidadePonderada = horas.reduce(
-          (total, hora) => total + hora.media! * hora.quantidadeAmostras!,
-          0,
-        );
-        const mediaJanela = intensidadePonderada / totalAmostras;
+      if (
+        horas.some(
+          (hora) =>
+            hora.media === null ||
+            hora.quantidadeAmostras === null ||
+            hora.quantidadeAmostras === 0,
+        )
+      ) {
+        continue;
+      }
 
-        if (melhorJanela === null || mediaJanela < melhorJanela.mediaJanela) {
-          melhorJanela = { diaSemana, horaInicio, mediaJanela };
-        }
+      const totalAmostras = horas.reduce(
+        (total, hora) => total + hora.quantidadeAmostras!,
+        0,
+      );
+      const intensidadePonderada = horas.reduce(
+        (total, hora) => total + hora.media! * hora.quantidadeAmostras!,
+        0,
+      );
+      const mediaJanela = intensidadePonderada / totalAmostras;
+      const diaSemana = Math.floor(indiceInicio / 24);
+      const horaInicio = indiceInicio % 24;
+
+      if (melhorJanela === null || mediaJanela < melhorJanela.mediaJanela) {
+        melhorJanela = { diaSemana, horaInicio, mediaJanela };
       }
     }
 
