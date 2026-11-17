@@ -32,6 +32,8 @@
   --login-alert-border: #a17b1b;
   --login-alert-text: #6a5010;
   --radius: 16px;
+  --chart-energia: var(--green-forest);
+  --chart-emissao: #a65f00;
 }
 
 html,
@@ -244,17 +246,6 @@ button.nav-login {
 }
 .placeholder-notice p {
   margin: 0;
-}
-.chart-example {
-  margin: 0;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-}
-.chart-example figcaption {
-  margin-bottom: 12px;
-  color: var(--text-muted);
 }
 .page-heading {
   display: flex;
