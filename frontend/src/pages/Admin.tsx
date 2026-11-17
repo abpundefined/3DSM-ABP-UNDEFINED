@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import SaudeIntegracoes from '../components/admin/SaudeIntegracoes';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import useAuth from '../hooks/useAuth';
 import usePageTitle from '../hooks/usePageTitle';
@@ -199,6 +200,8 @@ export default function Admin() {
           )}
         </form>
       )}
+
+      <SaudeIntegracoes />
     </div>
   );
 }
