@@ -32,8 +32,8 @@ describe('ServiceCard', () => {
     expect(screen.getByText('São Paulo')).toBeVisible();
     expect(screen.getByText('12,5 %')).toBeVisible();
     expect(screen.getByText('2,00 GB')).toBeVisible();
-    expect(screen.getByText('0,0123 kWh')).toBeVisible();
-    expect(screen.getByText('1,0000 kgCO₂e')).toBeVisible();
+    expect(screen.getByText('12,30 Wh')).toBeVisible();
+    expect(screen.getByText('1,00 kgCO₂e')).toBeVisible();
     expect(screen.getByText('—')).toBeVisible();
   });
 
@@ -71,7 +71,7 @@ describe('ServiceCard', () => {
         }}
       />,
     );
-    expect(screen.getByText('0,0200 kWh')).toBeVisible();
-    expect(screen.getByText('0,5000 kgCO₂e')).toBeVisible();
+    expect(screen.getByText('20,00 Wh')).toBeVisible();
+    expect(screen.getByText('500,00 gCO₂e')).toBeVisible();
   });
 });
