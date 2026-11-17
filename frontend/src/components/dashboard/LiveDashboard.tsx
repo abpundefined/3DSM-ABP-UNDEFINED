@@ -244,7 +244,6 @@ export default function LiveDashboard({
           }
         } catch {
           if (!signal?.aborted) {
-            // Keep the last valid indicators for this period, just like services.
             setIndicatorsStatus('failed');
           }
         }
@@ -510,7 +509,6 @@ function MetricSummary({
   icon: 'server' | 'bolt' | 'cloud' | 'alert';
   tone: 'forest' | 'leaf' | 'olive';
 }) {
-  // Split the shared formatter's result only for layout, without a new rule.
   const separator = withUnit ? value.lastIndexOf(' ') : -1;
   const number = separator < 0 ? value : value.slice(0, separator);
   const unit = separator < 0 ? undefined : value.slice(separator + 1);

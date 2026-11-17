@@ -65,7 +65,7 @@ export async function apiRequest<T = unknown>(
       try {
         message = getErrorMessage(await response.json());
       } catch {
-        // Keep the generic HTTP message for empty or non-JSON error responses.
+        // Mantém a mensagem HTTP genérica quando o corpo do erro está vazio ou não é JSON.
       }
     }
     throw new ApiError(response.status, message);
