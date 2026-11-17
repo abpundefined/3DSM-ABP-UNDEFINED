@@ -14,6 +14,9 @@ export async function comTimeout<T>(
         `Tempo limite de ${timeoutMs}ms excedido ao consultar ${descricao}.`,
       );
     }
+    if (error instanceof TypeError && error.message === "fetch failed") {
+      throw new Error(`Não foi possível conectar para consultar ${descricao}.`);
+    }
     throw error;
   } finally {
     clearTimeout(timer);
