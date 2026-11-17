@@ -69,7 +69,13 @@ export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
 
   async obterMatrizHorarios(query: IntensidadeHorariosQueryDto) {
-    const { inicio, fim } = converterPeriodo(query);
+    const consulta =
+      query.inicio === undefined &&
+      query.fim === undefined &&
+      query.periodo === undefined
+        ? { ...query, periodo: PeriodoPredefinido.ULTIMOS_30_DIAS }
+        : query;
+    const { inicio, fim } = converterPeriodo(consulta);
     const dados = await this.indicadoresRepository.obterDadosMatrizIntensidade(
       inicio,
       fim,

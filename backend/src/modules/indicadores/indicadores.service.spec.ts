@@ -426,6 +426,16 @@ describe("IndicadoresService", () => {
   });
 
   describe("obterMatrizHorarios", () => {
+    it("usa os últimos 30 dias quando nenhum período é informado", async () => {
+      await service.obterMatrizHorarios(new IntensidadeHorariosQueryDto());
+
+      expect(repository.obterDadosMatrizIntensidade).toHaveBeenCalledWith(
+        new Date("2026-10-09T12:00:00.000Z"),
+        agora,
+        undefined,
+      );
+    });
+
     it("retorna uma matriz vazia de sete dias por 24 horas sem dados", async () => {
       repository.obterDadosMatrizIntensidade.mockResolvedValue([]);
 
