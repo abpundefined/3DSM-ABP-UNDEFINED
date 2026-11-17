@@ -69,17 +69,68 @@ export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
 
   async obterMatrizHorarios(query: IntensidadeHorariosQueryDto) {
-    void query;
-    const resposta = await Promise.resolve({
+    const { inicio, fim } = converterPeriodo(query);
+    const dados = await this.indicadoresRepository.obterDadosMatrizIntensidade(
+      inicio,
+      fim,
+      query.regiao,
+    );
+    const matriz = Array.from({ length: 7 }, () =>
+      Array.from({ length: 24 }, () => ({
+        media: null as number | null,
+        quantidadeAmostras: null as number | null,
+      })),
+    );
+
+    for (const dado of dados) {
+      matriz[dado.diaSemana][dado.hora] = {
+        media: dado.media,
+        quantidadeAmostras: dado.quantidadeAmostras,
+      };
+    }
+
+    let melhorJanela: {
+      diaSemana: number;
+      horaInicio: number;
+      mediaJanela: number;
+    } | null = null;
+
+    for (let diaSemana = 0; diaSemana < matriz.length; diaSemana += 1) {
+      for (let horaInicio = 0; horaInicio <= 21; horaInicio += 1) {
+        const horas = matriz[diaSemana].slice(horaInicio, horaInicio + 3);
+
+        if (
+          horas.some(
+            (hora) =>
+              hora.media === null ||
+              hora.quantidadeAmostras === null ||
+              hora.quantidadeAmostras === 0,
+          )
+        ) {
+          continue;
+        }
+
+        const totalAmostras = horas.reduce(
+          (total, hora) => total + hora.quantidadeAmostras!,
+          0,
+        );
+        const intensidadePonderada = horas.reduce(
+          (total, hora) => total + hora.media! * hora.quantidadeAmostras!,
+          0,
+        );
+        const mediaJanela = intensidadePonderada / totalAmostras;
+
+        if (melhorJanela === null || mediaJanela < melhorJanela.mediaJanela) {
+          melhorJanela = { diaSemana, horaInicio, mediaJanela };
+        }
+      }
+    }
+
+    return {
       fusoHorario: "America/Sao_Paulo",
-      matriz: [],
-      melhorJanela: {
-        diaSemana: 0,
-        horaInicio: 2,
-        mediaJanela: 50.5,
-      },
-    });
-    return resposta;
+      matriz,
+      melhorJanela,
+    };
   }
 
   obterSerieTemporal(

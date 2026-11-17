@@ -3,6 +3,7 @@ jest.mock("../../database/prisma.service", () => ({
 }));
 
 import { BadRequestException } from "@nestjs/common";
+import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
@@ -17,6 +18,7 @@ describe("IndicadoresService", () => {
     buscarUltimaColetaEm: jest.fn(),
     obterAgregacaoSerieTemporal: jest.fn(),
     obterSerieAgrupadaPorServico: jest.fn(),
+    obterDadosMatrizIntensidade: jest.fn(),
     listarServicosParaRanking: jest.fn(),
   };
   const service = new IndicadoresService(
@@ -39,6 +41,7 @@ describe("IndicadoresService", () => {
     repository.buscarUltimaColetaEm
       .mockReset()
       .mockResolvedValue(new Date("2026-11-08T11:59:30.000Z"));
+    repository.obterDadosMatrizIntensidade.mockReset().mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -419,6 +422,66 @@ describe("IndicadoresService", () => {
         new Date(fim),
         "hora",
       );
+    });
+  });
+
+  describe("obterMatrizHorarios", () => {
+    it("retorna uma matriz vazia de sete dias por 24 horas sem dados", async () => {
+      repository.obterDadosMatrizIntensidade.mockResolvedValue([]);
+
+      const resultado = await service.obterMatrizHorarios(
+        new IntensidadeHorariosQueryDto(),
+      );
+
+      expect(resultado).toEqual({
+        fusoHorario: "America/Sao_Paulo",
+        matriz: Array.from({ length: 7 }, () =>
+          Array.from({ length: 24 }, () => ({
+            media: null,
+            quantidadeAmostras: null,
+          })),
+        ),
+        melhorJanela: null,
+      });
+    });
+
+    it("preenche os horários e calcula a melhor janela de três horas", async () => {
+      repository.obterDadosMatrizIntensidade.mockResolvedValue([
+        {
+          diaSemana: 1,
+          hora: 2,
+          media: 10,
+          quantidadeAmostras: 1,
+        },
+        {
+          diaSemana: 1,
+          hora: 3,
+          media: 20,
+          quantidadeAmostras: 1,
+        },
+        {
+          diaSemana: 1,
+          hora: 4,
+          media: 30,
+          quantidadeAmostras: 1,
+        },
+      ]);
+
+      const resultado = await service.obterMatrizHorarios(
+        new IntensidadeHorariosQueryDto(),
+      );
+
+      expect(resultado.matriz[1]).toHaveLength(24);
+      expect(resultado.matriz[1].slice(2, 5)).toEqual([
+        { media: 10, quantidadeAmostras: 1 },
+        { media: 20, quantidadeAmostras: 1 },
+        { media: 30, quantidadeAmostras: 1 },
+      ]);
+      expect(resultado.melhorJanela).toEqual({
+        diaSemana: 1,
+        horaInicio: 2,
+        mediaJanela: 20,
+      });
     });
   });
 });
