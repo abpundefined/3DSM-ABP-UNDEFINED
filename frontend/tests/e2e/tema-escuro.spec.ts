@@ -95,3 +95,19 @@ test('administração com erro de campo', async ({ page }) => {
   ).toBeVisible();
   await expectNoViolations(page);
 });
+
+test('administração com a saúde das integrações em demonstração', async ({
+  page,
+}) => {
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({ json: configuracao }),
+  );
+  await page.addInitScript(
+    (key) => localStorage.setItem(key, 'token'),
+    TOKEN_KEY,
+  );
+  await page.goto('/admin?demo=1');
+
+  await expect(page.getByText('Com falha')).toBeVisible();
+  await expectNoViolations(page);
+});

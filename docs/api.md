@@ -29,6 +29,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
 | GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
 | GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
+| GET | `/saude` | 200, objeto | Mostra a última consulta ao agregador e à API de carbono, a taxa de falha das coletas na última hora e os serviços por estado. Requer JWT Bearer. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
 
@@ -321,6 +322,52 @@ Regra (função pura `simularRegioes`, em `backend/src/common/regras/simulacao-r
 ```
 
 É uma estimativa: considera a mesma carga em todas as regiões e não leva em conta latência, custo ou disponibilidade.
+
+## Saúde das integrações
+
+`GET /saude` alimenta o painel "Saúde das integrações" da página de administração. Requer JWT Bearer; sem token ou com token inválido, responde 401.
+
+`agregador` descreve a consulta da lista de serviços (`/services`) ao agregador de métricas, e `apiCarbono`, a consulta da intensidade de carbono de uma região. Cada uma traz:
+
+- `estado`: `OPERACIONAL` quando a última consulta funcionou, `FALHA` quando falhou e `SEM_CONSULTA` enquanto não houve consulta desde que o backend iniciou.
+- `ultimaConsultaEm` e `tempoRespostaMs`: quando a última consulta terminou e quanto ela durou, em milissegundos.
+- `ultimoSucessoEm`: a última consulta que funcionou, mantida mesmo depois de uma falha.
+- `mensagemErro`: o motivo da última falha, ou `null`.
+
+Esse registro fica em memória e recomeça vazio quando o backend reinicia. A API de carbono é consultada por região, então `apiCarbono` mostra a consulta mais recente, de qualquer região. As consultas de métricas de cada serviço não entram em `agregador`: um serviço sem métricas é um estado normal, e seu efeito aparece em `coletasUltimaHora` e `servicosPorEstado`.
+
+`ultimaDescobertaEm` é a última descoberta de serviços concluída com sucesso. `coletasUltimaHora` conta as coletas iniciadas na última hora; `taxaFalha` é `falhas` dividido por `total`, de 0 a 1, e vem `null` sem coletas. Coleta sem métricas não conta como falha. `servicosPorEstado` traz todos os estados, com 0 nos ausentes.
+
+Exemplo de resposta:
+
+```json
+{
+  "geradoEm": "2026-11-17T12:00:30.000Z",
+  "agregador": {
+    "estado": "OPERACIONAL",
+    "ultimaConsultaEm": "2026-11-17T12:00:00.120Z",
+    "tempoRespostaMs": 120,
+    "ultimoSucessoEm": "2026-11-17T12:00:00.120Z",
+    "mensagemErro": null
+  },
+  "apiCarbono": {
+    "estado": "FALHA",
+    "ultimaConsultaEm": "2026-11-17T12:00:20.000Z",
+    "tempoRespostaMs": 8000,
+    "ultimoSucessoEm": "2026-11-17T11:59:50.000Z",
+    "mensagemErro": "Falha ao buscar intensidade de carbono para br-sudeste: Tempo limite de 8000ms excedido ao consultar a API de intensidade de carbono."
+  },
+  "ultimaDescobertaEm": "2026-11-17T12:00:00.120Z",
+  "coletasUltimaHora": { "total": 10, "falhas": 1, "taxaFalha": 0.1 },
+  "servicosPorEstado": {
+    "DISPONIVEL": 4,
+    "INDISPONIVEL": 0,
+    "SEM_METRICAS": 0,
+    "REMOVIDO": 0,
+    "DESCONHECIDO": 0
+  }
+}
+```
 
 ## Erros
 

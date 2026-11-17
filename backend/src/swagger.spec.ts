@@ -17,6 +17,9 @@ jest.mock("./modules/indicadores/ranking.service", () => ({
 jest.mock("./modules/mapa/mapa.service", () => ({
   MapaService: class MapaService {},
 }));
+jest.mock("./modules/saude/saude.service", () => ({
+  SaudeService: class SaudeService {},
+}));
 jest.mock("./modules/servicos/servicos.service", () => ({
   ServicosService: class ServicosService {},
 }));
@@ -42,6 +45,8 @@ import { RankingController } from "./modules/indicadores/ranking.controller";
 import { RankingService } from "./modules/indicadores/ranking.service";
 import { MapaController } from "./modules/mapa/mapa.controller";
 import { MapaService } from "./modules/mapa/mapa.service";
+import { SaudeController } from "./modules/saude/saude.controller";
+import { SaudeService } from "./modules/saude/saude.service";
 import { ServicosController } from "./modules/servicos/servicos.controller";
 import { ServicosService } from "./modules/servicos/servicos.service";
 import { OPCOES_LIMITE_LOGIN } from "./modules/auth/limite-login";
@@ -63,6 +68,7 @@ describe("Swagger", () => {
         IntensidadeController,
         RankingController,
         MapaController,
+        SaudeController,
         ServicosController,
       ],
       providers: [
@@ -73,6 +79,7 @@ describe("Swagger", () => {
         { provide: IndicadoresService, useValue: {} },
         { provide: RankingService, useValue: {} },
         { provide: MapaService, useValue: {} },
+        { provide: SaudeService, useValue: {} },
         { provide: ServicosService, useValue: {} },
         { provide: JwtService, useValue: {} },
       ],
@@ -143,6 +150,7 @@ describe("Swagger", () => {
       ["/intensidade/horarios", "get"],
       ["/ranking", "get"],
       ["/mapa", "get"],
+      ["/saude", "get"],
       ["/configuracao", "get"],
       ["/configuracao", "put"],
     ]) {
@@ -241,6 +249,7 @@ describe("Swagger", () => {
     for (const [path, method] of [
       ["/coletas", "post"],
       ["/servicos/sync", "post"],
+      ["/saude", "get"],
     ]) {
       expect(document.paths[path][method].security).toEqual([{ bearer: [] }]);
       expect(document.paths[path][method].responses["401"]).toBeDefined();
@@ -262,6 +271,7 @@ describe("Swagger", () => {
       ["/indicadores", "get", "200", "application/json"],
       ["/ranking", "get", "200", "application/json"],
       ["/mapa", "get", "200", "application/json"],
+      ["/saude", "get", "200", "application/json"],
       ["/configuracao", "get", "200", "application/json"],
       ["/configuracao", "put", "200", "application/json"],
     ]) {

@@ -17,6 +17,24 @@ interface ServicoListado {
   regiaoCodigo: string;
 }
 
+interface IntegracaoSaude {
+  estado: string;
+  ultimoSucessoEm: string | null;
+  mensagemErro: string | null;
+}
+
+interface RespostaSaude {
+  agregador: IntegracaoSaude;
+  apiCarbono: IntegracaoSaude;
+  ultimaDescobertaEm: string | null;
+  coletasUltimaHora: {
+    total: number;
+    falhas: number;
+    taxaFalha: number | null;
+  };
+  servicosPorEstado: Record<string, number>;
+}
+
 const METRICAS_SP = {
   cpu_percent: 40,
   memory_gb: 4,
@@ -349,6 +367,87 @@ describe("API com PostgreSQL (e2e)", () => {
           .query({ periodo: "24h", inicio: "2026-11-01T00:00:00Z" })
           .expect(400);
       }
+    });
+  });
+
+  describe("saúde das integrações", () => {
+    const autorizacao = () => `Bearer ${token}`;
+    const consultarSaude = async () =>
+      (
+        await http()
+          .get("/saude")
+          .set("Authorization", autorizacao())
+          .expect(200)
+      ).body as RespostaSaude;
+
+    it("GET /saude exige token", async () => {
+      await http().get("/saude").expect(401);
+      await http()
+        .get("/saude")
+        .set("Authorization", "Bearer token-invalido")
+        .expect(401);
+    });
+
+    it("mostra as integrações operacionais e as contagens reais do banco", async () => {
+      const saude = await consultarSaude();
+
+      expect(saude.agregador).toMatchObject({
+        estado: "OPERACIONAL",
+        mensagemErro: null,
+      });
+      expect(saude.apiCarbono).toMatchObject({
+        estado: "OPERACIONAL",
+        mensagemErro: null,
+      });
+      expect(saude.ultimaDescobertaEm).toBe(saude.agregador.ultimoSucessoEm);
+      expect(saude.coletasUltimaHora).toEqual({
+        total: 3,
+        falhas: 0,
+        taxaFalha: 0,
+      });
+      expect(saude.servicosPorEstado).toEqual({
+        DISPONIVEL: 2,
+        INDISPONIVEL: 0,
+        SEM_METRICAS: 1,
+        REMOVIDO: 0,
+        DESCONHECIDO: 0,
+      });
+    });
+
+    it("registra a falha do agregador sem derrubar a aplicação", async () => {
+      const antes = await consultarSaude();
+      apis.cenario.statusDescoberta = 503;
+
+      await http()
+        .post("/servicos/sync")
+        .set("Authorization", autorizacao())
+        .expect(500);
+
+      const saude = await consultarSaude();
+      expect(saude.agregador).toMatchObject({
+        estado: "FALHA",
+        ultimoSucessoEm: antes.agregador.ultimoSucessoEm,
+        mensagemErro: expect.stringContaining("503") as unknown,
+      });
+      expect(saude.ultimaDescobertaEm).toBe(antes.ultimaDescobertaEm);
+      expect(saude.apiCarbono.estado).toBe("OPERACIONAL");
+      await http().get("/").expect(200);
+      await http().get("/servicos").expect(200);
+    });
+
+    it("volta a OPERACIONAL quando o agregador responde de novo", async () => {
+      apis.cenario.statusDescoberta = undefined;
+
+      await http()
+        .post("/servicos/sync")
+        .set("Authorization", autorizacao())
+        .expect(201);
+
+      const saude = await consultarSaude();
+      expect(saude.agregador).toMatchObject({
+        estado: "OPERACIONAL",
+        mensagemErro: null,
+      });
     });
   });
 });

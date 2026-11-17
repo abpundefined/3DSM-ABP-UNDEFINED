@@ -1,0 +1,174 @@
+.saude {
+  display: grid;
+  gap: 18px;
+  max-width: 880px;
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.saude-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.saude h2 {
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.saude-meta {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.saude-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.saude-aviso p {
+  margin: 0;
+}
+
+.saude-aviso--erro {
+  padding: 10px 14px;
+  border: 1px solid var(--login-alert-border);
+  border-radius: 9px;
+  background: var(--login-alert-background);
+  color: var(--login-alert-text);
+}
+
+.saude-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.saude-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.saude-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.saude-card h3 {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.saude-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft-green);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.saude-badge .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.saude-badge--operacional .icon {
+  color: var(--green-forest);
+}
+
+.saude-badge--falha {
+  border-color: var(--login-alert-border);
+  background: var(--login-alert-background);
+  color: var(--login-alert-text);
+}
+
+.saude-lista,
+.saude-resumo {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.saude-lista > div,
+.saude-resumo > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  font-size: 14px;
+}
+
+.saude-lista dt,
+.saude-resumo dt {
+  color: var(--text-muted);
+}
+
+.saude-lista dd,
+.saude-resumo dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.saude-erro {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--login-alert-border);
+  border-radius: 9px;
+  background: var(--login-alert-background);
+  color: var(--login-alert-text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.saude-subtitulo {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.saude-estados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saude-estados li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.saude-estados strong {
+  color: var(--text);
+  font-size: 20px;
+}
