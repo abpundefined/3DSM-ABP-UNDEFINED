@@ -11,6 +11,7 @@ import {
 } from "@nestjs/swagger";
 import { IndicadoresRespostaDto } from "../../common/swagger/respostas.dto";
 import * as DateConversionHelper from "./date-conversion.helper";
+import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { PeriodoDto, PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
@@ -109,6 +110,13 @@ export class IndicadoresController {
     const { inicio, fim } = DateConversionHelper.converterPeriodo(query);
 
     return this.indicadoresService.obter(inicio, fim, query.periodo);
+  }
+
+  @Get("intensidade/horarios")
+  @ApiOperation({ summary: "Consultar matriz horária de intensidade" })
+  @ApiOkResponse({ description: "Matriz horária de intensidade." })
+  obterMatrizHorarios(@Query() query: IntensidadeHorariosQueryDto) {
+    return this.indicadoresService.obterMatrizHorarios(query);
   }
 
   @Get("serie")

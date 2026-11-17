@@ -13,6 +13,7 @@ import {
   intervaloMesCalendarioAnterior,
 } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
+import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
@@ -66,6 +67,20 @@ export interface VariacaoIndicador {
 @Injectable()
 export class IndicadoresService {
   constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
+
+  async obterMatrizHorarios(query: IntensidadeHorariosQueryDto) {
+    void query;
+    const resposta = await Promise.resolve({
+      fusoHorario: "America/Sao_Paulo",
+      matriz: [],
+      melhorJanela: {
+        diaSemana: 0,
+        horaInicio: 2,
+        mediaJanela: 50.5,
+      },
+    });
+    return resposta;
+  }
 
   obterSerieTemporal(
     query: SerieTemporalQueryDto,
