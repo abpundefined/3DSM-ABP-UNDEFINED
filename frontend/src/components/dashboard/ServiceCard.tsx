@@ -1,5 +1,10 @@
 import { useRef } from 'react';
-import { formatServiceLocation, toFiniteNumber } from '../../utils/formatters';
+import {
+  formatEmission,
+  formatEnergy,
+  formatServiceLocation,
+  toFiniteNumber,
+} from '../../utils/formatters';
 import {
   formatServiceMetric,
   formatServiceStatus,
@@ -77,17 +82,11 @@ export default function ServiceCard({
       <dl className="service-card-impact">
         <div>
           <dt>Energia</dt>
-          <dd>{formatServiceMetric(energyKwh, 'kWh', 4)}</dd>
+          <dd>{formatEnergy(energyKwh)}</dd>
         </div>
         <div>
           <dt>Emissões</dt>
-          <dd>
-            {formatServiceMetric(
-              emissionsGCo2e === null ? null : emissionsGCo2e / 1000,
-              'kgCO₂e',
-              4,
-            )}
-          </dd>
+          <dd>{formatEmission(emissionsGCo2e)}</dd>
         </div>
       </dl>
 

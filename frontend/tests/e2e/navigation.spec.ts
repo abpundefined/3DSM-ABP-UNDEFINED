@@ -38,8 +38,8 @@ test('rotas, histórico, foco e painel conectado funcionam sem backend', async (
   await expect(
     page.getByRole('link', { name: 'Dashboard', exact: true }),
   ).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('kWh');
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('kgCO₂e');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('0 Wh');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('0 gCO₂e');
   await expect(
     page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
   ).toBeVisible();
