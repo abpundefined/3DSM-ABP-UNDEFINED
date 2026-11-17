@@ -92,7 +92,7 @@ describe("CarbonApiService", () => {
     const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
-      "Falha ao buscar intensidade de carbono para br-sudeste: fetch failed",
+      "Falha ao buscar intensidade de carbono para br-sudeste: Não foi possível conectar para consultar a API de intensidade de carbono.",
     );
   });
 
