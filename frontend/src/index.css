@@ -247,17 +247,6 @@ button.nav-login {
 .placeholder-notice p {
   margin: 0;
 }
-.chart-example {
-  margin: 0;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-}
-.chart-example figcaption {
-  margin-bottom: 12px;
-  color: var(--text-muted);
-}
 .page-heading {
   display: flex;
   justify-content: space-between;

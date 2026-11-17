@@ -68,15 +68,6 @@ test('Administração aparece no menu só para usuário autenticado', async ({
   ).toBeVisible();
 });
 
-test('gráfico de exemplo mostra a unidade e funciona com ?demo=1', async ({
-  page,
-}) => {
-  await page.goto('/ranking?demo=1');
-  const chart = page.locator('.chart-example');
-  await expect(chart).toContainText('Wh');
-  await expect(chart.locator('.recharts-bar-rectangle')).toHaveCount(3);
-});
-
 test('barra inferior não cobre o fim da página no celular', async ({
   page,
 }, testInfo) => {
