@@ -189,8 +189,15 @@ export class IndicadoresService {
         }
       >();
 
+      const servicosComDados = new Set(
+        seriePorServico.map((ponto) => ponto.servicoId),
+      );
+
       for (const servico of servicos) {
-        if (servico.estadoAtual === "REMOVIDO") {
+        if (
+          servico.estadoAtual === "REMOVIDO" &&
+          !servicosComDados.has(servico.id)
+        ) {
           continue;
         }
 
