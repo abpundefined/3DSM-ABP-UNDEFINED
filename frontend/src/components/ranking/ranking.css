@@ -104,6 +104,7 @@
 }
 .ranking-tabela td:nth-child(n + 3) {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .ranking-tabela a,
 .ranking-sem-dados a {

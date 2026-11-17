@@ -4,7 +4,13 @@ import type {
   RespostaRanking,
 } from '../types/ranking';
 import type { PeriodoConsultado } from '../types/mapa';
-import { formatEmission, formatEnergy } from './formatters.ts';
+import {
+  type Escala,
+  escalaDeEmissao,
+  escalaDeEnergia,
+  formatEmission,
+  formatEnergy,
+} from './formatters.ts';
 
 export const LIMITE_DO_RANKING = 10;
 export const METRICA_PADRAO: MetricaRanking = 'energia';
@@ -13,10 +19,10 @@ const TAMANHO_DO_NOME_NO_EIXO = 18;
 
 export const METRICAS: Record<
   MetricaRanking,
-  { rotulo: string; nome: string; unidade: string }
+  { rotulo: string; nome: string }
 > = {
-  energia: { rotulo: 'Energia (kWh)', nome: 'energia', unidade: 'kWh' },
-  emissao: { rotulo: 'Emissão (gCO₂e)', nome: 'emissão', unidade: 'gCO₂e' },
+  energia: { rotulo: 'Energia', nome: 'energia' },
+  emissao: { rotulo: 'Emissão', nome: 'emissão' },
 };
 
 const porcentagem = new Intl.NumberFormat('pt-BR', {
@@ -110,6 +116,16 @@ export function valorDaMetrica(
   metrica: MetricaRanking,
 ) {
   return metrica === 'emissao' ? item.emissaoGCo2e : item.energiaKwh;
+}
+
+export function escalaDaMetrica(
+  metrica: MetricaRanking,
+  valores: number[],
+): Escala {
+  const maior = Math.max(0, ...valores);
+  return metrica === 'emissao'
+    ? escalaDeEmissao(maior)
+    : escalaDeEnergia(maior);
 }
 
 export function formatarValor(valor: number, metrica: MetricaRanking) {
