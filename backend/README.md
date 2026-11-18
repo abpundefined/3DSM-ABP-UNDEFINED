@@ -18,6 +18,7 @@ src/
   modules/indicadores/       agregados ambientais e contagem por estado
   modules/mapa/              serviços no mapa com a série de emissão do período
   modules/simulacao/         simulação da emissão do serviço em outra região
+  modules/saude/             saúde das integrações externas e das coletas
 prisma/
   schema.prisma
   migrations/
@@ -55,8 +56,9 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. `mes-anterior` inclui a comparação `variacao` com o mês calendário anterior.
 - `GET /mapa`: serviços com coordenadas, totais e série de emissão por hora (até 48 horas) ou por dia, além da lista `semCoordenadas`. Aceita os mesmos parâmetros de período de `GET /indicadores`.
 - `GET /servicos/:id/simulacao-regiao`: emissão estimada do serviço em cada região monitorada (energia do período × intensidade média da região), com a diferença em g e em % e a região de menor emissão. Aceita os mesmos parâmetros de período; serviço inexistente retorna 404.
+- `GET /saude`: última consulta e resultado do agregador e da API de carbono, taxa de falha das coletas na última hora e serviços por estado. Requer JWT.
 
-Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas` e `POST /servicos/sync` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
+Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas`, `POST /servicos/sync` e `GET /saude` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
 
 Leia [contratos, unidades e erros](../docs/api.md).
 
@@ -82,7 +84,7 @@ npm.cmd run lint
 
 ### Testes E2E de API (`npm run test:e2e`)
 
-Sobem a aplicação inteira (`AppModule`) contra um PostgreSQL real e chamam as rotas por HTTP com Supertest: login, `GET /configuracao` e `PUT /configuracao` (com e sem token), `POST /servicos/sync`, um ciclo do monitoramento, `GET /servicos`, a última coleta válida, `GET /indicadores`, `GET /ranking`, `GET /comparacao` e `GET /mapa`, incluindo os casos de 400, 401 e 404.
+Sobem a aplicação inteira (`AppModule`) contra um PostgreSQL real e chamam as rotas por HTTP com Supertest: login, `GET /configuracao` e `PUT /configuracao` (com e sem token), `POST /servicos/sync`, um ciclo do monitoramento, `GET /servicos`, a última coleta válida, `GET /indicadores`, `GET /ranking`, `GET /comparacao`, `GET /mapa` e `GET /saude` (com e sem token e com o agregador simulado fora do ar), incluindo os casos de 400, 401 e 404.
 
 - O script confere o banco, aplica `prisma migrate deploy` e roda o Jest com `test/jest-e2e.json`.
 - O banco precisa ter o nome terminado em `_e2e`: os testes apagam todas as tabelas no início e no fim. Com outro nome, o script para antes de qualquer migração.

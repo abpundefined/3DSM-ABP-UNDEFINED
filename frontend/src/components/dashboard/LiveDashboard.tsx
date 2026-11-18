@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api';
-import { toFiniteNumber } from '../../utils/formatters';
+import {
+  formatEmission,
+  formatEnergy,
+  toFiniteNumber,
+} from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 import ServiceCard from './ServiceCard';
@@ -45,17 +49,6 @@ function formatRelativeTime(date: Date, now: number) {
   const [unit, divisor] = units.find(([, size]) => seconds >= size) ?? units[3];
 
   return formatter.format(-Math.floor(seconds / divisor), unit);
-}
-
-function formatTotal(value: number | undefined) {
-  if (value === undefined) {
-    return '—';
-  }
-
-  return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4,
-  }).format(value);
 }
 
 function formatCount(value: number | undefined) {
@@ -115,17 +108,7 @@ function normalizeCollection(
   };
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    return `Não foi possível consultar o backend (HTTP ${error.status}). Confira se o backend está em execução e tente novamente.`;
-  }
-
-  if (error instanceof TypeError) {
-    return 'Não foi possível alcançar o backend. Confira se ele está em execução e tente novamente.';
-  }
-
-  return 'O backend retornou uma resposta inesperada. Tente atualizar os dados.';
-}
+type QueryStatus = 'pending' | 'ready' | 'failed';
 
 export default function LiveDashboard({
   periodQuery,
@@ -136,8 +119,11 @@ export default function LiveDashboard({
   const [indicators, setIndicators] = useState<BackendIndicators>();
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [indicatorError, setIndicatorError] = useState<string | null>(null);
+  const [servicesStatus, setServicesStatus] = useState<QueryStatus>('pending');
+  const [indicatorsStatus, setIndicatorsStatus] =
+    useState<QueryStatus>('pending');
+  const [configurationStatus, setConfigurationStatus] =
+    useState<QueryStatus>('pending');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [collectionIntervalSeconds, setCollectionIntervalSeconds] = useState<
@@ -160,8 +146,6 @@ export default function LiveDashboard({
       activeRequest.current = requestId;
       setIsLoading(true);
       setIsLoadingServices(true);
-      setErrorMessage(null);
-      setIndicatorError(null);
 
       const loadServices = async () => {
         try {
@@ -205,9 +189,10 @@ export default function LiveDashboard({
             })),
           );
           setLastUpdated(new Date());
-        } catch (error) {
+          setServicesStatus('ready');
+        } catch {
           if (!signal?.aborted) {
-            setErrorMessage(getErrorMessage(error));
+            setServicesStatus('failed');
           }
         } finally {
           if (!signal?.aborted) {
@@ -224,16 +209,23 @@ export default function LiveDashboard({
           );
           const configuredInterval = configuration?.intervaloColetaSegundos;
 
-          if (
-            !signal?.aborted &&
-            typeof configuredInterval === 'number' &&
-            Number.isSafeInteger(configuredInterval) &&
-            configuredInterval > 0
-          ) {
-            setCollectionIntervalSeconds(configuredInterval);
+          if (signal?.aborted) {
+            return;
           }
+          if (
+            typeof configuredInterval !== 'number' ||
+            !Number.isSafeInteger(configuredInterval) ||
+            configuredInterval <= 0
+          ) {
+            throw new Error('Intervalo de coleta inválido.');
+          }
+          setCollectionIntervalSeconds(configuredInterval);
+          setConfigurationStatus('ready');
         } catch {
-          // Sem a configuração, o painel deixa de informar o intervalo de coleta.
+          if (!signal?.aborted) {
+            setCollectionIntervalSeconds(null);
+            setConfigurationStatus('failed');
+          }
         }
       };
 
@@ -248,11 +240,12 @@ export default function LiveDashboard({
           }
           if (!signal?.aborted) {
             setIndicators(response);
+            setIndicatorsStatus('ready');
           }
-        } catch (error) {
+        } catch {
           if (!signal?.aborted) {
-            setIndicators(undefined);
-            setIndicatorError(getErrorMessage(error));
+            // Keep the last valid indicators for this period, just like services.
+            setIndicatorsStatus('failed');
           }
         }
       };
@@ -322,15 +315,51 @@ export default function LiveDashboard({
     setSelectedServiceId(null);
   }, []);
 
+  const failedQueries = [
+    servicesStatus === 'failed' ? 'os serviços' : null,
+    indicatorsStatus === 'failed' ? 'os indicadores' : null,
+    configurationStatus === 'failed' ? 'o intervalo de coleta' : null,
+  ].filter((label): label is string => label !== null);
+  const hasError = failedQueries.length > 0;
+  const isUnavailable = failedQueries.length === 3;
+  const hasPreviousData = lastUpdated !== null || indicators !== undefined;
+  const isConnecting =
+    !hasError &&
+    [servicesStatus, indicatorsStatus, configurationStatus].includes('pending');
+  const connectionTitle = isUnavailable
+    ? hasPreviousData
+      ? 'Backend indisponível — exibindo os últimos dados válidos'
+      : 'Backend indisponível — ainda não há dados válidos'
+    : hasError
+      ? 'Falha parcial nas consultas ao backend'
+      : isConnecting
+        ? 'Conectando ao backend'
+        : 'Dados conectados ao backend';
+  const failedLabels = failedQueries.join(', ').replace(/, ([^,]*)$/, ' e $1');
+  const errorDescription = isUnavailable
+    ? 'Tente atualizar novamente em instantes.'
+    : `Não foi possível atualizar ${failedLabels}; tente novamente em instantes.`;
+  const indicatorsDescription =
+    indicatorsStatus === 'failed' && indicators !== undefined
+      ? 'Últimos dados válidos · coletas calculadas no período analisado'
+      : 'Coletas calculadas no período analisado';
+
   return (
     <>
       <div className="live-dashboard-toolbar">
-        <div>
+        <div
+          className={
+            hasError ? 'live-connection-error live-refresh-error' : undefined
+          }
+          role={hasError ? 'alert' : 'status'}
+          aria-atomic="true"
+        >
           <span className="demo-toolbar-icon">
-            <Icon name="info" />
+            <Icon name={hasError ? 'alert' : 'info'} />
           </span>
           <div>
-            <strong>Dados conectados ao backend</strong>
+            <strong>{connectionTitle}</strong>
+            {hasError && <p>{errorDescription}</p>}
             <p>
               {collectionIntervalSeconds === null
                 ? 'Painel atualizado a cada 30 segundos.'
@@ -352,19 +381,17 @@ export default function LiveDashboard({
       <section aria-label="Indicadores gerais" className="metrics-grid">
         <MetricSummary
           label="Consumo energético total"
-          value={formatTotal(indicators?.energiaTotalKwh)}
-          description="Coletas calculadas no período analisado · kWh"
+          value={formatEnergy(toFiniteNumber(indicators?.energiaTotalKwh))}
+          withUnit
+          description={indicatorsDescription}
           icon="bolt"
           tone="leaf"
         />
         <MetricSummary
           label="Emissão total de CO₂e"
-          value={formatTotal(
-            indicators === undefined
-              ? undefined
-              : indicators.emissaoTotalGCo2e / 1000,
-          )}
-          description="Coletas calculadas no período analisado · kgCO₂e"
+          value={formatEmission(toFiniteNumber(indicators?.emissaoTotalGCo2e))}
+          withUnit
+          description={indicatorsDescription}
           icon="cloud"
           tone="olive"
         />
@@ -388,12 +415,6 @@ export default function LiveDashboard({
         />
       </section>
 
-      {indicatorError && (
-        <p className="live-refresh-error" role="alert">
-          Não foi possível carregar os indicadores. {indicatorError}
-        </p>
-      )}
-
       <section
         className="live-services-panel"
         aria-labelledby="live-services-heading"
@@ -416,11 +437,11 @@ export default function LiveDashboard({
             title="Conectando ao backend"
             description="Carregando serviços e suas métricas mais recentes."
           />
-        ) : errorMessage && services.length === 0 ? (
+        ) : servicesStatus === 'failed' && services.length === 0 ? (
           <FeedbackPanel
-            kind="error"
+            kind="empty"
             title="Não foi possível carregar os dados"
-            description={errorMessage}
+            description="Os serviços aparecerão aqui após uma consulta bem-sucedida."
           >
             <button
               className="button button--primary"
@@ -438,10 +459,9 @@ export default function LiveDashboard({
           />
         ) : (
           <>
-            {errorMessage && (
-              <p className="live-refresh-error" role="alert">
-                {errorMessage} Os dados exibidos são da última atualização
-                bem-sucedida.
+            {servicesStatus === 'failed' && (
+              <p className="chart-footnote">
+                Serviços da última atualização bem-sucedida.
               </p>
             )}
             <ul
@@ -478,16 +498,22 @@ export default function LiveDashboard({
 function MetricSummary({
   label,
   value,
+  withUnit = false,
   description,
   icon,
   tone,
 }: {
   label: string;
-  value: number | string;
+  value: string;
+  withUnit?: boolean;
   description: string;
   icon: 'server' | 'bolt' | 'cloud' | 'alert';
   tone: 'forest' | 'leaf' | 'olive';
 }) {
+  // Split the shared formatter's result only for layout, without a new rule.
+  const separator = withUnit ? value.lastIndexOf(' ') : -1;
+  const number = separator < 0 ? value : value.slice(0, separator);
+  const unit = separator < 0 ? undefined : value.slice(separator + 1);
   return (
     <div className={`metric-card metric-card--${tone}`}>
       <div className="metric-heading">
@@ -496,7 +522,10 @@ function MetricSummary({
           <Icon name={icon} />
         </span>
       </div>
-      <p className="metric-value">{value}</p>
+      <p className="metric-value">
+        <span>{number}</span>
+        {unit && <span className="metric-unit"> {unit}</span>}
+      </p>
       <p className="metric-description">{description}</p>
     </div>
   );

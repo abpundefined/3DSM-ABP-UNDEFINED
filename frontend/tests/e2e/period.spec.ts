@@ -57,7 +57,7 @@ test('trocar o período atualiza a URL, a frase e a consulta', async ({
   await expect
     .poll(() => requests.at(-1)?.searchParams.get('periodo'))
     .toBe('7d');
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('3,7500');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('3,75 kWh');
 
   await page.goBack();
   await expect(select).toHaveValue('24h');

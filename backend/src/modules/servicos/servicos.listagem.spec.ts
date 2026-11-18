@@ -5,6 +5,7 @@ jest.mock("./servicos.repository", () => ({
 
 import { ConfigService } from "@nestjs/config";
 import { ServicosRepository } from "./servicos.repository";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosService } from "./servicos.service";
 
 describe("ServicosService.listarServicos", () => {
@@ -12,6 +13,7 @@ describe("ServicosService.listarServicos", () => {
   const service = new ServicosService(
     { listarComLocalizacao } as unknown as ServicosRepository,
     {} as ConfigService,
+    new RegistroIntegracoesService(),
   );
 
   const servicoBase = {

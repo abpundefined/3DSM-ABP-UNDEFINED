@@ -63,6 +63,7 @@
   --login-alert-background: #302b1d;
   --login-alert-border: #81703d;
   --login-alert-text: #f0d98f;
+  --chart-emissao: #f0b65a;
 }
 
 :root[data-theme='dark'] body {

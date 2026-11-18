@@ -23,6 +23,20 @@
   color: var(--text-muted);
   font-size: 12px;
 }
+.live-dashboard-toolbar .live-connection-error {
+  margin: 0;
+  min-width: 0;
+}
+.live-connection-error p {
+  color: inherit;
+}
+.live-dashboard-toolbar strong {
+  overflow-wrap: anywhere;
+}
+.metrics-grid .metric-value {
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
 .live-dashboard-toolbar .button {
   min-height: 42px;
   padding: 10px 15px;

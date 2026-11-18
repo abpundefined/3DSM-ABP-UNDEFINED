@@ -458,6 +458,20 @@ Esta tabela é um **controle de validação**, não um registro de testes já re
 
 Repetir a avaliação nas telas de ranking, comparação, mapa, detalhe do serviço e administração **somente após a implementação que permita avaliar os fluxos reais** na `develop`. Registrar data, commit, versão, problemas, gravidade, evidências e vínculo às melhorias. As rotas da #85 eram provisórias na versão de referência. **Estado: pendente, sem resultados atribuídos nesta atualização.**
 
+#### Complemento de implementação e validação — 16/11/2026
+
+Este complemento atualiza o encaminhamento de **P01, P03 e P07** da [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101). A avaliação e as gravidades de 13/11 acima permanecem como registro histórico. A implementação parte da `develop` em `3f8559699796c0bb0bdc6af9ae3f1c1f0e882633`, na branch `fix/101-p01-p03-p07-integrado`, integrando o commit original `ad6e662` com resolução dos conflitos do PR #177; aguarda revisão da equipe, sem encerramento da issue.
+
+| Achado | Atualização do encaminhamento | Validação e situação |
+| --- | --- | --- |
+| P01 | Estado de conexão por consulta, com distinção entre falha geral e parcial e entre primeiro acesso sem dados e falha após carga válida. | Primeiro acesso e queda após carga registrados com a API local desligada; recuperação após religar a API conferida. E2E cobre também recuperação automática e preservação dos dados. Implementado localmente, aguardando revisão. |
+| P03 | Indicadores e cards reutilizam `formatEnergy` e `formatEmission`, já existentes e usados pelo painel lateral. Unidade junto ao valor; Wh/kWh e gCO₂e/kgCO₂e seguem a regra atual do PR #177, inclusive `< 0,01` para positivos abaixo da precisão. | Capturas reais de indicadores e painel; testes com valores mínimos, zero, ausentes e inválidos. Formatadores, contrato da API e painel lateral não foram modificados. Implementado localmente, aguardando revisão. |
+| P07 | Alerta único com mensagem curta e orientação para nova tentativa; falha isolada dos indicadores preserva os serviços e os indicadores válidos anteriores. | Falha isolada, recuperação e ausência de alertas duplicados verificadas com respostas controladas no E2E. A captura de falha geral usa a API local realmente desligada. Implementado localmente, aguardando revisão. |
+
+**Evidências e resultados:** [registro da versão atualizada, dez capturas de antes/depois e procedimento](evidencias/issue-101-2026-11-16/README.md); as [dez capturas originais de `ad6e662`](evidencias/issue-101/README.md) foram preservadas e identificadas como anteriores ao PR #177. Lint, formatação e build aprovados; **107 testes unitários aprovados**; Playwright em desktop e mobile: **119 aprovados, um ignorado** (teste da barra móvel ignorado no projeto desktop). Axe sem violações nos cenários e critérios automatizados selecionados; isso não substitui avaliação manual de acessibilidade.
+
+P02, P04, P05, P06 e P08 não foram implementados nesta entrega. Revisão da equipe, aparelho físico e leitor de tela manual permanecem pendentes. Este registro não representa uma segunda rodada de avaliação das páginas provisórias nem execução de testes com usuários. O roteiro e as referências SUS da seção 5.3 foram preservados.
+
 ### 5.3. Testes com usuários — Sprint 3
 
 > **Atividade:** [#81 — Avaliação heurística e avaliação com usuários (IHC05/IHC06)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81)  

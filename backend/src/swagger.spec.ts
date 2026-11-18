@@ -17,6 +17,9 @@ jest.mock("./modules/indicadores/ranking.service", () => ({
 jest.mock("./modules/mapa/mapa.service", () => ({
   MapaService: class MapaService {},
 }));
+jest.mock("./modules/saude/saude.service", () => ({
+  SaudeService: class SaudeService {},
+}));
 jest.mock("./modules/servicos/servicos.service", () => ({
   ServicosService: class ServicosService {},
 }));
@@ -37,10 +40,13 @@ import { ConfiguracaoController } from "./modules/configuracao/configuracao.cont
 import { ConfiguracaoService } from "./modules/configuracao/configuracao.service";
 import { IndicadoresController } from "./modules/indicadores/indicadores.controller";
 import { IndicadoresService } from "./modules/indicadores/indicadores.service";
+import { IntensidadeController } from "./modules/indicadores/intensidade.controller";
 import { RankingController } from "./modules/indicadores/ranking.controller";
 import { RankingService } from "./modules/indicadores/ranking.service";
 import { MapaController } from "./modules/mapa/mapa.controller";
 import { MapaService } from "./modules/mapa/mapa.service";
+import { SaudeController } from "./modules/saude/saude.controller";
+import { SaudeService } from "./modules/saude/saude.service";
 import { ServicosController } from "./modules/servicos/servicos.controller";
 import { ServicosService } from "./modules/servicos/servicos.service";
 import { OPCOES_LIMITE_LOGIN } from "./modules/auth/limite-login";
@@ -59,8 +65,10 @@ describe("Swagger", () => {
         ColetasController,
         ConfiguracaoController,
         IndicadoresController,
+        IntensidadeController,
         RankingController,
         MapaController,
+        SaudeController,
         ServicosController,
       ],
       providers: [
@@ -71,6 +79,7 @@ describe("Swagger", () => {
         { provide: IndicadoresService, useValue: {} },
         { provide: RankingService, useValue: {} },
         { provide: MapaService, useValue: {} },
+        { provide: SaudeService, useValue: {} },
         { provide: ServicosService, useValue: {} },
         { provide: JwtService, useValue: {} },
       ],
@@ -138,8 +147,10 @@ describe("Swagger", () => {
       ["/coletas/{id}", "get"],
       ["/coletas/servico/{servicoId}/ultima-valida", "get"],
       ["/indicadores", "get"],
+      ["/intensidade/horarios", "get"],
       ["/ranking", "get"],
       ["/mapa", "get"],
+      ["/saude", "get"],
       ["/configuracao", "get"],
       ["/configuracao", "put"],
     ]) {
@@ -167,6 +178,40 @@ describe("Swagger", () => {
         expect.objectContaining({ name: "metrica" }),
         expect.objectContaining({ name: "limite" }),
       ]),
+    );
+    expect(document.paths["/intensidade/horarios"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "regiao" }),
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+      ]),
+    );
+    const intensidadeResponseSchema =
+      document.components.schemas.IntensidadeHorariosResponseDto;
+    expect(intensidadeResponseSchema.properties).toHaveProperty("fusoHorario");
+    expect(intensidadeResponseSchema.properties).toHaveProperty("matriz");
+    expect(intensidadeResponseSchema.properties).toHaveProperty("melhorJanela");
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "type",
+      "array",
+    );
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "items.type",
+      "array",
+    );
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "items.items.$ref",
+      "#/components/schemas/MatrizCelulaDto",
+    );
+    const intensidadeSchema =
+      document.paths["/intensidade/horarios"].get.responses["200"].content?.[
+        "application/json"
+      ].schema;
+    expect(intensidadeSchema).toEqual(
+      expect.objectContaining({
+        $ref: "#/components/schemas/IntensidadeHorariosResponseDto",
+      }),
     );
     const rankingSchema =
       document.paths["/ranking"].get.responses["200"].content?.[
@@ -204,6 +249,7 @@ describe("Swagger", () => {
     for (const [path, method] of [
       ["/coletas", "post"],
       ["/servicos/sync", "post"],
+      ["/saude", "get"],
     ]) {
       expect(document.paths[path][method].security).toEqual([{ bearer: [] }]);
       expect(document.paths[path][method].responses["401"]).toBeDefined();
@@ -225,6 +271,7 @@ describe("Swagger", () => {
       ["/indicadores", "get", "200", "application/json"],
       ["/ranking", "get", "200", "application/json"],
       ["/mapa", "get", "200", "application/json"],
+      ["/saude", "get", "200", "application/json"],
       ["/configuracao", "get", "200", "application/json"],
       ["/configuracao", "put", "200", "application/json"],
     ]) {

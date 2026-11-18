@@ -13,6 +13,7 @@ import { IndicadoresModule } from "./modules/indicadores/indicadores.module";
 import { MapaModule } from "./modules/mapa/mapa.module";
 import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
 import { SimulacaoModule } from "./modules/simulacao/simulacao.module";
+import { SaudeModule } from "./modules/saude/saude.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SimulacaoModule } from "./modules/simulacao/simulacao.module";
     MapaModule,
     ComparacaoModule,
     SimulacaoModule,
+    SaudeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

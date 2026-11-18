@@ -7,6 +7,7 @@ jest.mock("../../../database/prisma.service", () => ({
 import { GUARDS_METADATA } from "@nestjs/common/constants";
 import { ColetasController } from "../../coletas/coletas.controller";
 import { ConfiguracaoController } from "../../configuracao/configuracao.controller";
+import { SaudeController } from "../../saude/saude.controller";
 import { ServicosController } from "../../servicos/servicos.controller";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 
@@ -25,6 +26,7 @@ describe("Rotas protegidas por JWT", () => {
     ["POST /coletas", ColetasController, "criar"],
     ["POST /servicos/sync", ServicosController, "sincronizar"],
     ["PUT /configuracao", ConfiguracaoController, "atualizar"],
+    ["GET /saude", SaudeController, "obter"],
   ])("%s exige JWT", (_rota, controller, metodo) => {
     expect(guardsDa(controller, metodo)).toContain(JwtAuthGuard);
   });

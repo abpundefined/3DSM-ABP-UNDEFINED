@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { comTimeout } from "../../common/utils/com-timeout";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 
 const CARBON_FETCH_TIMEOUT_MS = 8000;
 
@@ -12,7 +13,15 @@ export class CarbonApiService {
   private readonly logger = new Logger(CarbonApiService.name);
   private readonly apiUrl = process.env.CARBON_API_URL;
 
-  async obterIntensidadeCarbono(regionCode: string): Promise<number> {
+  constructor(private readonly registro: RegistroIntegracoesService) {}
+
+  obterIntensidadeCarbono(regionCode: string): Promise<number> {
+    return this.registro.medir("apiCarbono", () =>
+      this.consultarIntensidade(regionCode),
+    );
+  }
+
+  private async consultarIntensidade(regionCode: string): Promise<number> {
     try {
       if (!this.apiUrl) {
         throw new Error("CARBON_API_URL não configurada.");

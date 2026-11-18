@@ -53,6 +53,13 @@ export interface PontoSerieTemporalPorServico extends PontoSerieTemporal {
   nome: string;
 }
 
+export interface DadoMatrizIntensidade {
+  diaSemana: number;
+  hora: number;
+  media: number;
+  quantidadeAmostras: number;
+}
+
 interface PontoHistoricoServicoRaw extends Omit<
   PontoHistoricoServico,
   "coletas" | "ativo" | "indisponivel" | "semMetricas"
@@ -127,6 +134,30 @@ export class IndicadoresRepository {
         AND c."iniciadaEm" <= ${dataFim}
       GROUP BY c."servicoId", s."nome", 3
       ORDER BY c."servicoId", 3
+    `;
+  }
+
+  obterDadosMatrizIntensidade(
+    dataInicio: Date,
+    dataFim: Date,
+    regiao?: string,
+  ): Promise<DadoMatrizIntensidade[]> {
+    const codigoRegiao = regiao ?? null;
+
+    return this.prisma.$queryRaw<DadoMatrizIntensidade[]>`
+      SELECT
+        EXTRACT(DOW FROM c."iniciadaEm" AT TIME ZONE 'America/Sao_Paulo')::int AS "diaSemana",
+        EXTRACT(HOUR FROM c."iniciadaEm" AT TIME ZONE 'America/Sao_Paulo')::int AS "hora",
+        AVG(c."intensidadeCarbonoGCo2ePorKwh")::double precision AS "media",
+        COUNT(*)::int AS "quantidadeAmostras"
+      FROM "Coleta" c
+      WHERE c."estadoCalculo" = 'CONCLUIDO'
+        AND c."intensidadeCarbonoGCo2ePorKwh" IS NOT NULL
+        AND c."iniciadaEm" >= ${dataInicio}
+        AND c."iniciadaEm" <= ${dataFim}
+        AND (${codigoRegiao}::text IS NULL OR c."regiaoCodigoNaColeta" = ${codigoRegiao})
+      GROUP BY 1, 2
+      ORDER BY 1, 2
     `;
   }
 
