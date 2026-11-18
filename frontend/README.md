@@ -131,9 +131,9 @@ Para enviar JSON, informe `Content-Type` e serialize o corpo explicitamente.
 `npm.cmd test` executa os testes existentes com Node e os testes React com
 Vitest e Testing Library. Para gerar o relatório de cobertura localmente, rode
 `npm.cmd run test:coverage`; o CI publica `frontend-coverage` como artefato.
-Ranking e comparação ainda são páginas em construção: os testes verificam o
-conteúdo disponível, e estados de carregamento, vazio e erro dependem da
-implementação dessas páginas.
+Os testes do ranking cobrem carregamento, dados, estados vazios, erro com nova
+tentativa, troca de métrica e demonstração sem acessar a API. A comparação
+ainda é uma página em construção; o teste verifica o aviso atual.
 
 ## Testes de navegador
 
