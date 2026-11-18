@@ -111,6 +111,54 @@ function normalizeCollection(
 }
 
 type QueryStatus = 'pending' | 'ready' | 'failed';
+type ServiceStateFilter = 'all' | 'active' | 'unavailable' | 'noMetrics';
+type ServiceSort = 'default' | 'emissions' | 'energy' | 'name';
+
+function serviceMetricValue(
+  service: LiveService,
+  metric: 'emissions' | 'energy',
+) {
+  return metric === 'energy'
+    ? (toFiniteNumber(service.latestCollection?.energiaKwh) ??
+        toFiniteNumber(service.energiaKwh))
+    : (toFiniteNumber(service.latestCollection?.emissaoGCo2e) ??
+        toFiniteNumber(service.emissaoGCo2e));
+}
+
+function matchesServiceState(service: LiveService, filter: ServiceStateFilter) {
+  switch (filter) {
+    case 'active':
+      return service.estadoAtual === 'DISPONIVEL';
+    case 'unavailable':
+      return service.estadoAtual === 'INDISPONIVEL';
+    case 'noMetrics':
+      return service.estadoAtual === 'SEM_METRICAS';
+    default:
+      return true;
+  }
+}
+
+function parseServiceStateFilter(value: string): ServiceStateFilter {
+  switch (value) {
+    case 'active':
+    case 'unavailable':
+    case 'noMetrics':
+      return value;
+    default:
+      return 'all';
+  }
+}
+
+function parseServiceSort(value: string): ServiceSort {
+  switch (value) {
+    case 'emissions':
+    case 'energy':
+    case 'name':
+      return value;
+    default:
+      return 'default';
+  }
+}
 
 export default function LiveDashboard({
   periodQuery,
@@ -136,6 +184,10 @@ export default function LiveDashboard({
   );
   const [drawerReturnFocusEl, setDrawerReturnFocusEl] =
     useState<HTMLElement | null>(null);
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [serviceStateFilter, setServiceStateFilter] =
+    useState<ServiceStateFilter>('all');
+  const [serviceSort, setServiceSort] = useState<ServiceSort>('default');
   const activeRequest = useRef<object | null>(null);
 
   const refresh = useCallback(
@@ -303,6 +355,30 @@ export default function LiveDashboard({
     selectedServiceId === null
       ? null
       : (services.find((service) => service.id === selectedServiceId) ?? null);
+  const normalizedSearch = serviceSearch.trim().toLocaleLowerCase('pt-BR');
+  const filteredServices = services.filter(
+    (service) =>
+      service.nome.toLocaleLowerCase('pt-BR').includes(normalizedSearch) &&
+      matchesServiceState(service, serviceStateFilter),
+  );
+  const visibleServices =
+    serviceSort === 'default'
+      ? filteredServices
+      : [...filteredServices].sort((left, right) => {
+          if (serviceSort === 'name') {
+            return left.nome.localeCompare(right.nome, 'pt-BR');
+          }
+
+          const leftValue = serviceMetricValue(left, serviceSort);
+          const rightValue = serviceMetricValue(right, serviceSort);
+          if (leftValue === null || rightValue === null) {
+            if (leftValue === rightValue) {
+              return left.nome.localeCompare(right.nome, 'pt-BR');
+            }
+            return leftValue === null ? 1 : -1;
+          }
+          return rightValue - leftValue;
+        });
 
   const handleSelectService = useCallback(
     (service: LiveService, triggerElement: HTMLElement | null) => {
@@ -468,19 +544,119 @@ export default function LiveDashboard({
                 Serviços da última atualização bem-sucedida.
               </p>
             )}
-            <ul
-              className="service-card-grid"
-              aria-label="Cards dos serviços monitorados"
-            >
-              {services.map((service) => (
-                <li key={service.id}>
-                  <ServiceCard
-                    service={service}
-                    onSelect={handleSelectService}
-                  />
-                </li>
-              ))}
-            </ul>
+            <div className="live-service-controls">
+              <label>
+                Buscar por nome
+                <input
+                  aria-label="Buscar por nome"
+                  type="search"
+                  value={serviceSearch}
+                  onChange={(event) => setServiceSearch(event.target.value)}
+                  placeholder="Ex.: API de pagamentos"
+                />
+              </label>
+              <label>
+                Estado
+                <select
+                  aria-label="Estado"
+                  value={serviceStateFilter}
+                  onChange={(event) =>
+                    setServiceStateFilter(
+                      parseServiceStateFilter(event.target.value),
+                    )
+                  }
+                >
+                  <option value="all">Todos</option>
+                  <option value="active">Ativos</option>
+                  <option value="unavailable">Indisponíveis</option>
+                  <option value="noMetrics">Sem métricas</option>
+                </select>
+              </label>
+              <label>
+                Ordenar por
+                <select
+                  aria-label="Ordenar por"
+                  value={serviceSort}
+                  onChange={(event) =>
+                    setServiceSort(parseServiceSort(event.target.value))
+                  }
+                >
+                  <option value="default">Ordem original</option>
+                  <option value="emissions">Emissão (maior primeiro)</option>
+                  <option value="energy">Consumo (maior primeiro)</option>
+                  <option value="name">Nome (A-Z)</option>
+                </select>
+              </label>
+            </div>
+            {(normalizedSearch || serviceStateFilter !== 'all') && (
+              <div
+                className="live-service-active-filters"
+                aria-label="Filtros ativos"
+              >
+                {normalizedSearch && (
+                  <button
+                    type="button"
+                    className="live-service-filter-chip"
+                    aria-label={`Remover filtro de nome ${serviceSearch.trim()}`}
+                    onClick={() => setServiceSearch('')}
+                  >
+                    Nome: {serviceSearch.trim()}{' '}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                )}
+                {serviceStateFilter !== 'all' && (
+                  <button
+                    type="button"
+                    className="live-service-filter-chip"
+                    aria-label="Remover filtro de estado"
+                    onClick={() => setServiceStateFilter('all')}
+                  >
+                    Estado:{' '}
+                    {serviceStateFilter === 'active'
+                      ? 'Ativos'
+                      : serviceStateFilter === 'unavailable'
+                        ? 'Indisponíveis'
+                        : 'Sem métricas'}{' '}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                )}
+              </div>
+            )}
+            <p className="live-service-count" role="status" aria-live="polite">
+              {visibleServices.length} de {services.length} serviços
+            </p>
+            {visibleServices.length === 0 ? (
+              <FeedbackPanel
+                kind="empty"
+                title="Nenhum serviço encontrado"
+                description="Tente outro nome ou altere o filtro de estado."
+              >
+                <button
+                  className="button button--primary"
+                  type="button"
+                  onClick={() => {
+                    setServiceSearch('');
+                    setServiceStateFilter('all');
+                  }}
+                >
+                  Limpar filtros
+                </button>
+              </FeedbackPanel>
+            ) : (
+              <ul
+                className="service-card-grid"
+                aria-label="Cards dos serviços monitorados"
+              >
+                {visibleServices.map((service) => (
+                  <li key={service.id}>
+                    <ServiceCard
+                      service={service}
+                      onSelect={handleSelectService}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="chart-footnote">
               {latestCollectionDate
                 ? `Coleta válida mais recente: ${formatRelativeTime(latestCollectionDate, now)} (${latestCollectionDate.toLocaleString('pt-BR')}).`

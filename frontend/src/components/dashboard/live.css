@@ -52,6 +52,61 @@
   border-radius: var(--radius);
   background: var(--surface);
 }
+.live-service-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px 26px 8px;
+}
+.live-service-controls label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+.live-service-controls input,
+.live-service-controls select {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.live-service-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 26px 0;
+}
+.live-service-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft-green);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.live-service-filter-chip:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--green-forest) 35%, transparent);
+  outline-offset: 2px;
+}
+.live-service-count {
+  margin: 0;
+  padding: 12px 26px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
 .service-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -204,6 +259,15 @@
   margin: 0;
 }
 @media (max-width: 760px) {
+  .live-service-controls {
+    grid-template-columns: 1fr;
+    padding: 16px 16px 8px;
+  }
+  .live-service-active-filters,
+  .live-service-count {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
   .service-card-grid {
     padding: 16px 16px 8px;
   }
