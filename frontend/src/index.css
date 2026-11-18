@@ -890,6 +890,12 @@ h1 {
 .login-field {
   min-width: 0;
 }
+.login-field-error {
+  margin: 7px 0 0;
+  color: var(--login-alert-text);
+  font-size: 13px;
+  font-weight: 600;
+}
 .login-input {
   display: block;
   width: 100%;
@@ -906,6 +912,9 @@ h1 {
 .login-input:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--login-accent) 35%, transparent);
   outline-offset: 2px;
+}
+.login-input[aria-invalid='true'] {
+  border-color: var(--login-alert-border);
 }
 .login-input::placeholder {
   color: var(--login-muted);
