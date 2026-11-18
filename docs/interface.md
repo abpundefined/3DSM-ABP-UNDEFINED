@@ -699,6 +699,18 @@ A Rodada 1 de 13/11 registrou a avaliação e o encaminhamento dos achados na se
 
 As [capturas complementares do PR #167](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167) documentam situações da interface na etapa de avaliação, **antes das melhorias**. As imagens comparativas **depois** de cada correção deverão ser adicionadas quando a #101 for implementada e testada, com links às entregas. Correções concluídas e resultados de novos testes serão registrados nas entregas correspondentes.
 
+#### Atualização de implementação — 18/11/2026
+
+| Item | Implementação e validação registrada |
+| --- | --- |
+| P01, P03 e P07 | Implementados no [PR #184](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/184), integrado à `develop`. |
+| P02 e P06 | Implementados no [PR #193](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/193), integrado à `develop`. |
+| P04 | Busca, filtros de estado, chips removíveis e ordenação implementados na lista conectada; Playwright e Axe aprovados. |
+| P05 | Ação de Administração após autenticação entregue com a [#78](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/78). |
+| P08 | Validação visual por campo, foco no primeiro campo inválido e associação acessível da mensagem; Playwright e Axe aprovados. |
+
+As capturas antes/depois e os cenários automatizados de P04/P08 estão em [docs/evidencias/issue-101-2026-11-18/](evidencias/issue-101-2026-11-18/README.md). Os testes de interface usam fixtures controladas para reproduzir os estados necessários.
+
 ---
 
 ## ✅ 7. Situação da Entrega — Sprint 2 (registro histórico)

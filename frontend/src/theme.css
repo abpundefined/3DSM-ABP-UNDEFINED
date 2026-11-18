@@ -188,6 +188,8 @@
 }
 :root[data-theme='dark'] .service-filters input,
 :root[data-theme='dark'] .service-filters select,
+:root[data-theme='dark'] .live-service-controls input,
+:root[data-theme='dark'] .live-service-controls select,
 :root[data-theme='dark'] .ranking-select select {
   border-color: #526157;
   color: var(--text);

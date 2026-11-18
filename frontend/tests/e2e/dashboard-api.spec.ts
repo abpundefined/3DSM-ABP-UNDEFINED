@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   page,
@@ -122,6 +123,170 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(indicators.getByText('Serviços indisponíveis')).toBeVisible();
   await expect(indicators.getByText('1', { exact: true })).toHaveCount(2);
   await expect(indicators).toContainText('1 sem métricas · 0 removidos');
+});
+
+test('lista conectada filtra e ordena serviços pelos dados retornados', async ({
+  page,
+}, testInfo) => {
+  const services = [
+    {
+      id: 21,
+      idExterno: 'beta',
+      nome: 'Beta API',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'INDISPONIVEL',
+      energiaKwh: 4,
+      emissaoGCo2e: 1000,
+    },
+    {
+      id: 22,
+      idExterno: 'alpha',
+      nome: 'Alpha API',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'DISPONIVEL',
+      energiaKwh: 2,
+      emissaoGCo2e: 2000,
+    },
+    {
+      id: 23,
+      idExterno: 'gamma',
+      nome: 'Gamma API',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'SEM_METRICAS',
+      energiaKwh: null,
+      emissaoGCo2e: null,
+    },
+    {
+      id: 24,
+      idExterno: 'delta',
+      nome: 'Delta API',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'DISPONIVEL',
+      energiaKwh: 1,
+      emissaoGCo2e: 500,
+    },
+    {
+      id: 25,
+      idExterno: 'archive',
+      nome: 'Archive API',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'REMOVIDO',
+      energiaKwh: 8,
+      emissaoGCo2e: 4000,
+    },
+  ];
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(services),
+    }),
+  );
+  await page.route('**/api/coletas/servico/*/ultima-valida', (route) =>
+    route.fulfill({ status: 404 }),
+  );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        energiaTotalKwh: 15,
+        emissaoTotalGCo2e: 7500,
+        servicos: {
+          disponiveis: 2,
+          indisponiveis: 1,
+          semMetricas: 1,
+          removidos: 1,
+        },
+      }),
+    }),
+  );
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ intervaloColetaSegundos: 60 }),
+    }),
+  );
+
+  await page.goto('/');
+  const cards = page.getByRole('list', {
+    name: 'Cards dos serviços monitorados',
+  });
+  const serviceNames = () => cards.locator('h3').allTextContents();
+  await expect(cards.getByRole('listitem')).toHaveCount(5);
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Beta API',
+      'Alpha API',
+      'Gamma API',
+      'Delta API',
+      'Archive API',
+    ]);
+
+  await page.getByLabel('Ordenar por').selectOption('emissions');
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Archive API',
+      'Alpha API',
+      'Beta API',
+      'Delta API',
+      'Gamma API',
+    ]);
+  await page.getByLabel('Ordenar por').selectOption('energy');
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Archive API',
+      'Beta API',
+      'Alpha API',
+      'Delta API',
+      'Gamma API',
+    ]);
+  await page.getByLabel('Ordenar por').selectOption('name');
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Alpha API',
+      'Archive API',
+      'Beta API',
+      'Delta API',
+      'Gamma API',
+    ]);
+
+  await page.getByLabel('Estado', { exact: true }).selectOption('active');
+  await expect.poll(serviceNames).toEqual(['Alpha API', 'Delta API']);
+  await page.getByLabel('Buscar por nome').fill('alpha');
+  await expect.poll(serviceNames).toEqual(['Alpha API']);
+  await expect(
+    page.getByRole('button', { name: 'Remover filtro de nome alpha' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Remover filtro de estado' }),
+  ).toBeVisible();
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+  if (testInfo.project.name === 'desktop') {
+    await page.screenshot({
+      path: testInfo.outputPath('p04-depois.png'),
+      fullPage: true,
+    });
+  }
+  await page
+    .getByRole('button', { name: 'Remover filtro de nome alpha' })
+    .click();
+  await expect.poll(serviceNames).toEqual(['Alpha API', 'Delta API']);
+  await page.getByRole('button', { name: 'Remover filtro de estado' }).click();
+  await expect(cards.getByRole('listitem')).toHaveCount(5);
+
+  await page.getByLabel('Estado', { exact: true }).selectOption('unavailable');
+  await expect.poll(serviceNames).toEqual(['Beta API']);
+  await page.getByLabel('Estado', { exact: true }).selectOption('noMetrics');
+  await expect.poll(serviceNames).toEqual(['Gamma API']);
 });
 
 test('falha nos indicadores não impede os cards e recuperação na atualização', async ({

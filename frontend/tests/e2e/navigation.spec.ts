@@ -68,12 +68,44 @@ test('rotas, histórico, foco e painel conectado funcionam sem backend', async (
 
 test('login valida campos e exibe a mensagem 401 retornada pelo backend', async ({
   page,
-}) => {
+}, testInfo) => {
   let submittedBody: { email?: string; senha?: string } | undefined;
   await page.goto('/login');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page.getByLabel('E-mail', { exact: true })).toBeFocused();
+  await expect(page.getByText('Informe seu e-mail.')).toBeVisible();
+  await expect(page.getByText('Informe sua senha.')).toBeVisible();
+  await expect(page.getByLabel('E-mail', { exact: true })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  await expect(page.getByLabel('Senha', { exact: true })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  const requiredFieldsAccessibility = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(requiredFieldsAccessibility.violations).toEqual([]);
+  if (testInfo.project.name === 'desktop') {
+    await page.screenshot({
+      path: testInfo.outputPath('p08-depois.png'),
+      fullPage: true,
+    });
+  }
+
+  await page.getByLabel('E-mail', { exact: true }).fill('email-invalido');
+  await expect(page.getByText('Informe um e-mail válido.')).toBeVisible();
+  await expect(page.getByLabel('E-mail', { exact: true })).toHaveAttribute(
+    'aria-describedby',
+    'email-error',
+  );
   await page.getByLabel('E-mail', { exact: true }).fill('teste@greener.local');
+  await expect(page.getByText('Informe um e-mail válido.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByLabel('Senha', { exact: true })).toBeFocused();
+  await expect(page.getByText('Informe sua senha.')).toBeVisible();
+
   await page.getByLabel('Senha', { exact: true }).fill('senha-ficticia');
   await page.getByRole('button', { name: 'Mostrar senha' }).click();
   await expect(page.getByLabel('Senha', { exact: true })).toHaveAttribute(
