@@ -1,58 +1,46 @@
-# Arquitetura atual — GreenER
+# Arquitetura do Sistema — GreenER
 
-A aplicação é um frontend SPA, um backend NestJS modular e um PostgreSQL. Não há múltiplos microsserviços de negócio implementados.
+A aplicação é composta por uma SPA em React + TypeScript, um backend modular em NestJS + TypeScript, um banco de dados PostgreSQL via Prisma ORM e integrações HTTP com APIs externas de métricas e intensidade de carbono.
 
 ```mermaid
 flowchart LR
-    React[React e TypeScript] -->|/api/servicos e /api/coletas| Vite[Proxy Vite]
-    Vite -->|remove /api| Nest[API NestJS]
+    React[Frontend React + Vite] -->|/api/*| Vite[Proxy / Nginx]
+    Vite -->|remove /api| Nest[API REST NestJS]
     Nest --> Prisma[Prisma ORM]
     Prisma --> PG[(PostgreSQL)]
-    Timer[Monitoramento periódico] --> Descoberta[ServicosService]
+    Timer[MonitoramentoService] --> Descoberta[ServicosService]
     Timer --> Coletor[MonitoramentoService]
-    Descoberta --> Metrics[API externa de métricas]
+    Descoberta --> Metrics[GreenER Metrics API]
     Coletor --> Metrics
-    Descoberta --> Prisma
-    Coletor --> Prisma
+    Coletor --> Calculos[CalculosService]
+    Calculos --> Carbon[GreenER Carbon Intensity API]
 ```
 
-## Componentes implementados
+## Módulos e Componentes Implementados
 
-| Componente | Responsabilidade e limite atual |
+| Camada / Módulo | Responsabilidade |
 | --- | --- |
-| `frontend/src/pages` | Dashboard público, formulário de login e página 404, com React Router. O login chama o backend; não há ainda uma tela para editar a configuração administrativa. |
-| `frontend/src/components` | Layout, feedback, gráficos demonstrativos e painel conectado `LiveDashboard`. |
-| `frontend/src/services/api.ts` | Cliente JSON por caminhos relativos, erros HTTP e cancelamento por signal fornecido. Não valida o JSON em runtime. |
-| `frontend/src/hooks/usePageTitle.ts` | Título da página. A lógica de consultas periódicas ainda está no componente LiveDashboard. |
-| `backend/src/modules/servicos` | Descobre, normaliza e sincroniza serviços; lista registros persistidos via repository. |
-| `backend/src/modules/monitoramento` | Inicia ciclo ao subir o módulo, sincroniza descoberta e coleta sequencialmente os serviços não removidos. Persiste diretamente no Prisma. |
-| `backend/src/modules/coletas` | API de registro/histórico/última coleta válida, DTOs e repository próprio. O coletor automático não passa por esse service. |
-| `backend/src/database` | PrismaService e verificação das tabelas necessárias. |
-| `backend/prisma` | Esquema e migrações versionadas, incluindo Região, Serviço, Coleta, Usuário e Configuração. |
+| `frontend/src/pages` | Rotas públicas (`/`, `/?demo=1`, `/ranking`, `/comparar`, `/mapa`, `/servicos/:id`, `/metodologia`, `/login`) e rota protegida `/admin` via React Router. |
+| `frontend/src/components` | Layout responsivo, seletor global de período (`PeriodProvider`), cards e painel lateral de serviço, gráficos Recharts, mapa/globo interativo (`d3-geo` + Leaflet + MapLibre), painel de administração e saúde das integrações. |
+| `frontend/src/services/api.ts` | Cliente HTTP relativo em `/api` com tratamento tipado (`ApiError`) e cancelamento por `AbortSignal`. |
+| `backend/src/modules/servicos` | Descoberta e sincronização periódica com a API de métricas via `ServicosRepository`. |
+| `backend/src/modules/monitoramento` | Orquestração periódica de descoberta e coleta respeitando intervalos dinâmicos (`/configuracao`) e timeouts explícitos. |
+| `backend/src/modules/calculos` | Cálculo de energia (`kWh`) por recurso (CPU, RAM, disco e rede) e emissões (`gCO₂e`) com consulta à API de intensidade de carbono. |
+| `backend/src/modules/coletas` | Registro, histórico com filtros e consulta à última coleta válida (`ColetasRepository`). |
+| `backend/src/modules/indicadores` | Consolidação por período (`PeriodoDto`), série temporal (`/indicadores/serie`), ranking (`/ranking`) e matriz 7×24 de intensidade horária (`/intensidade/horarios`). |
+| `backend/src/modules/mapa` | Agregação geográfica e série de emissões por intervalo para serviços com e sem coordenadas (`/mapa`). |
+| `backend/src/modules/comparacao` | Comparação alinhada de totais e séries temporais de 2 a 5 serviços (`/comparacao`). |
+| `backend/src/modules/simulacao` | Simulação de emissões caso um serviço rodasse em outra região monitorada (`/servicos/:id/simulacao-regiao`). |
+| `backend/src/modules/saude` | Monitoramento em memória do estado e tempo de resposta do agregador, da API de carbono e da taxa de falha das coletas (`/saude`). |
+| `backend/src/modules/auth` e `configuracao` | Autenticação JWT (`POST /auth/login`), seed do administrador inicial (`AdminSeedService`) e parametrização em runtime (`/configuracao`). |
 
-## Fluxo de dados
+## Fluxo de Dados
 
-1. O backend verifica conexão/schema e inicia monitoramento, por padrão a cada 30 segundos.
-2. A descoberta recebe `/services`, valida a lista e sincroniza os registros. Novos/retornados aguardam coleta como `DESCONHECIDO`; ausentes de uma lista válida tornam-se `REMOVIDO`.
-3. O coletor consulta `/metrics/{idExterno}`, grava resultado e atualiza estado. O histórico anterior é preservado.
-4. O frontend consulta `/servicos` e a última coleta `SUCESSO` de cada serviço, atualizando a cada 30 segundos. Essa coleta pode ser antiga.
-5. O modo `?demo=1` usa fixtures locais e não alimenta o banco ou os indicadores reais.
+1. Ao iniciar, o backend valida variáveis obrigatórias (`validar-ambiente.ts`), verifica o schema PostgreSQL e cria o administrador inicial quando ainda não existe.
+2. O `MonitoramentoService` executa ciclos periódicos (lendo `ConfiguracaoMonitoramento` sem reiniciar o servidor) para sincronizar `/services` e coletar `/metrics/{idExterno}`.
+3. Para coletas válidas com duração positiva, o `CalculosService` estima a energia elétrica (`kWh`), consulta a intensidade de carbono regional (`gCO₂e/kWh`) e persiste a coleta com `estadoCalculo = CONCLUIDO`.
+4. O frontend consulta os endpoints via proxy `/api`, mantendo estado de período compartilhado na URL e no contexto (`PeriodProvider`), com fallback visual para o modo `?demo=1` sem backend.
 
-No Compose, os nomes de rede são `postgres`, `backend` e `frontend`. O navegador usa a porta publicada 5173; Vite encaminha para `http://backend:3000`. O backend usa PostgreSQL interno em `postgres:5432`.
+No Docker Compose, a rede interna resolve `postgres:5432` para o banco e `http://backend:3000` para o proxy do frontend, publicando a interface web em `http://localhost:5173` e a API/Swagger em `http://localhost:3000`.
 
-## Decisões e melhorias necessárias
-
-- A base modular e a injeção permitem substituir persistência/agendador em testes isolados.
-- A separação em repositories existe nos módulos de serviços, coletas e indicadores; monitoramento orquestra integrações sem acessar Prisma diretamente.
-- A regra de ausência de métricas está duplicada e diverge entre registro manual e automático; deve ter uma implementação compartilhada.
-- A leitura de localização não corresponde ao objeto `location` oficial. É necessário preservar a região original antes da integração de carbono.
-- Coleta não tem timeout explícito nem trava de ciclo; o intervalo gravado não usa o intervalo real recebido.
-- A carga do dashboard depende do sucesso de todas as consultas individuais. Extrair a coordenação para service/hook e isolar as falhas facilita teste e manutenção.
-
-Não criar contexts/providers ou padrões de projeto sem uma necessidade de estado compartilhado/regra que os justifique. As mudanças recomendadas organizam responsabilidades já existentes.
-
-## Autenticação e configuração
-
-`POST /auth/login` valida o e-mail e a senha do administrador inicial criado a partir das variáveis de ambiente e retorna um JWT. `GET /configuracao` é público; `PUT /configuracao` exige esse JWT. A interface de login já está integrada, mas o fluxo ainda redireciona para o dashboard público e não existe uma tela de administração. Ranking, comparação e mapa permanecem planejados.
-
-Consulte [plano de entregas](plano-de-entregas.md), [API implementada](api.md), [execução](execucao.md) e [revisão da Sprint 1](sprints/revisao-sprint-1.md).
+Consulte também [documentação da API](api.md), [memória de cálculo](calculos.md), [guia de execução](execucao.md) e [plano de entregas](plano-de-entregas.md).
