@@ -147,12 +147,12 @@
 :root[data-theme='dark'] .demo-toolbar--active strong {
   color: #e7f6ea;
 }
-:root[data-theme='dark'] .button--demo-exit {
+:root[data-theme='dark'] .button--secondary {
   border-color: #3d5a45;
   color: #e7f6ea;
   background: #1d3324;
 }
-:root[data-theme='dark'] .button--demo-exit:hover {
+:root[data-theme='dark'] .button--secondary:hover {
   background: #26422f;
 }
 :root[data-theme='dark'] .chart-switch,

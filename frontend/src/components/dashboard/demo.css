@@ -61,14 +61,6 @@
 .demo-toolbar--active strong {
   color: #123a1f;
 }
-.button--demo-exit {
-  background: #fff;
-  color: #123a1f;
-  border-color: #b7d1ad;
-}
-.button--demo-exit:hover {
-  background: #eef4e8;
-}
 .demo-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 335px;
@@ -674,7 +666,7 @@
     height: 16px;
   }
   .demo-toolbar p {
-    font-size: 11px;
+    display: none;
   }
   .demo-toolbar strong {
     font-size: 12px;

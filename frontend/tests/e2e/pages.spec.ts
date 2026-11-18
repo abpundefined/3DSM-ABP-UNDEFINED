@@ -113,6 +113,7 @@ test('Administração aparece no menu só para usuário autenticado', async ({
     testInfo.project.name === 'mobile'
       ? 'Navegação inferior'
       : 'Navegação principal';
+  await page.route('**/api/saude', (route) => route.fulfill({ status: 500 }));
   await page.addInitScript(() => {
     localStorage.setItem('@greener-abp:token', 'token-salvo');
   });

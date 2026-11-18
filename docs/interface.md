@@ -472,6 +472,21 @@ Este complemento atualiza o encaminhamento de **P01, P03 e P07** da [#101](https
 
 P02, P04, P05, P06 e P08 não foram implementados nesta entrega. Revisão da equipe, aparelho físico e leitor de tela manual permanecem pendentes. Este registro não representa uma segunda rodada de avaliação das páginas provisórias nem execução de testes com usuários. O roteiro e as referências SUS da seção 5.3 foram preservados.
 
+#### Complemento de implementação e validação — 17/11/2026 (P02 e P06)
+
+Este complemento registra a implementação dos achados **P02 e P06** da [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101), com base na `develop` no commit `40332d8`. A avaliação e as gravidades de 13/11 permanecem como registro histórico, e a #101 continua aberta.
+
+| Achado | Atualização do encaminhamento | Validação e situação |
+| --- | --- | --- |
+| P02 | O card sem coleta válida mostra o motivo. Se nunca houve coleta, aparece “Sem coleta válida” e “Nenhuma coleta válida foi registrada para este serviço”, sem data. Se o serviço não está ativo e há uma coleta anterior, aparece “Sem coleta válida no momento” com a data real da última coleta válida, no horário de Brasília. Se a data vier ausente ou inválida, o card informa que a data não foi informada. Serviço ativo com coleta válida não recebe aviso. | Testes unitários da regra e do componente; E2E com serviço ativo, indisponível com coleta antiga, sem métricas e sem nenhuma coleta; Axe nos temas claro e escuro. Aguardando revisão. |
+| P06 | “Ver demonstração” passou a botão secundário. O rótulo de saída passou de “Voltar ao estado vazio” para “Sair da demonstração”, porque o destino é o dashboard, que pode ter serviços. No celular (até 520 px) o aviso da demonstração mantém o título e esconde a frase explicativa. O topo do dashboard, conectado e em demonstração, mostra “X ativos de Y monitorados”; os serviços removidos ficam fora do total e o contador não aparece sem serviços carregados. | Testes unitários do contador (singular, plural e milhar); E2E do botão, do rótulo, do contador e do aviso compacto nos dois viewports; Axe nos temas claro e escuro. Aguardando revisão. |
+
+**Evidências e resultados:** [registro, capturas de antes e depois e procedimento](evidencias/issue-101-2026-11-17/README.md). As capturas usam respostas controladas da API (não o backend real), com os mesmos dados no antes e no depois.
+
+**Limitações:** a regra do P02 trata como “coleta anterior” o serviço que não está ativo e tem uma coleta válida registrada; um serviço ativo com coleta antiga não recebe aviso, porque não há um limite de antiguidade definido. A ergonomia no celular físico e a avaliação manual com leitor de tela seguem pendentes.
+
+P04, P08 e os achados novos do teste com usuários não foram implementados nesta entrega.
+
 ### 5.3. Testes com usuários — Sprint 3
 
 > **Atividade:** [#81 — Avaliação heurística e avaliação com usuários (IHC05/IHC06)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81)  

@@ -4,6 +4,7 @@ import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
 import DashboardDemo from '../components/dashboard/DashboardDemo';
 import LiveDashboard from '../components/dashboard/LiveDashboard';
+import ServiceCounter from '../components/dashboard/ServiceCounter';
 import { demoTotals } from '../mocks/dashboard';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
@@ -59,14 +60,18 @@ export default function Dashboard() {
         </div>
         <Link
           to={isDemo ? '/' : '/?demo=1'}
-          className={`button ${isDemo ? 'button--demo-exit' : 'button--accent'}`}
+          className="button button--secondary"
         >
-          {isDemo ? 'Voltar ao estado vazio' : 'Ver demonstração'}
+          {isDemo ? 'Sair da demonstração' : 'Ver demonstração'}
           <Icon name={isDemo ? 'back' : 'arrow'} />
         </Link>
       </section>
       {isDemo ? (
         <>
+          <ServiceCounter
+            active={demoTotals.active}
+            monitored={demoTotals.services}
+          />
           <section aria-label="Indicadores gerais" className="metrics-grid">
             <MetricCard
               label="Consumo energético total"
