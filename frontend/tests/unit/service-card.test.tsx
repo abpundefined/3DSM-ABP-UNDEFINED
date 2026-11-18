@@ -74,4 +74,52 @@ describe('ServiceCard', () => {
     expect(screen.getByText('20,00 Wh')).toBeVisible();
     expect(screen.getByText('500,00 gCO₂e')).toBeVisible();
   });
+
+  it('avisa que não há coleta válida quando nunca houve nenhuma', () => {
+    render(<ServiceCard service={{ ...service, latestCollection: null }} />);
+
+    expect(screen.getByText('Sem coleta válida')).toBeVisible();
+    expect(
+      screen.getByText(
+        'Nenhuma coleta válida foi registrada para este serviço.',
+      ),
+    ).toBeVisible();
+  });
+
+  it('mostra a data da última coleta válida quando o serviço saiu do ar', () => {
+    render(
+      <ServiceCard service={{ ...service, estadoAtual: 'INDISPONIVEL' }} />,
+    );
+
+    expect(screen.getByText('Sem coleta válida no momento')).toBeVisible();
+    const data = screen.getByText(/^15\/11\/2026/);
+    expect(data.tagName).toBe('TIME');
+    expect(data).toHaveAttribute('datetime', '2026-11-15T10:00:00.000Z');
+    expect(data).toHaveTextContent(/07:00$/);
+  });
+
+  it('não inventa data quando a coleta anterior não tem uma data válida', () => {
+    render(
+      <ServiceCard
+        service={{
+          ...service,
+          estadoAtual: 'SEM_METRICAS',
+          latestCollection: { ...service.latestCollection!, iniciadaEm: '' },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        'Valores da última coleta válida; a data não foi informada.',
+      ),
+    ).toBeVisible();
+    expect(document.querySelector('time')).toBeNull();
+  });
+
+  it('não mostra aviso para serviço ativo com coleta válida', () => {
+    render(<ServiceCard service={service} />);
+
+    expect(screen.queryByText(/Sem coleta válida/)).toBeNull();
+  });
 });

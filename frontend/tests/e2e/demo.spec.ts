@@ -79,7 +79,7 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
     'Dados fictícios',
   );
   expect(apiRequests).toEqual([]);
-  await page.getByRole('link', { name: 'Voltar ao estado vazio' }).click();
+  await page.getByRole('link', { name: 'Sair da demonstração' }).click();
   await expect(
     page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
   ).toBeVisible();
