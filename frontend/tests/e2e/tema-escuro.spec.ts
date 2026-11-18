@@ -79,6 +79,7 @@ test('administração com erro de campo', async ({ page }) => {
   await page.route('**/api/configuracao', (route) =>
     route.fulfill({ json: configuracao }),
   );
+  await page.route('**/api/saude', (route) => route.fulfill({ status: 500 }));
   await page.addInitScript(
     (key) => localStorage.setItem(key, 'token'),
     TOKEN_KEY,
