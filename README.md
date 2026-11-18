@@ -1,3 +1,6 @@
+[![CI](https://img.shields.io/github/actions/workflow/status/MarcusVRDN/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI)](https://github.com/MarcusVRDN/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Cobertura de testes](https://img.shields.io/badge/cobertura-relat%C3%B3rio%20Jest-blue?logo=jest)](https://github.com/MarcusVRDN/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+
 <h1>🚀 3DSM-ABP-UNDEFINED</h1>
 <p>
     Este repositório contém o desenvolvimento do projeto interdisciplinar da disciplina de
@@ -12,6 +15,7 @@
     <li><a href="#sobre">🌱 Sobre o Projeto</a></li>
     <li><a href="#tecnologias">🛠️ Tecnologias Utilizadas</a></li>
     <li><a href="#comorodar">🚀 Como Rodar o Projeto</a></li>
+    <li><a href="#ci-testes">✅ CI e Testes</a></li>
     <li><a href="#requisitos">📑 Requisitos</a></li>
     <li><a href="#userstories">📝 User Stories</a></li>
     <li><a href="#planejamento-de-sprints">🚀 Planejamento de Sprints</a></li>
@@ -85,6 +89,11 @@ docker compose up --build
 </ul>
 <p>A lista, as últimas coletas e os indicadores agregados já são consumidos do backend. Energia e CO₂e são consolidados a partir das coletas calculadas nas últimas 24 horas; autenticação e análises avançadas ainda não estão implementadas. O teste completo dos três containers permanece pendente de homologação registrada. Consulte a <a href="./docs/sprints/revisao-sprint-1.md">revisão técnica e seus limites</a>.</p>
 <p>Execução nativa exige Node 24.x/npm 11.x e ambiente configurado na pasta do backend; instruções em <a href="./backend/README.md">backend/README.md</a> e <a href="./frontend/README.md">frontend/README.md</a>. As rotas implementadas estão na <a href="./docs/api.md">documentação da API</a>.</p>
+
+<hr>
+
+<h2 id="ci-testes">✅ CI e Testes</h2>
+<p>O workflow executa os testes unitários, typecheck, lint, formatação e builds, além de publicar o relatório de cobertura do Jest como artifact. A inclusão dos testes E2E com Playwright no GitHub Actions foi postergada para uma issue futura, para manter o feedback do CI rápido no ciclo de TDD e evitar, neste momento, o download demorado dos binários dos browsers e a orquestração complexa de containers.</p>
 
 <hr>
 
