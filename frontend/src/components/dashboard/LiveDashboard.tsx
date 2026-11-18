@@ -7,7 +7,9 @@ import {
 } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
+import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
+import ServiceCounter from './ServiceCounter';
 import ServiceQuickDrawer from './ServiceQuickDrawer';
 import type {
   BackendCollection,
@@ -343,8 +345,11 @@ export default function LiveDashboard({
       ? 'Últimos dados válidos · coletas calculadas no período analisado'
       : 'Coletas calculadas no período analisado';
 
+  const serviceCount = countServices(services);
+
   return (
     <>
+      {services.length > 0 && <ServiceCounter {...serviceCount} />}
       <div className="live-dashboard-toolbar">
         <div
           className={

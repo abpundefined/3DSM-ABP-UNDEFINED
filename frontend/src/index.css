@@ -654,6 +654,14 @@ h1 {
 .button--accent:hover {
   background: #0b2a15;
 }
+.button--secondary {
+  background: #fff;
+  color: #123a1f;
+  border-color: #b7d1ad;
+}
+.button--secondary:hover {
+  background: #eef4e8;
+}
 .text-link {
   display: inline-flex;
   align-items: center;

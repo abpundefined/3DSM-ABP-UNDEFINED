@@ -94,6 +94,46 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.service-card-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  background: var(--soft-green);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.service-card-notice .icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--green-forest);
+}
+.service-card-notice p {
+  margin: 0;
+}
+.service-card-notice strong {
+  display: block;
+  color: var(--text);
+  font-weight: 650;
+}
+.service-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+}
+.service-counter .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--green-forest);
+}
 .service-card-header {
   display: flex;
   justify-content: space-between;

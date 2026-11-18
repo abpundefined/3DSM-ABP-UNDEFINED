@@ -5,6 +5,7 @@ import {
   formatServiceLocation,
   toFiniteNumber,
 } from '../../utils/formatters';
+import { describeServiceCollection } from '../../utils/serviceCollection';
 import {
   formatServiceMetric,
   formatServiceStatus,
@@ -31,6 +32,7 @@ export default function ServiceCard({
   const emissionsGCo2e =
     toFiniteNumber(metrics?.emissaoGCo2e) ??
     toFiniteNumber(service.emissaoGCo2e);
+  const collectionNotice = describeServiceCollection(service);
   const nameId = `service-card-${service.id}`;
 
   const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -78,6 +80,39 @@ export default function ServiceCard({
           {status.label}
         </span>
       </header>
+
+      {collectionNotice && (
+        <div className="service-card-notice">
+          <Icon name="clock" />
+          <p>
+            {collectionNotice.kind === 'never' ? (
+              <>
+                <strong>Sem coleta válida</strong>
+                <span>
+                  Nenhuma coleta válida foi registrada para este serviço.
+                </span>
+              </>
+            ) : (
+              <>
+                <strong>Sem coleta válida no momento</strong>
+                {collectionNotice.label && collectionNotice.dateTime ? (
+                  <span>
+                    Valores da última coleta válida, em{' '}
+                    <time dateTime={collectionNotice.dateTime}>
+                      {collectionNotice.label}
+                    </time>
+                    .
+                  </span>
+                ) : (
+                  <span>
+                    Valores da última coleta válida; a data não foi informada.
+                  </span>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       <dl className="service-card-impact">
         <div>
