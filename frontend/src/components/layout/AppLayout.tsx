@@ -39,7 +39,7 @@ export default function AppLayout() {
     try {
       window.localStorage.setItem('greener-theme', theme);
     } catch {
-      // The selected theme remains active for the current page session.
+      // Sem armazenamento, o tema escolhido vale apenas enquanto a página estiver aberta.
     }
   }, [theme]);
 

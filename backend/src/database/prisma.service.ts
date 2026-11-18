@@ -11,6 +11,7 @@ export class PrismaService
   constructor(configService: ConfigService) {
     const adapter = new PrismaPg({
       connectionString: configService.getOrThrow<string>("DATABASE_URL"),
+      options: "-c TimeZone=UTC",
     });
 
     super({ adapter });

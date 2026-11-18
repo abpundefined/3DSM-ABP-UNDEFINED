@@ -692,6 +692,20 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     });
   });
 
+  it("registra uma mensagem clara quando o agregador está fora do ar", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
+
+    await expect(servicosService.discoverServices()).rejects.toThrow(
+      "Não foi possível conectar para consultar a lista de serviços externos.",
+    );
+
+    expect(registro.obter("agregador")).toMatchObject({
+      sucesso: false,
+      mensagemErro:
+        "Não foi possível conectar para consultar a lista de serviços externos.",
+    });
+  });
+
   it("delega a verificação do schema para o repository", async () => {
     await servicosService.verificarSchema();
 

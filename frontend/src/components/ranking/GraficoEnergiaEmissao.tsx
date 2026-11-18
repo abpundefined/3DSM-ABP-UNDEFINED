@@ -1,9 +1,7 @@
 import { useId } from 'react';
 import type { ItemRanking } from '../../types/ranking';
-import { fraseDeIntensidade } from '../../utils/ranking';
+import { escalaDaMetrica, fraseDeIntensidade } from '../../utils/ranking';
 import BarrasHorizontais from './BarrasHorizontais';
-
-const WH_POR_KWH = 1000;
 
 export default function GraficoEnergiaEmissao({
   itens,
@@ -11,6 +9,14 @@ export default function GraficoEnergiaEmissao({
   itens: ItemRanking[];
 }) {
   const tituloId = useId();
+  const energia = escalaDaMetrica(
+    'energia',
+    itens.map((item) => item.energiaKwh),
+  );
+  const emissao = escalaDaMetrica(
+    'emissao',
+    itens.map((item) => item.emissaoGCo2e),
+  );
 
   return (
     <section className="ranking-bloco" aria-labelledby={tituloId}>
@@ -21,28 +27,28 @@ export default function GraficoEnergiaEmissao({
       </p>
       <div className="ranking-par">
         <div>
-          <h3>Energia (Wh)</h3>
+          <h3>Energia ({energia.unidade})</h3>
           <BarrasHorizontais
             barras={itens.map(({ servicoId, nome, energiaKwh }) => ({
               servicoId,
               nome,
-              valor: energiaKwh * WH_POR_KWH,
+              valor: energiaKwh * energia.fator,
             }))}
-            rotulo="Energia (Wh)"
-            unidade="Wh"
+            rotulo={`Energia (${energia.unidade})`}
+            unidade={energia.unidade}
             cor="var(--chart-energia)"
           />
         </div>
         <div>
-          <h3>CO₂e (g)</h3>
+          <h3>Emissão ({emissao.unidade})</h3>
           <BarrasHorizontais
             barras={itens.map(({ servicoId, nome, emissaoGCo2e }) => ({
               servicoId,
               nome,
-              valor: emissaoGCo2e,
+              valor: emissaoGCo2e * emissao.fator,
             }))}
-            rotulo="CO₂e (g)"
-            unidade="gCO₂e"
+            rotulo={`Emissão (${emissao.unidade})`}
+            unidade={emissao.unidade}
             cor="var(--chart-emissao)"
           />
         </div>

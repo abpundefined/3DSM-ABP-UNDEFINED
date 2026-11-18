@@ -164,6 +164,13 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
   await page.route('**/api/coletas/servico/12/ultima-valida', (route) =>
     route.fulfill({ status: 404 }),
   );
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ intervaloColetaSegundos: 60 }),
+    }),
+  );
   await page.goto('/');
 
   const indicators = page.getByLabel('Indicadores gerais');

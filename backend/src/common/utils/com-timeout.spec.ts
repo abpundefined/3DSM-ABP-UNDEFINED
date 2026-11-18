@@ -34,12 +34,22 @@ describe("comTimeout", () => {
     expect(sinalRecebido?.aborted).toBe(true);
   });
 
-  it("propaga erros que não são de tempo limite", async () => {
+  it("propaga erros que não são de tempo limite nem de conexão", async () => {
+    await expect(
+      comTimeout(1000, "a API de teste", () =>
+        Promise.reject(new Error("HTTP Status 500")),
+      ),
+    ).rejects.toThrow("HTTP Status 500");
+  });
+
+  it("troca a falha de conexão do fetch por uma mensagem clara", async () => {
     await expect(
       comTimeout(1000, "a API de teste", () =>
         Promise.reject(new TypeError("fetch failed")),
       ),
-    ).rejects.toThrow("fetch failed");
+    ).rejects.toThrow(
+      "Não foi possível conectar para consultar a API de teste.",
+    );
   });
 
   it("cancela o temporizador quando a operação termina", async () => {

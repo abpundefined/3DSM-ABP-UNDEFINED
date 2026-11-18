@@ -26,6 +26,9 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
+| GET | `/indicadores/serie` | 200, objeto | Retorna a série temporal de energia e emissão do período, global e, opcionalmente, por serviço. |
+| GET | `/ranking` | 200, objeto | Ordena os serviços por energia ou emissão no período e lista à parte os serviços sem dados. |
+| GET | `/intensidade/horarios` | 200, objeto | Retorna a intensidade de carbono média por dia da semana e hora (matriz 7 × 24) e a melhor janela de 3 horas. |
 | GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
 | GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
 | GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
@@ -60,7 +63,7 @@ Cada item do array de resposta contém:
 | `indisponivel` | Contagem numérica de coletas com falha; zero em intervalos vazios. |
 | `semMetricas` | Contagem numérica de coletas sem métricas; zero em intervalos vazios. |
 
-Intervalos sem dados são incluídos na série. Neles, as métricas e `coletas` vêm como `null`; as contagens de estado vêm como zero. Os valores de energia e emissão são somados apenas para coletas com `estadoCalculo = CONCLUIDO`.
+Intervalos sem dados são incluídos na série. Neles, as métricas e `coletas` vêm como `null`; as contagens de estado vêm como zero. Os valores de energia e emissão são somados apenas para coletas com `estadoCalculo = CONCLUIDO`. Já `cpuMedia` e `memoriaMediaMb` são médias de todas as coletas do intervalo com essas medições, inclusive aquelas em que o cálculo de carbono falhou, porque CPU e memória são medidas mesmo quando a API de carbono está indisponível. Por isso esses valores podem diferir das médias de `GET /comparacao`, que considera apenas coletas com `estadoCalculo = CONCLUIDO`.
 
 ## Login e configuração administrativa
 
@@ -217,6 +220,42 @@ Exemplo de resposta:
 ```
 
 `energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
+
+## Série temporal de indicadores
+
+`GET /indicadores/serie` aceita os mesmos parâmetros de período de `GET /indicadores` e mais dois:
+
+| Query | Formato |
+| --- | --- |
+| `granularidade` | Opcional: `hora` ou `dia`. Se omitida, usa hora para períodos de até 48 horas e dia acima disso. |
+| `porServico` | Opcional: `true` ou `false`. Com `true`, a resposta inclui a série de cada serviço. |
+
+A resposta contém `periodo`, `granularidade`, `intervalos` (início de cada intervalo em ISO 8601 UTC), `global` e `servicos`. Cada ponto de `global` e de `servicos[].serie` traz `inicio`, `energiaKwh` e `emissaoGCo2e`; intervalos sem dados vêm com `null`. Energia e emissão somam apenas coletas com `estadoCalculo = CONCLUIDO`. Sem `porServico=true`, `servicos` vem vazio. Com ele, entram todos os serviços monitorados, inclusive os sem dados (série toda em `null`); um serviço `REMOVIDO` só entra se tiver dados no período, como em `GET /ranking` e `GET /mapa`. Granularidade ou `porServico` inválidos retornam 400.
+
+## Ranking de serviços
+
+`GET /ranking` aceita os mesmos parâmetros de período de `GET /indicadores` e mais dois:
+
+| Query | Formato |
+| --- | --- |
+| `metrica` | Opcional: `energia` (padrão) ou `emissao`. |
+| `limite` | Opcional: inteiro de 1 a 100; padrão 10. |
+
+A resposta contém `periodo`, `metrica`, `itens` e `semDados`. Cada item traz `posicao`, `servicoId`, `nome`, `energiaKwh`, `emissaoGCo2e` e `coletasValidas`. Os totais somam apenas coletas com `estadoCalculo = CONCLUIDO`. A ordem é decrescente pela métrica escolhida; no empate, por nome e depois por `servicoId`. Serviços sem valor na métrica vão para `semDados`, ordenados por nome; um serviço `REMOVIDO` sem dados não aparece em nenhuma das listas. Parâmetros inválidos retornam 400.
+
+## Melhor horário por intensidade de carbono
+
+`GET /intensidade/horarios` aceita os mesmos parâmetros de período de `GET /indicadores`; sem nenhum deles, considera os últimos 30 dias. O parâmetro opcional `regiao` filtra pelo código da região (`regiaoCodigoNaColeta`); sem ele, a matriz considera as coletas de todas as regiões. `regiao` vazio ou período inválido retornam 400; uma região sem coletas retorna 200 com a matriz vazia.
+
+A resposta contém:
+
+| Campo | Tipo / significado |
+| --- | --- |
+| `fusoHorario` | Sempre `America/Sao_Paulo`; dias e horas da matriz seguem esse fuso. |
+| `matriz` | 7 linhas (0 = domingo a 6 = sábado) por 24 colunas (horas 0 a 23). Cada célula traz `media` (intensidade média em gCO₂e/kWh) e `quantidadeAmostras`; sem amostras, ambos vêm `null`. |
+| `melhorJanela` | Objeto com `diaSemana`, `horaInicio` e `mediaJanela`, ou `null` quando não há 3 horas seguidas com amostras. |
+
+A média usa apenas coletas com `estadoCalculo = CONCLUIDO`. A melhor janela é o trecho de 3 horas seguidas com a menor média ponderada pela quantidade de amostras. A busca percorre as 168 horas da semana com volta, então a janela pode atravessar a meia-noite (por exemplo, 23h–02h) e a virada de sábado para domingo. No empate, vale a janela que começa primeiro a partir de domingo 0h.
 
 ## Comparação de serviços
 

@@ -39,7 +39,7 @@ test('mostra o ranking por energia e troca para emissão', async ({ page }) => {
   expect(consultas.at(-1)?.get('limite')).toBe('10');
   await semViolacoes(page);
 
-  const emissao = page.getByRole('button', { name: 'Emissão (gCO₂e)' });
+  const emissao = page.getByRole('button', { name: 'Emissão', exact: true });
   await emissao.click();
   await expect(emissao).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveURL(/\/ranking\?metrica=emissao$/);
@@ -111,7 +111,7 @@ test('mantém o ranking na tela enquanto atualiza a métrica', async ({
     page.getByRole('heading', { name: 'Ranking por energia' }),
   ).toBeVisible();
 
-  await page.getByRole('button', { name: 'Emissão (gCO₂e)' }).click();
+  await page.getByRole('button', { name: 'Emissão', exact: true }).click();
   await expect(page.getByText('Atualizando o ranking...')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Ranking por energia' }),
@@ -184,10 +184,10 @@ test('funciona com ?demo=1 sem chamar o backend', async ({ page }) => {
     page.locator('.ranking-bloco').first().locator('.recharts-bar-rectangle'),
   ).toHaveCount(8);
   await expect(page.locator('.ranking-bloco').first()).toContainText(
-    'Energia (kWh)',
+    'Energia (Wh)',
   );
 
-  await page.getByRole('button', { name: 'Emissão (gCO₂e)' }).click();
+  await page.getByRole('button', { name: 'Emissão', exact: true }).click();
   await expect(page).toHaveURL(/\/ranking\?demo=1&metrica=emissao$/);
   await expect(
     page.getByRole('heading', { name: 'Ranking por emissão' }),
@@ -207,6 +207,9 @@ test('sem rolagem lateral em 375px e em 1920px', async ({ page }) => {
     );
     expect(sobra, `${width}px`).toBeLessThanOrEqual(0);
   }
+
+  const celulaDeEnergia = page.locator('.ranking-tabela tbody td').nth(1);
+  await expect(celulaDeEnergia).toHaveCSS('white-space', 'nowrap');
 });
 
 test('modo escuro sem violação do Axe', async ({ page }) => {

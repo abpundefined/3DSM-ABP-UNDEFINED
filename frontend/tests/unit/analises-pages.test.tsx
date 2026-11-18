@@ -128,7 +128,7 @@ describe('Ranking', () => {
     renderRanking('/ranking?periodo=7d');
     await screen.findByRole('table');
 
-    const botao = screen.getByRole('button', { name: 'Emissão (gCO₂e)' });
+    const botao = screen.getByRole('button', { name: /^Emissão/ });
     await user.click(botao);
 
     expect(botao).toHaveAttribute('aria-pressed', 'true');

@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  METRICAS,
   abreviarNome,
   consultaDoRanking,
   ehRespostaRanking,
+  escalaDaMetrica,
   escreverMetrica,
   formatarNumero,
   formatarPeriodoConsiderado,
@@ -174,4 +176,36 @@ test('abrevia nomes longos no eixo e mantém os curtos', () => {
   assert.equal(abreviarNome('Notification Worker'), 'Notification Work…');
   assert.equal(abreviarNome('Serviço de relatórios'), 'Serviço de relató…');
   assert.equal(abreviarNome('Notification Worke'), 'Notification Worke');
+});
+
+test('os botões de métrica mostram só o nome, sem unidade', () => {
+  assert.equal(METRICAS.energia.rotulo, 'Energia');
+  assert.equal(METRICAS.emissao.rotulo, 'Emissão');
+});
+
+test('escolhe a unidade do eixo pelo maior valor da métrica', () => {
+  assert.deepEqual(escalaDaMetrica('energia', [0.03, 0.02]), {
+    unidade: 'Wh',
+    fator: 1000,
+  });
+  assert.deepEqual(escalaDaMetrica('energia', [0.5, 2]), {
+    unidade: 'kWh',
+    fator: 1,
+  });
+  assert.deepEqual(escalaDaMetrica('energia', [0.9999999]), {
+    unidade: 'kWh',
+    fator: 1,
+  });
+  assert.deepEqual(escalaDaMetrica('emissao', [0.6, 2]), {
+    unidade: 'gCO₂e',
+    fator: 1,
+  });
+  assert.deepEqual(escalaDaMetrica('emissao', [1500, 20]), {
+    unidade: 'kgCO₂e',
+    fator: 0.001,
+  });
+  assert.deepEqual(escalaDaMetrica('energia', []), {
+    unidade: 'Wh',
+    fator: 1000,
+  });
 });
