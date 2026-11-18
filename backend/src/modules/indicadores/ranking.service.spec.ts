@@ -102,4 +102,68 @@ describe("RankingService", () => {
       new Date(fim),
     );
   });
+
+  it("usa energia por padrão, desempata por id e omite removidos sem dados", async () => {
+    listarServicosParaRanking.mockResolvedValue([
+      { id: 2, nome: "Alpha", estadoAtual: "DISPONIVEL" },
+      { id: 1, nome: "Alpha", estadoAtual: "DISPONIVEL" },
+      { id: 3, nome: "Zeta", estadoAtual: "DISPONIVEL" },
+      { id: 4, nome: "Sem dados", estadoAtual: "DISPONIVEL" },
+      { id: 5, nome: "Sem dados", estadoAtual: "DISPONIVEL" },
+      { id: 6, nome: "Removido", estadoAtual: "REMOVIDO" },
+    ]);
+    somarImpactoPorServico.mockResolvedValue([
+      {
+        servicoId: 1,
+        energiaKwh: 5,
+        emissaoGCo2e: null,
+        coletasValidas: 1,
+      },
+      {
+        servicoId: 2,
+        energiaKwh: 5,
+        emissaoGCo2e: 1,
+        coletasValidas: 2,
+      },
+      {
+        servicoId: 3,
+        energiaKwh: null,
+        emissaoGCo2e: 8,
+        coletasValidas: 3,
+      },
+    ]);
+    const query = Object.assign(new RankingQueryDto(), {
+      inicio,
+      fim,
+      limite: undefined,
+    });
+
+    await expect(service.obterRanking(query)).resolves.toEqual({
+      periodo: { inicio, fim },
+      metrica: MetricaRanking.ENERGIA,
+      itens: [
+        {
+          posicao: 1,
+          servicoId: 1,
+          nome: "Alpha",
+          energiaKwh: 5,
+          emissaoGCo2e: 0,
+          coletasValidas: 1,
+        },
+        {
+          posicao: 2,
+          servicoId: 2,
+          nome: "Alpha",
+          energiaKwh: 5,
+          emissaoGCo2e: 1,
+          coletasValidas: 2,
+        },
+      ],
+      semDados: [
+        { servicoId: 4, nome: "Sem dados" },
+        { servicoId: 5, nome: "Sem dados" },
+        { servicoId: 3, nome: "Zeta" },
+      ],
+    });
+  });
 });

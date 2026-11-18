@@ -18,6 +18,9 @@ describe("ColetasService", () => {
   let service: ColetasService;
   const repository = {
     create: jest.fn(),
+    findMany: jest.fn(),
+    findLatestSuccessful: jest.fn(),
+    findById: jest.fn(),
   };
   const calculosService = {
     calcularEnergia: jest.fn(),
@@ -125,6 +128,83 @@ describe("ColetasService", () => {
     );
   });
 
+  it("preserva a mensagem existente para coleta sem métricas", async () => {
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 0,
+      mensagemErro: "Payload sem medições",
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.SEM_METRICAS,
+        mensagemErro: "Payload sem medições",
+      }),
+    );
+  });
+
+  it("preserva o estado de falha quando a coleta não tem métricas", async () => {
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.FALHA,
+      mensagemErro: "Falha na coleta",
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.FALHA,
+        mensagemErro: "Falha na coleta",
+        estadoCalculo: EstadoCalculoEnum.PENDENTE,
+      }),
+    );
+    expect(calculosService.calcularEnergia).not.toHaveBeenCalled();
+  });
+
+  it("registra falha de cálculo quando o serviço não existe", async () => {
+    servicosService.findById.mockResolvedValue(null);
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 12,
+      intervaloColetaSegundos: 27,
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(calculosService.calcularEmissao).not.toHaveBeenCalled();
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoColeta: EstadoColetaEnum.SUCESSO,
+        estadoCalculo: EstadoCalculoEnum.FALHA,
+        mensagemErro: "Falha no cálculo ambiental: Serviço não encontrado",
+      }),
+    );
+  });
+
+  it("usa mensagem genérica quando o cálculo rejeita sem um objeto Error", async () => {
+    calculosService.calcularEmissao.mockRejectedValue("falha desconhecida");
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 12,
+      intervaloColetaSegundos: 27,
+    };
+
+    await service.registrarColeta(dto);
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estadoCalculo: EstadoCalculoEnum.FALHA,
+        mensagemErro: "Falha no cálculo ambiental: Erro desconhecido",
+      }),
+    );
+  });
+
   it("persiste métricas como SUCESSO quando o cálculo de carbono falha", async () => {
     calculosService.calcularEmissao.mockRejectedValue(
       new Error("API de carbono indisponível"),
@@ -155,5 +235,50 @@ describe("ColetasService", () => {
       }),
     );
     expect(calculosService.calcularEnergia).toHaveBeenCalled();
+  });
+
+  it("delega a listagem do histórico ao repositório", async () => {
+    const filtros = { servicoId: 7 };
+    const historico = [{ id: 1 }];
+    repository.findMany.mockResolvedValue(historico);
+
+    await expect(service.listarHistorico(filtros)).resolves.toBe(historico);
+    expect(repository.findMany).toHaveBeenCalledWith(filtros);
+  });
+
+  it("retorna a última coleta válida no formato de fallback", async () => {
+    const ultimaColeta = { id: 1, estadoColeta: EstadoColetaEnum.SUCESSO };
+    repository.findLatestSuccessful.mockResolvedValue(ultimaColeta);
+
+    await expect(service.obterUltimaColetaValida(7)).resolves.toEqual({
+      fonte: "CACHE_FALLBACK",
+      mensagem: "Dados recuperados da última coleta válida preservada",
+      dados: ultimaColeta,
+    });
+    expect(repository.findLatestSuccessful).toHaveBeenCalledWith(7);
+  });
+
+  it("falha quando não há coleta válida para usar como fallback", async () => {
+    repository.findLatestSuccessful.mockResolvedValue(null);
+
+    await expect(service.obterUltimaColetaValida(7)).rejects.toThrow(
+      "Nenhuma coleta válida anterior encontrada para o serviço ID 7",
+    );
+  });
+
+  it("busca uma coleta pelo id", async () => {
+    const coleta = { id: 7 };
+    repository.findById.mockResolvedValue(coleta);
+
+    await expect(service.buscarPorId(7)).resolves.toBe(coleta);
+    expect(repository.findById).toHaveBeenCalledWith(7);
+  });
+
+  it("falha quando a coleta solicitada não existe", async () => {
+    repository.findById.mockResolvedValue(null);
+
+    await expect(service.buscarPorId(7)).rejects.toThrow(
+      "Coleta com id 7 não encontrada.",
+    );
   });
 });

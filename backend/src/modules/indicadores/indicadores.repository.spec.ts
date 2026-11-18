@@ -188,6 +188,26 @@ describe("IndicadoresRepository", () => {
     expect(sql).toContain("GROUP BY 1, 2");
   });
 
+  it("agrega intensidade sem restringir por região quando ela não é informada", async () => {
+    const inicio = new Date("2026-11-07T12:00:00.000Z");
+    const fim = new Date("2026-11-08T12:00:00.000Z");
+    const queryRaw = jest.fn().mockResolvedValue([]);
+    const repository = new IndicadoresRepository({
+      $queryRaw: queryRaw,
+    } as unknown as PrismaService);
+
+    await repository.obterDadosMatrizIntensidade(inicio, fim);
+
+    const [partes, ...valores] = queryRaw.mock.calls[0] as [
+      TemplateStringsArray,
+      ...unknown[],
+    ];
+    expect(valores).toEqual([inicio, fim, null, null]);
+    expect(partes.join("?")).toContain(
+      `AND (?::text IS NULL OR c."regiaoCodigoNaColeta" = ?)`,
+    );
+  });
+
   it("soma apenas coletas calculadas dentro do período solicitado", async () => {
     const inicio = new Date("2026-11-07T12:00:00.000Z");
     const fim = new Date("2026-11-08T12:00:00.000Z");
@@ -248,6 +268,42 @@ describe("IndicadoresRepository", () => {
       },
       _sum: { energiaKwh: true, emissaoGCo2e: true },
       _count: { id: true },
+    });
+  });
+
+  it("conta os serviços agrupados por estado", async () => {
+    const groupBy = jest.fn().mockResolvedValue([
+      { estadoAtual: "DISPONIVEL", _count: { _all: 3 } },
+      { estadoAtual: "REMOVIDO", _count: { _all: 1 } },
+    ]);
+    const repository = new IndicadoresRepository({
+      servico: { groupBy },
+    } as unknown as PrismaService);
+
+    await expect(repository.contarServicosPorEstado()).resolves.toEqual([
+      { estado: "DISPONIVEL", quantidade: 3 },
+      { estado: "REMOVIDO", quantidade: 1 },
+    ]);
+    expect(groupBy).toHaveBeenCalledWith({
+      by: ["estadoAtual"],
+      _count: { _all: true },
+    });
+  });
+
+  it("retorna a data da coleta mais recente, inclusive quando não há coleta", async () => {
+    const iniciadaEm = new Date("2026-11-08T12:00:00.000Z");
+    const aggregate = jest
+      .fn()
+      .mockResolvedValueOnce({ _max: { iniciadaEm } })
+      .mockResolvedValueOnce({ _max: { iniciadaEm: null } });
+    const repository = new IndicadoresRepository({
+      coleta: { aggregate },
+    } as unknown as PrismaService);
+
+    await expect(repository.buscarUltimaColetaEm()).resolves.toBe(iniciadaEm);
+    await expect(repository.buscarUltimaColetaEm()).resolves.toBeNull();
+    expect(aggregate).toHaveBeenCalledWith({
+      _max: { iniciadaEm: true },
     });
   });
 
