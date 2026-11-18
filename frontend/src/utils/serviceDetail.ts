@@ -92,7 +92,9 @@ export function buildServiceHistoryPath(serviceId: number): string {
   return `/servicos/${serviceId}`;
 }
 
-function formatCollectedTimestamp(isoDate: string | undefined): string {
+export function formatServiceCollectionTimestamp(
+  isoDate: string | undefined,
+): string {
   if (!isoDate) {
     return 'Sem coleta válida registrada';
   }
@@ -131,7 +133,7 @@ export function buildServiceDrawerSummary(
     regionCode: service.regiaoCodigo,
     status: formatServiceStatus(service.estadoAtual),
     locationLabel,
-    collectedAtLabel: formatCollectedTimestamp(metrics?.iniciadaEm),
+    collectedAtLabel: formatServiceCollectionTimestamp(metrics?.iniciadaEm),
     historyPath: buildServiceHistoryPath(service.id),
     cpu: formatServiceMetric(metrics?.cpuPercent, '%', 1),
     memory: formatServiceMetric(metrics?.memoryGb, 'GB'),

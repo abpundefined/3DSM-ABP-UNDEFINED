@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { simulacaoDemo } from '../../src/mocks/simulacao';
 
 const pages = [
   { path: '/ranking', heading: 'Ranking' },
   { path: '/comparar', heading: 'Comparar serviços' },
   { path: '/mapa', heading: 'Mapa de emissões' },
-  { path: '/servicos/7', heading: 'Serviço 7' },
+  { path: '/servicos/7', heading: 'Reports Engine' },
   { path: '/metodologia', heading: 'Como calculamos' },
 ];
 
@@ -15,6 +16,62 @@ for (const { path, heading } of pages) {
   }) => {
     const failures: string[] = [];
     page.on('pageerror', (error) => failures.push(error.message));
+    if (path === '/servicos/7') {
+      await page.route('**/api/servicos', (route) =>
+        route.fulfill({
+          json: [
+            {
+              id: 7,
+              idExterno: 'reports-engine',
+              nome: 'Reports Engine',
+              regiaoCodigo: 'ca-central',
+              localizacao: {
+                pais: 'Canadá',
+                regiao: 'Ontário',
+                cidade: 'Toronto',
+              },
+              estadoAtual: 'DISPONIVEL',
+            },
+          ],
+        }),
+      );
+      await page.route('**/api/servicos/7/historico**', (route) =>
+        route.fulfill({
+          json: [
+            {
+              inicio: '2026-11-15T13:00:00.000Z',
+              energiaKwh: 0.25,
+              emissaoGCo2e: 350,
+            },
+            {
+              inicio: '2026-11-15T14:00:00.000Z',
+              energiaKwh: 0.3,
+              emissaoGCo2e: 420,
+            },
+          ],
+        }),
+      );
+      await page.route('**/api/coletas/servico/7/ultima-valida', (route) =>
+        route.fulfill({
+          json: {
+            fonte: 'BANCO',
+            dados: {
+              iniciadaEm: '2026-11-15T14:00:00.000Z',
+              intervaloColetaSegundos: 30,
+              cpuPercent: 42,
+              memoryGb: 1.5,
+              diskGb: 10,
+              networkGb: 0.25,
+              energiaKwh: 0.3,
+              emissaoGCo2e: 420,
+            },
+          },
+        }),
+      );
+      await page.route('**/api/servicos/7/simulacao-regiao**', (route) =>
+        route.fulfill({ json: simulacaoDemo(7) }),
+      );
+    }
     await page.goto(path);
     await expect(
       page.getByRole('heading', { level: 1, name: heading }),
