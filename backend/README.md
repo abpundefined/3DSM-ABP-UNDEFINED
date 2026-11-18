@@ -79,7 +79,7 @@ npm.cmd run lint
 ```
 
 - `npm test`: roda todos os testes unitários, sem medir cobertura. É o comando do dia a dia.
-- `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se algum arquivo de `src/modules/calculos/*.service.ts` ou de `src/common/regras/` ficar abaixo de 80% em linhas, ramificações, funções ou instruções (`coverageThreshold` no `package.json`). **É o comando executado no CI**: rode-o antes de abrir um PR, principalmente se alterar cálculo ou classificação de estados. O relatório fica em `backend/coverage/`, ignorado pelo Git.
+- `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se a cobertura global ou a cobertura de qualquer arquivo de negócio incluído ficar abaixo de 80% em linhas, funções, ramificações (branches) ou instruções (`coverageThreshold` no `package.json`). A medição inclui exclusivamente arquivos `*.service.ts` e `*.repository.ts`; exclui explicitamente `src/generated/prisma`, `src/main.ts`, `src/app.module.ts`, `src/app.service.ts`, demais módulos (`*.module.ts`) e arquivos de configuração (`*.config.ts`). **É o comando executado no CI**: rode-o antes de abrir um PR. O relatório fica em `coverage/`, ignorado pelo Git.
 - O `npm run lint` verifica problemas sem alterar arquivos; use `npm run lint:fix` para corrigir automaticamente.
 
 ### Testes E2E de API (`npm run test:e2e`)

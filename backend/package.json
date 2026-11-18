@@ -82,18 +82,31 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.service.ts",
+      "**/*.repository.ts",
+      "!generated/prisma/**",
+      "!main.ts",
+      "!app.module.ts",
+      "!app.service.ts",
+      "!**/*.module.ts",
+      "!**/*.config.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "coverageThreshold": {
-      "./src/modules/calculos/**/*.service.ts": {
+      "global": {
         "branches": 80,
         "functions": 80,
         "lines": 80,
         "statements": 80
       },
-      "./src/common/regras/**/*.ts": {
+      "./src/**/*.service.ts": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      },
+      "./src/**/*.repository.ts": {
         "branches": 80,
         "functions": 80,
         "lines": 80,

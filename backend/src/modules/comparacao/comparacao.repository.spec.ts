@@ -44,6 +44,31 @@ describe("ComparacaoRepository", () => {
     });
   });
 
+  it("preserva totais e médias nulos quando não há medições", async () => {
+    const groupBy = jest.fn().mockResolvedValue([
+      {
+        servicoId: 3,
+        _sum: { energiaKwh: null, emissaoGCo2e: null },
+        _avg: { cpuPercent: null, memoryGb: null },
+        _count: { _all: 0 },
+      },
+    ]);
+    const repository = new ComparacaoRepository({
+      coleta: { groupBy },
+    } as unknown as PrismaService);
+
+    await expect(repository.obterTotais([3], inicio, fim)).resolves.toEqual([
+      {
+        servicoId: 3,
+        energiaKwh: null,
+        emissaoGCo2e: null,
+        cpuMedia: null,
+        memoriaMediaMb: null,
+        coletasValidas: 0,
+      },
+    ]);
+  });
+
   it.each([
     ["hora", "hour", "UTC"],
     ["dia", "day", "America/Sao_Paulo"],
