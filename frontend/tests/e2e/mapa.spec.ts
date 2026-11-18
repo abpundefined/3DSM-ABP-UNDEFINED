@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { horariosDemo } from '../../src/mocks/horarios';
 import { mapaDemo } from '../../src/mocks/mapa';
 
 const estiloDeTeste = {
@@ -29,6 +30,9 @@ async function simularMapa(page: Page) {
     chamadas.push(route.request().url());
     return route.fulfill({ json: mapaDemo });
   });
+  await page.route('**/api/intensidade/horarios**', (route) =>
+    route.fulfill({ json: horariosDemo(null) }),
+  );
   return chamadas;
 }
 
