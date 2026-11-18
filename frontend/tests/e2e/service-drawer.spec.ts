@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { simulacaoDemo } from '../../src/mocks/simulacao';
 
 async function mockDashboardWithServices(page: Page) {
   await page.route('**/api/servicos', (route) =>
@@ -86,6 +87,23 @@ async function mockDashboardWithServices(page: Page) {
   await page.route('**/api/coletas/servico/13/ultima-valida', (route) =>
     route.fulfill({ status: 404 }),
   );
+
+  await page.route('**/api/servicos/12/historico**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          inicio: '2026-11-15T13:00:00.000Z',
+          energiaKwh: 1.2,
+          emissaoGCo2e: 1200,
+        },
+      ]),
+    }),
+  );
+  await page.route('**/api/servicos/12/simulacao-regiao**', (route) =>
+    route.fulfill({ json: simulacaoDemo(4) }),
+  );
 }
 
 test('clique no card abre painel lateral com dados atuais, foco acessível, Esc e botão Ver histórico', async ({
@@ -135,7 +153,7 @@ test('clique no card abre painel lateral com dados atuais, foco acessível, Esc 
   await drawer.getByRole('link', { name: 'Ver histórico' }).click();
   await expect(page).toHaveURL(/\/servicos\/12$/);
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Serviço 12' }),
+    page.getByRole('heading', { level: 1, name: 'Billing API' }),
   ).toBeVisible();
 });
 
