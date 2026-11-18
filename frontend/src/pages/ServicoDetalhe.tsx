@@ -4,6 +4,7 @@ import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
 import PeriodSelector from '../components/common/PeriodSelector';
 import ServiceHistoryChart from '../components/servico/ServiceHistoryChart';
+import MelhorHorarioDoServico from '../components/horarios/MelhorHorarioDoServico';
 import SimuladorRegiao from '../components/servico/SimuladorRegiao';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
@@ -330,6 +331,7 @@ export default function ServicoDetalhe() {
           </section>
 
           <SimuladorRegiao servicoId={serviceId} />
+          <MelhorHorarioDoServico servicoId={serviceId} />
         </>
       )}
     </div>
