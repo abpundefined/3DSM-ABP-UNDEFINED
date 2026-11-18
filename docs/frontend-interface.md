@@ -69,6 +69,14 @@ Cada página organiza seu conteúdo. Componentes comuns recebem propriedades tip
 
 `PeriodSelector` oferece Últimas 24 horas, Últimos 7 dias, Últimos 30 dias, Este mês, Mês passado e Personalizado (início e fim, no máximo 90 dias, fim igual ou posterior ao início). A URL é a fonte do período (`?periodo=7d` ou `?inicio=2026-11-01&fim=2026-11-07`); sem parâmetro, vale 24 horas. Por isso o período sobrevive a recarregar a página, a voltar no navegador e a compartilhar o link, e os links do menu o mantêm ao trocar de tela. Telas novas leem o período com `usePeriod()`: `apiQuery` traz os parâmetros prontos para a API (o personalizado vai em ISO 8601 com o fuso de São Paulo, `-03:00`) e `linkSearch` serve para links internos. O período por extenso fica sempre visível junto ao seletor e é anunciado ao leitor de tela quando muda. No modo `?demo=1` o seletor não aparece, porque os dados de demonstração são um retrato fixo de 07/10/2026.
 
+### Mapa de calor do melhor horário
+
+A seção "Melhor horário para executar processamentos pesados" aparece abaixo do mapa em `/mapa` e no detalhe do serviço (`/servicos/:id`). Ela consulta `GET /intensidade/horarios` com o período do seletor e, quando há região escolhida, `regiao=<código>`. A resposta traz a matriz 7 × 24 (dia da semana, com 0 = domingo, por hora, no fuso informado em `fusoHorario`) com a média da intensidade de carbono e o número de amostras de cada célula, e a `melhorJanela` de 3 horas seguidas calculada no backend, inclusive quando atravessa a meia-noite ou a virada da semana.
+
+O mapa de calor usa cinco faixas de cor entre a menor e a maior intensidade do período, com legenda em gCO₂e/kWh, e mostra o valor e o número de amostras de cada célula ao passar o mouse ou tocar. A melhor janela é contornada e descrita na frase de resumo, que compara a média da janela com a média do período. Horários sem amostras têm padrão hachurado e aviso com a contagem; sem 3 horas seguidas com coletas, a página avisa que os dados são insuficientes e não indica janela; sem nenhuma coleta, mostra o estado vazio. A tabela alternativa ("Ver os dados do mapa de calor em tabela") traz as 24 horas por 7 dias com a média e, entre parênteses, as amostras.
+
+Em `/mapa`, a região dos horários acompanha o filtro `?regiao=` do mapa até o usuário escolher outra em "Horários de" (guardada em `?horarios=<código>` ou `?horarios=todas`). No detalhe do serviço, abre na região do serviço (lida da simulação de regiões) e permite trocar. Sem região, a matriz mistura todas as regiões. Com `?demo=1`, a seção usa dados gerados a partir das intensidades do mapa de demonstração, sem chamar o backend.
+
 ## Executar e verificar
 
 Na pasta `frontend/`, use Node 24 e npm 11:
