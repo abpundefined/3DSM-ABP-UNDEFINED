@@ -26,21 +26,24 @@ As páginas são carregadas com `lazy`. Enquanto seu arquivo JavaScript chega, `
 
 ### Rotas
 
-| URL                    | Página        | Comportamento nesta entrega                                                                                                             |
-| ---------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                    | Dashboard     | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                                                         |
-| `/login`               | Login         | Formulário com validação e mostrar/ocultar senha. Envia `POST /auth/login` e volta à página de origem.                                  |
-| `/admin`               | Administração | Exige login. Lê e salva os intervalos de coleta e de descoberta.                                                                        |
-| `/ranking`             | Ranking       | Os 10 serviços de maior energia ou emissão no período (`GET /ranking`), com gráficos, tabela e lista sem dados. Funciona com `?demo=1`. |
-| Qualquer outro caminho | NotFound      | Mensagem de página não encontrada e retorno ao dashboard.                                                                               |
+| URL                    | Página        | Comportamento nesta entrega                                                                                                                                                               |
+| ---------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                    | Dashboard     | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                                                                                                           |
+| `/login`               | Login         | Formulário com validação e mostrar/ocultar senha. Envia `POST /auth/login` e volta à página de origem.                                                                                    |
+| `/admin`               | Administração | Exige login. Lê e salva os intervalos de coleta e de descoberta.                                                                                                                          |
+| `/ranking`             | Ranking       | Os 10 serviços de maior energia ou emissão no período (`GET /ranking`), com gráficos, tabela e lista sem dados. Funciona com `?demo=1`.                                                   |
+| `/servicos/:id`        | Detalhe       | Cabeçalho com estado, localização e última coleta; totais e séries de energia/emissão (`GET /servicos/:id/historico`), com seletor de período, estados de feedback e acesso à comparação. |
+| Qualquer outro caminho | NotFound      | Mensagem de página não encontrada e retorno ao dashboard.                                                                                                                                 |
 
 O login envia `POST /auth/login` e guarda o JWT no `AuthProvider`. A rota `/admin` passa por `RequireAuth`: sem sessão, leva ao login e, depois de entrar, volta para a página pedida. A página lê `GET /configuracao` e salva com `PUT /configuracao` (Bearer token), valida os limites do backend (coleta de 10 a 3600 s, descoberta de 10 a 86400 s, inteiros) com mensagens no padrão do app e mostra salvando, sucesso e erro. Resposta 401 encerra a sessão e leva ao login com o aviso de sessão expirada. Os novos intervalos valem a partir do próximo ciclo do monitoramento. Não há cadastro ou recuperação de senha previstos no contrato atual.
 
 A página `/ranking` consulta `GET /ranking` com o período do seletor, a métrica (`metrica=energia` ou `metrica=emissao`, guardada na URL; energia é o padrão) e `limite=10`. Mostra o gráfico de barras horizontal na métrica escolhida, o par de gráficos de energia (Wh) e CO₂e (g) na mesma ordem, para evidenciar quando consumo parecido gera emissão diferente por causa da intensidade de carbono da região, a tabela com posição, energia, emissão e coletas válidas e a lista "Sem dados no período" (`semDados`). Cada gráfico tem unidade no eixo e uma frase de resumo. Clicar no serviço (barra ou link) leva a `/servicos/:id`, mantendo o período. Ao trocar a métrica ou o período, o ranking anterior continua na tela com o aviso "Atualizando o ranking..." até a nova resposta chegar. Com `?demo=1`, a página usa os mesmos serviços e totais do mapa de demonstração, sem chamar o backend.
 
+`/servicos/:id` combina os dados do serviço e da última coleta válida com o histórico do período. Os gráficos mantêm energia em kWh/Wh e emissão em gCO₂e/kgCO₂e em eixos independentes, preservam intervalos sem cálculo e oferecem os valores em tabela. Totais ausentes aparecem como “—”; carregamento, erro com nova tentativa, histórico vazio e serviço inexistente têm mensagens próprias. O botão de comparação mantém o período na URL. Com `?demo=1`, usa os dados fictícios locais e mantém o simulador de região sem consultar a API.
+
 O dashboard oferece agora uma [demonstração opcional com gráficos e dados fictícios](frontend-demo.md), acessível por `/?demo=1`. O aviso de demonstração e a data simulada distinguem essa prévia do monitoramento real.
 
-No modo padrão, o dashboard não consulta os endpoints que ainda estão em implementação. “—” significa **dado indisponível**, não zero. Não se inventou período nem horário da última coleta. As imagens com dados mockados orientaram a hierarquia e a paleta; a prévia implementada permite avaliar os gráficos, sem representar uma integração entregue. #7/#8 implementarão os totais e a lista reais; histórico e comparação continuam em suas próprias issues.
+No modo padrão, o dashboard não consulta os endpoints que ainda estão em implementação. “—” significa **dado indisponível**, não zero. Não se inventou período nem horário da última coleta. As imagens com dados mockados orientaram a hierarquia e a paleta; a prévia implementada permite avaliar os gráficos, sem representar uma integração entregue. #7/#8 implementarão os totais e a lista reais; a comparação continua em sua própria issue.
 
 ## Estrutura e responsabilidades
 
