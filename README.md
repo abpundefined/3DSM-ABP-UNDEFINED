@@ -1,5 +1,5 @@
-[![CI](https://img.shields.io/github/actions/workflow/status/MarcusVRDN/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI)](https://github.com/MarcusVRDN/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
-[![Cobertura de testes](https://img.shields.io/badge/cobertura-relat%C3%B3rio%20Jest-blue?logo=jest)](https://github.com/MarcusVRDN/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![CI](https://img.shields.io/github/actions/workflow/status/abpundefined/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Cobertura de testes](https://img.shields.io/badge/cobertura-relat%C3%B3rio%20Jest-blue?logo=jest)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
 
 <h1>🚀 3DSM-ABP-UNDEFINED</h1>
 <p>
