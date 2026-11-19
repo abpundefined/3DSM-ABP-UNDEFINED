@@ -34,6 +34,12 @@
   --radius: 16px;
   --chart-energia: var(--green-forest);
   --chart-emissao: #a65f00;
+  --treemap-0: #cfe8d4;
+  --treemap-1: #f6dcb3;
+  --treemap-2: #d6e4f0;
+  --treemap-3: #ead7ef;
+  --treemap-4: #e9e2c6;
+  --treemap-5: #d9ece9;
 }
 
 html,
