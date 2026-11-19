@@ -1,10 +1,12 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
+import useSerie from '../../hooks/useSerie';
 import { ApiError, apiRequest } from '../../services/api';
 import {
   formatEmission,
@@ -19,6 +21,7 @@ import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
 import ServiceQuickDrawer from './ServiceQuickDrawer';
+import PainelDaTendencia from '../tendencia/PainelDaTendencia';
 import type {
   BackendCollection,
   BackendService,
@@ -197,6 +200,23 @@ export default function LiveDashboard({
     useState<ServiceStateFilter>('all');
   const [serviceSort, setServiceSort] = useState<ServiceSort>('default');
   const activeRequest = useRef<object | null>(null);
+  const { estado: serie, recarregar: recarregarSerie } = useSerie(
+    periodQuery,
+    true,
+  );
+  const tendencias = useMemo(
+    () =>
+      serie.status === 'pronto'
+        ? new Map(
+            serie.dados.servicos.map(({ servicoId, serie: pontos }) => [
+              servicoId,
+              pontos.map((ponto) => ponto.emissaoGCo2e),
+            ]),
+          )
+        : null,
+    [serie],
+  );
+
   const { serviceIds, toggleService } = useComparisonSelection();
 
   const refresh = useCallback(
@@ -459,7 +479,10 @@ export default function LiveDashboard({
         <button
           className="button button--accent"
           type="button"
-          onClick={() => void refresh()}
+          onClick={() => {
+            void refresh();
+            recarregarSerie();
+          }}
           disabled={isLoading}
         >
           Atualizar agora
@@ -507,6 +530,8 @@ export default function LiveDashboard({
           tone="olive"
         />
       </section>
+
+      <PainelDaTendencia estado={serie} onRecarregar={recarregarSerie} />
 
       <section
         className="live-services-panel"
@@ -665,6 +690,7 @@ export default function LiveDashboard({
                     <ServiceCard
                       service={service}
                       onSelect={handleSelectService}
+                      tendencia={tendencias?.get(service.id)}
                       comparisonSelected={serviceIds.includes(service.id)}
                       onToggleComparison={toggleService}
                     />

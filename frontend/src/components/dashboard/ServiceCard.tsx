@@ -11,16 +11,19 @@ import {
   formatServiceStatus,
 } from '../../utils/serviceDetail';
 import Icon from '../common/Icon';
+import MiniTendencia from '../tendencia/MiniTendencia';
 import type { LiveService } from './liveTypes';
 
 export default function ServiceCard({
   service,
   onSelect,
+  tendencia,
   comparisonSelected = false,
   onToggleComparison,
 }: {
   service: LiveService;
   onSelect?: (service: LiveService, triggerElement: HTMLElement | null) => void;
+  tendencia?: (number | null)[];
   comparisonSelected?: boolean;
   onToggleComparison?: (serviceId: number) => void;
 }) {
@@ -144,6 +147,8 @@ export default function ServiceCard({
           <dd>{formatEmission(emissionsGCo2e)}</dd>
         </div>
       </dl>
+
+      {tendencia && <MiniTendencia valores={tendencia} />}
 
       <dl className="service-card-metrics">
         <div>
