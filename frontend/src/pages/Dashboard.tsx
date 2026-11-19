@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router';
 import Icon from '../components/common/Icon';
 import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
+import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import DashboardDemo from '../components/dashboard/DashboardDemo';
 import LiveDashboard from '../components/dashboard/LiveDashboard';
 import ServiceCounter from '../components/dashboard/ServiceCounter';
@@ -10,6 +11,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import '../components/dashboard/demo.css';
 import '../components/dashboard/live.css';
+import '../components/comparacao/comparacao.css';
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
@@ -37,6 +39,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      <ComparisonSelectionBar />
       <section
         className={`demo-toolbar${isDemo ? ' demo-toolbar--active' : ''}`}
         aria-label="Modo de visualização"

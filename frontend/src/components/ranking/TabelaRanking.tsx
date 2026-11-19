@@ -4,6 +4,7 @@ import usePeriod from '../../hooks/usePeriod';
 import type { ItemRanking, MetricaRanking } from '../../types/ranking';
 import { formatEmission, formatEnergy } from '../../utils/formatters';
 import { METRICAS } from '../../utils/ranking';
+import useComparisonSelection from '../../hooks/useComparisonSelection';
 
 type TabelaRankingProps = {
   itens: ItemRanking[];
@@ -13,6 +14,7 @@ type TabelaRankingProps = {
 export default function TabelaRanking({ itens, metrica }: TabelaRankingProps) {
   const tituloId = useId();
   const { linkSearch } = usePeriod();
+  const { serviceIds, toggleService } = useComparisonSelection();
 
   return (
     <section className="ranking-bloco" aria-labelledby={tituloId}>
@@ -35,6 +37,7 @@ export default function TabelaRanking({ itens, metrica }: TabelaRankingProps) {
               <th scope="col">Energia</th>
               <th scope="col">Emissão</th>
               <th scope="col">Coletas</th>
+              <th scope="col">Comparação</th>
             </tr>
           </thead>
           <tbody>
@@ -42,13 +45,34 @@ export default function TabelaRanking({ itens, metrica }: TabelaRankingProps) {
               <tr key={item.servicoId}>
                 <td>{item.posicao}º</td>
                 <th scope="row">
-                  <Link to={`/servicos/${item.servicoId}${linkSearch}`}>
+                  <Link
+                    id={`ranking-service-${item.servicoId}`}
+                    to={`/servicos/${item.servicoId}${linkSearch}`}
+                  >
                     {item.nome}
                   </Link>
                 </th>
                 <td>{formatEnergy(item.energiaKwh)}</td>
                 <td>{formatEmission(item.emissaoGCo2e)}</td>
                 <td>{item.coletasValidas}</td>
+                <td>
+                  <button
+                    className="ranking-compare-button"
+                    type="button"
+                    aria-label={
+                      serviceIds.includes(item.servicoId)
+                        ? 'Remover da comparação'
+                        : 'Comparar'
+                    }
+                    aria-describedby={`ranking-service-${item.servicoId}`}
+                    aria-pressed={serviceIds.includes(item.servicoId)}
+                    onClick={() => toggleService(item.servicoId)}
+                  >
+                    {serviceIds.includes(item.servicoId)
+                      ? 'Selecionado'
+                      : 'Comparar'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

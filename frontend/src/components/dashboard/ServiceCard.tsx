@@ -16,9 +16,13 @@ import type { LiveService } from './liveTypes';
 export default function ServiceCard({
   service,
   onSelect,
+  comparisonSelected = false,
+  onToggleComparison,
 }: {
   service: LiveService;
   onSelect?: (service: LiveService, triggerElement: HTMLElement | null) => void;
+  comparisonSelected?: boolean;
+  onToggleComparison?: (serviceId: number) => void;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const status = formatServiceStatus(service.estadoAtual);
@@ -75,10 +79,26 @@ export default function ServiceCard({
             {location.city ?? 'Cidade não informada'}
           </p>
         </div>
-        <span className={`service-badge service-badge--${status.className}`}>
-          <Icon name={status.icon} />
-          {status.label}
-        </span>
+        <div className="service-card-header-actions">
+          <span className={`service-badge service-badge--${status.className}`}>
+            <Icon name={status.icon} />
+            {status.label}
+          </span>
+          {onToggleComparison && (
+            <button
+              className="service-card-compare"
+              type="button"
+              aria-label={
+                comparisonSelected ? 'Remover da comparação' : 'Comparar'
+              }
+              aria-describedby={nameId}
+              aria-pressed={comparisonSelected}
+              onClick={() => onToggleComparison(service.id)}
+            >
+              {comparisonSelected ? 'Selecionado' : 'Comparar'}
+            </button>
+          )}
+        </div>
       </header>
 
       {collectionNotice && (

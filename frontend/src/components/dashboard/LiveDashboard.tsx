@@ -7,6 +7,7 @@ import {
 } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
+import useComparisonSelection from '../../hooks/useComparisonSelection';
 import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
@@ -189,6 +190,7 @@ export default function LiveDashboard({
     useState<ServiceStateFilter>('all');
   const [serviceSort, setServiceSort] = useState<ServiceSort>('default');
   const activeRequest = useRef<object | null>(null);
+  const { serviceIds, toggleService } = useComparisonSelection();
 
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
@@ -652,6 +654,8 @@ export default function LiveDashboard({
                     <ServiceCard
                       service={service}
                       onSelect={handleSelectService}
+                      comparisonSelected={serviceIds.includes(service.id)}
+                      onToggleComparison={toggleService}
                     />
                   </li>
                 ))}

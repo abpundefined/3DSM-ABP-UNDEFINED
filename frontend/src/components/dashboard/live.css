@@ -213,6 +213,12 @@
 .service-card-header .service-badge {
   flex-shrink: 0;
 }
+.service-card-header-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .service-card dl {
   display: grid;
   gap: 12px;
