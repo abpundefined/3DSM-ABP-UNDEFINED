@@ -4,16 +4,26 @@ jest.mock("./servicos.repository", () => ({
 }));
 
 import { ConfigService } from "@nestjs/config";
+import type { CalculosService } from "../calculos/calculos.service";
 import { ServicosRepository } from "./servicos.repository";
 import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosService } from "./servicos.service";
 
 describe("ServicosService.listarServicos", () => {
   const listarComLocalizacao = jest.fn();
+  const componentes = {
+    cpuW: 0.25,
+    memoriaW: 0.75,
+    discoW: 0.1,
+    redeW: 0.1,
+    totalW: 1.2,
+  };
+  const calcularPotencia = jest.fn().mockReturnValue(componentes);
   const service = new ServicosService(
     { listarComLocalizacao } as unknown as ServicosRepository,
     {} as ConfigService,
     new RegistroIntegracoesService(),
+    { calcularPotencia } as unknown as CalculosService,
   );
 
   const servicoBase = {
@@ -26,13 +36,12 @@ describe("ServicosService.listarServicos", () => {
     descobertoEm: new Date("2026-11-01T00:00:00.000Z"),
     ultimaVezListadoEm: new Date("2026-11-08T00:00:00.000Z"),
     atualizadoEm: new Date("2026-11-08T00:00:00.000Z"),
-    componentes: {
-      cpuW: 0.25,
-      memoriaW: 0.75,
-      discoW: 0.1,
-      redeW: 0.1,
-      totalW: 1.2,
-    },
+  };
+  const coletaRecente = {
+    cpuPercent: 50,
+    memoryGb: 2,
+    diskGb: 10,
+    networkGb: 5,
   };
 
   const regiaoSudeste = {
@@ -47,6 +56,7 @@ describe("ServicosService.listarServicos", () => {
 
   beforeEach(() => {
     listarComLocalizacao.mockReset();
+    calcularPotencia.mockReset().mockReturnValue(componentes);
   });
 
   it("busca os serviços com a região, do mais recente ao mais antigo", async () => {
@@ -59,7 +69,11 @@ describe("ServicosService.listarServicos", () => {
 
   it("devolve país, região e cidade de cada serviço", async () => {
     listarComLocalizacao.mockResolvedValue([
-      { ...servicoBase, regiao: regiaoSudeste },
+      {
+        ...servicoBase,
+        coletas: [coletaRecente],
+        regiao: regiaoSudeste,
+      },
     ]);
 
     const [servico] = await service.listarServicos();
@@ -74,14 +88,17 @@ describe("ServicosService.listarServicos", () => {
         latitude: -23.55,
         longitude: -46.63,
       },
+      componentes,
     });
     expect(servico).not.toHaveProperty("regiao");
+    expect(calcularPotencia).toHaveBeenCalledWith(50, 2, 10, 5);
   });
 
   it("mantém a cidade e as coordenadas como null quando a API não informa", async () => {
     listarComLocalizacao.mockResolvedValue([
       {
         ...servicoBase,
+        coletas: [coletaRecente],
         regiaoCodigo: "us-east",
         regiao: {
           ...regiaoSudeste,
@@ -105,6 +122,6 @@ describe("ServicosService.listarServicos", () => {
       latitude: null,
       longitude: null,
     });
-    expect(servico).toHaveProperty("componentes", servicoBase.componentes);
+    expect(servico).toHaveProperty("componentes", componentes);
   });
 });

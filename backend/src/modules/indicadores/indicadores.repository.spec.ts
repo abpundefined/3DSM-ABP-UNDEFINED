@@ -46,6 +46,8 @@ describe("IndicadoresRepository", () => {
           emissaoGCo2e: 12.5,
           cpuMedia: 24,
           memoriaMediaMb: 512,
+          discoMediaGb: 1.5,
+          redeMediaGb: 2.5,
           coletas: 3n,
           ativo: 1n,
           indisponivel: 1n,
@@ -65,6 +67,8 @@ describe("IndicadoresRepository", () => {
           emissaoGCo2e: 12.5,
           cpuMedia: 24,
           memoriaMediaMb: 512,
+          discoMediaGb: 1.5,
+          redeMediaGb: 2.5,
           coletas: 3,
           ativo: 1,
           indisponivel: 1,
@@ -86,6 +90,8 @@ describe("IndicadoresRepository", () => {
       );
       expect(sql).toContain('AVG(c."cpuPercent") AS "cpuMedia"');
       expect(sql).toContain('AVG(c."memoryGb") * 1024 AS "memoriaMediaMb"');
+      expect(sql).toContain('AVG(c."diskGb") AS "discoMediaGb"');
+      expect(sql).toContain('AVG(c."networkGb") AS "redeMediaGb"');
       expect(sql).toContain('COUNT(*) AS "coletas"');
       expect(sql).toContain(`c."estadoColeta" = 'SUCESSO'`);
       expect(sql).toContain(`c."estadoColeta" = 'FALHA'`);

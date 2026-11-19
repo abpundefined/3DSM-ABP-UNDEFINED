@@ -6,6 +6,8 @@ jest.mock("@nestjs/config", () => ({
 }));
 
 import { NotFoundException } from "@nestjs/common";
+import { CalculosService } from "../calculos/calculos.service";
+import { CarbonApiService } from "../calculos/carbon-api.service";
 import type { ConfiguracaoService } from "../configuracao/configuracao.service";
 import { IndicadoresRepository } from "./indicadores.repository";
 import { IndicadoresService } from "./indicadores.service";
@@ -18,9 +20,13 @@ describe("IndicadoresService.obterHistoricoServico", () => {
     obterSerieTemporal,
   };
   const configuracaoService = { obter: jest.fn() };
+  const calculosService = new CalculosService(
+    {} as unknown as CarbonApiService,
+  );
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
     configuracaoService as unknown as ConfiguracaoService,
+    calculosService,
   );
 
   beforeEach(() => {
@@ -76,6 +82,8 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           emissaoGCo2e: 8.5,
           cpuMedia: 12,
           memoriaMediaMb: 256,
+          discoMediaGb: 2,
+          redeMediaGb: 3,
           coletas: 1,
           ativo: 1,
           indisponivel: 0,
@@ -87,6 +95,8 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           emissaoGCo2e: 17,
           cpuMedia: 24,
           memoriaMediaMb: 512,
+          discoMediaGb: 4,
+          redeMediaGb: 5,
           coletas: 2,
           ativo: 0,
           indisponivel: 1,
@@ -99,7 +109,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         fim: "2026-11-10T12:00:00.000Z",
       });
 
-      expect(resultado).toEqual([
+      expect(resultado).toMatchObject([
         {
           inicio: "2026-11-10T10:00:00.000Z",
           energiaKwh: 0.1,
@@ -134,6 +144,27 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           semMetricas: 0,
         },
       ]);
+      expect(resultado[0].componentes).toMatchObject({
+        cpuW: 0.06,
+        memoriaW: 0.09375,
+        discoW: 0.02,
+        redeW: 0.06,
+      });
+      expect(resultado[0].componentes.totalW).toBeCloseTo(0.23375, 10);
+      expect(resultado[1].componentes).toEqual({
+        cpuW: 0,
+        memoriaW: 0,
+        discoW: 0,
+        redeW: 0,
+        totalW: 0,
+      });
+      expect(resultado[2].componentes).toMatchObject({
+        cpuW: 0.12,
+        memoriaW: 0.1875,
+        discoW: 0.04,
+        redeW: 0.1,
+      });
+      expect(resultado[2].componentes.totalW).toBeCloseTo(0.4475, 10);
     });
   });
 });

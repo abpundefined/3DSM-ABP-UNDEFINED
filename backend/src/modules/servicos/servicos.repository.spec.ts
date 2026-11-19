@@ -250,7 +250,19 @@ describe("ServicosRepository", () => {
 
     expect(servicoFindMany).toHaveBeenCalledWith({
       orderBy: { atualizadoEm: "desc" },
-      include: { regiao: true },
+      include: {
+        regiao: true,
+        coletas: {
+          orderBy: { iniciadaEm: "desc" },
+          take: 1,
+          select: {
+            cpuPercent: true,
+            memoryGb: true,
+            diskGb: true,
+            networkGb: true,
+          },
+        },
+      },
     });
   });
 

@@ -21,15 +21,7 @@ describe("CalculosService", () => {
     memoria: number,
     disco: number,
     rede: number,
-    intervalo: number,
-  ) =>
-    service.calcularEnergia(
-      cpu,
-      memoria,
-      disco,
-      rede,
-      intervalo,
-    ) as unknown as ComponentesEnergia;
+  ): ComponentesEnergia => service.calcularPotencia(cpu, memoria, disco, rede);
 
   beforeEach(async () => {
     carbonApi.obterIntensidadeCarbono.mockReset();
@@ -48,7 +40,7 @@ describe("CalculosService", () => {
   });
 
   it("calculates power using the documented resource factors", () => {
-    const componentes = calcularPotencia(50, 2, 10, 5, 3600);
+    const componentes = calcularPotencia(50, 2, 10, 5);
 
     expect(componentes.totalW).toBeCloseTo(1.2, 10);
     expect((componentes.totalW * 3600) / 3_600_000).toBeCloseTo(0.0012, 10);
@@ -62,14 +54,15 @@ describe("CalculosService", () => {
   ])(
     "calcula corretamente o consumo isolado de %s",
     (_resource, cpu, memory, disk, network, expectedW) => {
-      expect(
-        calcularPotencia(cpu, memory, disk, network, 3600).totalW,
-      ).toBeCloseTo(expectedW, 10);
+      expect(calcularPotencia(cpu, memory, disk, network).totalW).toBeCloseTo(
+        expectedW,
+        10,
+      );
     },
   );
 
   it("retorna os componentes de potência de CPU, memória, disco e rede", () => {
-    const componentes = calcularPotencia(50, 2, 10, 5, 3600);
+    const componentes = calcularPotencia(50, 2, 10, 5);
 
     expect(componentes.cpuW).toBeCloseTo(0.25, 10);
     expect(componentes.memoriaW).toBeCloseTo(0.75, 10);
@@ -78,27 +71,21 @@ describe("CalculosService", () => {
     expect(componentes.totalW).toBeCloseTo(1.2, 10);
   });
 
-  it("retorna a mesma potência para intervalos de duração diferente", () => {
-    const potenciaFor30Seconds = calcularPotencia(50, 2, 10, 5, 30);
-    const potenciaFor90Seconds = calcularPotencia(50, 2, 10, 5, 90);
+  it("usa a duração real recebida para converter a potência em kWh", () => {
+    const energyFor30Seconds = service.calcularEnergia(50, 2, 10, 5, 30);
+    const energyFor90Seconds = service.calcularEnergia(50, 2, 10, 5, 90);
 
-    expect(potenciaFor90Seconds.totalW).toBeCloseTo(
-      potenciaFor30Seconds.totalW,
-      10,
-    );
-    expect((potenciaFor90Seconds.totalW * 90) / 3_600_000).toBeCloseTo(
-      ((potenciaFor30Seconds.totalW * 30) / 3_600_000) * 3,
-      10,
-    );
+    expect(energyFor90Seconds).toBeCloseTo(energyFor30Seconds * 3, 10);
+    expect(energyFor30Seconds).toBeCloseTo(0.0012 / 120, 10);
   });
 
   it("valida o exemplo de referência de 50.87 W, energia e emissão", async () => {
     carbonApi.obterIntensidadeCarbono.mockResolvedValue(85);
 
-    const componentes = calcularPotencia(100, 100, 1000, 143.5, 60);
+    const componentes = calcularPotencia(100, 100, 1000, 143.5);
     expect(componentes.totalW).toBeCloseTo(50.87, 10);
 
-    const energiaKwh = (componentes.totalW * 60) / 3_600_000;
+    const energiaKwh = service.calcularEnergia(100, 100, 1000, 143.5, 60);
     const emissao = await service.calcularEmissao(energiaKwh, "br-sudeste");
 
     expect(componentes.cpuW).toBeCloseTo(0.5, 10);

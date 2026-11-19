@@ -6,6 +6,10 @@ import {
 import { getDaysInMonth } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
+import {
+  CalculosService,
+  ComponentesPotencia,
+} from "../calculos/calculos.service";
 import { ConfiguracaoService } from "../configuracao/configuracao.service";
 import {
   escolherGranularidade,
@@ -34,6 +38,7 @@ export interface ItemHistoricoServico {
   emissaoGCo2e: number | null;
   cpuMedia: number | null;
   memoriaMediaMb: number | null;
+  componentes: ComponentesPotencia;
   coletas: number | null;
   ativo: number;
   indisponivel: number;
@@ -74,6 +79,7 @@ export class IndicadoresService {
   constructor(
     private readonly indicadoresRepository: IndicadoresRepository,
     private readonly configuracaoService: ConfiguracaoService,
+    private readonly calculosService: CalculosService,
   ) {}
 
   async obterMeta(): Promise<MetaCarbonoResponseDto> {
@@ -310,6 +316,12 @@ export class IndicadoresService {
         emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
         cpuMedia: ponto?.cpuMedia ?? null,
         memoriaMediaMb: ponto?.memoriaMediaMb ?? null,
+        componentes: this.calculosService.calcularPotencia(
+          ponto?.cpuMedia ?? 0,
+          (ponto?.memoriaMediaMb ?? 0) / 1024,
+          ponto?.discoMediaGb ?? 0,
+          ponto?.redeMediaGb ?? 0,
+        ),
         coletas: ponto?.coletas ?? null,
         ativo: ponto?.ativo ?? 0,
         indisponivel: ponto?.indisponivel ?? 0,

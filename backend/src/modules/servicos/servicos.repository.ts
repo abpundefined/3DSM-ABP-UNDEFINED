@@ -20,7 +20,19 @@ type ServicoDescoberto = {
 };
 
 type ServicoComRegiao = Prisma.ServicoGetPayload<{
-  include: { regiao: true };
+  include: {
+    regiao: true;
+    coletas: {
+      orderBy: { iniciadaEm: "desc" };
+      take: 1;
+      select: {
+        cpuPercent: true;
+        memoryGb: true;
+        diskGb: true;
+        networkGb: true;
+      };
+    };
+  };
 }>;
 
 @Injectable()
@@ -131,7 +143,19 @@ export class ServicosRepository {
   async listarComLocalizacao(): Promise<ServicoComRegiao[]> {
     return this.prisma.servico.findMany({
       orderBy: { atualizadoEm: "desc" },
-      include: { regiao: true },
+      include: {
+        regiao: true,
+        coletas: {
+          orderBy: { iniciadaEm: "desc" },
+          take: 1,
+          select: {
+            cpuPercent: true,
+            memoryGb: true,
+            diskGb: true,
+            networkGb: true,
+          },
+        },
+      },
     });
   }
 

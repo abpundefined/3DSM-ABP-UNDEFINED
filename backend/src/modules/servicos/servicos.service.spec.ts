@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import type { ConfigService } from "@nestjs/config";
+import type { CalculosService } from "../calculos/calculos.service";
 import type { ColetasService } from "../coletas/coletas.service";
 import {
   CreateColetaDto,
@@ -166,6 +167,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
       repository as unknown as ServicosRepository,
       config,
       registro,
+      { calcularPotencia: jest.fn() } as unknown as CalculosService,
     );
     registrarColeta = jest.fn((data: CreateColetaDto) => {
       const estadoColeta =
@@ -731,6 +733,7 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
         get: jest.fn().mockReturnValue(undefined),
       } as unknown as ConfigService,
       registro,
+      { calcularPotencia: jest.fn() } as unknown as CalculosService,
     );
 
     await expect(semUrl.discoverServices()).rejects.toThrow(
