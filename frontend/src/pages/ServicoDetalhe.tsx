@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
+import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
 import PeriodSelector from '../components/common/PeriodSelector';
@@ -257,6 +258,11 @@ export default function ServicoDetalhe() {
               <p className="service-detail-total-description">
                 Soma das medições válidas no período.
               </p>
+              <EmissionEquivalences
+                emissaoGCo2e={
+                  summary.possuiEmissao ? summary.totalEmissaoGCo2e : null
+                }
+              />
             </article>
           </section>
 

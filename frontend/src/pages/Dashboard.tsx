@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router';
+import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import Icon from '../components/common/Icon';
 import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
@@ -88,7 +89,9 @@ export default function Dashboard() {
               description="Total ilustrativo de 07/10/2026"
               icon="cloud"
               tone="olive"
-            />
+            >
+              <EmissionEquivalences emissaoGCo2e={demoTotals.carbonKg * 1000} />
+            </MetricCard>
             <MetricCard
               label="Serviços ativos"
               value={demoTotals.active}

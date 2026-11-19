@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Icon, { type IconName } from './Icon';
 
 type MetricCardProps = {
@@ -7,6 +8,7 @@ type MetricCardProps = {
   description: string;
   icon: IconName;
   tone: 'forest' | 'leaf' | 'olive';
+  children?: ReactNode;
 };
 
 export default function MetricCard({
@@ -16,6 +18,7 @@ export default function MetricCard({
   description,
   icon,
   tone,
+  children,
 }: MetricCardProps) {
   const formattedValue =
     value === undefined
@@ -41,6 +44,7 @@ export default function MetricCard({
         {unit && <span className="metric-unit">{unit}</span>}
       </p>
       <p className="metric-description">{description}</p>
+      {children}
     </div>
   );
 }

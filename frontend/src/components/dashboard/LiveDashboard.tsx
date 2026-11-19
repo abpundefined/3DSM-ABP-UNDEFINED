@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { ApiError, apiRequest } from '../../services/api';
 import {
   formatEmission,
   formatEnergy,
   toFiniteNumber,
 } from '../../utils/formatters';
+import EmissionEquivalences from '../common/EmissionEquivalences';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
 import { countServices } from '../../utils/serviceCounter';
@@ -474,7 +481,11 @@ export default function LiveDashboard({
           description={indicatorsDescription}
           icon="cloud"
           tone="olive"
-        />
+        >
+          <EmissionEquivalences
+            emissaoGCo2e={toFiniteNumber(indicators?.emissaoTotalGCo2e)}
+          />
+        </MetricSummary>
         <MetricSummary
           label="Serviços ativos"
           value={formatCount(indicators?.servicos.disponiveis)}
@@ -682,6 +693,7 @@ function MetricSummary({
   description,
   icon,
   tone,
+  children,
 }: {
   label: string;
   value: string;
@@ -689,6 +701,7 @@ function MetricSummary({
   description: string;
   icon: 'server' | 'bolt' | 'cloud' | 'alert';
   tone: 'forest' | 'leaf' | 'olive';
+  children?: ReactNode;
 }) {
   const separator = withUnit ? value.lastIndexOf(' ') : -1;
   const number = separator < 0 ? value : value.slice(0, separator);
@@ -706,6 +719,7 @@ function MetricSummary({
         {unit && <span className="metric-unit"> {unit}</span>}
       </p>
       <p className="metric-description">{description}</p>
+      {children}
     </div>
   );
 }

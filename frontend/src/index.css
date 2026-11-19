@@ -367,6 +367,18 @@ h1 {
   font-size: 12px;
   color: var(--text-muted);
 }
+.emission-equivalences {
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
 .dashboard-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 335px;
