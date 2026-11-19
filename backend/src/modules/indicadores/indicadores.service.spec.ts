@@ -1,8 +1,12 @@
 jest.mock("../../database/prisma.service", () => ({
   PrismaService: class PrismaService {},
 }));
+jest.mock("@nestjs/config", () => ({
+  ConfigService: class ConfigService {},
+}));
 
 import { BadRequestException } from "@nestjs/common";
+import type { ConfiguracaoService } from "../configuracao/configuracao.service";
 import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
@@ -21,12 +25,21 @@ describe("IndicadoresService", () => {
     obterDadosMatrizIntensidade: jest.fn(),
     listarServicosParaRanking: jest.fn(),
   };
+  const configuracaoService = { obter: jest.fn() };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
+    configuracaoService as unknown as ConfiguracaoService,
   );
 
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(agora);
+    configuracaoService.obter.mockReset().mockResolvedValue({
+      intervaloDescobertaSegundos: 120,
+      intervaloColetaSegundos: 60,
+      metaMensalKgCo2e: null,
+      atualizadaEm: agora,
+      padrao: false,
+    });
     repository.somarImpactoNoPeriodo.mockReset().mockResolvedValue({
       energiaKwh: 0.0012,
       emissaoGCo2e: 0.102,
@@ -46,6 +59,113 @@ describe("IndicadoresService", () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  describe("obterMeta", () => {
+    const configurarPeriodo = (
+      dataAtual: Date,
+      emissaoGCo2e: number | null,
+    ) => {
+      jest.setSystemTime(dataAtual);
+      repository.somarImpactoNoPeriodo.mockReset().mockResolvedValue({
+        energiaKwh: null,
+        emissaoGCo2e,
+        coletasCalculadas: 0,
+      });
+    };
+
+    it("calcula acumulado e projeção quando há meta mensal definida", async () => {
+      configurarPeriodo(new Date("2026-11-10T12:00:00.000Z"), 100000);
+      configuracaoService.obter.mockResolvedValue({
+        intervaloDescobertaSegundos: 120,
+        intervaloColetaSegundos: 60,
+        metaMensalKgCo2e: 500,
+        atualizadaEm: agora,
+        padrao: false,
+      });
+
+      await expect(service.obterMeta()).resolves.toEqual({
+        metaMensal: 500,
+        acumuladoMes: 100,
+        diasDecorridos: 10,
+        diasNoMes: 30,
+        projecaoMes: 300,
+      });
+      expect(repository.somarImpactoNoPeriodo).toHaveBeenCalledWith(
+        new Date("2026-11-01T03:00:00.000Z"),
+        new Date("2026-11-10T12:00:00.000Z"),
+      );
+    });
+
+    it("retorna os dados corretamente quando a meta mensal é null", async () => {
+      configurarPeriodo(new Date("2026-11-10T12:00:00.000Z"), 100000);
+
+      await expect(service.obterMeta()).resolves.toEqual({
+        metaMensal: null,
+        acumuladoMes: 100,
+        diasDecorridos: 10,
+        diasNoMes: 30,
+        projecaoMes: 300,
+      });
+    });
+
+    it.each([0, null])(
+      "retorna projeção zero no início do mês quando o acumulado é %s",
+      async (emissaoGCo2e) => {
+        configurarPeriodo(new Date("2026-11-01T12:00:00.000Z"), emissaoGCo2e);
+        configuracaoService.obter.mockResolvedValue({
+          intervaloDescobertaSegundos: 120,
+          intervaloColetaSegundos: 60,
+          metaMensalKgCo2e: 500,
+          atualizadaEm: agora,
+          padrao: false,
+        });
+
+        await expect(service.obterMeta()).resolves.toEqual({
+          metaMensal: 500,
+          acumuladoMes: 0,
+          diasDecorridos: 1,
+          diasNoMes: 30,
+          projecaoMes: 0,
+        });
+      },
+    );
+
+    it("projeta o acumulado ao longo do mês desde o primeiro dia", async () => {
+      configurarPeriodo(new Date("2026-11-01T12:00:00.000Z"), 2000);
+
+      const resultado = await service.obterMeta();
+
+      expect(resultado.diasDecorridos).toBe(1);
+      expect(resultado.acumuladoMes).toBe(2);
+      expect(resultado.projecaoMes).toBe(
+        resultado.acumuladoMes * resultado.diasNoMes,
+      );
+    });
+
+    it("retorna acumulado e projeção zero quando não há dados no mês", async () => {
+      configurarPeriodo(new Date("2026-11-15T12:00:00.000Z"), null);
+
+      const resultado = await service.obterMeta();
+
+      expect(resultado.acumuladoMes).toBe(0);
+      expect(resultado.projecaoMes).toBe(0);
+    });
+
+    it.each([
+      ["2026-02-15", 28],
+      ["2026-04-15", 30],
+      ["2026-01-15", 31],
+    ])(
+      "retorna corretamente os dias do mês para %s (%s dias)",
+      async (data, diasNoMes) => {
+        configurarPeriodo(new Date(`${data}T12:00:00.000Z`), 1000);
+
+        const resultado = await service.obterMeta();
+
+        expect(resultado.diasNoMes).toBe(diasNoMes);
+      },
+    );
   });
 
   it("consolida consumo, emissão e estados dos serviços", async () => {

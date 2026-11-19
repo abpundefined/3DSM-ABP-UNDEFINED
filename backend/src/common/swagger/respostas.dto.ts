@@ -104,6 +104,8 @@ export class UltimaColetaRespostaDto {
 export class ConfiguracaoRespostaDto {
   @ApiProperty() intervaloDescobertaSegundos!: number;
   @ApiProperty() intervaloColetaSegundos!: number;
+  @ApiProperty({ type: Number, nullable: true })
+  metaMensalKgCo2e!: number | null;
   @ApiProperty({ type: String, format: "date-time", nullable: true })
   atualizadaEm!: Date | null;
   @ApiProperty() padrao!: boolean;

@@ -3,7 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { getDaysInMonth } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
+import { ConfiguracaoService } from "../configuracao/configuracao.service";
 import {
   escolherGranularidade,
   gerarIntervalos,
@@ -11,9 +14,11 @@ import {
 import {
   converterPeriodo,
   intervaloMesCalendarioAnterior,
+  TIME_ZONE,
 } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
+import { MetaCarbonoResponseDto } from "./dto/meta-carbono-response.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
@@ -66,7 +71,36 @@ export interface VariacaoIndicador {
 
 @Injectable()
 export class IndicadoresService {
-  constructor(private readonly indicadoresRepository: IndicadoresRepository) {}
+  constructor(
+    private readonly indicadoresRepository: IndicadoresRepository,
+    private readonly configuracaoService: ConfiguracaoService,
+  ) {}
+
+  async obterMeta(): Promise<MetaCarbonoResponseDto> {
+    const configuracao = await this.configuracaoService.obter();
+    const { inicio: inicioMes, fim: hoje } = converterPeriodo({
+      periodo: PeriodoPredefinido.MES_ATUAL,
+    });
+    const totais = await this.indicadoresRepository.somarImpactoNoPeriodo(
+      inicioMes,
+      hoje,
+    );
+    const acumuladoMes = (totais.emissaoGCo2e ?? 0) / 1000;
+    const diaAtual = Number(formatInTimeZone(hoje, TIME_ZONE, "d"));
+    const anoMesAtual = formatInTimeZone(hoje, TIME_ZONE, "yyyy-MM");
+    const [ano, mes] = anoMesAtual.split("-").map(Number);
+    const diasNoMes = getDaysInMonth(new Date(ano, mes - 1, 1));
+    const projecaoMes =
+      acumuladoMes === 0 ? 0 : (acumuladoMes / diaAtual) * diasNoMes;
+
+    return {
+      metaMensal: configuracao.metaMensalKgCo2e,
+      acumuladoMes,
+      diasDecorridos: diaAtual,
+      diasNoMes,
+      projecaoMes,
+    };
+  }
 
   async obterMatrizHorarios(query: IntensidadeHorariosQueryDto) {
     const consulta =

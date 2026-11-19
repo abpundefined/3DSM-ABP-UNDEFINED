@@ -1,8 +1,12 @@
 jest.mock("../../database/prisma.service", () => ({
   PrismaService: class PrismaService {},
 }));
+jest.mock("@nestjs/config", () => ({
+  ConfigService: class ConfigService {},
+}));
 
 import { NotFoundException } from "@nestjs/common";
+import type { ConfiguracaoService } from "../configuracao/configuracao.service";
 import { IndicadoresRepository } from "./indicadores.repository";
 import { IndicadoresService } from "./indicadores.service";
 
@@ -13,8 +17,10 @@ describe("IndicadoresService.obterHistoricoServico", () => {
     buscarServicoPorId,
     obterSerieTemporal,
   };
+  const configuracaoService = { obter: jest.fn() };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
+    configuracaoService as unknown as ConfiguracaoService,
   );
 
   beforeEach(() => {
