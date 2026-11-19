@@ -16,6 +16,7 @@ import {
 import EmissionEquivalences from '../common/EmissionEquivalences';
 import FeedbackPanel from '../common/FeedbackPanel';
 import Icon from '../common/Icon';
+import MethodologyLink from '../common/MethodologyLink';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
 import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
@@ -498,7 +499,9 @@ export default function LiveDashboard({
           description={indicatorsDescription}
           icon="bolt"
           tone="leaf"
-        />
+        >
+          <MethodologyLink />
+        </MetricSummary>
         <MetricSummary
           label="Emissão total de CO₂e"
           value={formatEmission(toFiniteNumber(indicators?.emissaoTotalGCo2e))}
@@ -510,6 +513,7 @@ export default function LiveDashboard({
           <EmissionEquivalences
             emissaoGCo2e={toFiniteNumber(indicators?.emissaoTotalGCo2e)}
           />
+          <MethodologyLink />
         </MetricSummary>
         <MetricSummary
           label="Serviços ativos"

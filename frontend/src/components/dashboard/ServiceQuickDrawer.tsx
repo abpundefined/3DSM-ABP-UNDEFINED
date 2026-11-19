@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { Link } from 'react-router';
 import { buildServiceDrawerSummary } from '../../utils/serviceDetail';
 import Icon from '../common/Icon';
+import MethodologyLink from '../common/MethodologyLink';
 import type { LiveService } from './liveTypes';
 
 type ServiceQuickDrawerProps = {
@@ -154,6 +155,7 @@ export default function ServiceQuickDrawer({
                 <dd>{summary.collectionInterval}</dd>
               </div>
             </dl>
+            <MethodologyLink />
           </section>
 
           <section

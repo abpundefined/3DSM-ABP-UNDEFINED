@@ -398,6 +398,17 @@ h1 {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
+.methodology-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green-forest);
+  text-underline-offset: 3px;
+}
+.methodology-link:hover {
+  text-decoration-thickness: 2px;
+}
 .dashboard-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 335px;
