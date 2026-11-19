@@ -14,8 +14,8 @@ issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_c
 80,[TASK] Paginação do GET /coletas,3,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 78,[PBI] Página de administração dos intervalos (frontend),5,NadlaFernandes,Done,CLOSED,sim,2026-11-15T17:28:22Z,
 81,[PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06),8,thalestcd,Done,CLOSED,sim,2026-11-18T04:37:13Z,
-101,[PBI-26] Melhorias de usabilidade (P01 a P08),8,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-103,[TASK] Cobertura de 80% em todos os services e repositories,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+101,[PBI-26] Melhorias de usabilidade (P01 a P08),8,thalestcd,Done,CLOSED,sim,2026-11-18T23:26:02Z,
+103,[TASK] Cobertura de 80% em todos os services e repositories,3,MarcusVRDN,Done,CLOSED,sim,2026-11-19T01:03:14Z,
 104,[TASK] Testes E2E de API com PostgreSQL no CI,5,Israelisl,Done,CLOSED,sim,2026-11-17T23:42:58Z,
 105,[TASK] Testes de componentes do frontend,5,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 106,[TASK] CI completo,5,MarcusVRDN,Done,CLOSED,sim,2026-11-18T01:33:49Z,
