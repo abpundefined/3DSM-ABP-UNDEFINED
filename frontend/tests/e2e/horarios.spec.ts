@@ -46,6 +46,33 @@ async function simularHorarios(
 
 const secao = (page: Page) => page.getByRole('region', { name: nomeDaSecao });
 
+async function simularDetalheDoServico(page: Page) {
+  const { servico } = simulacaoDemo(4)!;
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: servico.servicoId,
+          idExterno: 'servico-4',
+          nome: servico.nome,
+          regiaoCodigo: servico.regiaoCodigo,
+          localizacao: null,
+          estadoAtual: 'DISPONIVEL',
+        },
+      ],
+    }),
+  );
+  await page.route('**/api/servicos/4/historico**', (route) =>
+    route.fulfill({ json: [] }),
+  );
+  await page.route('**/api/coletas/servico/4/ultima-valida', (route) =>
+    route.fulfill({
+      status: 404,
+      json: { statusCode: 404, message: 'Nenhuma coleta válida.' },
+    }),
+  );
+}
+
 async function analisarAcessibilidade(page: Page) {
   const resultado = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
@@ -306,6 +333,7 @@ test('no detalhe do serviço abre na região dele e permite trocar', async ({
     route.fulfill({ json: simulacaoDemo(4) }),
   );
   const chamadas = await simularHorarios(page);
+  await simularDetalheDoServico(page);
   await page.goto('/servicos/4');
 
   await expect(secao(page).getByLabel('Horários de')).toHaveValue(regiao);
@@ -331,6 +359,7 @@ test('no detalhe, sem a região do serviço não duplica o alerta e permite tent
       : route.fulfill({ json: simulacaoDemo(4) }),
   );
   await simularHorarios(page);
+  await simularDetalheDoServico(page);
   await page.goto('/servicos/4');
 
   await expect(page.getByRole('alert')).toHaveCount(1);
