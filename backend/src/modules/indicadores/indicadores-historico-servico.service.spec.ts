@@ -151,13 +151,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         redeW: 0.06,
       });
       expect(resultado[0].componentes.totalW).toBeCloseTo(0.23375, 10);
-      expect(resultado[1].componentes).toEqual({
-        cpuW: 0,
-        memoriaW: 0,
-        discoW: 0,
-        redeW: 0,
-        totalW: 0,
-      });
+      expect(resultado[1].componentes).toBeNull();
       expect(resultado[2].componentes).toMatchObject({
         cpuW: 0.12,
         memoriaW: 0.1875,

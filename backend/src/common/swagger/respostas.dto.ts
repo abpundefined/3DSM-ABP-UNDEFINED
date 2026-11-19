@@ -31,8 +31,8 @@ export class ServicoRespostaDto {
   @ApiProperty({ type: String, format: "date-time" }) descobertoEm!: Date;
   @ApiProperty({ type: String, format: "date-time" }) ultimaVezListadoEm!: Date;
   @ApiProperty({ type: String, format: "date-time" }) atualizadoEm!: Date;
-  @ApiProperty({ type: ComponentesEnergiaRespostaDto })
-  componentes!: ComponentesEnergiaRespostaDto;
+  @ApiProperty({ type: ComponentesEnergiaRespostaDto, nullable: true })
+  componentes!: ComponentesEnergiaRespostaDto | null;
 }
 
 export class ServicoDescobertoRespostaDto {

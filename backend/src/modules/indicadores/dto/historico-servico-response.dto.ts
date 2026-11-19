@@ -13,6 +13,6 @@ export class HistoricoServicoRespostaDto {
   @ApiProperty({ type: Number }) ativo!: number;
   @ApiProperty({ type: Number }) indisponivel!: number;
   @ApiProperty({ type: Number }) semMetricas!: number;
-  @ApiProperty({ type: ComponentesEnergiaRespostaDto })
-  componentes!: ComponentesEnergiaRespostaDto;
+  @ApiProperty({ type: ComponentesEnergiaRespostaDto, nullable: true })
+  componentes!: ComponentesEnergiaRespostaDto | null;
 }

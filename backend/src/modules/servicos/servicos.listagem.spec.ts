@@ -42,6 +42,7 @@ describe("ServicosService.listarServicos", () => {
     memoryGb: 2,
     diskGb: 10,
     networkGb: 5,
+    estadoColeta: "SUCESSO",
   };
 
   const regiaoSudeste = {
@@ -93,6 +94,33 @@ describe("ServicosService.listarServicos", () => {
     expect(servico).not.toHaveProperty("regiao");
     expect(calcularPotencia).toHaveBeenCalledWith(50, 2, 10, 5);
   });
+
+  it("retorna componentes null quando o serviço não possui coletas", async () => {
+    listarComLocalizacao.mockResolvedValue([
+      { ...servicoBase, coletas: [], regiao: regiaoSudeste },
+    ]);
+
+    const [servico] = await service.listarServicos();
+
+    expect(servico.componentes).toBeNull();
+  });
+
+  it.each(["SEM_METRICAS", "FALHA"])(
+    "retorna componentes null quando a última coleta tem estado %s",
+    async (estadoColeta) => {
+      listarComLocalizacao.mockResolvedValue([
+        {
+          ...servicoBase,
+          coletas: [{ ...coletaRecente, estadoColeta }],
+          regiao: regiaoSudeste,
+        },
+      ]);
+
+      const [servico] = await service.listarServicos();
+
+      expect(servico.componentes).toBeNull();
+    },
+  );
 
   it("mantém a cidade e as coordenadas como null quando a API não informa", async () => {
     listarComLocalizacao.mockResolvedValue([
