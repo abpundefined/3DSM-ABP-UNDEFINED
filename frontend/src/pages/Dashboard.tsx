@@ -17,7 +17,7 @@ import '../components/comparacao/comparacao.css';
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
-  const { apiQuery } = usePeriod();
+  const { apiQuery, linkSearch } = usePeriod();
   usePageTitle(isDemo ? 'Dashboard · demonstração' : 'Dashboard');
 
   return (
@@ -30,15 +30,28 @@ export default function Dashboard() {
             Uma visão clara dos seus serviços e do impacto que eles geram.
           </p>
         </div>
-        {isDemo && (
-          <div className="collection-status">
-            <Icon name="clock" />
-            <div>
-              <strong>Exemplo de 07 de outubro de 2026</strong>
-              <span>Atualização simulada às 14:32</span>
+        <div className="page-heading-actions">
+          {isDemo && (
+            <div className="collection-status">
+              <Icon name="clock" />
+              <div>
+                <strong>Exemplo de 07 de outubro de 2026</strong>
+                <span>Atualização simulada às 14:32</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          <Link
+            to={
+              isDemo
+                ? '/relatorio?demo=1'
+                : { pathname: '/relatorio', search: linkSearch }
+            }
+            className="button button--secondary"
+          >
+            <Icon name="printer" />
+            Relatório do período
+          </Link>
+        </div>
       </div>
       <ComparisonSelectionBar />
       <section

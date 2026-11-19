@@ -1,5 +1,6 @@
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
+import Icon from '../components/common/Icon';
 import PeriodSelector from '../components/common/PeriodSelector';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import GraficoEnergiaEmissao from '../components/ranking/GraficoEnergiaEmissao';
@@ -74,7 +75,7 @@ export default function Ranking() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
   const metrica = lerMetrica(searchParams);
-  const { apiQuery } = usePeriod();
+  const { apiQuery, linkSearch } = usePeriod();
   const { estado, recarregar } = useRanking(
     consultaDoRanking(apiQuery, metrica),
     !isDemo,
@@ -102,6 +103,17 @@ export default function Ranking() {
             emitem CO₂e no período.
           </p>
         </div>
+        <Link
+          to={
+            isDemo
+              ? '/relatorio?demo=1'
+              : { pathname: '/relatorio', search: linkSearch }
+          }
+          className="button button--secondary"
+        >
+          <Icon name="printer" />
+          Relatório do período
+        </Link>
       </div>
       <ComparisonSelectionBar />
       {!isDemo && <PeriodSelector />}

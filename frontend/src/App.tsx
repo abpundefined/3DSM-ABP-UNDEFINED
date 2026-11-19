@@ -13,6 +13,7 @@ const Mapa = lazy(() => import('./pages/Mapa'));
 const ServicoDetalhe = lazy(() => import('./pages/ServicoDetalhe'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Metodologia = lazy(() => import('./pages/Metodologia'));
+const Relatorio = lazy(() => import('./pages/Relatorio'));
 
 export default function App() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
             }
           />
           <Route path="metodologia" element={<Metodologia />} />
+          <Route path="relatorio" element={<Relatorio />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
