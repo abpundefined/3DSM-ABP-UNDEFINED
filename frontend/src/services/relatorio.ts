@@ -1,46 +1,23 @@
-import type { DadosRelatorio, OportunidadeRelatorio } from '../types/relatorio';
+import type { DadosRelatorio } from '../types/relatorio';
 import {
   consultaRankingRelatorio,
   normalizarIndicadoresRelatorio,
-  normalizarOportunidadesRelatorio,
   normalizarTopEmissores,
   resumirSerieRelatorio,
 } from '../utils/relatorio';
-import { ApiError, apiRequest } from './api';
-
-async function buscarOportunidadesOpcional(
-  apiQuery: string,
-  signal?: AbortSignal,
-): Promise<OportunidadeRelatorio[] | null> {
-  try {
-    const resposta = await apiRequest<unknown>(`/oportunidades${apiQuery}`, {
-      signal,
-    });
-    return normalizarOportunidadesRelatorio(resposta);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      return null;
-    }
-    if (signal?.aborted) {
-      throw error;
-    }
-    return null;
-  }
-}
+import { apiRequest } from './api';
 
 export async function buscarDadosRelatorio(
   apiQuery: string,
   signal?: AbortSignal,
 ): Promise<DadosRelatorio> {
-  const [indicadoresBruto, serieBruta, rankingBruto, oportunidades] =
-    await Promise.all([
-      apiRequest<unknown>(`/indicadores${apiQuery}`, { signal }),
-      apiRequest<unknown>(`/indicadores/serie${apiQuery}`, { signal }),
-      apiRequest<unknown>(`/ranking${consultaRankingRelatorio(apiQuery)}`, {
-        signal,
-      }),
-      buscarOportunidadesOpcional(apiQuery, signal),
-    ]);
+  const [indicadoresBruto, serieBruta, rankingBruto] = await Promise.all([
+    apiRequest<unknown>(`/indicadores${apiQuery}`, { signal }),
+    apiRequest<unknown>(`/indicadores/serie${apiQuery}`, { signal }),
+    apiRequest<unknown>(`/ranking${consultaRankingRelatorio(apiQuery)}`, {
+      signal,
+    }),
+  ]);
 
   const indicadores = normalizarIndicadoresRelatorio(indicadoresBruto);
   if (!indicadores) {
@@ -63,6 +40,5 @@ export async function buscarDadosRelatorio(
     indicadores,
     serie,
     topEmissores,
-    oportunidades,
   };
 }

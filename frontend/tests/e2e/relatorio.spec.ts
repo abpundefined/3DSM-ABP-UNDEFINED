@@ -1,10 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-function mockApiRelatorio(
-  page: Page,
-  options?: { oportunidades404?: boolean },
-) {
+function mockApiRelatorio(page: Page) {
   const consultas: string[] = [];
 
   return Promise.all([
@@ -91,7 +88,6 @@ function mockApiRelatorio(
               energiaKwh: 6.1,
               emissaoGCo2e: 2500,
               coletasValidas: 40,
-              selo: 'E',
             },
             {
               posicao: 2,
@@ -100,7 +96,6 @@ function mockApiRelatorio(
               energiaKwh: 3.1,
               emissaoGCo2e: 1300,
               coletasValidas: 35,
-              selo: 'D',
             },
             {
               posicao: 3,
@@ -109,7 +104,6 @@ function mockApiRelatorio(
               energiaKwh: 1.8,
               emissaoGCo2e: 640,
               coletasValidas: 25,
-              selo: 'C',
             },
             {
               posicao: 4,
@@ -118,7 +112,6 @@ function mockApiRelatorio(
               energiaKwh: 0.9,
               emissaoGCo2e: 280,
               coletasValidas: 12,
-              selo: 'B',
             },
             {
               posicao: 5,
@@ -127,30 +120,10 @@ function mockApiRelatorio(
               energiaKwh: 0.5,
               emissaoGCo2e: 164,
               coletasValidas: 8,
-              selo: 'A',
             },
           ],
           semDados: [],
         },
-      });
-    }),
-    page.route('**/api/oportunidades**', (route) => {
-      consultas.push(route.request().url());
-      if (options?.oportunidades404) {
-        return route.fulfill({ status: 404, json: { statusCode: 404 } });
-      }
-      return route.fulfill({
-        json: [
-          {
-            servicoId: 5,
-            servicoNome: 'Video Processor',
-            tipo: 'MIGRAR_REGIAO',
-            textoExplicativo:
-              'Migrar de us-east para ca-central reduz a intensidade elétrica média.',
-            economiaGCo2e: 1850,
-            economiaPercentual: 74,
-          },
-        ],
       });
     }),
   ]).then(() => consultas);
@@ -186,6 +159,7 @@ test('renderiza relatório completo, aciona impressão, oculta navegação em @m
   await expect(resumo).toContainText('4,88 kgCO₂e');
   await expect(resumo).toContainText('km rodados de carro');
   await expect(resumo).toContainText('cargas de celular');
+  await expect(resumo).toContainText('5 ativos · 1 indisponível');
 
   await expect(
     page.getByRole('region', { name: 'Tendência no período' }),
@@ -196,14 +170,7 @@ test('renderiza relatório completo, aciona impressão, oculta navegação em @m
   });
   await expect(tabela.locator('tbody tr')).toHaveCount(5);
   await expect(tabela).toContainText('Video Processor');
-  await expect(tabela).toContainText('E');
   await expect(tabela).toContainText('Reports Engine');
-
-  const oportunidades = page.getByRole('region', {
-    name: 'Oportunidades de redução',
-  });
-  await expect(oportunidades).toContainText('Video Processor');
-  await expect(oportunidades).toContainText('1,85 kgCO₂e');
 
   await expect(
     page.getByRole('region', { name: 'Nota de metodologia' }),
@@ -211,13 +178,18 @@ test('renderiza relatório completo, aciona impressão, oculta navegação em @m
 
   const rodape = page.locator('footer[aria-label="Metadados do relatório"]');
   await expect(rodape).toContainText('19/11/2026, 11:00');
-  await expect(rodape).toContainText('Versão do cálculo: 1.0.0');
+  await expect(rodape).toContainText(
+    'Cálculo conforme a página Como calculamos',
+  );
 
   expect(
     consultas.some((url) =>
       url.includes('/api/ranking?periodo=7d&metrica=emissao&limite=5'),
     ),
   ).toBe(true);
+  expect(consultas.some((url) => url.includes('/api/oportunidades'))).toBe(
+    false,
+  );
 
   const axeResult = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
@@ -248,16 +220,9 @@ test('renderiza relatório completo, aciona impressão, oculta navegação em @m
   await expect(rodape).toBeVisible();
 });
 
-test('mantém relatório funcional se oportunidades retornar 404 e funciona no modo ?demo=1', async ({
+test('funciona no modo ?demo=1 sem chamar a API e sem rolagem horizontal', async ({
   page,
 }) => {
-  await mockApiRelatorio(page, { oportunidades404: true });
-  await page.goto('/relatorio');
-
-  await expect(
-    page.getByRole('region', { name: 'Oportunidades de redução' }),
-  ).toContainText('indisponível neste servidor');
-
   const apiRequests: string[] = [];
   page.on('request', (request) => {
     if (request.url().includes('/api/')) {

@@ -14,10 +14,8 @@ import type { DadosRelatorio } from '../types/relatorio';
 import { formatEmission, formatEnergy } from '../utils/formatters';
 import { formatarPeriodoConsiderado } from '../utils/ranking';
 import {
-  VERSAO_CALCULO,
+  formatarContagemComConcordancia,
   formatarDataGeracaoRelatorio,
-  formatarPercentualEconomia,
-  formatarRotuloTipoOportunidade,
 } from '../utils/relatorio';
 import './relatorio.css';
 
@@ -39,11 +37,10 @@ function ConteudoDoRelatorio({
   isDemo: boolean;
   linkSearch: string;
 }) {
-  const { indicadores, serie, topEmissores, oportunidades } = dados;
+  const { indicadores, serie, topEmissores } = dados;
   const periodo = indicadores.periodo ?? serie.periodo;
   const dataGeracao = formatarDataGeracaoRelatorio(indicadores.geradoEm);
-  const versaoCalculo = indicadores.versaoCalculo ?? VERSAO_CALCULO;
-  const algumSeloDisponivel = topEmissores.some((item) => item.selo !== null);
+  const metodologiaTo = isDemo ? '/metodologia?demo=1' : '/metodologia';
 
   return (
     <div className="relatorio-sheet">
@@ -106,10 +103,17 @@ function ConteudoDoRelatorio({
               {contagemFormatador.format(indicadores.servicos.monitorados)}
             </strong>
             <p className="relatorio-metric-note">
-              {contagemFormatador.format(indicadores.servicos.disponiveis)}{' '}
-              ativos ·{' '}
-              {contagemFormatador.format(indicadores.servicos.indisponiveis)}{' '}
-              indisponíveis
+              {formatarContagemComConcordancia(
+                indicadores.servicos.disponiveis,
+                'ativo',
+                'ativos',
+              )}{' '}
+              ·{' '}
+              {formatarContagemComConcordancia(
+                indicadores.servicos.indisponiveis,
+                'indisponível',
+                'indisponíveis',
+              )}
             </p>
           </div>
         </div>
@@ -135,119 +139,46 @@ function ConteudoDoRelatorio({
             serviços que mais emitiram.
           </p>
         ) : (
-          <>
-            <div className="relatorio-table-wrap">
-              <table
-                className="relatorio-top-table"
-                aria-label="Os 5 serviços que mais emitiram no período"
-              >
-                <thead>
-                  <tr>
-                    <th scope="col">Posição</th>
-                    <th scope="col">Serviço</th>
-                    <th scope="col">Selo</th>
-                    <th scope="col">Emissão</th>
-                    <th scope="col">Energia</th>
-                    <th scope="col">Coletas</th>
+          <div className="relatorio-table-wrap">
+            <table
+              className="relatorio-top-table"
+              aria-label="Os 5 serviços que mais emitiram no período"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">Posição</th>
+                  <th scope="col">Serviço</th>
+                  <th scope="col">Emissão</th>
+                  <th scope="col">Energia</th>
+                  <th scope="col">Coletas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topEmissores.map((item) => (
+                  <tr key={item.servicoId}>
+                    <td>{item.posicao}º</td>
+                    <td>
+                      <Link
+                        to={
+                          isDemo
+                            ? `/servicos/${item.servicoId}?demo=1`
+                            : {
+                                pathname: `/servicos/${item.servicoId}`,
+                                search: linkSearch,
+                              }
+                        }
+                      >
+                        {item.nome}
+                      </Link>
+                    </td>
+                    <td>{formatEmission(item.emissaoGCo2e)}</td>
+                    <td>{formatEnergy(item.energiaKwh)}</td>
+                    <td>{contagemFormatador.format(item.coletasValidas)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {topEmissores.map((item) => (
-                    <tr key={item.servicoId}>
-                      <td>{item.posicao}º</td>
-                      <td>
-                        <Link
-                          to={
-                            isDemo
-                              ? `/servicos/${item.servicoId}?demo=1`
-                              : {
-                                  pathname: `/servicos/${item.servicoId}`,
-                                  search: linkSearch,
-                                }
-                          }
-                        >
-                          {item.nome}
-                        </Link>
-                      </td>
-                      <td>
-                        <span
-                          className="relatorio-seal"
-                          aria-label={
-                            item.selo
-                              ? `Selo ${item.selo}`
-                              : 'Selo ainda não disponível'
-                          }
-                        >
-                          {item.selo ?? '—'}
-                        </span>
-                      </td>
-                      <td>{formatEmission(item.emissaoGCo2e)}</td>
-                      <td>{formatEnergy(item.energiaKwh)}</td>
-                      <td>{contagemFormatador.format(item.coletasValidas)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {!algumSeloDisponivel && (
-              <p className="relatorio-footnote">
-                O selo de eficiência (A a F) aparece automaticamente nesta
-                coluna quando fornecido pela API.
-              </p>
-            )}
-          </>
-        )}
-      </section>
-
-      <section
-        className="relatorio-section"
-        aria-label="Oportunidades de redução"
-      >
-        <h2>Oportunidades de redução</h2>
-        <p className="relatorio-section-description">
-          Sugestões estimadas com base nos dados do período; não representam
-          garantia de economia.
-        </p>
-        {oportunidades === null ? (
-          <p className="relatorio-empty-note" role="status">
-            O módulo de oportunidades de redução ainda está indisponível neste
-            servidor.
-          </p>
-        ) : oportunidades.length === 0 ? (
-          <p className="relatorio-empty-note" role="status">
-            Nenhuma oportunidade de redução identificada para este período.
-          </p>
-        ) : (
-          <ul className="relatorio-opportunity-list">
-            {oportunidades.map((oportunidade, indice) => {
-              const percentual = formatarPercentualEconomia(
-                oportunidade.economiaPercentual,
-              );
-              return (
-                <li
-                  key={`${oportunidade.servicoNome}-${oportunidade.tipo}-${indice}`}
-                  className="relatorio-opportunity-item"
-                >
-                  <div className="relatorio-opportunity-top">
-                    <div>
-                      <strong>{oportunidade.servicoNome}</strong>
-                      <span className="relatorio-opportunity-type">
-                        {formatarRotuloTipoOportunidade(oportunidade.tipo)}
-                      </span>
-                    </div>
-                    {oportunidade.economiaGCo2e !== null && (
-                      <span className="relatorio-opportunity-saving">
-                        Economia estimada:{' '}
-                        {formatEmission(oportunidade.economiaGCo2e)}
-                        {percentual ? ` (${percentual})` : ''}
-                      </span>
-                    )}
-                  </div>
-                  <p>{oportunidade.explicacao}</p>
-                </li>
-              );
-            })}
-          </ul>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -267,7 +198,7 @@ function ConteudoDoRelatorio({
             {FONTE_EQUIVALENCIAS.consultadoEm}).
           </p>
           <Link
-            to={isDemo ? '/metodologia?demo=1' : '/metodologia'}
+            to={metodologiaTo}
             className="relatorio-methodology-link relatorio-no-print"
           >
             Consultar detalhes completos em Como calculamos
@@ -277,7 +208,10 @@ function ConteudoDoRelatorio({
 
       <footer className="relatorio-footer" aria-label="Metadados do relatório">
         <p>Gerado em: {dataGeracao} (horário de Brasília)</p>
-        <p>Versão do cálculo: {versaoCalculo}</p>
+        <p>
+          Cálculo conforme a página{' '}
+          <Link to={metodologiaTo}>Como calculamos</Link>
+        </p>
       </footer>
     </div>
   );

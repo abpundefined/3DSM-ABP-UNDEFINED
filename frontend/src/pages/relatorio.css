@@ -175,72 +175,10 @@
   text-decoration: underline;
 }
 
-.relatorio-seal {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--soft-green);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.relatorio-footnote,
 .relatorio-empty-note {
   margin: 12px 0 0;
   color: var(--text-muted);
   font-size: 13px;
-}
-
-.relatorio-opportunity-list {
-  display: grid;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.relatorio-opportunity-item {
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-
-.relatorio-opportunity-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px 16px;
-  margin-bottom: 6px;
-}
-
-.relatorio-opportunity-type {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.relatorio-opportunity-saving {
-  color: var(--green-forest);
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.relatorio-opportunity-item p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 14px;
 }
 
 .relatorio-methodology-note {
@@ -351,7 +289,6 @@
   .relatorio-section,
   .relatorio-metric,
   .relatorio-chart,
-  .relatorio-opportunity-item,
   .relatorio-top-table tr,
   .relatorio-footer {
     break-inside: avoid;
@@ -370,7 +307,8 @@
     gap: 10px;
   }
 
-  .relatorio-top-table a {
+  .relatorio-top-table a,
+  .relatorio-footer a {
     color: #111;
     text-decoration: none;
   }

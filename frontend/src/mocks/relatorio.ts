@@ -1,7 +1,6 @@
 import type { DadosRelatorio } from '../types/relatorio';
 import {
   LIMITE_TOP_EMISSORES_RELATORIO,
-  VERSAO_CALCULO,
   resumirSerieRelatorio,
 } from '../utils/relatorio';
 import { mapaDemo } from './mapa';
@@ -90,12 +89,8 @@ export function relatorioDemo(): DadosRelatorio {
         removidos: 0,
       },
       geradoEm: mapaDemo.periodo.fim,
-      versaoCalculo: VERSAO_CALCULO,
     },
     serie,
-    topEmissores: ranking.itens
-      .slice(0, LIMITE_TOP_EMISSORES_RELATORIO)
-      .map((item) => ({ ...item, selo: null })),
-    oportunidades: [],
+    topEmissores: ranking.itens.slice(0, LIMITE_TOP_EMISSORES_RELATORIO),
   };
 }

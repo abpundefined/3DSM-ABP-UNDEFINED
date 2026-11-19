@@ -2,17 +2,15 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   LIMITE_TOP_EMISSORES_RELATORIO,
-  VERSAO_CALCULO,
   consultaRankingRelatorio,
+  formatarContagemComConcordancia,
   formatarDataGeracaoRelatorio,
   normalizarIndicadoresRelatorio,
-  normalizarOportunidadesRelatorio,
   normalizarTopEmissores,
   resumirSerieRelatorio,
 } from '../src/utils/relatorio.ts';
 
-test('define constantes explícitas do relatório', () => {
-  assert.equal(VERSAO_CALCULO, '1.0.0');
+test('define limite explícito dos maiores emissores no relatório', () => {
   assert.equal(LIMITE_TOP_EMISSORES_RELATORIO, 5);
 });
 
@@ -67,7 +65,6 @@ test('normalizarIndicadoresRelatorio valida payload de GET /indicadores e rejeit
       removidos: 0,
     },
     geradoEm: '2026-11-18T15:30:00.000Z',
-    versaoCalculo: null,
   });
 
   for (const invalido of [
@@ -114,7 +111,7 @@ test('resumirSerieRelatorio aplica escalas independentes de energia e emissão m
   assert.equal(resumo.pontos[1].emissao, null);
 });
 
-test('normalizarTopEmissores limita a 5 itens e preserva selo opcional', () => {
+test('normalizarTopEmissores limita a 5 itens e rejeita formato inválido', () => {
   const itens = Array.from({ length: 7 }, (_, indice) => ({
     posicao: indice + 1,
     servicoId: indice + 1,
@@ -122,7 +119,6 @@ test('normalizarTopEmissores limita a 5 itens e preserva selo opcional', () => {
     energiaKwh: 2 - indice * 0.1,
     emissaoGCo2e: 800 - indice * 50,
     coletasValidas: 12,
-    ...(indice === 0 ? { selo: 'D' } : {}),
   }));
 
   const top5 = normalizarTopEmissores({
@@ -137,35 +133,9 @@ test('normalizarTopEmissores limita a 5 itens e preserva selo opcional', () => {
 
   assert.ok(top5 !== null);
   assert.equal(top5.length, 5);
-  assert.equal(top5[0].selo, 'D');
-  assert.equal(top5[1].selo, null);
+  assert.equal(top5[0].nome, 'Serviço 1');
+  assert.equal(top5[4].nome, 'Serviço 5');
   assert.equal(normalizarTopEmissores({ invalid: true }), null);
-});
-
-test('normalizarOportunidadesRelatorio normaliza oportunidades válidas e retorna null quando fora do formato', () => {
-  const lista = normalizarOportunidadesRelatorio([
-    {
-      servicoId: 4,
-      servicoNome: 'Search API',
-      tipo: 'MIGRAR_REGIAO',
-      textoExplicativo: 'Redução estimada ao migrar para ca-central.',
-      economiaGCo2e: 420.5,
-      economiaPercentual: 62.4,
-    },
-  ]);
-
-  assert.deepEqual(lista, [
-    {
-      servicoId: 4,
-      servicoNome: 'Search API',
-      tipo: 'MIGRAR_REGIAO',
-      explicacao: 'Redução estimada ao migrar para ca-central.',
-      economiaGCo2e: 420.5,
-      economiaPercentual: 62.4,
-    },
-  ]);
-  assert.deepEqual(normalizarOportunidadesRelatorio([]), []);
-  assert.equal(normalizarOportunidadesRelatorio(null), null);
 });
 
 test('formatarDataGeracaoRelatorio formata em America/Sao_Paulo e usa fallback seguro', () => {
@@ -175,4 +145,27 @@ test('formatarDataGeracaoRelatorio formata em America/Sao_Paulo e usa fallback s
     '19/11/2026, 11:05',
   );
   assert.equal(formatarDataGeracaoRelatorio(null, agora), '19/11/2026, 11:05');
+});
+
+test('formatarContagemComConcordancia usa singular apenas para 1', () => {
+  assert.equal(
+    formatarContagemComConcordancia(1, 'indisponível', 'indisponíveis'),
+    '1 indisponível',
+  );
+  assert.equal(
+    formatarContagemComConcordancia(0, 'indisponível', 'indisponíveis'),
+    '0 indisponíveis',
+  );
+  assert.equal(
+    formatarContagemComConcordancia(2, 'indisponível', 'indisponíveis'),
+    '2 indisponíveis',
+  );
+  assert.equal(
+    formatarContagemComConcordancia(1, 'ativo', 'ativos'),
+    '1 ativo',
+  );
+  assert.equal(
+    formatarContagemComConcordancia(5, 'ativo', 'ativos'),
+    '5 ativos',
+  );
 });

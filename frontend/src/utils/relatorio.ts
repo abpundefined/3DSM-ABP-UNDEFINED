@@ -1,7 +1,6 @@
 import type {
   IndicadoresRelatorio,
   ItemTopEmissorRelatorio,
-  OportunidadeRelatorio,
   PeriodoRelatorio,
   PontoSerieRelatorio,
   ResumoSerieRelatorio,
@@ -13,7 +12,6 @@ import {
   toFiniteNumber,
 } from './formatters.ts';
 
-export const VERSAO_CALCULO = '1.0.0';
 export const LIMITE_TOP_EMISSORES_RELATORIO = 5;
 
 const dataHoraGeracao = new Intl.DateTimeFormat('pt-BR', {
@@ -22,16 +20,9 @@ const dataHoraGeracao = new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short',
 });
 
-const percentualEconomia = new Intl.NumberFormat('pt-BR', {
-  maximumFractionDigits: 1,
+const contagemFormatador = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 0,
 });
-
-const rotulosTipoOportunidade: Record<string, string> = {
-  MIGRAR_REGIAO: 'Migrar de região',
-  POSSIVEL_SUPERDIMENSIONAMENTO: 'Possível superdimensionamento',
-  SUPERDIMENSIONAMENTO: 'Possível superdimensionamento',
-  MUDAR_HORARIO: 'Mudar horário',
-};
 
 function ehObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null;
@@ -129,7 +120,6 @@ export function normalizarIndicadoresRelatorio(
     coletasCalculadas: inteiroNaoNegativo(valor.coletasCalculadas, 0),
     servicos,
     geradoEm: textoNaoVazio(valor.geradoEm),
-    versaoCalculo: textoNaoVazio(valor.versaoCalculo),
   };
 }
 
@@ -254,8 +244,6 @@ export function normalizarTopEmissores(
       return null;
     }
 
-    const seloBruto = textoNaoVazio(item.selo);
-
     itens.push({
       posicao: item.posicao as number,
       servicoId: item.servicoId as number,
@@ -263,74 +251,10 @@ export function normalizarTopEmissores(
       energiaKwh,
       emissaoGCo2e,
       coletasValidas: item.coletasValidas as number,
-      selo: seloBruto && seloBruto !== '—' ? seloBruto : null,
     });
   }
 
   return itens.slice(0, LIMITE_TOP_EMISSORES_RELATORIO);
-}
-
-export function normalizarOportunidadesRelatorio(
-  valor: unknown,
-): OportunidadeRelatorio[] | null {
-  const listaBruta = Array.isArray(valor)
-    ? valor
-    : ehObjeto(valor) && Array.isArray(valor.itens)
-      ? valor.itens
-      : null;
-
-  if (!listaBruta) {
-    return null;
-  }
-
-  const oportunidades: OportunidadeRelatorio[] = [];
-
-  for (const item of listaBruta) {
-    if (!ehObjeto(item)) {
-      return null;
-    }
-
-    const servicoNome =
-      textoNaoVazio(item.servicoNome) ??
-      textoNaoVazio(item.nome) ??
-      (ehObjeto(item.servico) ? textoNaoVazio(item.servico.nome) : null);
-    const tipo = textoNaoVazio(item.tipo);
-    const explicacao =
-      textoNaoVazio(item.textoExplicativo) ??
-      textoNaoVazio(item.explicacao) ??
-      textoNaoVazio(item.descricao);
-
-    if (!servicoNome || !tipo || !explicacao) {
-      return null;
-    }
-
-    const servicoId =
-      typeof item.servicoId === 'number' && Number.isInteger(item.servicoId)
-        ? item.servicoId
-        : ehObjeto(item.servico) &&
-            typeof item.servico.id === 'number' &&
-            Number.isInteger(item.servico.id)
-          ? item.servico.id
-          : null;
-
-    const economiaGCo2e = numeroNaoNegativo(
-      item.economiaGCo2e ?? item.economiaEstimadaGCo2e,
-    );
-    const economiaPercentual = numeroNaoNegativo(
-      item.economiaPercentual ?? item.economiaEstimadaPercentual,
-    );
-
-    oportunidades.push({
-      servicoId,
-      servicoNome,
-      tipo,
-      explicacao,
-      economiaGCo2e,
-      economiaPercentual,
-    });
-  }
-
-  return oportunidades;
 }
 
 export function formatarDataGeracaoRelatorio(
@@ -342,18 +266,10 @@ export function formatarDataGeracaoRelatorio(
   return dataHoraGeracao.format(valida);
 }
 
-export function formatarRotuloTipoOportunidade(tipo: string): string {
-  return (
-    rotulosTipoOportunidade[tipo] ??
-    tipo
-      .toLocaleLowerCase('pt-BR')
-      .replace(/[_-]+/g, ' ')
-      .replace(/^\p{L}/u, (letra) => letra.toLocaleUpperCase('pt-BR'))
-  );
-}
-
-export function formatarPercentualEconomia(
-  valor: number | null,
-): string | null {
-  return valor === null ? null : `${percentualEconomia.format(valor)}%`;
+export function formatarContagemComConcordancia(
+  quantidade: number,
+  singular: string,
+  plural: string,
+): string {
+  return `${contagemFormatador.format(quantidade)} ${quantidade === 1 ? singular : plural}`;
 }

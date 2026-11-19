@@ -19,7 +19,6 @@ export type IndicadoresRelatorio = {
   coletasCalculadas: number;
   servicos: ResumoServicosRelatorio;
   geradoEm: string | null;
-  versaoCalculo: string | null;
 };
 
 export type PontoSerieRelatorio = {
@@ -52,21 +51,10 @@ export type ItemTopEmissorRelatorio = {
   energiaKwh: number;
   emissaoGCo2e: number;
   coletasValidas: number;
-  selo: string | null;
-};
-
-export type OportunidadeRelatorio = {
-  servicoId: number | null;
-  servicoNome: string;
-  tipo: string;
-  explicacao: string;
-  economiaGCo2e: number | null;
-  economiaPercentual: number | null;
 };
 
 export type DadosRelatorio = {
   indicadores: IndicadoresRelatorio;
   serie: ResumoSerieRelatorio;
   topEmissores: ItemTopEmissorRelatorio[];
-  oportunidades: OportunidadeRelatorio[] | null;
 };

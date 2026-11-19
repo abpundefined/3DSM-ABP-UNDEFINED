@@ -37,7 +37,6 @@ const dadosCompletos: DadosRelatorio = {
       removidos: 0,
     },
     geradoEm: '2026-11-19T14:00:00.000Z',
-    versaoCalculo: '1.0.0',
   },
   serie: {
     periodo: {
@@ -74,7 +73,6 @@ const dadosCompletos: DadosRelatorio = {
       energiaKwh: 6.1,
       emissaoGCo2e: 2500,
       coletasValidas: 40,
-      selo: 'E',
     },
     {
       posicao: 2,
@@ -83,17 +81,6 @@ const dadosCompletos: DadosRelatorio = {
       energiaKwh: 3.4,
       emissaoGCo2e: 1300,
       coletasValidas: 40,
-      selo: 'C',
-    },
-  ],
-  oportunidades: [
-    {
-      servicoId: 5,
-      servicoNome: 'Video Processor',
-      tipo: 'MIGRAR_REGIAO',
-      explicacao: 'Redução estimada ao migrar para ca-central.',
-      economiaGCo2e: 1200,
-      economiaPercentual: 48,
     },
   ],
 };
@@ -127,7 +114,7 @@ describe('Relatorio', () => {
     ).toBeVisible();
   });
 
-  it('renderiza período, totais com equivalências, tendência, top 5 com selos, oportunidades, metodologia e rodapé', async () => {
+  it('renderiza período, totais com equivalências, concordância, tendência, top 5, metodologia e rodapé', async () => {
     buscarDadosRelatorioMock.mockResolvedValue(dadosCompletos);
     renderRelatorio();
 
@@ -138,6 +125,7 @@ describe('Relatorio', () => {
     expect(totais).toHaveTextContent('4,88 kgCO₂e');
     expect(totais).toHaveTextContent('km rodados de carro');
     expect(totais).toHaveTextContent('cargas de celular');
+    expect(totais).toHaveTextContent('5 ativos · 1 indisponível');
 
     expect(
       screen.getByRole('region', { name: 'Tendência no período' }),
@@ -149,16 +137,12 @@ describe('Relatorio', () => {
       }),
     );
     expect(tabela.getByText('Video Processor')).toBeVisible();
-    expect(tabela.getByText('E')).toBeVisible();
     expect(tabela.getByText('Search API')).toBeVisible();
-    expect(tabela.getByText('C')).toBeVisible();
+    expect(tabela.queryByText('Selo')).not.toBeInTheDocument();
 
-    const secaoOportunidades = screen.getByRole('region', {
-      name: 'Oportunidades de redução',
-    });
-    expect(secaoOportunidades).toHaveTextContent('Video Processor');
-    expect(secaoOportunidades).toHaveTextContent('1,20 kgCO₂e');
-    expect(secaoOportunidades).toHaveTextContent('estimada');
+    expect(
+      screen.queryByRole('region', { name: 'Oportunidades de redução' }),
+    ).not.toBeInTheDocument();
 
     const metodologia = screen.getByRole('region', {
       name: 'Nota de metodologia',
@@ -170,7 +154,9 @@ describe('Relatorio', () => {
 
     const rodape = screen.getByLabelText('Metadados do relatório');
     expect(rodape).toHaveTextContent('19/11/2026, 11:00');
-    expect(rodape).toHaveTextContent('Versão do cálculo: 1.0.0');
+    expect(rodape).toHaveTextContent(
+      'Cálculo conforme a página Como calculamos',
+    );
   });
 
   it('aciona window.print ao clicar em Imprimir / salvar PDF', async () => {
@@ -185,19 +171,6 @@ describe('Relatorio', () => {
     await user.click(botao);
 
     expect(printSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('mantém o relatório funcional quando oportunidades ainda não estão disponíveis no servidor', async () => {
-    buscarDadosRelatorioMock.mockResolvedValue({
-      ...dadosCompletos,
-      oportunidades: null,
-    });
-    renderRelatorio();
-
-    const secaoOportunidades = await screen.findByRole('region', {
-      name: 'Oportunidades de redução',
-    });
-    expect(secaoOportunidades).toHaveTextContent(/indisponível/i);
   });
 
   it('permite tentar novamente em caso de falha na consulta', async () => {
