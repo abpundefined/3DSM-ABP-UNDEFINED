@@ -1,7 +1,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/abpundefined/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI%20Build%20%26%20Tests)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
 [![Backend Coverage](https://img.shields.io/badge/cobertura%20backend-%E2%89%A5%2080%25%20Jest-176b30?logo=jest)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
-[![Frontend Tests](https://img.shields.io/badge/frontend-Unit%20%2B%20Vitest%20%2B%20Playwright%20Axe-2f7b45)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
-[![Docker Compose](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker&logoColor=white)](./docker-compose.yml)
+[![Frontend Tests](https://img.shields.io/badge/frontend-Node%20%2B%20Vitest-2f7b45)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker&logoColor=white)](./compose.yaml)
 
 <h1>🚀 3DSM-ABP-UNDEFINED — GreenER</h1>
 <p>
@@ -80,7 +80,7 @@
 
 ```mermaid
 flowchart LR
-    Front[Frontend React + Vite] -->|/api/*| Proxy[Proxy Vite / Compose]
+    Front[Frontend React + Vite] -->|/api/*| Proxy[Proxy do Vite]
     Proxy -->|HTTP REST| API[Backend NestJS]
     API --> Prisma[Prisma ORM]
     Prisma --> DB[(PostgreSQL)]
@@ -93,16 +93,16 @@ flowchart LR
 ```mermaid
 erDiagram
     REGIAO ||--o{ SERVICO : "hospeda"
-    REGIAO ||--o{ COLETA : "intensidade na coleta"
+    REGIAO |o--o{ COLETA : "intensidade na coleta"
     SERVICO ||--o{ COLETA : "possui"
 
     REGIAO {
         string codigo PK
         string pais
         string regiao
-        string cidade
-        float latitude
-        float longitude
+        string cidade "opcional"
+        float latitude "opcional"
+        float longitude "opcional"
         datetime atualizadaEm
     }
     SERVICO {
@@ -119,19 +119,25 @@ erDiagram
     COLETA {
         int id PK
         int servicoId FK
-        string regiaoCodigoNaColeta FK
+        string regiaoCodigoNaColeta FK "opcional"
         datetime iniciadaEm
-        datetime finalizadaEm
-        int intervaloColetaSegundos
+        datetime finalizadaEm "opcional"
+        int intervaloColetaSegundos "opcional"
         enum estadoColeta
-        float cpuPercent
-        float memoryGb
-        float diskGb
-        float networkGb
-        float intensidadeCarbonoGCo2ePorKwh
-        float energiaKwh
-        float emissaoGCo2e
+        string codigoErro "opcional"
+        string mensagemErro "opcional"
+        float cpuPercent "opcional"
+        float memoryGb "opcional"
+        float diskGb "opcional"
+        float networkGb "opcional"
+        float intensidadeCarbonoGCo2ePorKwh "opcional"
+        datetime consultadaCarbonoEm "opcional"
+        datetime inicioPeriodo "opcional"
+        datetime fimPeriodo "opcional"
+        float energiaKwh "opcional"
+        float emissaoGCo2e "opcional"
         enum estadoCalculo
+        string versaoCalculo "opcional"
     }
     USUARIO {
         int id PK
@@ -224,11 +230,11 @@ npm.cmd run test:e2e   # requer PostgreSQL de teste (*_e2e)
 npm.cmd run lint
 
 # Frontend (na pasta frontend/)
-npm.cmd test               # testes unitários Node e hooks/componentes
-npm.cmd run test:coverage  # cobertura Vitest
+npm.cmd test               # testes unitários Node e hooks/componentes (CI)
+npm.cmd run test:coverage  # cobertura Vitest (CI)
 npm.cmd run lint
 npm.cmd run format:check
-npm.cmd run test:e2e       # Playwright + acessibilidade Axe (desktop e mobile)
+npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local em desktop e celular)
 </code></pre>
 
 <hr>

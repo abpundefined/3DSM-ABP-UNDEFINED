@@ -4,15 +4,16 @@ A aplicação é composta por uma SPA em React + TypeScript, um backend modular 
 
 ```mermaid
 flowchart LR
-    React[Frontend React + Vite] -->|/api/*| Vite[Proxy / Nginx]
+    React[Frontend React + Vite] -->|/api/*| Vite[Proxy do Vite]
     Vite -->|remove /api| Nest[API REST NestJS]
     Nest --> Prisma[Prisma ORM]
     Prisma --> PG[(PostgreSQL)]
-    Timer[MonitoramentoService] --> Descoberta[ServicosService]
-    Timer --> Coletor[MonitoramentoService]
-    Descoberta --> Metrics[GreenER Metrics API]
-    Coletor --> Metrics
-    Coletor --> Calculos[CalculosService]
+    Monitor[MonitoramentoService] -->|descoberta| Descoberta[ServicosService]
+    Monitor -->|coleta| Metrics[GreenER Metrics API]
+    Monitor --> Calculos[CalculosService]
+    Monitor --> Prisma
+    Descoberta --> Metrics
+    Descoberta --> Prisma
     Calculos --> Carbon[GreenER Carbon Intensity API]
 ```
 
