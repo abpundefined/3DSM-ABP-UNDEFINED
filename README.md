@@ -1,7 +1,9 @@
-[![CI](https://img.shields.io/github/actions/workflow/status/abpundefined/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
-[![Cobertura de testes](https://img.shields.io/badge/cobertura-relat%C3%B3rio%20Jest-blue?logo=jest)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![CI](https://img.shields.io/github/actions/workflow/status/abpundefined/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI%20Build%20%26%20Tests)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Backend Coverage](https://img.shields.io/badge/cobertura%20backend-%E2%89%A5%2080%25%20Jest-176b30?logo=jest)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Frontend Tests](https://img.shields.io/badge/frontend-Node%20%2B%20Vitest-2f7b45)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker&logoColor=white)](./compose.yaml)
 
-<h1>🚀 3DSM-ABP-UNDEFINED</h1>
+<h1>🚀 3DSM-ABP-UNDEFINED — GreenER</h1>
 <p>
     Este repositório contém o desenvolvimento do projeto interdisciplinar da disciplina de
     <strong>Aprendizagem Baseada em Projetos (ABP)</strong> do 3º semestre do curso de
@@ -14,8 +16,11 @@
 <ul>
     <li><a href="#sobre">🌱 Sobre o Projeto</a></li>
     <li><a href="#tecnologias">🛠️ Tecnologias Utilizadas</a></li>
-    <li><a href="#comorodar">🚀 Como Rodar o Projeto</a></li>
+    <li><a href="#arquitetura">🏗️ Arquitetura e Modelo de Dados (ER)</a></li>
+    <li><a href="#comorodar">🚀 Como Rodar o Projeto e Configurar APIs Externas</a></li>
+    <li><a href="#api-endpoints">🔌 Endpoints e Swagger</a></li>
     <li><a href="#ci-testes">✅ CI e Testes</a></li>
+    <li><a href="#telas-evidencias">🖼️ Telas Principais e Evidências</a></li>
     <li><a href="#requisitos">📑 Requisitos</a></li>
     <li><a href="#userstories">📝 User Stories</a></li>
     <li><a href="#planejamento-de-sprints">🚀 Planejamento de Sprints</a></li>
@@ -70,30 +75,178 @@
 
 <hr>
 
-<h2 id="comorodar">🚀 Como Rodar o Projeto</h2>
+<h2 id="arquitetura">🏗️ Arquitetura e Modelo de Dados (ER)</h2>
+<p>O sistema segue uma arquitetura modular dividida em SPA React/TypeScript, API REST NestJS/TypeScript com Prisma ORM e banco relacional PostgreSQL, consumindo o Agregador de Métricas e a API de Intensidade de Carbono. Detalhes completos em <a href="./docs/arquitetura.md">docs/arquitetura.md</a>.</p>
 
-<p>O ambiente completo usa Docker Desktop em execução, com containers Linux. Na raiz:</p>
+```mermaid
+flowchart LR
+    Front[Frontend React + Vite] -->|/api/*| Proxy[Proxy do Vite]
+    Proxy -->|HTTP REST| API[Backend NestJS]
+    API --> Prisma[Prisma ORM]
+    Prisma --> DB[(PostgreSQL)]
+    API --> Metrics[GreenER Metrics Aggregator API]
+    API --> Carbon[GreenER Carbon Intensity API]
+```
+
+<h3>🗃️ Diagrama Entidade-Relacionamento (Prisma)</h3>
+
+```mermaid
+erDiagram
+    REGIAO ||--o{ SERVICO : "hospeda"
+    REGIAO |o--o{ COLETA : "intensidade na coleta"
+    SERVICO ||--o{ COLETA : "possui"
+
+    REGIAO {
+        string codigo PK
+        string pais
+        string regiao
+        string cidade "opcional"
+        float latitude "opcional"
+        float longitude "opcional"
+        datetime atualizadaEm
+    }
+    SERVICO {
+        int id PK
+        string idExterno UK
+        string nome
+        string regiaoCodigo FK
+        string caminhoMetricas
+        enum estadoAtual
+        datetime descobertoEm
+        datetime ultimaVezListadoEm
+        datetime atualizadoEm
+    }
+    COLETA {
+        int id PK
+        int servicoId FK
+        string regiaoCodigoNaColeta FK "opcional"
+        datetime iniciadaEm
+        datetime finalizadaEm "opcional"
+        int intervaloColetaSegundos "opcional"
+        enum estadoColeta
+        string codigoErro "opcional"
+        string mensagemErro "opcional"
+        float cpuPercent "opcional"
+        float memoryGb "opcional"
+        float diskGb "opcional"
+        float networkGb "opcional"
+        float intensidadeCarbonoGCo2ePorKwh "opcional"
+        datetime consultadaCarbonoEm "opcional"
+        datetime inicioPeriodo "opcional"
+        datetime fimPeriodo "opcional"
+        float energiaKwh "opcional"
+        float emissaoGCo2e "opcional"
+        enum estadoCalculo
+        string versaoCalculo "opcional"
+    }
+    USUARIO {
+        int id PK
+        string nome
+        string email UK
+        string senhaHash
+    }
+    CONFIGURACAO_MONITORAMENTO {
+        int id PK
+        int intervaloDescobertaSegundos
+        int intervaloColetaSegundos
+        datetime atualizadaEm
+    }
+```
+
+<hr>
+
+<h2 id="comorodar">🚀 Como Rodar o Projeto e Configurar APIs Externas</h2>
+
+<h3>1. Configuração de Variáveis e APIs Externas (<code>.env</code>)</h3>
+<p>Na raiz do repositório, crie seu arquivo de ambiente a partir do modelo:</p>
 <pre><code>Copy-Item .env.example .env
 </code></pre>
-<p>Preencha as credenciais e a porta do PostgreSQL no arquivo antes de iniciar. Leia o <a href="./docs/execucao.md">guia de execução</a> para exemplos de variáveis e para escolher entre Docker completo e desenvolvimento nativo.</p>
+<p>Defina as URLs das duas APIs externas e segredos de inicialização antes de subir os containers (o backend valida no boot que <code>JWT_SECRET</code> tem ao menos 32 caracteres e <code>ADMIN_PASSWORD</code> ao menos 12 caracteres, sem manter valores padrão):</p>
+<table>
+    <tr><th>Variável</th><th>Padrão / Exemplo</th><th>Descrição</th></tr>
+    <tr><td><code>METRICS_API_URL</code></td><td><code>https://metrics.unilaunch.org</code></td><td>Base da API externa de descoberta (<code>/services</code>) e telemetria (<code>/metrics/:id</code>).</td></tr>
+    <tr><td><code>CARBON_API_URL</code></td><td><code>https://carbon.unilaunch.org</code></td><td>Base da API de intensidade de carbono por região (<code>/regions/:code/carbon-intensity</code>).</td></tr>
+    <tr><td><code>METRICS_POLL_INTERVAL_MS</code></td><td><code>30000</code></td><td>Intervalo padrão entre ciclos automáticos de coleta (em ms), sobrescrito em runtime via <code>PUT /configuracao</code>.</td></tr>
+    <tr><td><code>JWT_SECRET</code> / <code>JWT_EXPIRES_IN</code></td><td>Hex 64 chars / <code>3600</code></td><td>Chave de assinatura dos tokens JWT e tempo de expiração em segundos.</td></tr>
+    <tr><td><code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code></td><td><code>admin@greener.local</code></td><td>Credenciais do administrador inicial criado pelo <code>AdminSeedService</code> no boot.</td></tr>
+    <tr><td><code>DATABASE_URL</code> / <code>DB_*</code></td><td>PostgreSQL 17</td><td>Conexão relacional usada pelo Prisma (no Compose usa rede interna <code>postgres:5432</code>).</td></tr>
+    <tr><td><code>CORS_ORIGIN</code></td><td><code>http://localhost:5173</code></td><td>Origens permitidas para requisições diretas ao backend.</td></tr>
+</table>
+
+<h3>2. Execução Completa com Docker Compose (Recomendado)</h3>
 <pre><code>docker compose config --quiet
 docker compose up --build
 </code></pre>
-<p>O backend containerizado já gera o Prisma Client, aplica as migrações e inicia o servidor. Não inicie outro backend nas mesmas portas após subir o Compose completo.</p>
+<p>O container do backend gera o Prisma Client, aplica as migrações pendentes e inicia a API; o frontend e o PostgreSQL sobem integrados na mesma rede.</p>
 <ul>
-  <li>Frontend: <a href="http://localhost:5173">http://localhost:5173</a>.</li>
-  <li>API direta: <a href="http://localhost:3000/servicos">http://localhost:3000/servicos</a>.</li>
-  <li>Swagger da API: <a href="http://localhost:3000/docs">http://localhost:3000/docs</a>.</li>
-  <li>API pelo proxy: <a href="http://localhost:5173/api/servicos">http://localhost:5173/api/servicos</a>.</li>
-  <li>Demonstração com dados fictícios: <a href="http://localhost:5173/?demo=1">http://localhost:5173/?demo=1</a>.</li>
+  <li>Frontend: <a href="http://localhost:5173">http://localhost:5173</a> (ou <a href="http://localhost:5173/?demo=1">modo demonstração <code>?demo=1</code></a>).</li>
+  <li>Backend direto: <a href="http://localhost:3000/servicos">http://localhost:3000/servicos</a> · Proxy Vite: <a href="http://localhost:5173/api/servicos">http://localhost:5173/api/servicos</a>.</li>
+  <li>Swagger / OpenAPI: <a href="http://localhost:3000/docs">http://localhost:3000/docs</a> (JSON em <a href="http://localhost:3000/docs-json">/docs-json</a>).</li>
 </ul>
-<p>A lista, as últimas coletas e os indicadores agregados já são consumidos do backend. Energia e CO₂e são consolidados a partir das coletas calculadas nas últimas 24 horas; autenticação e análises avançadas ainda não estão implementadas. O teste completo dos três containers permanece pendente de homologação registrada. Consulte a <a href="./docs/sprints/revisao-sprint-1.md">revisão técnica e seus limites</a>.</p>
-<p>Execução nativa exige Node 24.x/npm 11.x e ambiente configurado na pasta do backend; instruções em <a href="./backend/README.md">backend/README.md</a> e <a href="./frontend/README.md">frontend/README.md</a>. As rotas implementadas estão na <a href="./docs/api.md">documentação da API</a>.</p>
+
+<h3>3. Execução Local (Sem Container de App)</h3>
+<p>Exige <strong>Node 24.x</strong>, <strong>npm 11.x</strong> e PostgreSQL ativo. Veja detalhes completos no <a href="./docs/execucao.md">guia de execução</a>, em <a href="./backend/README.md">backend/README.md</a> e em <a href="./frontend/README.md">frontend/README.md</a>:</p>
+<pre><code># Terminal 1 — Backend
+cd backend
+npm.cmd ci
+npx.cmd prisma generate --config prisma7.config.ts
+npx.cmd prisma migrate deploy --config prisma7.config.ts
+npm.cmd run start:dev
+
+# Terminal 2 — Frontend
+cd frontend
+npm.cmd ci
+npm.cmd run dev
+</code></pre>
+
+<hr>
+
+<h2 id="api-endpoints">🔌 Endpoints e Swagger</h2>
+<p>A documentação interativa OpenAPI está disponível em <code>GET /docs</code> e o contrato completo com exemplos em <a href="./docs/api.md">docs/api.md</a>. Resumo das rotas:</p>
+<table>
+    <tr><th>Método</th><th>Rota (Backend)</th><th>Autenticação</th><th>Finalidade</th></tr>
+    <tr><td><code>POST</code></td><td><code>/auth/login</code></td><td>Pública</td><td>Autentica administrador e retorna <code>accessToken</code> JWT.</td></tr>
+    <tr><td><code>GET</code> / <code>PUT</code></td><td><code>/configuracao</code></td><td><code>GET</code> público / <code>PUT</code> JWT</td><td>Consulta ou altera intervalos de descoberta e coleta em runtime.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/servicos</code></td><td>Pública</td><td>Lista serviços descobertos com região e estado operacional.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/servicos/:id/historico</code></td><td>Pública</td><td>Série temporal de energia, emissão, CPU, memória e estados por intervalo.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/servicos/:id/simulacao-regiao</code></td><td>Pública</td><td>Simula emissões e economia estimada caso o serviço rodasse em outra região.</td></tr>
+    <tr><td><code>POST</code></td><td><code>/servicos/sync</code></td><td>JWT Bearer</td><td>Dispara descoberta externa e sincronização imediata no banco.</td></tr>
+    <tr><td><code>GET</code> / <code>POST</code></td><td><code>/coletas</code> e <code>/coletas/servico/:id/ultima-valida</code></td><td><code>GET</code> público / <code>POST</code> JWT</td><td>Registra coletas e consulta histórico ou última coleta válida.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/indicadores</code> e <code>/indicadores/serie</code></td><td>Pública</td><td>Totais consolidados e séries temporais por período (<code>24h</code>, <code>7d</code>, <code>30d</code>, etc.).</td></tr>
+    <tr><td><code>GET</code></td><td><code>/ranking</code></td><td>Pública</td><td>Ranking de serviços por energia ou emissão no período e lista sem dados.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/comparacao</code></td><td>Pública</td><td>Comparação alinhada de 2 a 5 serviços no mesmo intervalo.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/mapa</code></td><td>Pública</td><td>Serviços geolocalizados, série por intervalo e lista sem coordenadas.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/intensidade/horarios</code></td><td>Pública</td><td>Matriz 7×24 de intensidade média por dia/hora e melhor janela de 3h.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/saude</code></td><td>JWT Bearer</td><td>Estado das integrações (agregador e API de carbono) e taxa de falha.</td></tr>
+</table>
 
 <hr>
 
 <h2 id="ci-testes">✅ CI e Testes</h2>
-<p>O workflow executa os testes unitários, typecheck, lint, formatação e builds, além de publicar o relatório de cobertura do Jest como artifact. A inclusão dos testes E2E com Playwright no GitHub Actions foi postergada para uma issue futura, para manter o feedback do CI rápido no ciclo de TDD e evitar, neste momento, o download demorado dos binários dos browsers e a orquestração complexa de containers.</p>
+<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa quatro jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, lint, Prettier, typecheck e build), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker).</p>
+<pre><code># Backend (na pasta backend/)
+npm.cmd run test:cov   # unitários + cobertura >= 80% (services e repositories)
+npm.cmd run test:e2e   # requer PostgreSQL de teste (*_e2e)
+npm.cmd run lint
+
+# Frontend (na pasta frontend/)
+npm.cmd test               # testes unitários Node e hooks/componentes (CI)
+npm.cmd run test:coverage  # cobertura Vitest (CI)
+npm.cmd run lint
+npm.cmd run format:check
+npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local em desktop e celular)
+</code></pre>
+
+<hr>
+
+<h2 id="telas-evidencias">🖼️ Telas Principais e Evidências</h2>
+<p>As capturas das telas principais e dos ciclos de avaliação heurística e usabilidade estão catalogadas no repositório:</p>
+<ul>
+    <li><strong>Sprint 2 (Dashboard, Login, 404 e Responsividade 1920px/375px):</strong> <a href="./docs/evidencias/frontend-25/">docs/evidencias/frontend-25/</a></li>
+    <li><strong>Sprint 3 (Avaliação Heurística e Melhorias P01–P08 — Antes e Depois):</strong> <a href="./docs/evidencias/issue-101/">issue-101</a>, <a href="./docs/evidencias/issue-101-2026-11-16/">2026-11-16</a> e <a href="./docs/evidencias/issue-101-2026-11-17/">2026-11-17</a></li>
+    <li><strong>Relatório de IHC, Protótipos e Testes com Usuários:</strong> <a href="./docs/interface.md">docs/interface.md</a></li>
+    <li><em>Demonstração em GIF e capturas finais da Sprint 3 (ranking, mapa animado, detalhe com simulador e admin): atualização final prevista antes do corte de 21/11 (#21).</em></li>
+</ul>
 
 <hr>
 
