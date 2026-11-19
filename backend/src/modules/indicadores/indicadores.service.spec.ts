@@ -6,6 +6,7 @@ jest.mock("@nestjs/config", () => ({
 }));
 
 import { BadRequestException } from "@nestjs/common";
+import type { CalculosService } from "../calculos/calculos.service";
 import type { ConfiguracaoService } from "../configuracao/configuracao.service";
 import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
@@ -26,9 +27,11 @@ describe("IndicadoresService", () => {
     listarServicosParaRanking: jest.fn(),
   };
   const configuracaoService = { obter: jest.fn() };
+  const calculosService = { calcularPotencia: jest.fn() };
   const service = new IndicadoresService(
     repository as unknown as IndicadoresRepository,
     configuracaoService as unknown as ConfiguracaoService,
+    calculosService as unknown as CalculosService,
   );
 
   beforeEach(() => {

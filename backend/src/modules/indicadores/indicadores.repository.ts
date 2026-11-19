@@ -36,6 +36,8 @@ export interface PontoHistoricoServico {
   emissaoGCo2e: number | null;
   cpuMedia: number | null;
   memoriaMediaMb: number | null;
+  discoMediaGb: number | null;
+  redeMediaGb: number | null;
   coletas: number;
   ativo: number;
   indisponivel: number;
@@ -179,6 +181,8 @@ export class IndicadoresRepository {
         SUM(c."emissaoGCo2e") FILTER (WHERE c."estadoCalculo" = 'CONCLUIDO') AS "emissaoGCo2e",
         AVG(c."cpuPercent") AS "cpuMedia",
         AVG(c."memoryGb") * 1024 AS "memoriaMediaMb",
+        AVG(c."diskGb") AS "discoMediaGb",
+        AVG(c."networkGb") AS "redeMediaGb",
         COUNT(*) AS "coletas",
         SUM(CASE WHEN c."estadoColeta" = 'SUCESSO' THEN 1 ELSE 0 END) AS "ativo",
         SUM(CASE WHEN c."estadoColeta" = 'FALHA' THEN 1 ELSE 0 END) AS "indisponivel",

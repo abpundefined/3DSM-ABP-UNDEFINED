@@ -4,6 +4,10 @@ import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
 import { comTimeout } from "../../common/utils/com-timeout";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
+import {
+  CalculosService,
+  ComponentesPotencia,
+} from "../calculos/calculos.service";
 import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosRepository } from "./servicos.repository";
 
@@ -20,6 +24,7 @@ export interface LocalizacaoServico {
 
 export type ServicoComLocalizacao = Servico & {
   localizacao: LocalizacaoServico;
+  componentes: ComponentesPotencia | null;
 };
 
 @Injectable()
@@ -30,6 +35,7 @@ export class ServicosService {
     private readonly servicosRepository: ServicosRepository,
     private readonly configService: ConfigService,
     private readonly registro: RegistroIntegracoesService,
+    private readonly calculosService: CalculosService,
   ) {}
 
   discoverServices() {
@@ -164,17 +170,35 @@ export class ServicosService {
   async listarServicos(): Promise<ServicoComLocalizacao[]> {
     const servicos = await this.servicosRepository.listarComLocalizacao();
 
-    return servicos.map(({ regiao, ...servico }) => ({
-      ...servico,
-      localizacao: {
-        codigo: regiao.codigo,
-        pais: regiao.pais,
-        regiao: regiao.regiao,
-        cidade: regiao.cidade,
-        latitude: regiao.latitude,
-        longitude: regiao.longitude,
-      },
-    }));
+    return servicos.map(({ regiao, coletas, ...servico }) => {
+      const coleta = coletas[0];
+      const coletaSemDadosValidos =
+        !coleta ||
+        coleta.estadoColeta === "SEM_METRICAS" ||
+        coleta.estadoColeta === "FALHA" ||
+        coleta.estadoCalculo === "FALHA";
+      const componentes = coletaSemDadosValidos
+        ? null
+        : this.calculosService.calcularPotencia(
+            coleta.cpuPercent ?? 0,
+            coleta.memoryGb ?? 0,
+            coleta.diskGb ?? 0,
+            coleta.networkGb ?? 0,
+          );
+
+      return {
+        ...servico,
+        localizacao: {
+          codigo: regiao.codigo,
+          pais: regiao.pais,
+          regiao: regiao.regiao,
+          cidade: regiao.cidade,
+          latitude: regiao.latitude,
+          longitude: regiao.longitude,
+        },
+        componentes,
+      };
+    });
   }
 
   async findById(id: number) {

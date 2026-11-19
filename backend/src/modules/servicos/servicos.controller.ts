@@ -12,6 +12,7 @@ import {
   ServicoDescobertoRespostaDto,
   ServicoRespostaDto,
 } from "../../common/swagger/respostas.dto";
+import { HistoricoServicoRespostaDto } from "../indicadores/dto/historico-servico-response.dto";
 import { HistoricoServicoQueryDto } from "../indicadores/dto/historico-servico-query.dto";
 import { IndicadoresService } from "../indicadores/indicadores.service";
 
@@ -34,23 +35,8 @@ export class ServicosController {
   @ApiOperation({ summary: "Série temporal de um serviço no período" })
   @ApiOkResponse({
     description: "Série temporal agrupada por hora ou dia.",
-    schema: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          inicio: { type: "string", format: "date-time" },
-          energiaKwh: { type: "number", nullable: true },
-          emissaoGCo2e: { type: "number", nullable: true },
-          cpuMedia: { type: "number", nullable: true },
-          memoriaMediaMb: { type: "number", nullable: true },
-          coletas: { type: "number", nullable: true },
-          ativo: { type: "number" },
-          indisponivel: { type: "number" },
-          semMetricas: { type: "number" },
-        },
-      },
-    },
+    type: HistoricoServicoRespostaDto,
+    isArray: true,
   })
   @ApiResponse({ status: 404, description: "Serviço inexistente." })
   obterHistorico(

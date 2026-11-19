@@ -8,6 +8,14 @@ export interface ResultadoCalculoEmissao {
   emissaoGCo2e: number;
 }
 
+export interface ComponentesPotencia {
+  cpuW: number;
+  memoriaW: number;
+  discoW: number;
+  redeW: number;
+  totalW: number;
+}
+
 @Injectable()
 export class CalculosService {
   constructor(private readonly carbonApi: CarbonApiService) {}
@@ -37,13 +45,12 @@ export class CalculosService {
     return { intensidadeCarbonoGCo2ePorKwh, emissaoGCo2e };
   }
 
-  calcularEnergia(
+  calcularPotencia(
     cpuPercent: number,
     memoryGb: number,
     diskGb: number,
     networkGb: number,
-    intervaloSegundos: number,
-  ): number {
+  ): ComponentesPotencia {
     const measurements = [cpuPercent, memoryGb, diskGb, networkGb];
     if (
       measurements.some((value) => !Number.isFinite(value) || value < 0) ||
@@ -53,20 +60,38 @@ export class CalculosService {
         "As métricas devem ser finitas e não negativas; CPU deve estar entre 0 e 100%.",
       );
     }
+
+    const cpuW = (cpuPercent / 100) * CPU_MAX_WATTS;
+    const memoriaW = memoryGb * 0.375;
+    const discoW = diskGb * 0.01;
+    const redeW = networkGb * 0.02;
+    const totalW = cpuW + memoriaW + discoW + redeW;
+
+    if (!Number.isFinite(totalW)) {
+      throw new RangeError("A potência calculada não é um valor finito.");
+    }
+
+    return { cpuW, memoriaW, discoW, redeW, totalW };
+  }
+
+  calcularEnergia(
+    cpuPercent: number,
+    memoryGb: number,
+    diskGb: number,
+    networkGb: number,
+    intervaloSegundos: number,
+  ): number {
+    const { totalW } = this.calcularPotencia(
+      cpuPercent,
+      memoryGb,
+      diskGb,
+      networkGb,
+    );
     if (!Number.isFinite(intervaloSegundos) || intervaloSegundos <= 0) {
       throw new RangeError("O intervalo de coleta deve ser finito e positivo.");
     }
 
-    const consumoCpu = (cpuPercent / 100) * CPU_MAX_WATTS;
-    const consumoMemoria = memoryGb * 0.375;
-    const consumoDisco = diskGb * 0.01;
-    const consumoRede = networkGb * 0.02;
-
-    const potenciaWatts =
-      consumoCpu + consumoMemoria + consumoDisco + consumoRede;
-    const horas = intervaloSegundos / 3600;
-
-    const energiaKwh = (potenciaWatts * horas) / 1000;
+    const energiaKwh = (totalW * intervaloSegundos) / 3_600_000;
     if (!Number.isFinite(energiaKwh)) {
       throw new RangeError("A energia calculada não é um valor finito.");
     }

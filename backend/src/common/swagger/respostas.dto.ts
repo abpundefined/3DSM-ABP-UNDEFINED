@@ -4,6 +4,14 @@ import {
   EstadoColetaEnum,
 } from "../../modules/coletas/estados-coleta.enum";
 
+export class ComponentesEnergiaRespostaDto {
+  @ApiProperty({ type: Number, example: 0.25 }) cpuW!: number;
+  @ApiProperty({ type: Number, example: 0.75 }) memoriaW!: number;
+  @ApiProperty({ type: Number, example: 0.1 }) discoW!: number;
+  @ApiProperty({ type: Number, example: 0.1 }) redeW!: number;
+  @ApiProperty({ type: Number, example: 1.2 }) totalW!: number;
+}
+
 export class ServicoRespostaDto {
   @ApiProperty() id!: number;
   @ApiProperty() idExterno!: string;
@@ -23,6 +31,8 @@ export class ServicoRespostaDto {
   @ApiProperty({ type: String, format: "date-time" }) descobertoEm!: Date;
   @ApiProperty({ type: String, format: "date-time" }) ultimaVezListadoEm!: Date;
   @ApiProperty({ type: String, format: "date-time" }) atualizadoEm!: Date;
+  @ApiProperty({ type: ComponentesEnergiaRespostaDto, nullable: true })
+  componentes!: ComponentesEnergiaRespostaDto | null;
 }
 
 export class ServicoDescobertoRespostaDto {
