@@ -164,7 +164,11 @@ describe('Ranking', () => {
   it('renderiza a demonstração sem consultar a API', () => {
     renderRanking('/ranking?demo=1');
 
-    expect(screen.getByRole('table')).toBeVisible();
+    expect(
+      within(
+        screen.getByRole('region', { name: 'Tabela do ranking' }),
+      ).getByRole('table'),
+    ).toBeVisible();
     expect(document.title).toBe('Ranking · demonstração | GreenER');
     expect(buscarRankingMock).not.toHaveBeenCalled();
   });
