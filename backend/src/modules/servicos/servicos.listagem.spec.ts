@@ -26,6 +26,13 @@ describe("ServicosService.listarServicos", () => {
     descobertoEm: new Date("2026-11-01T00:00:00.000Z"),
     ultimaVezListadoEm: new Date("2026-11-08T00:00:00.000Z"),
     atualizadoEm: new Date("2026-11-08T00:00:00.000Z"),
+    componentes: {
+      cpuW: 0.25,
+      memoriaW: 0.75,
+      discoW: 0.1,
+      redeW: 0.1,
+      totalW: 1.2,
+    },
   };
 
   const regiaoSudeste = {
@@ -98,5 +105,6 @@ describe("ServicosService.listarServicos", () => {
       latitude: null,
       longitude: null,
     });
+    expect(servico).toHaveProperty("componentes", servicoBase.componentes);
   });
 });
