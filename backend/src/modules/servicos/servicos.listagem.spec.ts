@@ -43,6 +43,7 @@ describe("ServicosService.listarServicos", () => {
     diskGb: 10,
     networkGb: 5,
     estadoColeta: "SUCESSO",
+    estadoCalculo: "CONCLUIDO",
   };
 
   const regiaoSudeste = {
@@ -111,7 +112,13 @@ describe("ServicosService.listarServicos", () => {
       listarComLocalizacao.mockResolvedValue([
         {
           ...servicoBase,
-          coletas: [{ ...coletaRecente, estadoColeta }],
+          coletas: [
+            {
+              ...coletaRecente,
+              estadoColeta,
+              estadoCalculo: estadoColeta === "FALHA" ? "FALHA" : "PENDENTE",
+            },
+          ],
           regiao: regiaoSudeste,
         },
       ]);
@@ -121,6 +128,26 @@ describe("ServicosService.listarServicos", () => {
       expect(servico.componentes).toBeNull();
     },
   );
+
+  it("retorna componentes null quando o cálculo da última coleta falhou", async () => {
+    listarComLocalizacao.mockResolvedValue([
+      {
+        ...servicoBase,
+        coletas: [
+          {
+            ...coletaRecente,
+            estadoColeta: "SUCESSO",
+            estadoCalculo: "FALHA",
+          },
+        ],
+        regiao: regiaoSudeste,
+      },
+    ]);
+
+    const [servico] = await service.listarServicos();
+
+    expect(servico.componentes).toBeNull();
+  });
 
   it("mantém a cidade e as coordenadas como null quando a API não informa", async () => {
     listarComLocalizacao.mockResolvedValue([

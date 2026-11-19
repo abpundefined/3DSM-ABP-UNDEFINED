@@ -30,6 +30,8 @@ type ServicoComRegiao = Prisma.ServicoGetPayload<{
         memoryGb: true;
         diskGb: true;
         networkGb: true;
+        estadoColeta: true;
+        estadoCalculo: true;
       };
     };
   };
@@ -153,6 +155,8 @@ export class ServicosRepository {
             memoryGb: true,
             diskGb: true,
             networkGb: true,
+            estadoColeta: true,
+            estadoCalculo: true,
           },
         },
       },

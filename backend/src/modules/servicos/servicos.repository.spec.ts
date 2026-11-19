@@ -260,6 +260,8 @@ describe("ServicosRepository", () => {
             memoryGb: true,
             diskGb: true,
             networkGb: true,
+            estadoColeta: true,
+            estadoCalculo: true,
           },
         },
       },

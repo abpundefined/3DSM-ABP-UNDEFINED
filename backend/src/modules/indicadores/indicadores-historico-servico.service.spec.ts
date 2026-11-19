@@ -150,7 +150,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         discoW: 0.02,
         redeW: 0.06,
       });
-      expect(resultado[0].componentes.totalW).toBeCloseTo(0.23375, 10);
+      expect(resultado[0].componentes?.totalW).toBeCloseTo(0.23375, 10);
       expect(resultado[1].componentes).toBeNull();
       expect(resultado[2].componentes).toMatchObject({
         cpuW: 0.12,
@@ -158,7 +158,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         discoW: 0.04,
         redeW: 0.1,
       });
-      expect(resultado[2].componentes.totalW).toBeCloseTo(0.4475, 10);
+      expect(resultado[2].componentes?.totalW).toBeCloseTo(0.4475, 10);
     });
   });
 });

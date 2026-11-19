@@ -24,7 +24,7 @@ export interface LocalizacaoServico {
 
 export type ServicoComLocalizacao = Servico & {
   localizacao: LocalizacaoServico;
-  componentes: ComponentesPotencia;
+  componentes: ComponentesPotencia | null;
 };
 
 @Injectable()
@@ -172,12 +172,19 @@ export class ServicosService {
 
     return servicos.map(({ regiao, coletas, ...servico }) => {
       const coleta = coletas[0];
-      const componentes = this.calculosService.calcularPotencia(
-        coleta?.cpuPercent ?? 0,
-        coleta?.memoryGb ?? 0,
-        coleta?.diskGb ?? 0,
-        coleta?.networkGb ?? 0,
-      );
+      const coletaSemDadosValidos =
+        !coleta ||
+        coleta.estadoColeta === "SEM_METRICAS" ||
+        coleta.estadoColeta === "FALHA" ||
+        coleta.estadoCalculo === "FALHA";
+      const componentes = coletaSemDadosValidos
+        ? null
+        : this.calculosService.calcularPotencia(
+            coleta.cpuPercent ?? 0,
+            coleta.memoryGb ?? 0,
+            coleta.diskGb ?? 0,
+            coleta.networkGb ?? 0,
+          );
 
       return {
         ...servico,

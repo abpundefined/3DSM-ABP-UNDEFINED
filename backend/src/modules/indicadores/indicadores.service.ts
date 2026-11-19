@@ -38,7 +38,7 @@ export interface ItemHistoricoServico {
   emissaoGCo2e: number | null;
   cpuMedia: number | null;
   memoriaMediaMb: number | null;
-  componentes: ComponentesPotencia;
+  componentes: ComponentesPotencia | null;
   coletas: number | null;
   ativo: number;
   indisponivel: number;
@@ -309,6 +309,21 @@ export class IndicadoresService {
 
     return intervalos.map((intervalo) => {
       const ponto = seriePorInicio.get(intervalo.getTime());
+      const componentes =
+        ponto !== undefined &&
+        [
+          ponto.cpuMedia,
+          ponto.memoriaMediaMb,
+          ponto.discoMediaGb,
+          ponto.redeMediaGb,
+        ].some((medicao) => medicao !== null)
+          ? this.calculosService.calcularPotencia(
+              ponto.cpuMedia ?? 0,
+              (ponto.memoriaMediaMb ?? 0) / 1024,
+              ponto.discoMediaGb ?? 0,
+              ponto.redeMediaGb ?? 0,
+            )
+          : null;
 
       return {
         inicio: intervalo.toISOString(),
@@ -316,12 +331,7 @@ export class IndicadoresService {
         emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
         cpuMedia: ponto?.cpuMedia ?? null,
         memoriaMediaMb: ponto?.memoriaMediaMb ?? null,
-        componentes: this.calculosService.calcularPotencia(
-          ponto?.cpuMedia ?? 0,
-          (ponto?.memoriaMediaMb ?? 0) / 1024,
-          ponto?.discoMediaGb ?? 0,
-          ponto?.redeMediaGb ?? 0,
-        ),
+        componentes,
         coletas: ponto?.coletas ?? null,
         ativo: ponto?.ativo ?? 0,
         indisponivel: ponto?.indisponivel ?? 0,
