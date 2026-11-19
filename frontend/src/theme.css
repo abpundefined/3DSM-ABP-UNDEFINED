@@ -64,6 +64,12 @@
   --login-alert-border: #81703d;
   --login-alert-text: #f0d98f;
   --chart-emissao: #f0b65a;
+  --treemap-0: #24452d;
+  --treemap-1: #4a3415;
+  --treemap-2: #213a52;
+  --treemap-3: #3e2a48;
+  --treemap-4: #3f3a22;
+  --treemap-5: #1f403c;
 }
 
 :root[data-theme='dark'] body {
