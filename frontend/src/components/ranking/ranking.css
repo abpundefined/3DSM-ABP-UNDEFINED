@@ -177,3 +177,13 @@
 .treemap-dados[open] summary {
   margin-bottom: 10px;
 }
+.treemap-erro {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.treemap-erro p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}

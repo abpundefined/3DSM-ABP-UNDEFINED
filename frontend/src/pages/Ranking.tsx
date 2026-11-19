@@ -4,6 +4,7 @@ import PeriodSelector from '../components/common/PeriodSelector';
 import GraficoEnergiaEmissao from '../components/ranking/GraficoEnergiaEmissao';
 import GraficoRanking from '../components/ranking/GraficoRanking';
 import ListaSemDados from '../components/ranking/ListaSemDados';
+import ParticipacaoEmissoes from '../components/ranking/ParticipacaoEmissoes';
 import TabelaRanking from '../components/ranking/TabelaRanking';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
@@ -25,9 +26,11 @@ const metricas = Object.keys(METRICAS) as MetricaRanking[];
 function ConteudoDoRanking({
   dados,
   atualizando,
+  isDemo,
 }: {
   dados: RespostaRanking;
   atualizando: boolean;
+  isDemo: boolean;
 }) {
   const { periodo, metrica, itens, semDados } = dados;
 
@@ -56,6 +59,7 @@ function ConteudoDoRanking({
         <>
           <GraficoRanking itens={itens} metrica={metrica} />
           <GraficoEnergiaEmissao itens={itens} />
+          <ParticipacaoEmissoes isDemo={isDemo} />
           <TabelaRanking itens={itens} metrica={metrica} />
         </>
       )}
@@ -140,7 +144,11 @@ export default function Ranking() {
         </FeedbackPanel>
       )}
       {exibido.status === 'pronto' && (
-        <ConteudoDoRanking dados={exibido.dados} atualizando={atualizando} />
+        <ConteudoDoRanking
+          dados={exibido.dados}
+          atualizando={atualizando}
+          isDemo={isDemo}
+        />
       )}
     </div>
   );
