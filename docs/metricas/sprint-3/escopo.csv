@@ -4,34 +4,34 @@ issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_c
 85,"[TASK] Navegação, rotas e biblioteca de gráficos",2,NadlaFernandes,Done,CLOSED,sim,2026-11-13T00:13:27Z,
 86,[TASK] Seletor de período compartilhado (frontend),5,NadlaFernandes,Done,CLOSED,sim,2026-11-14T01:00:00Z,
 88,[TASK] Endpoint GET /ranking,3,MarcusVRDN,Done,CLOSED,sim,2026-11-15T03:02:33Z,
-91,[TASK] Página de ranking,6,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+91,[TASK] Página de ranking,6,NadlaFernandes,Done,CLOSED,sim,2026-11-17T23:43:48Z,
 93,[TASK] Endpoint GET /comparacao,5,PedrinhoDBR,Done,CLOSED,sim,2026-11-16T13:43:07Z,
 94,[TASK] Página de comparação,6,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 95,[TASK] Endpoint GET /mapa,5,Israelisl,Done,CLOSED,sim,2026-11-14T00:58:07Z,
 96,[TASK] Mapa animado no frontend,9,Israelisl,Done,CLOSED,sim,2026-11-15T03:01:24Z,
-98,[TASK] Endpoint GET /servicos/:id/historico,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-99,[TASK] Página de detalhe do serviço,7,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+98,[TASK] Endpoint GET /servicos/:id/historico,3,MarcusVRDN,Done,CLOSED,sim,2026-11-16T21:35:48Z,
+99,[TASK] Página de detalhe do serviço,7,RainanKaneka,Done,CLOSED,sim,2026-11-18T01:48:34Z,
 80,[TASK] Paginação do GET /coletas,3,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 78,[PBI] Página de administração dos intervalos (frontend),5,NadlaFernandes,Done,CLOSED,sim,2026-11-15T17:28:22Z,
-81,[PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06),8,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-101,[PBI-26] Melhorias de usabilidade (P01 a P08),8,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-103,[TASK] Cobertura de 80% em todos os services e repositories,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-104,[TASK] Testes E2E de API com PostgreSQL no CI,5,Israelisl,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+81,[PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06),8,thalestcd,Done,CLOSED,sim,2026-11-18T04:37:13Z,
+101,[PBI-26] Melhorias de usabilidade (P01 a P08),8,thalestcd,Done,CLOSED,sim,2026-11-18T23:26:02Z,
+103,[TASK] Cobertura de 80% em todos os services e repositories,3,MarcusVRDN,Done,CLOSED,sim,2026-11-19T01:03:14Z,
+104,[TASK] Testes E2E de API com PostgreSQL no CI,5,Israelisl,Done,CLOSED,sim,2026-11-17T23:42:58Z,
 105,[TASK] Testes de componentes do frontend,5,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-106,[TASK] CI completo,5,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+106,[TASK] CI completo,5,MarcusVRDN,Done,CLOSED,sim,2026-11-18T01:33:49Z,
 21,[PBI-21] Documentação técnica,5,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 108,[TASK] Planejamento e burndown da Sprint 3,2,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 109,[TASK] Roteiro e vídeo da apresentação da Sprint 3,3,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-110,[TASK] Endpoint GET /indicadores/serie,2,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+110,[TASK] Endpoint GET /indicadores/serie,2,MarcusVRDN,Done,CLOSED,sim,2026-11-17T00:35:03Z,
 111,[TASK] Tendência no dashboard,4,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 114,[PBI-27] Variação em relação ao período anterior,4,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-115,"[PBI-28] Simulador ""e se mudasse de região?""",3,Israelisl,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+115,"[PBI-28] Simulador ""e se mudasse de região?""",3,Israelisl,Done,CLOSED,sim,2026-11-17T23:42:50Z,
 116,[PBI-29] Equivalências do CO₂e,1,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 117,"[PBI-30] Página ""Como calculamos""",2,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 118,[PBI-31] Exportar relatório CSV do período,2,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 119,[PBI-33] Oportunidades de redução de emissão,5,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 120,[PBI-34] Selo de eficiência A a F,3,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-122,[TASK] Endpoint GET /intensidade/horarios,2,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+122,[TASK] Endpoint GET /intensidade/horarios,2,MarcusVRDN,Done,CLOSED,sim,2026-11-17T01:34:06Z,
 123,[TASK] Mapa de calor do melhor horário,3,Israelisl,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 124,[PBI-36] Linha do tempo de estado e disponibilidade,3,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 125,[PBI-37] Corrida de barras do ranking,3,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
@@ -41,7 +41,7 @@ issue,titulo,sp_baseline,responsaveis_github,status_kanban,status_issue,aceite_c
 130,[TASK] Projeção e meta no frontend,3,PedrinhoDBR,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 131,[PBI-41] Contadores animados e transições de ordem,1,thalestcd,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 133,[PBI-42] Relatório do período (imprimir ou salvar PDF),3,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
-135,[PBI-43] Saúde das integrações (administração),3,Israelisl,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
+135,[PBI-43] Saúde das integrações (administração),3,Israelisl,Done,CLOSED,sim,2026-11-17T23:42:14Z,
 136,[PBI-44] Modo TV para tela de monitoramento,2,NadlaFernandes,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 139,[TASK] Composição da energia no backend,1,MarcusVRDN,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
 140,[TASK] Gráfico de composição da energia,2,RainanKaneka,Backlog,OPEN,não,,Item em planejamento/desenvolvimento na Sprint 3.
