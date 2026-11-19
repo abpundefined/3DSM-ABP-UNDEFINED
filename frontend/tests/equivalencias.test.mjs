@@ -6,12 +6,12 @@ import {
   formatarEquivalenciasCo2e,
 } from '../src/utils/equivalencias.ts';
 
-test('constantes de equivalência citam fonte oficial da EPA e valores positivos', () => {
+test('constantes de equivalência citam fonte oficial da EPA com fatores atualizados', () => {
   assert.match(FONTE_EQUIVALENCIAS.nome, /EPA/i);
   assert.ok(FONTE_EQUIVALENCIAS.url.startsWith('https://www.epa.gov/'));
   assert.ok(FONTE_EQUIVALENCIAS.consultadoEm.length >= 8);
-  assert.ok(FONTE_EQUIVALENCIAS.carroGCo2ePorKm > 200);
-  assert.ok(FONTE_EQUIVALENCIAS.celularGCo2ePorCarga > 5);
+  assert.equal(FONTE_EQUIVALENCIAS.carroGCo2ePorMilha, 393);
+  assert.equal(FONTE_EQUIVALENCIAS.celularGCo2ePorCarga, 12.4);
 });
 
 test('converterEquivalenciasCo2e retorna null para entrada nula, inválida ou negativa', () => {
@@ -37,7 +37,7 @@ test('converterEquivalenciasCo2e converte gramas de CO₂e em km de carro e carg
   );
 });
 
-test('formatarEquivalenciasCo2e formata aproximação com símbolo ≈ para zero, pequenos e grandes volumes', () => {
+test('formatarEquivalenciasCo2e formata aproximação com símbolo ≈ para zero, pequenos, fronteira e grandes volumes', () => {
   assert.equal(formatarEquivalenciasCo2e(null), null);
 
   assert.deepEqual(formatarEquivalenciasCo2e(0), {
@@ -46,14 +46,18 @@ test('formatarEquivalenciasCo2e formata aproximação com símbolo ≈ para zero
   });
 
   const pequeno = formatarEquivalenciasCo2e(1);
-  assert.ok(pequeno !== null);
-  assert.equal(pequeno.carro, '≈ < 0,01 km rodados de carro');
-  assert.equal(pequeno.celular, '≈ < 1 carga de celular');
+  assert.deepEqual(pequeno, {
+    carro: '≈ menos de 0,01 km rodados de carro',
+    celular: '≈ menos de 1 carga de celular',
+  });
 
-  const medio = formatarEquivalenciasCo2e(2442);
-  assert.ok(medio !== null);
-  assert.ok(medio.carro.startsWith('≈ '));
-  assert.ok(medio.carro.endsWith(' km rodados de carro'));
-  assert.ok(medio.celular.startsWith('≈ '));
-  assert.ok(medio.celular.endsWith(' cargas de celular'));
+  const fronteira = formatarEquivalenciasCo2e(2441);
+  assert.ok(fronteira !== null);
+  assert.equal(fronteira.carro, '≈ 10,0 km rodados de carro');
+
+  const medio = formatarEquivalenciasCo2e(24420);
+  assert.deepEqual(medio, {
+    carro: '≈ 100,0 km rodados de carro',
+    celular: '≈ 1.969 cargas de celular',
+  });
 });
