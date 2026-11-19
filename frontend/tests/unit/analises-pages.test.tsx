@@ -5,9 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Comparacao from '../../src/pages/Comparacao';
 import Ranking from '../../src/pages/Ranking';
 import PeriodProvider from '../../src/providers/PeriodProvider';
+import { buscarMapa } from '../../src/services/mapa';
 import { buscarRanking } from '../../src/services/ranking';
+import { mapaDemo } from '../../src/mocks/mapa';
 import type { RespostaRanking } from '../../src/types/ranking';
 
+vi.mock('../../src/services/mapa', () => ({ buscarMapa: vi.fn() }));
 vi.mock('../../src/services/ranking', () => ({ buscarRanking: vi.fn() }));
 
 vi.mock('../../src/hooks/usePrefersReducedMotion', () => ({
@@ -39,6 +42,7 @@ const resposta: RespostaRanking = {
 };
 
 const buscarRankingMock = vi.mocked(buscarRanking);
+const buscarMapaMock = vi.mocked(buscarMapa);
 
 function ConsultaAtual() {
   const { search } = useLocation();
@@ -59,6 +63,7 @@ function renderRanking(url = '/ranking') {
 describe('Ranking', () => {
   beforeEach(() => {
     buscarRankingMock.mockReset();
+    buscarMapaMock.mockReset().mockResolvedValue(mapaDemo);
   });
 
   it('mostra o carregamento enquanto a consulta não responde', () => {
@@ -69,14 +74,18 @@ describe('Ranking', () => {
     expect(
       screen.getByRole('heading', { name: 'Carregando o ranking' }),
     ).toBeVisible();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Tabela do ranking' }),
+    ).not.toBeInTheDocument();
   });
 
   it('mostra as métricas na tabela e separa os serviços sem dados', async () => {
     buscarRankingMock.mockResolvedValue(resposta);
     renderRanking('/ranking?periodo=7d');
 
-    const tabela = within(await screen.findByRole('table'));
+    const tabela = within(
+      await screen.findByRole('region', { name: 'Tabela do ranking' }),
+    );
     const servico = tabela.getByRole('link', { name: 'API de pagamentos' });
     expect(servico).toHaveAttribute('href', '/servicos/1?periodo=7d');
     expect(tabela.getByRole('cell', { name: '2,00 kWh' })).toBeVisible();
@@ -100,7 +109,9 @@ describe('Ranking', () => {
     renderRanking();
 
     expect(await screen.findByRole('heading', { name: titulo })).toBeVisible();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Tabela do ranking' }),
+    ).not.toBeInTheDocument();
   });
 
   it('mostra o erro e carrega o ranking ao tentar novamente', async () => {
@@ -115,7 +126,9 @@ describe('Ranking', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
-    expect(await screen.findByRole('table')).toBeVisible();
+    expect(
+      await screen.findByRole('region', { name: 'Tabela do ranking' }),
+    ).toBeVisible();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(buscarRankingMock).toHaveBeenCalledTimes(2);
   });
@@ -126,7 +139,7 @@ describe('Ranking', () => {
       .mockResolvedValueOnce(resposta)
       .mockImplementationOnce(() => new Promise(() => {}));
     renderRanking('/ranking?periodo=7d');
-    await screen.findByRole('table');
+    await screen.findByRole('region', { name: 'Tabela do ranking' });
 
     const botao = screen.getByRole('button', { name: /^Emissão/ });
     await user.click(botao);
@@ -143,7 +156,9 @@ describe('Ranking', () => {
     expect(params.get('metrica')).toBe('emissao');
     expect(params.get('periodo')).toBe('7d');
     expect(screen.getByText('Atualizando o ranking...')).toBeVisible();
-    expect(screen.getByRole('table')).toBeVisible();
+    expect(
+      screen.getByRole('region', { name: 'Tabela do ranking' }),
+    ).toBeVisible();
   });
 
   it('renderiza a demonstração sem consultar a API', () => {
