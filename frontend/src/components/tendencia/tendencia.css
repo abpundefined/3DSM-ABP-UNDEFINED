@@ -45,6 +45,16 @@
 .tendencia-aviso {
   margin: 0;
 }
+.tendencia-vazio {
+  display: grid;
+  min-height: 240px;
+  margin: 0;
+  padding: 16px;
+  place-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
 .tendencia-visoes {
   display: inline-flex;
   gap: 4px;

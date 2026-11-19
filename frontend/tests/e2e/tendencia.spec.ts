@@ -80,6 +80,20 @@ const serieDaApi: RespostaSerie = {
   servicos: seriesDeTeste,
 };
 
+function serieSemMetrica(
+  metrica: 'energiaKwh' | 'emissaoGCo2e',
+): RespostaSerie {
+  const limparPonto = (ponto: PontoDaSerie) => ({ ...ponto, [metrica]: null });
+  return {
+    ...serieDaApi,
+    global: serieDaApi.global.map(limparPonto),
+    servicos: serieDaApi.servicos.map((servico) => ({
+      ...servico,
+      serie: servico.serie.map(limparPonto),
+    })),
+  };
+}
+
 const indicadores = {
   energiaTotalKwh: 0.1,
   emissaoTotalGCo2e: 31.53,
@@ -212,11 +226,42 @@ test('sem coletas no período mostra o aviso', async ({ page }) => {
   await page.goto('/');
 
   await expect(painel(page)).toContainText(
-    'Nenhuma coleta calculada no período.',
+    'Sem dados de energia para exibir neste período.',
+  );
+  await expect(painel(page)).toContainText(
+    'Sem dados de emissão para exibir neste período.',
   );
   await expect(page.locator('.mini-tendencia').first()).toContainText(
     'Sem coletas suficientes para a tendência nas últimas 24 horas',
   );
+});
+
+test('mostra o estado vazio somente no gráfico da métrica sem dados', async ({
+  page,
+}) => {
+  let resposta = serieSemMetrica('energiaKwh');
+  await simularPainel(page, () => ({ json: resposta }));
+
+  for (const caso of [
+    {
+      metrica: 'energiaKwh' as const,
+      mensagem: 'Sem dados de energia para exibir neste período.',
+      graficoVisivel: 'Emissão (gCO₂e)',
+    },
+    {
+      metrica: 'emissaoGCo2e' as const,
+      mensagem: 'Sem dados de emissão para exibir neste período.',
+      graficoVisivel: 'Energia (Wh)',
+    },
+  ]) {
+    resposta = serieSemMetrica(caso.metrica);
+    await page.goto('/?periodo=7d');
+
+    const graficos = painel(page).locator('.tendencia-graficos');
+    await expect(graficos.getByText(caso.mensagem)).toBeVisible();
+    await expect(graficos.getByText(caso.graficoVisivel)).toBeVisible();
+    await expect(graficos.locator('.recharts-line')).toHaveCount(1);
+  }
 });
 
 test('erro na série não derruba o painel e permite recarregar', async ({

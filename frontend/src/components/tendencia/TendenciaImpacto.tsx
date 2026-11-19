@@ -25,9 +25,8 @@ export default function TendenciaImpacto({ serie }: { serie: RespostaSerie }) {
   const { global, granularidade } = serie;
   const energias = global.map((ponto) => ponto.energiaKwh);
   const emissoes = global.map((ponto) => ponto.emissaoGCo2e);
-  const semColetas = [...energias, ...emissoes].every(
-    (valor) => valor === null,
-  );
+  const temEnergia = energias.some((valor) => valor !== null);
+  const temEmissao = emissoes.some((valor) => valor !== null);
   const energia = escalaDaEnergia(maiorValor(energias));
   const emissao = escalaDaEmissao(maiorValor(emissoes));
   const { camadas, pontos } = montarCamadas(serie);
@@ -56,12 +55,7 @@ export default function TendenciaImpacto({ serie }: { serie: RespostaSerie }) {
           ))}
         </div>
       </div>
-      {semColetas ? (
-        <p className="tendencia-aviso">
-          Nenhuma coleta calculada no período. Escolha um período maior ou
-          aguarde as próximas coletas.
-        </p>
-      ) : visao === 'servico' ? (
+      {visao === 'servico' ? (
         <figure className="tendencia-empilhada">
           <figcaption>
             <strong>Emissão por serviço ({emissao.unidade})</strong>
@@ -70,14 +64,18 @@ export default function TendenciaImpacto({ serie }: { serie: RespostaSerie }) {
                 'Nenhum serviço registrou emissão no período.'}
             </span>
           </figcaption>
-          {camadas.length > 0 && (
+          {!temEmissao ? (
+            <p className="tendencia-vazio" role="status">
+              Sem dados de emissão para exibir neste período.
+            </p>
+          ) : camadas.length > 0 ? (
             <AreaEmpilhada
               camadas={camadas}
               pontos={pontos}
               granularidade={granularidade}
               escala={emissao}
             />
-          )}
+          ) : null}
         </figure>
       ) : (
         <div className="tendencia-graficos">
@@ -86,33 +84,46 @@ export default function TendenciaImpacto({ serie }: { serie: RespostaSerie }) {
               <strong>Energia ({energia.unidade})</strong>
               <span>{resumoDaMetrica(serie, 'energia')}</span>
             </figcaption>
-            <GraficoDeLinha
-              pontos={global.map(({ inicio, energiaKwh }) => ({
-                inicio,
-                valor: energiaKwh === null ? null : energiaKwh * energia.fator,
-              }))}
-              granularidade={granularidade}
-              rotulo="Energia"
-              unidade={energia.unidade}
-              cor="var(--chart-energia)"
-            />
+            {temEnergia ? (
+              <GraficoDeLinha
+                pontos={global.map(({ inicio, energiaKwh }) => ({
+                  inicio,
+                  valor:
+                    energiaKwh === null ? null : energiaKwh * energia.fator,
+                }))}
+                granularidade={granularidade}
+                rotulo="Energia"
+                unidade={energia.unidade}
+                cor="var(--chart-energia)"
+              />
+            ) : (
+              <p className="tendencia-vazio" role="status">
+                Sem dados de energia para exibir neste período.
+              </p>
+            )}
           </figure>
           <figure>
             <figcaption>
               <strong>Emissão ({emissao.unidade})</strong>
               <span>{resumoDaMetrica(serie, 'emissao')}</span>
             </figcaption>
-            <GraficoDeLinha
-              pontos={global.map(({ inicio, emissaoGCo2e }) => ({
-                inicio,
-                valor:
-                  emissaoGCo2e === null ? null : emissaoGCo2e * emissao.fator,
-              }))}
-              granularidade={granularidade}
-              rotulo="Emissão"
-              unidade={emissao.unidade}
-              cor="var(--chart-emissao)"
-            />
+            {temEmissao ? (
+              <GraficoDeLinha
+                pontos={global.map(({ inicio, emissaoGCo2e }) => ({
+                  inicio,
+                  valor:
+                    emissaoGCo2e === null ? null : emissaoGCo2e * emissao.fator,
+                }))}
+                granularidade={granularidade}
+                rotulo="Emissão"
+                unidade={emissao.unidade}
+                cor="var(--chart-emissao)"
+              />
+            ) : (
+              <p className="tendencia-vazio" role="status">
+                Sem dados de emissão para exibir neste período.
+              </p>
+            )}
           </figure>
         </div>
       )}
