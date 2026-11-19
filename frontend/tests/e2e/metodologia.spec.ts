@@ -32,10 +32,16 @@ test('página /metodologia apresenta fórmulas, API de carbono, SCI, EPA, crité
   );
   await expect(page.locator('.methodology-page')).toContainText('12,4');
   await expect(page.locator('.methodology-page')).toContainText(
-    'Selo de eficiência (A a F)',
+    'matriz 7 × 24',
   );
   await expect(page.locator('.methodology-page')).toContainText(
-    'média + 3 desvios-padrão',
+    'melhor janela de 3 horas seguidas',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
+    'time-shifting',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
+    'médias históricas do período selecionado',
   );
 
   const axeLight = await new AxeBuilder({ page })

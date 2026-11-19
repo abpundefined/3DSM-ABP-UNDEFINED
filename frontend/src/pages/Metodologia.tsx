@@ -285,32 +285,27 @@ export default function Metodologia() {
 
       <section
         className="methodology-card"
-        aria-labelledby="metodologia-criterios-title"
+        aria-labelledby="metodologia-timeshifting-title"
       >
-        <h2 id="metodologia-criterios-title">
-          6. Critérios de análise: Selo A–F, oportunidades e picos
+        <h2 id="metodologia-timeshifting-title">
+          6. Melhor horário e <em>time-shifting</em>
         </h2>
-        <ul>
-          <li>
-            <strong>Selo de eficiência (A a F):</strong> classifica cada serviço
-            em faixas fixas de emissão média por hora dentro do período
-            analisado, permitindo identificar rapidamente cargas eficientes (A)
-            e serviços prioritários para otimização (F).
-          </li>
-          <li>
-            <strong>Oportunidades de redução:</strong> cruza três critérios
-            acionáveis — (1) migração de região quando outra localidade
-            monitorada reduz a emissão estimada com a mesma energia, (2)
-            serviços superdimensionados com baixa média de CPU e consumo
-            elevado, e (3) deslocamento de tarefas pesadas para a janela de 3
-            horas de menor intensidade na matriz 7×24 de horários.
-          </li>
-          <li>
-            <strong>Detecção de picos incomuns:</strong> destaca nos gráficos os
-            intervalos em que o consumo ou a emissão ultrapassam a{' '}
-            <strong>média + 3 desvios-padrão</strong> do período selecionado.
-          </li>
-        </ul>
+        <p>
+          O mapa de calor de horários organiza as coletas em uma{' '}
+          <strong>matriz 7 × 24</strong> (dia da semana × hora) com a
+          intensidade média de carbono de cada intervalo e identifica a{' '}
+          <strong>melhor janela de 3 horas seguidas</strong> com medições
+          registradas.
+        </p>
+        <p>
+          Essa leitura apoia o padrão de <strong>time-shifting</strong> da{' '}
+          <strong>Green Software Foundation</strong>: deslocar cargas flexíveis
+          (como processamentos em lote e rotinas pesadas) para os horários em
+          que a rede elétrica da região emite menos CO₂e por kWh. A matriz
+          reflete apenas as{' '}
+          <strong>médias históricas do período selecionado</strong>, e não uma
+          previsão futura da rede elétrica.
+        </p>
       </section>
     </div>
   );
