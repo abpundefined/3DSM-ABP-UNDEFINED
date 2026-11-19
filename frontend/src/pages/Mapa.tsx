@@ -6,6 +6,7 @@ import GloboInterativo, {
   type CentroDoGlobo,
 } from '../components/mapa/GloboInterativo';
 import PeriodSelector from '../components/common/PeriodSelector';
+import MelhorHorario from '../components/horarios/MelhorHorario';
 import LegendaEmissao from '../components/mapa/LegendaEmissao';
 import LinhaDoTempo from '../components/mapa/LinhaDoTempo';
 import ListaSemCoordenadas from '../components/mapa/ListaSemCoordenadas';
@@ -274,6 +275,45 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
   );
 }
 
+function HorariosDoMapa({ dados }: { dados: RespostaMapa }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isDemo = searchParams.get('demo') === '1';
+  const { apiQuery, linkSearch } = usePeriod();
+  const regioes = useMemo(
+    () => regioesDoMapa(dados.servicos),
+    [dados.servicos],
+  );
+  const codigoDoMapa =
+    regioes.find(({ codigo }) => codigo === searchParams.get('regiao'))
+      ?.codigo ?? null;
+  const pedida = searchParams.get('horarios');
+  const regiao =
+    pedida === 'todas'
+      ? null
+      : (regioes.find(({ codigo }) => codigo === pedida)?.codigo ??
+        codigoDoMapa);
+
+  return (
+    <MelhorHorario
+      regioes={regioes.map(({ codigo, local }) => ({ codigo, rotulo: local }))}
+      regiao={regiao}
+      onTrocarRegiao={(codigo) =>
+        setSearchParams(
+          (atuais) => {
+            const parametros = new URLSearchParams(atuais);
+            parametros.set('horarios', codigo ?? 'todas');
+            return parametros;
+          },
+          { replace: true },
+        )
+      }
+      periodQuery={apiQuery}
+      isDemo={isDemo}
+      linkMetodologia={`/metodologia${isDemo ? '?demo=1' : linkSearch}`}
+    />
+  );
+}
+
 export default function Mapa() {
   const [searchParams] = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
@@ -319,7 +359,13 @@ export default function Mapa() {
           </button>
         </FeedbackPanel>
       )}
-      {exibido.status === 'pronto' && <ConteudoDoMapa dados={exibido.dados} />}
+      {exibido.status === 'pronto' && (
+        <>
+          <ConteudoDoMapa dados={exibido.dados} />
+          {exibido.dados.servicos.length + exibido.dados.semCoordenadas.length >
+            0 && <HorariosDoMapa dados={exibido.dados} />}
+        </>
+      )}
     </div>
   );
 }
