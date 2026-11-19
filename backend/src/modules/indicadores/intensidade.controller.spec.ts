@@ -1,6 +1,9 @@
 jest.mock("../../database/prisma.service", () => ({
   PrismaService: class PrismaService {},
 }));
+jest.mock("@nestjs/config", () => ({
+  ConfigService: class ConfigService {},
+}));
 
 import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { IndicadoresService } from "./indicadores.service";
