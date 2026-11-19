@@ -168,9 +168,7 @@ describe('Relatorio', () => {
       within(metodologia).getByRole('link', { name: /Como calculamos/i }),
     ).toHaveAttribute('href', '/metodologia');
 
-    const rodape = screen.getByRole('contentinfo', {
-      name: 'Metadados do relatório',
-    });
+    const rodape = screen.getByLabelText('Metadados do relatório');
     expect(rodape).toHaveTextContent('19/11/2026, 11:00');
     expect(rodape).toHaveTextContent('Versão do cálculo: 1.0.0');
   });
