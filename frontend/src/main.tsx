@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import App from './App';
 import AuthProvider from './providers/AuthProvider';
+import ComparisonSelectionProvider from './providers/ComparisonSelectionProvider';
 import PeriodProvider from './providers/PeriodProvider';
 import './index.css';
 import './theme.css';
@@ -19,7 +20,9 @@ createRoot(rootElement).render(
     <BrowserRouter>
       <AuthProvider>
         <PeriodProvider>
-          <App />
+          <ComparisonSelectionProvider>
+            <App />
+          </ComparisonSelectionProvider>
         </PeriodProvider>
       </AuthProvider>
     </BrowserRouter>

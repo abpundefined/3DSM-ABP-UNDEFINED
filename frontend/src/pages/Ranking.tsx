@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import PeriodSelector from '../components/common/PeriodSelector';
+import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import GraficoEnergiaEmissao from '../components/ranking/GraficoEnergiaEmissao';
 import GraficoRanking from '../components/ranking/GraficoRanking';
 import ListaSemDados from '../components/ranking/ListaSemDados';
@@ -19,6 +20,7 @@ import {
   lerMetrica,
 } from '../utils/ranking';
 import '../components/ranking/ranking.css';
+import '../components/comparacao/comparacao.css';
 
 const metricas = Object.keys(METRICAS) as MetricaRanking[];
 
@@ -97,6 +99,7 @@ export default function Ranking() {
           </p>
         </div>
       </div>
+      <ComparisonSelectionBar />
       {!isDemo && <PeriodSelector />}
       <div
         className="ranking-metricas"

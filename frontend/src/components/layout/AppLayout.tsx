@@ -8,11 +8,20 @@ import usePeriod from '../../hooks/usePeriod';
 import { getNavItems } from '../../navigation';
 
 export default function AppLayout() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const isLoginPage = pathname === '/login';
   const { isAuthenticated, logout } = useAuth();
   const navItems = getNavItems(isAuthenticated);
   const { linkSearch } = usePeriod();
+  const navigationParams = new URLSearchParams(
+    linkSearch.startsWith('?') ? linkSearch.slice(1) : linkSearch,
+  );
+  const selectedServices = new URLSearchParams(search).get('servicos');
+  if (selectedServices) {
+    navigationParams.set('servicos', selectedServices);
+  }
+  const navigationQuery = navigationParams.toString();
+  const navigationSearch = navigationQuery ? `?${navigationQuery}` : '';
   const previousPath = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -56,7 +65,7 @@ export default function AppLayout() {
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
-                  to={{ pathname: item.to, search: linkSearch }}
+                  to={{ pathname: item.to, search: navigationSearch }}
                   end={item.to === '/'}
                   className="nav-page"
                 >
@@ -128,7 +137,7 @@ export default function AppLayout() {
         {navItems.map((item) => (
           <NavLink
             key={item.to}
-            to={{ pathname: item.to, search: linkSearch }}
+            to={{ pathname: item.to, search: navigationSearch }}
             end={item.to === '/'}
             aria-label={item.shortLabel ? item.label : undefined}
           >
