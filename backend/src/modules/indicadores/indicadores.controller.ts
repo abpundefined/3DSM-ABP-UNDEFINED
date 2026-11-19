@@ -12,6 +12,7 @@ import {
 import { IndicadoresRespostaDto } from "../../common/swagger/respostas.dto";
 import * as DateConversionHelper from "./date-conversion.helper";
 import { PeriodoDto, PeriodoPredefinido } from "./dto/periodo.dto";
+import { MetaCarbonoResponseDto } from "./dto/meta-carbono-response.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
 import { SerieTemporalResponseDto } from "./dto/serie-temporal-response.dto";
 import { IndicadoresService } from "./indicadores.service";
@@ -109,6 +110,13 @@ export class IndicadoresController {
     const { inicio, fim } = DateConversionHelper.converterPeriodo(query);
 
     return this.indicadoresService.obter(inicio, fim, query.periodo);
+  }
+
+  @Get("meta")
+  @ApiOperation({ summary: "Consultar meta mensal de carbono e projeção" })
+  @ApiOkResponse({ type: MetaCarbonoResponseDto })
+  obterMeta(): Promise<MetaCarbonoResponseDto> {
+    return this.indicadoresService.obterMeta();
   }
 
   @Get("serie")

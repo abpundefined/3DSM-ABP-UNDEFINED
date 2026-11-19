@@ -1,5 +1,5 @@
-import { IsInt, Max, Min } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsInt, IsNumber, IsOptional, Max, Min } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class AtualizarConfiguracaoDto {
   @ApiProperty({
@@ -23,4 +23,16 @@ export class AtualizarConfiguracaoDto {
   @Min(10, { message: "O intervalo de coleta mínimo é 10 segundos." })
   @Max(3600, { message: "O intervalo de coleta máximo é 3600 segundos." })
   intervaloColetaSegundos!: number;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 0,
+    nullable: true,
+    example: 500.5,
+    description: "Meta mensal de emissões em kgCO₂e.",
+  })
+  @IsOptional()
+  @IsNumber({}, { message: "A meta mensal deve ser um número." })
+  @Min(0, { message: "A meta mensal não pode ser negativa." })
+  metaMensalKgCo2e?: number | null;
 }

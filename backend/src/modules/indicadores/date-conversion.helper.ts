@@ -3,7 +3,7 @@ import { subMilliseconds } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { PeriodoDto, PeriodoPredefinido } from "./dto/periodo.dto";
 
-const TIME_ZONE = "America/Sao_Paulo";
+export const TIME_ZONE = "America/Sao_Paulo";
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export interface IntervaloIndicadores {
