@@ -72,6 +72,11 @@ for (const { path, heading } of pages) {
         route.fulfill({ json: simulacaoDemo(7) }),
       );
     }
+    if (path === '/comparar') {
+      await page.route('**/api/servicos', (route) =>
+        route.fulfill({ json: [] }),
+      );
+    }
     await page.goto(path);
     await expect(
       page.getByRole('heading', { level: 1, name: heading }),

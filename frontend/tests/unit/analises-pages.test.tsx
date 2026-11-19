@@ -4,11 +4,21 @@ import { MemoryRouter, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Comparacao from '../../src/pages/Comparacao';
 import Ranking from '../../src/pages/Ranking';
+import ComparisonSelectionProvider from '../../src/providers/ComparisonSelectionProvider';
 import PeriodProvider from '../../src/providers/PeriodProvider';
 import { buscarRanking } from '../../src/services/ranking';
 import type { RespostaRanking } from '../../src/types/ranking';
 
 vi.mock('../../src/services/ranking', () => ({ buscarRanking: vi.fn() }));
+
+vi.mock('../../src/hooks/useComparisonData', () => ({
+  default: () => ({
+    servicesState: { status: 'pronto', dados: [] },
+    comparisonState: { status: 'ocioso' },
+    retryServices: vi.fn(),
+    retryComparison: vi.fn(),
+  }),
+}));
 
 vi.mock('../../src/hooks/usePrefersReducedMotion', () => ({
   default: () => true,
@@ -49,8 +59,23 @@ function renderRanking(url = '/ranking') {
   render(
     <MemoryRouter initialEntries={[url]}>
       <PeriodProvider>
-        <Ranking />
-        <ConsultaAtual />
+        <ComparisonSelectionProvider>
+          <Ranking />
+          <ConsultaAtual />
+        </ComparisonSelectionProvider>
+      </PeriodProvider>
+    </MemoryRouter>,
+  );
+}
+
+function renderComparacao(url = '/comparar') {
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <PeriodProvider>
+        <ComparisonSelectionProvider>
+          <Comparacao />
+          <ConsultaAtual />
+        </ComparisonSelectionProvider>
       </PeriodProvider>
     </MemoryRouter>,
   );
@@ -156,14 +181,17 @@ describe('Ranking', () => {
 });
 
 describe('Comparação', () => {
-  it('apresenta o aviso de comparação', () => {
-    render(<Comparacao />);
+  it('mostra o estado vazio quando não há serviços disponíveis', () => {
+    renderComparacao();
     expect(
       screen.getByRole('heading', { name: 'Comparar serviços' }),
     ).toBeVisible();
-    expect(screen.getByLabelText('Situação da página')).toHaveTextContent(
-      '#94',
-    );
+    expect(
+      screen.getByRole('heading', { name: 'Nenhum serviço disponível' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Selecione ao menos dois serviços' }),
+    ).toBeVisible();
     expect(document.title).toBe('Comparar serviços | GreenER');
   });
 });
