@@ -22,6 +22,11 @@ export type Participacao = {
 
 type Comparavel = { nome: string; emissaoGCo2e: number };
 
+const LIMIAR_DE_PARETO = 0.8;
+const porcentagem = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 1,
+});
+
 const porEmissao = (a: Comparavel, b: Comparavel) =>
   b.emissaoGCo2e - a.emissaoGCo2e || a.nome.localeCompare(b.nome, 'pt-BR');
 
@@ -72,4 +77,47 @@ export function montarParticipacao({
   });
 
   return { totalGCo2e, regioes: regioes.sort(porEmissao) };
+}
+
+export function formatarPercentual(valor: number) {
+  return `${porcentagem.format(valor)}%`;
+}
+
+export function fraseDePareto({
+  totalGCo2e,
+  regioes,
+}: Participacao): string | null {
+  const servicos = regioes
+    .flatMap((regiao) => regiao.servicos)
+    .sort(porEmissao);
+  const maior = servicos.at(0);
+  if (!maior) {
+    return null;
+  }
+
+  let acumulado = 0;
+  let quantidade = 0;
+  for (const { emissaoGCo2e } of servicos) {
+    acumulado += emissaoGCo2e;
+    quantidade += 1;
+    if (acumulado >= totalGCo2e * LIMIAR_DE_PARETO) {
+      break;
+    }
+  }
+
+  const parte = formatarPercentual((acumulado / totalGCo2e) * 100);
+  return quantidade === 1
+    ? `${maior.nome} sozinho responde por ${parte} das emissões do período.`
+    : `${quantidade} de ${servicos.length} serviços respondem por ${parte} das emissões do período.`;
+}
+
+export function fraseDaRegiao({ regioes }: Participacao): string | null {
+  const maior = regioes.at(0);
+  if (!maior) {
+    return null;
+  }
+
+  return regioes.length === 1
+    ? `Todas as emissões vêm de ${maior.nome}.`
+    : `${maior.nome} é a região que mais emite: ${formatarPercentual(maior.percentual)} do total.`;
 }

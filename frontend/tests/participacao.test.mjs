@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { montarParticipacao } from '../src/utils/participacao.ts';
+import {
+  fraseDaRegiao,
+  fraseDePareto,
+  montarParticipacao,
+} from '../src/utils/participacao.ts';
 
 const noMapa = (servicoId, nome, regiaoCodigo, local, emissaoGCo2e) => ({
   servicoId,
@@ -94,4 +98,56 @@ test('empate na emissão ordena pelo nome', () => {
     regioes[0].servicos.map(({ nome }) => nome),
     ['Alfa', 'Zeta'],
   );
+});
+
+const participacaoDe = (...emissoes) =>
+  montarParticipacao({
+    servicos: emissoes.map(([nome, regiao, emissao], indice) =>
+      noMapa(indice + 1, nome, regiao, `Local ${regiao}`, emissao),
+    ),
+    semCoordenadas: [],
+  });
+
+test('Pareto conta os maiores até chegar a 80% das emissões', () => {
+  assert.equal(
+    fraseDePareto(
+      participacaoDe(
+        ['A', 'r1', 50],
+        ['B', 'r1', 25],
+        ['C', 'r2', 15],
+        ['D', 'r2', 10],
+      ),
+    ),
+    '3 de 4 serviços respondem por 90% das emissões do período.',
+  );
+  assert.equal(
+    fraseDePareto(
+      participacaoDe(['A', 'r1', 60], ['B', 'r2', 20], ['C', 'r2', 20]),
+    ),
+    '2 de 3 serviços respondem por 80% das emissões do período.',
+  );
+});
+
+test('Pareto com um serviço dominante ou sozinho', () => {
+  assert.equal(
+    fraseDePareto(participacaoDe(['Video', 'r1', 85], ['B', 'r2', 15])),
+    'Video sozinho responde por 85% das emissões do período.',
+  );
+  assert.equal(
+    fraseDePareto(participacaoDe(['Video', 'r1', 3])),
+    'Video sozinho responde por 100% das emissões do período.',
+  );
+  assert.equal(fraseDePareto({ totalGCo2e: 0, regioes: [] }), null);
+});
+
+test('frase da região que mais emite', () => {
+  assert.equal(
+    fraseDaRegiao(participacaoDe(['A', 'r1', 2], ['B', 'r2', 1])),
+    'Local r1 é a região que mais emite: 66,7% do total.',
+  );
+  assert.equal(
+    fraseDaRegiao(participacaoDe(['A', 'r1', 2], ['B', 'r1', 1])),
+    'Todas as emissões vêm de Local r1.',
+  );
+  assert.equal(fraseDaRegiao({ totalGCo2e: 0, regioes: [] }), null);
 });
