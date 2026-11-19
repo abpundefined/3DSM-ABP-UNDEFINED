@@ -88,3 +88,98 @@ test('link "Como calculamos?" ao lado de valor estimado navega para /metodologia
     page.getByRole('heading', { level: 1, name: 'Como calculamos' }),
   ).toBeVisible();
 });
+
+test('link "Como calculamos?" aparece junto dos totais em /comparar e navega para /metodologia', async ({
+  page,
+}) => {
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: 1,
+          idExterno: 'billing-api',
+          nome: 'Billing API',
+          regiaoCodigo: 'br-sudeste',
+          localizacao: null,
+          estadoAtual: 'DISPONIVEL',
+        },
+        {
+          id: 2,
+          idExterno: 'reports-engine',
+          nome: 'Reports Engine',
+          regiaoCodigo: 'ca-central',
+          localizacao: null,
+          estadoAtual: 'DISPONIVEL',
+        },
+      ],
+    }),
+  );
+  await page.route('**/api/comparacao**', (route) =>
+    route.fulfill({
+      json: {
+        periodo: {
+          inicio: '2026-11-10T00:00:00.000Z',
+          fim: '2026-11-17T23:59:59.999Z',
+        },
+        granularidade: 'hora',
+        servicos: [
+          {
+            servicoId: 1,
+            nome: 'Billing API',
+            totais: {
+              energiaKwh: 0.002,
+              emissaoGCo2e: 0.4,
+              cpuMedia: 21,
+              memoriaMediaMb: 512,
+              coletasValidas: 2,
+            },
+            serie: [
+              {
+                inicio: '2026-11-10T00:00:00.000Z',
+                energiaKwh: 0.002,
+                emissaoGCo2e: 0.4,
+              },
+            ],
+          },
+          {
+            servicoId: 2,
+            nome: 'Reports Engine',
+            totais: {
+              energiaKwh: 0.001,
+              emissaoGCo2e: 0.9,
+              cpuMedia: 22,
+              memoriaMediaMb: 1024,
+              coletasValidas: 2,
+            },
+            serie: [
+              {
+                inicio: '2026-11-10T00:00:00.000Z',
+                energiaKwh: 0.001,
+                emissaoGCo2e: 0.9,
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  );
+
+  await page.goto('/comparar?servicos=1,2');
+  const totais = page.getByRole('region', {
+    name: 'Totais dos serviços comparados',
+  });
+  await expect(
+    totais.getByRole('link', { name: 'Como calculamos?' }),
+  ).toHaveCount(2);
+
+  const axeComparacao = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(axeComparacao.violations).toEqual([]);
+
+  await totais.getByRole('link', { name: 'Como calculamos?' }).first().click();
+  await expect(page).toHaveURL(/\/metodologia$/);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Como calculamos' }),
+  ).toBeVisible();
+});

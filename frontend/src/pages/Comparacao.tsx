@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import FeedbackPanel from '../components/common/FeedbackPanel';
+import MethodologyLink from '../components/common/MethodologyLink';
 import ComparisonCharts from '../components/comparacao/ComparisonCharts';
 import PeriodSelector from '../components/common/PeriodSelector';
 import useComparisonData from '../hooks/useComparisonData';
@@ -69,6 +70,7 @@ function ComparisonSummaryCard({
           <dd>{service.totais.coletasValidas}</dd>
         </div>
       </dl>
+      <MethodologyLink />
     </article>
   );
 }
