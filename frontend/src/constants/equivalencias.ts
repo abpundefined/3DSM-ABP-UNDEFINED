@@ -5,5 +5,5 @@ export const FONTE_EQUIVALENCIAS = {
   carroGCo2ePorMilha: 393,
   kmPorMilha: 1.609344,
   carroGCo2ePorKm: 393 / 1.609344,
-  celularGCo2ePorCarga: 15.1,
+  celularGCo2ePorCarga: 12.4,
 } as const;

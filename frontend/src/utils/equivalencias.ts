@@ -43,19 +43,21 @@ export function formatarEquivalenciasCo2e(
     return null;
   }
 
+  const km = Math.round(convertido.kmCarro * 100) / 100;
+  const casasKm = km < 10 ? 2 : 1;
   const carro =
     convertido.kmCarro === 0
       ? '≈ 0 km rodados de carro'
-      : convertido.kmCarro < 0.01
-        ? '≈ < 0,01 km rodados de carro'
-        : `≈ ${formatarNumero(convertido.kmCarro, convertido.kmCarro < 10 ? 2 : 1)} km rodados de carro`;
+      : km < 0.01
+        ? '≈ menos de 0,01 km rodados de carro'
+        : `≈ ${formatarNumero(km, casasKm)} km rodados de carro`;
 
   const cargasArredondadas = Math.round(convertido.cargasCelular);
   const celular =
     convertido.cargasCelular === 0
       ? '≈ 0 cargas de celular'
       : convertido.cargasCelular < 1
-        ? '≈ < 1 carga de celular'
+        ? '≈ menos de 1 carga de celular'
         : cargasArredondadas === 1
           ? '≈ 1 carga de celular'
           : `≈ ${formatarNumero(cargasArredondadas, 0)} cargas de celular`;
