@@ -27,7 +27,7 @@ import {
 import {
   ColetaRespostaDto,
   DetalheColetaRespostaDto,
-  HistoricoColetaRespostaDto,
+  HistoricoColetasPaginadoRespostaDto,
   UltimaColetaRespostaDto,
 } from "../../common/swagger/respostas.dto";
 
@@ -57,8 +57,12 @@ export class ColetasController {
   }
 
   @Get()
-  @ApiOperation({ summary: "Consultar histórico de coletas" })
-  @ApiResponse({ status: 200, type: HistoricoColetaRespostaDto, isArray: true })
+  @ApiOperation({
+    summary: "Consultar histórico paginado de coletas",
+    description:
+      "Mais recentes primeiro, com desempate por ID decrescente. Página padrão 1 e tamanho padrão 20 (máximo 100).",
+  })
+  @ApiResponse({ status: 200, type: HistoricoColetasPaginadoRespostaDto })
   @ApiResponse({ status: 400, description: "Filtros inválidos." })
   async listar(@Query() filtros: FilterColetasDto) {
     return this.coletasService.listarHistorico(filtros);

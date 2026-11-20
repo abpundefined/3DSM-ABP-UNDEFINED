@@ -22,7 +22,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/servicos/:id/historico` | 200, array | Retorna a série temporal de um serviço por hora ou dia. |
 | POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo; requer JWT Bearer. |
 | POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO; requer JWT Bearer. |
-| GET | `/coletas` | 200, array | Consulta histórico. |
+| GET | `/coletas` | 200, objeto | Consulta histórico paginado com itens e metadados. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
@@ -34,7 +34,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
 | GET | `/saude` | 200, objeto | Mostra a última consulta ao agregador e à API de carbono, a taxa de falha das coletas na última hora e os serviços por estado. Requer JWT Bearer. |
 
-O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
+O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. A listagem de coletas é paginada; a de serviços continua retornando um array.
 
 ## Histórico temporal de serviço
 
@@ -157,8 +157,28 @@ Filtros opcionais de `GET /coletas`:
 | `servicoId` | Número do ID interno. |
 | `dataInicio` | Data ISO; limite inferior inclusivo de `iniciadaEm`. |
 | `dataFim` | Data ISO; limite superior inclusivo de `iniciadaEm`. |
+| `pagina` | Inteiro maior ou igual a 1; padrão 1. |
+| `tamanho` | Inteiro de 1 a 100; padrão 20. |
 
-O retorno é ordenado por `iniciadaEm` decrescente e inclui nome/identificador externo do serviço. O detalhe por ID também inclui relações disponíveis de serviço e região.
+O retorno é um objeto com `itens`, `pagina`, `tamanho`, `total` e
+`totalPaginas`. Os itens preservam os campos da coleta e o nome/identificador
+externo do serviço. A ordenação é por `iniciadaEm` decrescente e depois por
+`id` decrescente para desempatar datas iguais. `total` conta apenas as coletas
+que atendem aos filtros; `totalPaginas` é arredondado para cima.
+Uma consulta sem resultados retorna `itens: []`, `total: 0` e
+`totalPaginas: 0`. Uma página além da última retorna `itens: []`, preservando
+os metadados. Parâmetros de paginação inválidos retornam 400.
+
+Exemplo sem resultados:
+
+```json
+{ "itens": [], "pagina": 1, "tamanho": 20, "total": 0, "totalPaginas": 0 }
+```
+
+Essa mudança substitui o antigo array de `GET /coletas`. O frontend usa
+`GET /servicos/:id/historico` para os gráficos e
+`GET /coletas/servico/:id/ultima-valida` para a última coleta; essas rotas não
+mudam. O detalhe por ID continua incluindo as relações de serviço e região.
 
 `GET /coletas/servico/1/ultima-valida` retorna:
 

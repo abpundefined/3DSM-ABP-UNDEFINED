@@ -238,8 +238,14 @@ describe("ColetasService", () => {
   });
 
   it("delega a listagem do histórico ao repositório", async () => {
-    const filtros = { servicoId: 7 };
-    const historico = [{ id: 1 }];
+    const filtros = { servicoId: 7, pagina: 2, tamanho: 10 };
+    const historico = {
+      itens: [{ id: 1 }],
+      pagina: 2,
+      tamanho: 10,
+      total: 11,
+      totalPaginas: 2,
+    };
     repository.findMany.mockResolvedValue(historico);
 
     await expect(service.listarHistorico(filtros)).resolves.toBe(historico);
