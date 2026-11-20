@@ -1,4 +1,5 @@
 import type { PeriodoConsultado } from './mapa';
+import type { VariacaoPercentual, VariacaoPorServico } from './variacao';
 
 export type MetricaRanking = 'energia' | 'emissao';
 
@@ -18,6 +19,9 @@ export type ServicoSemDados = {
 
 export type RespostaRanking = {
   periodo: PeriodoConsultado;
+  periodoAnterior?: PeriodoConsultado;
+  variacaoPercentual?: VariacaoPercentual;
+  variacaoPorServico?: VariacaoPorServico[];
   metrica: MetricaRanking;
   itens: ItemRanking[];
   semDados: ServicoSemDados[];

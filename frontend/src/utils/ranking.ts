@@ -5,6 +5,11 @@ import type {
 } from '../types/ranking';
 import type { PeriodoConsultado } from '../types/mapa';
 import {
+  ehNumeroOuNulo,
+  ehPeriodoConsultado,
+  ehVariacaoPercentual,
+} from './variacao.ts';
+import {
   type Escala,
   escalaDeEmissao,
   escalaDeEnergia,
@@ -77,7 +82,25 @@ export function ehRespostaRanking(valor: unknown): valor is RespostaRanking {
     Array.isArray(valor.itens) &&
     valor.itens.every(ehItem) &&
     Array.isArray(valor.semDados) &&
-    valor.semDados.every(ehServico)
+    valor.semDados.every(ehServico) &&
+    (valor.periodoAnterior === undefined ||
+      ehPeriodoConsultado(valor.periodoAnterior)) &&
+    (valor.variacaoPercentual === undefined ||
+      (ehVariacaoPercentual(valor.variacaoPercentual) &&
+        ehPeriodoConsultado(valor.periodo))) &&
+    (valor.variacaoPorServico === undefined ||
+      (Array.isArray(valor.variacaoPorServico) &&
+        valor.variacaoPorServico.every(
+          (item: unknown) =>
+            ehServico(item) &&
+            (item.emissaoAtualGCo2e === null ||
+              ehNumeroNaoNegativo(item.emissaoAtualGCo2e)) &&
+            ehNumeroOuNulo(item.emissaoAnteriorGCo2e) &&
+            (item.emissaoAnteriorGCo2e === null ||
+              item.emissaoAnteriorGCo2e >= 0) &&
+            ehNumeroOuNulo(item.diferencaGCo2e) &&
+            ehNumeroOuNulo(item.variacaoPercentual),
+        )))
   );
 }
 

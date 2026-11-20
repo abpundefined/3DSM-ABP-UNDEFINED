@@ -64,7 +64,7 @@ describe("RankingService", () => {
       limite: 3,
     });
 
-    await expect(service.obterRanking(query)).resolves.toEqual({
+    await expect(service.obterRanking(query)).resolves.toMatchObject({
       periodo: { inicio, fim },
       metrica: MetricaRanking.EMISSAO,
       itens: [
@@ -138,7 +138,7 @@ describe("RankingService", () => {
       limite: undefined,
     });
 
-    await expect(service.obterRanking(query)).resolves.toEqual({
+    await expect(service.obterRanking(query)).resolves.toMatchObject({
       periodo: { inicio, fim },
       metrica: MetricaRanking.ENERGIA,
       itens: [
@@ -166,4 +166,208 @@ describe("RankingService", () => {
       ],
     });
   });
+
+  it("compara todos os serviços, inclusive fora do limite e somente na janela anterior", async () => {
+    listarServicosParaRanking.mockResolvedValue([
+      { id: 1, nome: "API", estadoAtual: "DISPONIVEL" },
+      { id: 2, nome: "Worker", estadoAtual: "REMOVIDO" },
+      { id: 3, nome: "Novo", estadoAtual: "DISPONIVEL" },
+      { id: 4, nome: "Sem coleta", estadoAtual: "DISPONIVEL" },
+    ]);
+    somarImpactoPorServico
+      .mockResolvedValueOnce([
+        {
+          servicoId: 1,
+          energiaKwh: 112,
+          emissaoGCo2e: 95,
+          coletasValidas: 2,
+        },
+        { servicoId: 3, energiaKwh: 10, emissaoGCo2e: 20, coletasValidas: 1 },
+      ])
+      .mockResolvedValueOnce([
+        {
+          servicoId: 1,
+          energiaKwh: 100,
+          emissaoGCo2e: 100,
+          coletasValidas: 2,
+        },
+        { servicoId: 2, energiaKwh: 10, emissaoGCo2e: 50, coletasValidas: 1 },
+      ]);
+
+    const resultado = await service.obterRanking(
+      Object.assign(new RankingQueryDto(), { inicio, fim, limite: 1 }),
+    );
+    expect(resultado.itens).toHaveLength(1);
+    expect(resultado).toMatchObject({
+      periodoAnterior: {
+        inicio: "2026-10-24T23:59:59.999Z",
+        fim: "2026-10-31T23:59:59.999Z",
+      },
+      variacaoPercentual: {
+        energiaKwh: (12 / 110) * 100,
+        emissaoGCo2e: (-35 / 150) * 100,
+      },
+      variacaoPorServico: [
+        {
+          servicoId: 1,
+          nome: "API",
+          emissaoAtualGCo2e: 95,
+          emissaoAnteriorGCo2e: 100,
+          diferencaGCo2e: -5,
+          variacaoPercentual: -5,
+        },
+        {
+          servicoId: 3,
+          nome: "Novo",
+          emissaoAtualGCo2e: 20,
+          emissaoAnteriorGCo2e: null,
+          diferencaGCo2e: null,
+          variacaoPercentual: null,
+        },
+        {
+          servicoId: 2,
+          nome: "Worker",
+          emissaoAtualGCo2e: null,
+          emissaoAnteriorGCo2e: 50,
+          diferencaGCo2e: null,
+          variacaoPercentual: null,
+        },
+      ],
+    });
+    expect(somarImpactoPorServico).toHaveBeenNthCalledWith(
+      2,
+      new Date("2026-10-24T23:59:59.999Z"),
+      new Date("2026-10-31T23:59:59.999Z"),
+    );
+  });
+
+  it.each([null, 0])(
+    "distingue emissão atual ausente (%s) de zero medido na variação por serviço",
+    async (emissaoAtual) => {
+      somarImpactoPorServico
+        .mockResolvedValueOnce([
+          {
+            servicoId: 1,
+            energiaKwh: 10,
+            emissaoGCo2e: emissaoAtual,
+            coletasValidas: 1,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            servicoId: 1,
+            energiaKwh: 10,
+            emissaoGCo2e: 100,
+            coletasValidas: 1,
+          },
+        ]);
+
+      expect(
+        await service.obterRanking(
+          Object.assign(new RankingQueryDto(), { inicio, fim }),
+        ),
+      ).toMatchObject({
+        variacaoPorServico: [
+          {
+            servicoId: 1,
+            emissaoAtualGCo2e: emissaoAtual,
+            emissaoAnteriorGCo2e: 100,
+            diferencaGCo2e: emissaoAtual === null ? null : -100,
+            variacaoPercentual: emissaoAtual === null ? null : -100,
+          },
+        ],
+      });
+    },
+  );
+
+  it("não transforma a ausência de agregados atuais em redução global de 100%", async () => {
+    somarImpactoPorServico
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { servicoId: 1, energiaKwh: 10, emissaoGCo2e: 100, coletasValidas: 1 },
+      ]);
+    expect(
+      await service.obterRanking(
+        Object.assign(new RankingQueryDto(), { inicio, fim }),
+      ),
+    ).toMatchObject({
+      variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
+      variacaoPorServico: [
+        {
+          servicoId: 1,
+          emissaoAtualGCo2e: null,
+          emissaoAnteriorGCo2e: 100,
+          diferencaGCo2e: null,
+          variacaoPercentual: null,
+        },
+      ],
+    });
+  });
+
+  it("calcula redução global de 100% quando o zero foi medido", async () => {
+    somarImpactoPorServico
+      .mockResolvedValueOnce([
+        { servicoId: 1, energiaKwh: 0, emissaoGCo2e: 0, coletasValidas: 1 },
+      ])
+      .mockResolvedValueOnce([
+        { servicoId: 1, energiaKwh: 10, emissaoGCo2e: 100, coletasValidas: 1 },
+      ]);
+    expect(
+      await service.obterRanking(
+        Object.assign(new RankingQueryDto(), { inicio, fim }),
+      ),
+    ).toMatchObject({
+      variacaoPercentual: { energiaKwh: -100, emissaoGCo2e: -100 },
+    });
+  });
+
+  it("não transforma em zero métricas ausentes mesmo quando há impacto atual", async () => {
+    somarImpactoPorServico
+      .mockResolvedValueOnce([
+        {
+          servicoId: 1,
+          energiaKwh: 10,
+          emissaoGCo2e: null,
+          coletasValidas: 1,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          servicoId: 1,
+          energiaKwh: 10,
+          emissaoGCo2e: 100,
+          coletasValidas: 1,
+        },
+      ]);
+    expect(
+      await service.obterRanking(
+        Object.assign(new RankingQueryDto(), { inicio, fim }),
+      ),
+    ).toMatchObject({
+      variacaoPercentual: { energiaKwh: 0, emissaoGCo2e: null },
+    });
+  });
+
+  it.each([
+    { anteriores: [] },
+    {
+      anteriores: [
+        { servicoId: 1, energiaKwh: 0, emissaoGCo2e: 0, coletasValidas: 1 },
+      ],
+    },
+  ])(
+    "retorna percentual null sem dados anteriores ou com base zero",
+    async ({ anteriores }) => {
+      somarImpactoPorServico
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce(anteriores);
+      expect(
+        await service.obterRanking(
+          Object.assign(new RankingQueryDto(), { inicio, fim }),
+        ),
+      ).toMatchObject({
+        variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
+      });
+    },
+  );
 });

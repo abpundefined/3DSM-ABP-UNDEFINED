@@ -174,7 +174,7 @@ describe("IndicadoresService", () => {
   it("consolida consumo, emissão e estados dos serviços", async () => {
     const indicadores = await service.obter(inicioPadrao, agora);
 
-    expect(indicadores).toEqual({
+    expect(indicadores).toMatchObject({
       periodo: {
         inicio: inicioPadrao.toISOString(),
         fim: agora.toISOString(),
@@ -263,7 +263,7 @@ describe("IndicadoresService", () => {
     expect(repository.somarImpactoNoPeriodo).not.toHaveBeenCalled();
   });
 
-  it("calcula a variação do mês anterior contra o mês retrasado", async () => {
+  it("compara meses com a janela anterior de mesma duração, não com outro mês calendário", async () => {
     repository.somarImpactoNoPeriodo
       .mockReset()
       .mockResolvedValueOnce({
@@ -292,12 +292,12 @@ describe("IndicadoresService", () => {
     );
     expect(repository.somarImpactoNoPeriodo).toHaveBeenNthCalledWith(
       2,
-      new Date("2026-09-01T03:00:00.000Z"),
+      new Date("2026-08-31T03:00:00.000Z"),
       new Date("2026-10-01T02:59:59.999Z"),
     );
     expect(indicadores.variacao).toEqual({
       energiaTotalKwh: { absoluta: 30, percentual: null },
-      emissaoTotalGCo2e: { absoluta: 0, percentual: 0 },
+      emissaoTotalGCo2e: { absoluta: 0, percentual: null },
       coletasCalculadas: { absoluta: 3, percentual: 100 },
     });
   });
@@ -343,6 +343,116 @@ describe("IndicadoresService", () => {
     await expect(service.obter(inicioPadrao, agora)).rejects.toThrow(
       "conexão perdida",
     );
+  });
+
+  it("devolve a variação de energia e emissão para qualquer período", async () => {
+    repository.somarImpactoNoPeriodo
+      .mockResolvedValueOnce({
+        energiaKwh: 112,
+        emissaoGCo2e: 95,
+        coletasCalculadas: 2,
+      })
+      .mockResolvedValueOnce({
+        energiaKwh: 100,
+        emissaoGCo2e: 100,
+        coletasCalculadas: 2,
+      });
+
+    expect(await service.obter(inicioPadrao, agora)).toMatchObject({
+      periodoAnterior: {
+        inicio: "2026-11-06T11:59:59.999Z",
+        fim: "2026-11-07T11:59:59.999Z",
+      },
+      variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
+    });
+    expect(repository.somarImpactoNoPeriodo).toHaveBeenNthCalledWith(
+      2,
+      new Date("2026-11-06T11:59:59.999Z"),
+      new Date("2026-11-07T11:59:59.999Z"),
+    );
+  });
+
+  it.each([null, 0])(
+    "não inventa base percentual quando o anterior é %s",
+    async (anterior) => {
+      repository.somarImpactoNoPeriodo
+        .mockResolvedValueOnce({
+          energiaKwh: 10,
+          emissaoGCo2e: 20,
+          coletasCalculadas: 2,
+        })
+        .mockResolvedValueOnce({
+          energiaKwh: anterior,
+          emissaoGCo2e: anterior,
+          coletasCalculadas: anterior === null ? 0 : 1,
+        });
+      expect(await service.obter(inicioPadrao, agora)).toMatchObject({
+        variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
+      });
+    },
+  );
+
+  it.each([null, 0])(
+    "compara totais atuais %s sem confundir ausência e zero medido",
+    async (atual) => {
+      repository.somarImpactoNoPeriodo
+        .mockResolvedValueOnce({
+          energiaKwh: atual,
+          emissaoGCo2e: atual,
+          coletasCalculadas: atual === null ? 0 : 1,
+        })
+        .mockResolvedValueOnce({
+          energiaKwh: 10,
+          emissaoGCo2e: 100,
+          coletasCalculadas: 1,
+        });
+      expect(
+        await service.obter(
+          inicioPadrao,
+          agora,
+          PeriodoPredefinido.MES_ANTERIOR,
+        ),
+      ).toMatchObject({
+        energiaTotalKwh: 0,
+        emissaoTotalGCo2e: 0,
+        variacaoPercentual: {
+          energiaKwh: atual === null ? null : -100,
+          emissaoGCo2e: atual === null ? null : -100,
+        },
+        variacao: {
+          energiaTotalKwh: {
+            absoluta: atual === null ? null : -10,
+            percentual: atual === null ? null : -100,
+          },
+          emissaoTotalGCo2e: {
+            absoluta: atual === null ? null : -100,
+            percentual: atual === null ? null : -100,
+          },
+        },
+      });
+    },
+  );
+
+  it("não inventa diferença absoluta quando falta o agregado anterior", async () => {
+    repository.somarImpactoNoPeriodo
+      .mockResolvedValueOnce({
+        energiaKwh: 10,
+        emissaoGCo2e: 20,
+        coletasCalculadas: 1,
+      })
+      .mockResolvedValueOnce({
+        energiaKwh: null,
+        emissaoGCo2e: null,
+        coletasCalculadas: 0,
+      });
+    expect(
+      await service.obter(inicioPadrao, agora, PeriodoPredefinido.MES_ANTERIOR),
+    ).toMatchObject({
+      variacao: {
+        energiaTotalKwh: { absoluta: null, percentual: null },
+        emissaoTotalGCo2e: { absoluta: null, percentual: null },
+      },
+    });
   });
 
   describe("obterSerieTemporal", () => {

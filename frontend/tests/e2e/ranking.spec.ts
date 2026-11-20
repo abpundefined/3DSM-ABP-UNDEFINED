@@ -23,7 +23,8 @@ async function semViolacoes(page: Page) {
   expect(resultado.violations).toEqual([]);
 }
 
-const linhas = (page: Page) => page.getByRole('table').getByRole('row');
+const linhas = (page: Page) =>
+  page.getByRole('region', { name: 'Tabela do ranking' }).getByRole('row');
 
 test('mostra o ranking por energia e troca para emissão', async ({ page }) => {
   const consultas = await simularRanking(page);
@@ -48,6 +49,72 @@ test('mostra o ranking por energia e troca para emissão', async ({ page }) => {
   ).toBeVisible();
   await expect(linhas(page).nth(8)).toContainText('Reports Engine');
   expect(consultas.at(-1)?.get('metrica')).toBe('emissao');
+  await semViolacoes(page);
+});
+
+test('compara janelas com texto e ícone e permite ordenar todas as colunas', async ({
+  page,
+}) => {
+  const dados = {
+    ...rankingDemo('energia'),
+    periodo: { inicio: '2026-11-01T00:00:00Z', fim: '2026-11-08T00:00:00Z' },
+    variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
+    variacaoPorServico: [
+      {
+        servicoId: 1,
+        nome: 'Alpha',
+        emissaoAtualGCo2e: 80,
+        emissaoAnteriorGCo2e: 100,
+        diferencaGCo2e: -20,
+        variacaoPercentual: -20,
+      },
+      {
+        servicoId: 2,
+        nome: 'Beta',
+        emissaoAtualGCo2e: 120,
+        emissaoAnteriorGCo2e: 50,
+        diferencaGCo2e: 70,
+        variacaoPercentual: 140,
+      },
+      {
+        servicoId: 3,
+        nome: 'Novo',
+        emissaoAtualGCo2e: 10,
+        emissaoAnteriorGCo2e: null,
+        diferencaGCo2e: null,
+        variacaoPercentual: null,
+      },
+    ],
+  };
+  await page.route('**/api/ranking**', (route) =>
+    route.fulfill({ json: dados }),
+  );
+  await page.goto('/ranking?periodo=7d');
+  await expect(
+    page.getByText('▲ 12% em relação aos 7 dias anteriores'),
+  ).toBeVisible();
+  await expect(
+    page.getByText('▼ 5% em relação aos 7 dias anteriores'),
+  ).toBeVisible();
+  const tabela = page.getByRole('table', { name: 'Variação por serviço' });
+  await expect(tabela.getByRole('row')).toHaveCount(4);
+  for (const [coluna, primeiro] of [
+    ['Serviço', 'Alpha'],
+    ['Emissão atual', 'Novo'],
+    ['Emissão anterior', 'Beta'],
+    ['Diferença', 'Alpha'],
+    ['Variação (%)', 'Alpha'],
+  ]) {
+    await tabela.getByRole('button', { name: coluna, exact: true }).click();
+    await expect(tabela.getByRole('row').nth(1)).toContainText(primeiro);
+  }
+  await tabela
+    .getByRole('button', { name: 'Variação (%)', exact: true })
+    .click();
+  await expect(tabela.getByRole('row').nth(1)).toContainText('Beta');
+  await expect(tabela.getByRole('row').last()).toContainText(
+    'sem base de comparação',
+  );
   await semViolacoes(page);
 });
 
@@ -77,13 +144,15 @@ test('clique no serviço leva ao detalhe mantendo o período', async ({
   await simularRanking(page);
   await page.goto('/ranking?periodo=7d');
 
-  await page.getByRole('link', { name: 'Media CDN' }).click();
+  await page
+    .getByRole('region', { name: 'Tabela do ranking' })
+    .getByRole('link', { name: 'Media CDN' })
+    .click();
   await expect(page).toHaveURL(/\/servicos\/8\?periodo=7d$/);
 
   await page.goBack();
   await page
-    .locator('.ranking-bloco')
-    .first()
+    .getByRole('region', { name: 'Ranking por energia' })
     .locator('.recharts-bar-rectangle')
     .first()
     .click();
@@ -181,11 +250,13 @@ test('funciona com ?demo=1 sem chamar o backend', async ({ page }) => {
   await expect(page).toHaveTitle('Ranking · demonstração | GreenER');
   await expect(page.getByLabel('Período', { exact: true })).toHaveCount(0);
   await expect(
-    page.locator('.ranking-bloco').first().locator('.recharts-bar-rectangle'),
+    page
+      .getByRole('region', { name: 'Ranking por energia' })
+      .locator('.recharts-bar-rectangle'),
   ).toHaveCount(8);
-  await expect(page.locator('.ranking-bloco').first()).toContainText(
-    'Energia (Wh)',
-  );
+  await expect(
+    page.getByRole('region', { name: 'Ranking por energia' }),
+  ).toContainText('Energia (Wh)');
 
   await page.getByRole('button', { name: 'Emissão', exact: true }).click();
   await expect(page).toHaveURL(/\/ranking\?demo=1&metrica=emissao$/);

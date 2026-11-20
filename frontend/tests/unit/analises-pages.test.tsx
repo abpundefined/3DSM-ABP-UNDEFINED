@@ -197,6 +197,125 @@ describe('Ranking', () => {
     expect(document.title).toBe('Ranking · demonstração | GreenER');
     expect(buscarRankingMock).not.toHaveBeenCalled();
   });
+
+  it('mostra variações globais e ordena todas as colunas da tabela por serviço', async () => {
+    const user = userEvent.setup();
+    buscarRankingMock.mockResolvedValue(
+      Object.assign({}, resposta, {
+        variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
+        variacaoPorServico: [
+          {
+            servicoId: 1,
+            nome: 'Alpha',
+            emissaoAtualGCo2e: 80,
+            emissaoAnteriorGCo2e: 100,
+            diferencaGCo2e: -20,
+            variacaoPercentual: -20,
+          },
+          {
+            servicoId: 2,
+            nome: 'Beta',
+            emissaoAtualGCo2e: 120,
+            emissaoAnteriorGCo2e: 50,
+            diferencaGCo2e: 70,
+            variacaoPercentual: 140,
+          },
+          {
+            servicoId: 3,
+            nome: 'Novo',
+            emissaoAtualGCo2e: 10,
+            emissaoAnteriorGCo2e: null,
+            diferencaGCo2e: null,
+            variacaoPercentual: null,
+          },
+        ],
+      }),
+    );
+    renderRanking('/ranking?periodo=7d');
+
+    const tabela = within(
+      await screen.findByRole('table', { name: 'Variação por serviço' }),
+    );
+    expect(
+      screen.getByText('▲ 12% em relação aos 7 dias anteriores'),
+    ).toBeVisible();
+    expect(
+      screen.getByText('▼ 5% em relação aos 7 dias anteriores'),
+    ).toBeVisible();
+    expect(tabela.getByText('sem base de comparação')).toBeVisible();
+    expect(tabela.getAllByRole('row')).toHaveLength(4);
+    for (const [coluna, primeiro] of [
+      ['Serviço', 'Alpha'],
+      ['Emissão atual', 'Novo'],
+      ['Emissão anterior', 'Beta'],
+      ['Diferença', 'Alpha'],
+      ['Variação (%)', 'Alpha'],
+    ]) {
+      await user.click(tabela.getByRole('button', { name: coluna }));
+      expect(tabela.getAllByRole('row')[1]).toHaveTextContent(primeiro);
+      expect(
+        tabela.getByRole('columnheader', {
+          name: new RegExp(coluna.replace(/[()%]/g, '\\$&')),
+        }),
+      ).toHaveAttribute('aria-sort', 'ascending');
+    }
+    await user.click(tabela.getByRole('button', { name: 'Variação (%)' }));
+    expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Beta');
+  });
+
+  it('preserva emissão ausente na tabela sem mostrar uma redução falsa', async () => {
+    buscarRankingMock.mockResolvedValue(
+      Object.assign({}, resposta, {
+        variacaoPorServico: [
+          {
+            servicoId: 1,
+            nome: 'Emissão ausente',
+            emissaoAtualGCo2e: null,
+            emissaoAnteriorGCo2e: 100,
+            diferencaGCo2e: null,
+            variacaoPercentual: null,
+          },
+        ],
+      }),
+    );
+    renderRanking();
+    const tabela = within(
+      await screen.findByRole('table', { name: 'Variação por serviço' }),
+    );
+    expect(tabela.getAllByRole('cell', { name: '—' })).toHaveLength(2);
+    expect(tabela.getByText('sem dados no período atual')).toBeVisible();
+    expect(tabela.queryByText(/100%/)).not.toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(tabela.getByRole('button', { name: 'Emissão atual' }));
+    expect(tabela.getByRole('link', { name: 'Emissão ausente' })).toBeVisible();
+  });
+
+  it('mantém a tabela com serviços que só tiveram dados na janela anterior', async () => {
+    buscarRankingMock.mockResolvedValue(
+      Object.assign({}, resposta, {
+        itens: [],
+        variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
+        variacaoPorServico: [
+          {
+            servicoId: 2,
+            nome: 'Worker antigo',
+            emissaoAtualGCo2e: null,
+            emissaoAnteriorGCo2e: 50,
+            diferencaGCo2e: null,
+            variacaoPercentual: null,
+          },
+        ],
+      }),
+    );
+    renderRanking();
+    const tabela = within(
+      await screen.findByRole('table', { name: 'Variação por serviço' }),
+    );
+    expect(tabela.getByText('Worker antigo')).toBeVisible();
+    expect(tabela.getByText('sem dados no período atual')).toBeVisible();
+    expect(tabela.queryByText(/100%/)).not.toBeInTheDocument();
+  });
 });
 
 describe('Comparação', () => {

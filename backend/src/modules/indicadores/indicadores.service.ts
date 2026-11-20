@@ -15,11 +15,7 @@ import {
   escolherGranularidade,
   gerarIntervalos,
 } from "../../common/utils/intervalos-periodo";
-import {
-  converterPeriodo,
-  intervaloMesCalendarioAnterior,
-  TIME_ZONE,
-} from "./date-conversion.helper";
+import { converterPeriodo, TIME_ZONE } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
 import { MetaCarbonoResponseDto } from "./dto/meta-carbono-response.dto";
@@ -31,6 +27,11 @@ import {
   IndicadoresRepository,
   PontoSerieTemporalPorServico,
 } from "./indicadores.repository";
+import {
+  calcularVariacaoPercentual,
+  periodoAnterior,
+  VariacaoPercentual,
+} from "./variacao-periodo";
 
 export interface ItemHistoricoServico {
   inicio: string;
@@ -56,6 +57,8 @@ export interface ResumoServicos {
 
 export interface IndicadoresConsolidados {
   periodo: { inicio: string; fim: string };
+  periodoAnterior: { inicio: string; fim: string };
+  variacaoPercentual: VariacaoPercentual;
   variacao?: {
     energiaTotalKwh: VariacaoIndicador;
     emissaoTotalGCo2e: VariacaoIndicador;
@@ -70,7 +73,7 @@ export interface IndicadoresConsolidados {
 }
 
 export interface VariacaoIndicador {
-  absoluta: number;
+  absoluta: number | null;
   percentual: number | null;
 }
 
@@ -355,45 +358,55 @@ export class IndicadoresService {
       throw new BadRequestException("inicio deve ser anterior a fim.");
     }
 
-    const periodoComparacao =
-      tipoPeriodo === PeriodoPredefinido.MES_ANTERIOR
-        ? intervaloMesCalendarioAnterior(inicio)
-        : null;
+    const periodoComparacao = periodoAnterior(inicio, fim);
 
     const [totais, contagens, ultimaColetaEm, totaisComparacao] =
       await Promise.all([
         this.indicadoresRepository.somarImpactoNoPeriodo(inicio, fim),
         this.indicadoresRepository.contarServicosPorEstado(),
         this.indicadoresRepository.buscarUltimaColetaEm(),
-        periodoComparacao
-          ? this.indicadoresRepository.somarImpactoNoPeriodo(
-              periodoComparacao.inicio,
-              periodoComparacao.fim,
-            )
-          : Promise.resolve(null),
+        this.indicadoresRepository.somarImpactoNoPeriodo(
+          periodoComparacao.inicio,
+          periodoComparacao.fim,
+        ),
       ]);
 
     const energiaTotalKwh = totais.energiaKwh ?? 0;
     const emissaoTotalGCo2e = totais.emissaoGCo2e ?? 0;
-    const variacao = totaisComparacao
-      ? {
-          energiaTotalKwh: this.calcularVariacao(
-            energiaTotalKwh,
-            totaisComparacao.energiaKwh ?? 0,
-          ),
-          emissaoTotalGCo2e: this.calcularVariacao(
-            emissaoTotalGCo2e,
-            totaisComparacao.emissaoGCo2e ?? 0,
-          ),
-          coletasCalculadas: this.calcularVariacao(
-            totais.coletasCalculadas,
-            totaisComparacao.coletasCalculadas,
-          ),
-        }
-      : undefined;
+    const variacao =
+      tipoPeriodo === PeriodoPredefinido.MES_ANTERIOR
+        ? {
+            energiaTotalKwh: this.calcularVariacao(
+              totais.energiaKwh,
+              totaisComparacao.energiaKwh,
+            ),
+            emissaoTotalGCo2e: this.calcularVariacao(
+              totais.emissaoGCo2e,
+              totaisComparacao.emissaoGCo2e,
+            ),
+            coletasCalculadas: this.calcularVariacao(
+              totais.coletasCalculadas,
+              totaisComparacao.coletasCalculadas,
+            ),
+          }
+        : undefined;
 
     return {
       periodo: { inicio: inicio.toISOString(), fim: fim.toISOString() },
+      periodoAnterior: {
+        inicio: periodoComparacao.inicio.toISOString(),
+        fim: periodoComparacao.fim.toISOString(),
+      },
+      variacaoPercentual: {
+        energiaKwh: calcularVariacaoPercentual(
+          totais.energiaKwh,
+          totaisComparacao.energiaKwh,
+        ),
+        emissaoGCo2e: calcularVariacaoPercentual(
+          totais.emissaoGCo2e,
+          totaisComparacao.emissaoGCo2e,
+        ),
+      },
       ...(variacao ? { variacao } : {}),
       energiaTotalKwh,
       emissaoTotalGCo2e,
@@ -405,19 +418,17 @@ export class IndicadoresService {
   }
 
   private calcularVariacao(
-    valorAtual: number,
-    valorComparacao: number,
+    valorAtual: number | null,
+    valorComparacao: number | null,
   ): VariacaoIndicador {
-    const absoluta = valorAtual - valorComparacao;
+    const absoluta =
+      valorAtual === null || valorComparacao === null
+        ? null
+        : valorAtual - valorComparacao;
 
     return {
       absoluta,
-      percentual:
-        valorComparacao === 0
-          ? valorAtual === 0
-            ? 0
-            : null
-          : (absoluta / valorComparacao) * 100,
+      percentual: calcularVariacaoPercentual(valorAtual, valorComparacao),
     };
   }
 

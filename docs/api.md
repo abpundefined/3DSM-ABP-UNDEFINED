@@ -215,7 +215,25 @@ O objeto `dados` contém os demais campos do modelo `Coleta`, omitidos no exempl
 
 Sem parâmetros, considera as últimas 24 horas. `24h`, `7d` e `30d` representam durações exatas retroativas a partir do instante atual. `mes-atual` usa o mês calendário no fuso `America/Sao_Paulo`, do primeiro dia até agora; `mes-anterior` usa o mês calendário completo imediatamente anterior nesse mesmo fuso. O intervalo customizado aceita no máximo 90 dias; `inicio` deve ser anterior a `fim`. Parâmetros inválidos retornam 400.
 
-Quando `periodo=mes-anterior`, a resposta inclui `variacao`, comparando os totais do período selecionado com os do mês calendário imediatamente anterior a ele. Para cada métrica (`energiaTotalKwh`, `emissaoTotalGCo2e` e `coletasCalculadas`), `absoluta` é a diferença entre atual e comparação, e `percentual` é a variação percentual; esse campo é `null` quando o valor de comparação é zero e o atual é diferente de zero.
+Todos os períodos incluem `periodoAnterior` e `variacaoPercentual`, com
+`energiaKwh` e `emissaoGCo2e`. O cálculo é `(atual - anterior) / anterior * 100`.
+Sem dados atuais ou anteriores para a métrica, ou com total anterior zero
+(inclusive quando ambos são zero), o percentual é `null`, nunca infinito.
+Os totais públicos permanecem zero quando não há coletas atuais, por
+compatibilidade, mas a comparação usa os agregados originais e não inventa
+uma redução. Um zero realmente medido pode resultar em -100%.
+
+A janela anterior é imediatamente adjacente, sem sobreposição, e tem a mesma
+duração em milissegundos. Como os limites são inclusivos, seu fim é
+`inicioAtual - 1ms` e seu início é `fimAnterior - (fimAtual - inicioAtual)`.
+Isso também vale para `mes-atual` e `mes-anterior`: não se compara com um mês
+calendário de duração diferente. As agregações das duas janelas consideram
+exclusivamente coletas com cálculo concluído.
+
+O campo legado `variacao` permanece para `periodo=mes-anterior`, com
+`energiaTotalKwh`, `emissaoTotalGCo2e` e `coletasCalculadas` contendo `absoluta`
+e `percentual`, seguindo a mesma janela e regra de base zero. Para energia e
+emissão, `absoluta` também é `null` quando falta valor em alguma janela.
 
 Exemplo de resposta:
 
@@ -225,6 +243,11 @@ Exemplo de resposta:
     "inicio": "2026-11-07T12:00:00.000Z",
     "fim": "2026-11-08T12:00:00.000Z"
   },
+  "periodoAnterior": {
+    "inicio": "2026-11-06T11:59:59.999Z",
+    "fim": "2026-11-07T11:59:59.999Z"
+  },
+  "variacaoPercentual": { "energiaKwh": 12, "emissaoGCo2e": -5 },
   "energiaTotalKwh": 2.5,
   "emissaoTotalGCo2e": 100,
   "coletasCalculadas": 2,
@@ -284,6 +307,33 @@ A resposta contém `periodo`, `granularidade`, `intervalos` (início de cada int
 | `limite` | Opcional: inteiro de 1 a 100; padrão 10. |
 
 A resposta contém `periodo`, `metrica`, `itens` e `semDados`. Cada item traz `posicao`, `servicoId`, `nome`, `energiaKwh`, `emissaoGCo2e` e `coletasValidas`. Os totais somam apenas coletas com `estadoCalculo = CONCLUIDO`. A ordem é decrescente pela métrica escolhida; no empate, por nome e depois por `servicoId`. Serviços sem valor na métrica vão para `semDados`, ordenados por nome; um serviço `REMOVIDO` sem dados não aparece em nenhuma das listas. Parâmetros inválidos retornam 400.
+
+Também retorna `periodoAnterior` e `variacaoPercentual: { energiaKwh,
+emissaoGCo2e }`, com as mesmas regras de comparação de `GET /indicadores`.
+Esses percentuais somam **todos** os serviços antes de aplicar `limite`, e
+não mudam ao trocar a métrica de ordenação.
+
+`variacaoPorServico` alimenta a tabela de emissão: inclui todo serviço com
+coletas em ao menos uma das duas janelas, inclusive removidos, independentemente
+do top 10. É ordenada inicialmente por nome e ID; o frontend permite ordenar
+qualquer coluna. Sem emissão atual, haja impacto registrado ou não,
+`emissaoAtualGCo2e`, diferença e percentual são `null`, evitando uma redução
+falsa de -100%. Um zero medido continua sendo zero. Sem emissão anterior,
+valor anterior, diferença e percentual são `null`; com anterior zero,
+a diferença é calculada, mas o percentual é `null`.
+
+Exemplo de item:
+
+```json
+{
+  "servicoId": 1,
+  "nome": "api-pagamentos",
+  "emissaoAtualGCo2e": 95,
+  "emissaoAnteriorGCo2e": 100,
+  "diferencaGCo2e": -5,
+  "variacaoPercentual": -5
+}
+```
 
 ## Melhor horário por intensidade de carbono
 

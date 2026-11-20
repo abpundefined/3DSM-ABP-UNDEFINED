@@ -4,6 +4,7 @@ import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
 import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
+import VariacaoPeriodo from '../components/common/VariacaoPeriodo';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import DashboardDemo from '../components/dashboard/DashboardDemo';
 import LiveDashboard from '../components/dashboard/LiveDashboard';
@@ -99,6 +100,7 @@ export default function Dashboard() {
               icon="bolt"
               tone="leaf"
             >
+              <VariacaoPeriodo valor={null} />
               <MethodologyLink />
             </MetricCard>
             <MetricCard
@@ -109,6 +111,7 @@ export default function Dashboard() {
               icon="cloud"
               tone="olive"
             >
+              <VariacaoPeriodo valor={null} />
               <EmissionEquivalences emissaoGCo2e={demoTotals.carbonKg * 1000} />
               <MethodologyLink />
             </MetricCard>

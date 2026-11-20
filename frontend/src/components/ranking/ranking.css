@@ -99,6 +99,19 @@
   font-weight: 650;
   text-transform: uppercase;
 }
+.ranking-tabela thead button {
+  min-height: 44px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ranking-tabela thead button:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+}
 .ranking-tabela tbody th {
   font-weight: 600;
 }

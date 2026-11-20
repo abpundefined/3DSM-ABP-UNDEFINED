@@ -3,12 +3,14 @@ import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
 import PeriodSelector from '../components/common/PeriodSelector';
+import VariacaoPeriodo from '../components/common/VariacaoPeriodo';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import GraficoEnergiaEmissao from '../components/ranking/GraficoEnergiaEmissao';
 import GraficoRanking from '../components/ranking/GraficoRanking';
 import ListaSemDados from '../components/ranking/ListaSemDados';
 import ParticipacaoEmissoes from '../components/ranking/ParticipacaoEmissoes';
 import TabelaRanking from '../components/ranking/TabelaRanking';
+import TabelaVariacao from '../components/ranking/TabelaVariacao';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import useRanking, { type EstadoDoRanking } from '../hooks/useRanking';
@@ -38,7 +40,11 @@ function ConteudoDoRanking({
 }) {
   const { periodo, metrica, itens, semDados } = dados;
 
-  if (itens.length === 0 && semDados.length === 0) {
+  if (
+    itens.length === 0 &&
+    semDados.length === 0 &&
+    !dados.variacaoPorServico?.length
+  ) {
     return (
       <FeedbackPanel
         kind="empty"
@@ -53,6 +59,28 @@ function ConteudoDoRanking({
       <p className="ranking-periodo">
         Dados de {formatarPeriodoConsiderado(periodo)}, no horário de Brasília.
       </p>
+      {dados.variacaoPercentual && (
+        <section className="ranking-bloco" aria-label="Variação global">
+          <h2>Em relação ao período anterior</h2>
+          <p>
+            Energia:{' '}
+            <VariacaoPeriodo
+              valor={dados.variacaoPercentual.energiaKwh}
+              periodo={periodo}
+            />
+          </p>
+          <p>
+            Emissão:{' '}
+            <VariacaoPeriodo
+              valor={dados.variacaoPercentual.emissaoGCo2e}
+              periodo={periodo}
+            />
+          </p>
+          <p className="ranking-resumo">
+            Totais de todos os serviços, não apenas os do top 10.
+          </p>
+        </section>
+      )}
       {itens.length === 0 ? (
         <FeedbackPanel
           kind="empty"
@@ -66,6 +94,9 @@ function ConteudoDoRanking({
           <ParticipacaoEmissoes isDemo={isDemo} />
           <TabelaRanking itens={itens} metrica={metrica} />
         </>
+      )}
+      {!!dados.variacaoPorServico?.length && (
+        <TabelaVariacao itens={dados.variacaoPorServico} />
       )}
       {semDados.length > 0 && <ListaSemDados servicos={semDados} />}
     </div>
