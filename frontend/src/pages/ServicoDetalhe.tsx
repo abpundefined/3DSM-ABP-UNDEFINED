@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import EmissionEquivalences from '../components/common/EmissionEquivalences';
+import ComposicaoEnergia from '../components/common/ComposicaoEnergia';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
@@ -16,6 +17,7 @@ import {
   fetchServiceDetail,
   type ServiceDetailData,
 } from '../services/serviceDetail';
+import { resolverComposicaoServico } from '../utils/composicaoEnergia';
 import {
   formatServiceCollectionTimestamp,
   formatServiceStatus,
@@ -339,6 +341,14 @@ export default function ServicoDetalhe() {
             )}
           </section>
 
+          <ComposicaoEnergia
+            componentes={resolverComposicaoServico(
+              view.data.history,
+              view.data.service.componentes,
+            )}
+            subtitulo="Distribuição estimada da potência por recurso neste serviço no período."
+            isDemo={isDemo}
+          />
           <SimuladorRegiao servicoId={serviceId} />
           <MelhorHorarioDoServico servicoId={serviceId} />
         </>

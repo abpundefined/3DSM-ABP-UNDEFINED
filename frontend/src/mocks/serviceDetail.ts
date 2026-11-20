@@ -2,6 +2,7 @@ import type {
   BackendCollection,
   BackendService,
 } from '../components/dashboard/liveTypes';
+import { calcularComponentesPorMetricas } from '../utils/composicaoEnergia';
 import { mapaDemo } from './mapa';
 import type { ServiceDetailData } from '../services/serviceDetail';
 
@@ -22,12 +23,22 @@ export function getDemoServiceDetail(
     service.totais.energiaKwh === null || validEmissionCount === 0
       ? null
       : service.totais.energiaKwh / validEmissionCount;
+  const demoComponentes =
+    validEmissionCount === 0
+      ? null
+      : calcularComponentesPorMetricas({
+          cpuPercent: 32 + ((serviceId * 11) % 45),
+          memoryGb: 1.2 + (serviceId % 4) * 0.6,
+          diskGb: 14 + (serviceId % 5) * 6,
+          networkGb: 2.5 + (serviceId % 3) * 1.5,
+        });
   const history = mapaDemo.intervalos.map((inicio, index) => {
     const emissaoGCo2e = service.serie[index];
     return {
       inicio,
       energiaKwh: emissaoGCo2e === null ? null : energyPerInterval,
       emissaoGCo2e,
+      componentes: emissaoGCo2e === null ? null : demoComponentes,
     };
   });
   const lastValidIndex = service.serie.findLastIndex((value) => value !== null);
@@ -43,6 +54,7 @@ export function getDemoServiceDetail(
       cidade,
     },
     estadoAtual: service.estado,
+    componentes: demoComponentes,
   };
   const latestCollection: BackendCollection | null =
     lastValidIndex < 0
