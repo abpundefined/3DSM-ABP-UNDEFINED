@@ -53,7 +53,8 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /coletas`: histórico com filtros opcionais.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
-- `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. `mes-anterior` inclui a comparação `variacao` com o mês calendário anterior.
+- `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. Sempre retorna `periodoAnterior` e `variacaoPercentual` de energia/emissão contra uma janela de mesma duração; sem base ou base zero, o percentual é `null`. O campo legado `variacao` de `mes-anterior` segue essa mesma janela.
+- `GET /ranking`: ranking limitado por energia/emissão, variação global antes do limite e `variacaoPorServico` de todos os serviços com dados em qualquer janela, incluindo removidos.
 - `GET /mapa`: serviços com coordenadas, totais e série de emissão por hora (até 48 horas) ou por dia, além da lista `semCoordenadas`. Aceita os mesmos parâmetros de período de `GET /indicadores`.
 - `GET /servicos/:id/simulacao-regiao`: emissão estimada do serviço em cada região monitorada (energia do período × intensidade média da região), com a diferença em g e em % e a região de menor emissão. Aceita os mesmos parâmetros de período; serviço inexistente retorna 404.
 - `GET /saude`: última consulta e resultado do agregador e da API de carbono, taxa de falha das coletas na última hora e serviços por estado. Requer JWT.

@@ -135,6 +135,26 @@ Os testes do ranking cobrem carregamento, dados, estados vazios, erro com nova
 tentativa, troca de métrica e demonstração sem acessar a API. A comparação
 ainda é uma página em construção; o teste verifica o aviso atual.
 
+## Comparação com o período anterior
+
+Dashboard e ranking mostram a variação percentual de energia e emissão
+recebida do backend, por exemplo, **▲ 12% em relação aos 7 dias anteriores**.
+Aumento usa estilo de alerta; redução usa estilo de melhoria, sempre com
+seta e texto, não apenas cor. `null` aparece como **sem base de comparação**,
+inclusive quando o total anterior é zero. A duração exibida vem do período
+efetivamente retornado pela API, inclusive em intervalos personalizados.
+
+No ranking, **Variação por serviço** mostra emissão atual, anterior, diferença
+e percentual para todos os serviços com dados em qualquer janela, não apenas
+o top 10. Clique no cabeçalho de qualquer coluna para alternar a ordenação;
+valores sem base ficam ao final. Sem coleta atual, a emissão é zero.
+A tabela permanece disponível quando só há dados na janela anterior.
+As comparações não são inventadas para respostas antigas da API: os blocos
+só aparecem quando os novos campos estão presentes. Na demonstração, não há
+dados anteriores e a base é indicada como ausente.
+
+Testes focados: `npx.cmd vitest run tests/unit/variacao-periodo.test.tsx tests/unit/dashboard-variacao.test.tsx tests/unit/analises-pages.test.tsx`.
+
 ## Testes de navegador
 
 ```powershell
