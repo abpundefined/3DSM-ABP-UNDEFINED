@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { EstadoDaSerie } from '../../hooks/useSerie';
+import LoadingSkeleton from '../common/LoadingSkeleton';
 import TendenciaImpacto from './TendenciaImpacto';
 import './tendencia.css';
 
@@ -31,7 +32,11 @@ export default function PainelDaTendencia({
         </div>
       </div>
       {estado.status === 'carregando' ? (
-        <p className="tendencia-aviso">Carregando a série do período...</p>
+        <LoadingSkeleton
+          variant="chart"
+          description="Carregando a série do período..."
+          compact
+        />
       ) : (
         <div className="tendencia-erro">
           <p className="tendencia-aviso">

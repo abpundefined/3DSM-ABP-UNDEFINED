@@ -603,6 +603,7 @@ export default function LiveDashboard({
         {isLoadingServices && services.length === 0 ? (
           <FeedbackPanel
             kind="loading"
+            skeleton="cards"
             title="Conectando ao backend"
             description="Carregando serviços e suas métricas mais recentes."
           />
