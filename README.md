@@ -287,6 +287,12 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
         <td><img src="./docs/evidencias/sprint-3-detalhe-simulador-desktop.png" alt="Detalhe do serviço em desktop (1440x900) com histórico temporal, simulador de região e matriz horária" width="420"><br><em>Série histórica de energia e emissão, simulador “E se rodasse em outra região?” e melhor janela horária (<code>/servicos/1?demo=1</code>).</em></td>
         <td><img src="./docs/evidencias/sprint-3-admin-saude-desktop.png" alt="Página de Administração em desktop (1440x900) com intervalos de monitoramento e saúde das integrações" width="420"><br><em>Área restrita com JWT para configurar intervalos de coleta/descoberta e monitorar agregador e API de carbono (<code>/admin?demo=1</code>).</em></td>
     </tr>
+    <tr>
+        <th colspan="2">Metodologia (“Como calculamos”)</th>
+    </tr>
+    <tr>
+        <td colspan="2" align="center"><img src="./docs/evidencias/sprint-3-metodologia-desktop.png" alt="Página Como calculamos em desktop (1440x900) com fórmulas, exemplo numérico, Carbon Intensity API, SCI, equivalências EPA e time-shifting" width="420"><br><em>Fórmulas de potência, energia e emissão, exemplo numérico conferido com o <code>CalculosService</code>, tratamento de falhas da Carbon API, relação com SCI, equivalências EPA e <em>time-shifting</em> (<code>/metodologia?demo=1</code>).</em></td>
+    </tr>
 </table>
 <p><strong>Demonstração em GIF (#21):</strong> após gravar o fluxo completo de navegação (<code>dashboard → período → ranking → comparação → mapa animado → detalhe → admin</code>), salve o arquivo em <code>docs/evidencias/demo-greener.gif</code> e incorpore-o acima desta tabela.</p>
 <ul>
