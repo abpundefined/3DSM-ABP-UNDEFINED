@@ -171,6 +171,7 @@ export default function Ranking() {
       {exibido.status === 'carregando' && (
         <FeedbackPanel
           kind="loading"
+          skeleton="table"
           title="Carregando o ranking"
           description="Somando a energia e a emissão de cada serviço no período."
         />

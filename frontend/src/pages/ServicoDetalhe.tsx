@@ -172,6 +172,7 @@ export default function ServicoDetalhe() {
       {view.status === 'loading' && (
         <FeedbackPanel
           kind="loading"
+          skeleton="detail"
           title="Carregando o serviço"
           description="Buscando os dados do serviço e o histórico do período."
         />

@@ -144,6 +144,7 @@ export default function Admin() {
       ) : !configuracao ? (
         <FeedbackPanel
           kind="loading"
+          skeleton="cards"
           title="Carregando a configuração"
           description="Buscando os intervalos atuais do monitoramento."
         />
