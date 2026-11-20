@@ -199,11 +199,18 @@ export default function Metodologia() {
         </p>
         <p>
           <strong>Quando a API falha ou retorna resposta inválida:</strong> o
-          sistema <strong>não utiliza fator substituto fictício</strong>. A
-          coleta é registrada como falha explícita sem emissão inventada, o erro
-          é contabilizado no painel de saúde das integrações (
-          <code>/admin</code>) e o dashboard preserva o histórico da última
-          coleta válida anterior.
+          sistema <strong>não utiliza fator substituto fictício</strong> nem
+          inventa emissão. A coleta é registrada com{' '}
+          <code>estadoColeta = SUCESSO</code> (telemetria recebida) e{' '}
+          <code>estadoCalculo = FALHA</code>, sem gravar emissão para essa
+          amostra, e o erro é contabilizado no painel de saúde das integrações (
+          <code>/admin</code>). Nos indicadores, gráficos e totais do período
+          entram apenas coletas com <code>estadoCalculo = CONCLUIDO</code>; já a
+          busca da última coleta válida (
+          <code>/coletas/servico/:id/ultima-valida</code>) filtra apenas por{' '}
+          <code>estadoColeta = SUCESSO</code>, podendo retornar a coleta mais
+          recente ainda sem emissão calculada (<code>—</code>) em vez de uma
+          coleta anterior concluída.
         </p>
       </section>
 

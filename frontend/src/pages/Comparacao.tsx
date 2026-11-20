@@ -91,6 +91,11 @@ function ComparisonTable({
     'CO₂e total',
     'Intensidade de carbono',
   ];
+  const estimatedIndicators = new Set([
+    'Energia total',
+    'CO₂e total',
+    'Intensidade de carbono',
+  ]);
 
   function valueFor(service: ServicoComparacao, indicator: string) {
     const metadata = metadataById.get(service.servicoId);
@@ -154,7 +159,12 @@ function ComparisonTable({
           <tbody>
             {indicators.map((indicator) => (
               <tr key={indicator}>
-                <th scope="row">{indicator}</th>
+                <th scope="row">
+                  <span>{indicator}</span>
+                  {estimatedIndicators.has(indicator) && (
+                    <MethodologyLink className="comparison-table-methodology-link" />
+                  )}
+                </th>
                 {services.map((service) => (
                   <td key={service.servicoId}>
                     {valueFor(service, indicator)}

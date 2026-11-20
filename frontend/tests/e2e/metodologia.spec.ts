@@ -43,6 +43,15 @@ test('página /metodologia apresenta fórmulas, API de carbono, SCI, EPA, crité
   await expect(page.locator('.methodology-page')).toContainText(
     'médias históricas do período selecionado',
   );
+  await expect(page.locator('.methodology-page')).toContainText(
+    'estadoColeta = SUCESSO',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
+    'estadoCalculo = FALHA',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
+    '/coletas/servico/:id/ultima-valida',
+  );
 
   const axeLight = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
@@ -172,12 +181,34 @@ test('link "Como calculamos?" aparece junto dos totais em /comparar e navega par
     totais.getByRole('link', { name: 'Como calculamos?' }),
   ).toHaveCount(2);
 
+  const tabela = page.getByRole('region', {
+    name: 'Tabela de indicadores por serviço',
+  });
+  await expect(
+    tabela.getByRole('link', { name: 'Como calculamos?' }),
+  ).toHaveCount(3);
+  await expect(
+    tabela.getByRole('row', { name: /Energia total/ }).getByRole('link', {
+      name: 'Como calculamos?',
+    }),
+  ).toBeVisible();
+  await expect(
+    tabela.getByRole('row', { name: /CO₂e total/ }).getByRole('link', {
+      name: 'Como calculamos?',
+    }),
+  ).toBeVisible();
+  await expect(
+    tabela
+      .getByRole('row', { name: /Intensidade de carbono/ })
+      .getByRole('link', { name: 'Como calculamos?' }),
+  ).toBeVisible();
+
   const axeComparacao = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
   expect(axeComparacao.violations).toEqual([]);
 
-  await totais.getByRole('link', { name: 'Como calculamos?' }).first().click();
+  await tabela.getByRole('link', { name: 'Como calculamos?' }).first().click();
   await expect(page).toHaveURL(/\/metodologia$/);
   await expect(
     page.getByRole('heading', { level: 1, name: 'Como calculamos' }),
