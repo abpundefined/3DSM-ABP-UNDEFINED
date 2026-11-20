@@ -7,6 +7,7 @@ import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
 import PeriodSelector from '../components/common/PeriodSelector';
 import ServiceHistoryChart from '../components/servico/ServiceHistoryChart';
+import LinhaDoTempoEstado from '../components/servico/LinhaDoTempoEstado';
 import MelhorHorarioDoServico from '../components/horarios/MelhorHorarioDoServico';
 import SimuladorRegiao from '../components/servico/SimuladorRegiao';
 import usePageTitle from '../hooks/usePageTitle';
@@ -340,6 +341,16 @@ export default function ServicoDetalhe() {
               />
             )}
           </section>
+
+          <LinhaDoTempoEstado
+            history={view.data.history}
+            hourly={
+              view.data.history.length > 1
+                ? summary.granularidadeHoraria
+                : undefined
+            }
+            isDemo={isDemo}
+          />
 
           <ComposicaoEnergia
             componentes={resolverComposicaoServico(
