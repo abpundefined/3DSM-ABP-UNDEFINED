@@ -4,6 +4,7 @@ import { FONTE_EQUIVALENCIAS } from '../constants/equivalencias';
 import usePageTitle from '../hooks/usePageTitle';
 import { formatEmission, formatEnergy } from '../utils/formatters';
 import { CONSTANTES_CALCULO, EXEMPLO_CALCULO_REAL } from '../utils/metodologia';
+import { MINIMO_PONTOS_PICO, MULTIPLICADOR_DESVIO_PICO } from '../utils/picos';
 import './metodologia.css';
 
 function formatarDecimal(valor: number, casas = 2): string {
@@ -313,6 +314,47 @@ export default function Metodologia() {
           <strong>médias históricas do período selecionado</strong>, e não uma
           previsão futura da rede elétrica.
         </p>
+      </section>
+
+      <section
+        className="methodology-card"
+        aria-labelledby="metodologia-picos-title"
+      >
+        <h2 id="metodologia-picos-title">
+          7. Detecção de picos incomuns nos gráficos
+        </h2>
+        <p>
+          Nos gráficos de tendência do dashboard e de histórico no detalhe do
+          serviço, o GreenER destaca automaticamente intervalos com consumo ou
+          emissão fora do padrão esperado da própria série.
+        </p>
+        <div className="methodology-formulas">
+          <p>
+            <strong>Critério estatístico:</strong>{' '}
+            <code>
+              Limiar = média + {MULTIPLICADOR_DESVIO_PICO} × desvio-padrão
+            </code>{' '}
+            (desvio-padrão populacional da série observada).
+          </p>
+        </div>
+        <ul>
+          <li>
+            <strong>Amostra mínima:</strong> a marcação só é ativada quando há
+            pelo menos <strong>{MINIMO_PONTOS_PICO} pontos válidos</strong> no
+            período, evitando alertas distorcidos em séries curtas.
+          </li>
+          <li>
+            <strong>Série constante:</strong> quando todos os pontos têm o mesmo
+            valor (<code>desvio-padrão = 0</code>), nenhum pico é marcado.
+          </li>
+          <li>
+            <strong>Leitura acessível:</strong> cada ponto acima do limiar
+            recebe destaque visual no gráfico (ex.:{' '}
+            <em>&ldquo;pico incomum às 14h&rdquo;</em>) e aparece em uma lista
+            acessível logo abaixo do gráfico com horário, valor e desvio em
+            relação à média.
+          </li>
+        </ul>
       </section>
     </div>
   );
