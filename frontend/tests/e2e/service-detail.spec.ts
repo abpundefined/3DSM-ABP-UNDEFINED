@@ -20,16 +20,28 @@ const history = [
     inicio: '2026-11-15T13:00:00.000Z',
     energiaKwh: 1.25,
     emissaoGCo2e: 1200,
+    coletas: 992,
+    ativo: 992,
+    indisponivel: 0,
+    semMetricas: 0,
   },
   {
     inicio: '2026-11-15T14:00:00.000Z',
     energiaKwh: 0.75,
     emissaoGCo2e: 800,
+    coletas: 5,
+    ativo: 0,
+    indisponivel: 5,
+    semMetricas: 0,
   },
   {
     inicio: '2026-11-15T15:00:00.000Z',
     energiaKwh: null,
     emissaoGCo2e: null,
+    coletas: 3,
+    ativo: 0,
+    indisponivel: 0,
+    semMetricas: 3,
   },
 ];
 
@@ -113,6 +125,62 @@ test('exibe metadados, totais, histórico e preserva o período na comparação'
 
   await page.getByText('Consultar valores do histórico em tabela').click();
   await expect(page.getByRole('table')).toContainText('1,25 kWh');
+});
+
+test('exibe linha do tempo de estado, disponibilidade e detalhe ao clicar no segmento', async ({
+  page,
+}) => {
+  await mockServiceDetail(page);
+  await page.goto('/servicos/4?periodo=24h');
+
+  const secao = page.getByRole('region', { name: 'Linha do tempo de estado' });
+  await expect(secao).toBeVisible();
+  await expect(secao.getByText('99,2% disponível')).toBeVisible();
+
+  const legenda = secao.getByRole('list', {
+    name: 'Legenda dos estados da linha do tempo',
+  });
+  await expect(legenda.getByText('Ativo')).toBeVisible();
+  await expect(legenda.getByText('Indisponível')).toBeVisible();
+  await expect(legenda.getByText('Sem métricas')).toBeVisible();
+
+  const segmentos = secao
+    .getByRole('group', { name: 'Segmentos de estado por intervalo' })
+    .getByRole('button');
+  await expect(segmentos).toHaveCount(3);
+  await expect(segmentos.nth(1)).toHaveAttribute(
+    'title',
+    /Estado predominante: Indisponível/,
+  );
+
+  await segmentos.nth(1).click();
+  await expect(segmentos.nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    secao.getByRole('heading', { name: '15/11/2026, 11:00 – 12:00' }),
+  ).toBeVisible();
+  await expect(
+    secao.getByText('Predominante: Indisponível', { exact: true }),
+  ).toBeVisible();
+  await expect(secao.locator('.linha-tempo-contagens dd')).toHaveText([
+    '0',
+    '5',
+    '0',
+    '5',
+  ]);
+
+  await segmentos.nth(2).click();
+  await expect(
+    secao.getByRole('heading', { name: '15/11/2026, 12:00 – 13:00' }),
+  ).toBeVisible();
+  await expect(
+    secao.getByText('Predominante: Sem métricas', { exact: true }),
+  ).toBeVisible();
+  await expect(secao.locator('.linha-tempo-contagens dd')).toHaveText([
+    '0',
+    '0',
+    '3',
+    '3',
+  ]);
 });
 
 test('mostra o estado vazio e a ausência de coleta válida', async ({
@@ -238,6 +306,15 @@ for (const theme of ['light', 'dark']) {
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     await expect(
       page.getByRole('heading', { level: 1, name: 'Search API' }),
+    ).toBeVisible();
+
+    await page
+      .getByRole('group', { name: 'Segmentos de estado por intervalo' })
+      .getByRole('button')
+      .nth(1)
+      .click();
+    await expect(
+      page.getByText('Predominante: Indisponível', { exact: true }),
     ).toBeVisible();
 
     const result = await new AxeBuilder({ page })

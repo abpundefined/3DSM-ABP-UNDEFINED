@@ -1,0 +1,317 @@
+.linha-tempo-estado {
+  --estado-ativo-bg: #15803d;
+  --estado-indisponivel-bg: #b91c1c;
+  --estado-indisponivel-stripe: #991b1b;
+  --estado-sem-metricas-bg: #b45309;
+  --estado-sem-metricas-stripe: #92400e;
+  --estado-sem-dados-bg: #e4e9e1;
+  --estado-sem-dados-border: #b6c2b4;
+
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+:root[data-theme='dark'] .linha-tempo-estado {
+  --estado-ativo-bg: #22c55e;
+  --estado-indisponivel-bg: #ef4444;
+  --estado-indisponivel-stripe: #dc2626;
+  --estado-sem-metricas-bg: #f59e0b;
+  --estado-sem-metricas-stripe: #d97706;
+  --estado-sem-dados-bg: #25332b;
+  --estado-sem-dados-border: #485b4f;
+}
+
+.linha-tempo-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.linha-tempo-cabecalho h2 {
+  font-size: 20px;
+  font-weight: 680;
+  letter-spacing: -0.3px;
+}
+
+.linha-tempo-subtitulo {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.linha-tempo-kpi {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-green);
+}
+
+.linha-tempo-percentual {
+  color: var(--green-forest);
+  font-size: 20px;
+  font-weight: 720;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.linha-tempo-kpi-detalhe {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.linha-tempo-vazio {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.linha-tempo-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linha-tempo-legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.linha-tempo-legenda-contagem {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.linha-tempo-amostra {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.linha-tempo-amostra--ativo,
+.linha-tempo-segmento--ativo {
+  background-color: var(--estado-ativo-bg);
+}
+
+.linha-tempo-amostra--indisponivel,
+.linha-tempo-segmento--indisponivel {
+  background-color: var(--estado-indisponivel-bg);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--estado-indisponivel-bg) 0 4px,
+    var(--estado-indisponivel-stripe) 4px 8px
+  );
+}
+
+.linha-tempo-amostra--semMetricas,
+.linha-tempo-segmento--semMetricas {
+  background-color: var(--estado-sem-metricas-bg);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--estado-sem-metricas-bg) 0 3px,
+    var(--estado-sem-metricas-stripe) 3px 6px
+  );
+}
+
+.linha-tempo-amostra--semDados,
+.linha-tempo-segmento--semDados {
+  background-color: var(--estado-sem-dados-bg);
+  border-color: var(--estado-sem-dados-border);
+}
+
+.linha-tempo-trilha-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 4px 2px;
+}
+
+.linha-tempo-barra {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  min-height: 44px;
+}
+
+.linha-tempo-segmento {
+  flex: 1 1 0;
+  min-width: 8px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+.linha-tempo-segmento:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.16);
+}
+
+.linha-tempo-segmento:focus-visible {
+  outline: 3px solid var(--green-forest);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.linha-tempo-segmento--selecionado {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--text);
+  transform: translateY(-2px);
+  z-index: 1;
+}
+
+.linha-tempo-marcos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.linha-tempo-detalhe {
+  min-width: 0;
+}
+
+.linha-tempo-dica {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.linha-tempo-detalhe-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-green);
+}
+
+.linha-tempo-detalhe-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.linha-tempo-detalhe-rotulo {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.linha-tempo-detalhe-horario {
+  margin-top: 3px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.linha-tempo-detalhe-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.linha-tempo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.linha-tempo-fechar {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.linha-tempo-fechar:hover {
+  border-color: var(--green-forest);
+  color: var(--green-forest);
+}
+
+.linha-tempo-contagens {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.linha-tempo-contagens > div {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.linha-tempo-contagens dt {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.linha-tempo-contagens dd {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .linha-tempo-estado {
+    padding: 16px;
+  }
+
+  .linha-tempo-kpi {
+    justify-items: start;
+    width: 100%;
+  }
+
+  .linha-tempo-contagens {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

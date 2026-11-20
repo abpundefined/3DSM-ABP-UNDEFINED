@@ -89,6 +89,50 @@ describe('fetchServiceDetail', () => {
     expect(result).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('preserva contagens de estado do histórico quando presentes na API', async () => {
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const path = String(input);
+      if (path === '/api/servicos') {
+        return jsonResponse([service]);
+      }
+      if (path === '/api/servicos/4/historico?periodo=24h') {
+        return jsonResponse([
+          {
+            inicio: '2026-11-15T14:00:00.000Z',
+            energiaKwh: 1.25,
+            emissaoGCo2e: 1200,
+            coletas: 12,
+            ativo: 10,
+            indisponivel: 1,
+            semMetricas: 1,
+          },
+        ]);
+      }
+      if (path === '/api/coletas/servico/4/ultima-valida') {
+        return jsonResponse({ statusCode: 404 }, 404);
+      }
+      throw new Error(`URL inesperada: ${path}`);
+    });
+
+    const result = await fetchServiceDetail(
+      4,
+      '?periodo=24h',
+      new AbortController().signal,
+    );
+
+    expect(result?.history).toEqual([
+      {
+        inicio: '2026-11-15T14:00:00.000Z',
+        energiaKwh: 1.25,
+        emissaoGCo2e: 1200,
+        coletas: 12,
+        ativo: 10,
+        indisponivel: 1,
+        semMetricas: 1,
+      },
+    ]);
+  });
 });
 
 describe('summarizeServiceHistory', () => {

@@ -13,6 +13,10 @@ export type ServiceHistoryPoint = {
   energiaKwh: number | null;
   emissaoGCo2e: number | null;
   componentes?: ComponentesEnergia | null;
+  coletas?: number | null;
+  ativo?: number;
+  indisponivel?: number;
+  semMetricas?: number;
 };
 
 export type ServiceDetailData = {
@@ -106,6 +110,10 @@ function isBackendCollection(value: unknown): value is BackendCollection {
   );
 }
 
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0;
+}
+
 function parseHistory(value: unknown): ServiceHistoryPoint[] {
   if (!Array.isArray(value)) {
     throw new Error('A resposta do histórico do serviço é inválida.');
@@ -124,6 +132,17 @@ function parseHistory(value: unknown): ServiceHistoryPoint[] {
       throw new Error('A resposta do histórico do serviço é inválida.');
     }
 
+    if (
+      ('coletas' in point &&
+        point.coletas !== null &&
+        !isNonNegativeInteger(point.coletas)) ||
+      ('ativo' in point && !isNonNegativeInteger(point.ativo)) ||
+      ('indisponivel' in point && !isNonNegativeInteger(point.indisponivel)) ||
+      ('semMetricas' in point && !isNonNegativeInteger(point.semMetricas))
+    ) {
+      throw new Error('A resposta do histórico do serviço é inválida.');
+    }
+
     return {
       inicio: point.inicio,
       energiaKwh: point.energiaKwh === null ? null : Number(point.energiaKwh),
@@ -135,6 +154,16 @@ function parseHistory(value: unknown): ServiceHistoryPoint[] {
               ? point.componentes
               : null,
           }
+        : {}),
+      ...('coletas' in point
+        ? { coletas: point.coletas === null ? null : Number(point.coletas) }
+        : {}),
+      ...('ativo' in point ? { ativo: Number(point.ativo) } : {}),
+      ...('indisponivel' in point
+        ? { indisponivel: Number(point.indisponivel) }
+        : {}),
+      ...('semMetricas' in point
+        ? { semMetricas: Number(point.semMetricas) }
         : {}),
     };
   });
