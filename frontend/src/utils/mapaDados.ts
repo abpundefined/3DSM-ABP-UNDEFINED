@@ -2,6 +2,7 @@ import type {
   EstadoMonitoramento,
   RespostaMapa,
   ServicoNoMapa,
+  ServicoSemCoordenadas,
   TotaisAmbientais,
 } from '../types/mapa';
 
@@ -10,6 +11,21 @@ export type Limites = [[number, number], [number, number]];
 export type RegiaoDoMapa = {
   codigo: string;
   local: string;
+};
+
+export type IntensidadePorRegiao = {
+  codigo: string;
+  local: string;
+  intensidadeGCo2ePorKwh: number | null;
+  quantidadeServicos: number;
+};
+
+type AcumuladoRegional = {
+  codigo: string;
+  local: string;
+  quantidadeServicos: number;
+  energiaKwh: number;
+  emissaoGCo2e: number;
 };
 
 const ESTADOS: readonly EstadoMonitoramento[] = [
@@ -30,6 +46,12 @@ const ROTULOS_ESTADO: Record<EstadoMonitoramento, string> = {
 
 const formatoEnergia = new Intl.NumberFormat('pt-BR', {
   maximumSignificantDigits: 3,
+});
+const formatoIntensidade = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 1,
+});
+const formatoComparacao = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 1,
 });
 
 function ehObjeto(valor: unknown): valor is Record<string, unknown> {
@@ -145,6 +167,124 @@ export function regioesDoMapa(servicos: ServicoNoMapa[]): RegiaoDoMapa[] {
   return [...regioes.values()].sort((a, b) =>
     a.local.localeCompare(b.local, 'pt-BR'),
   );
+}
+
+export function intensidadesPorRegiao(
+  servicos: ServicoNoMapa[],
+  semCoordenadas: ServicoSemCoordenadas[] = [],
+): IntensidadePorRegiao[] {
+  const acumulados = new Map<string, AcumuladoRegional>();
+  const adicionarTotais = (
+    acumulado: AcumuladoRegional,
+    totais: TotaisAmbientais,
+  ) => {
+    const { energiaKwh, emissaoGCo2e } = totais;
+    if (
+      energiaKwh === null ||
+      emissaoGCo2e === null ||
+      energiaKwh <= 0 ||
+      emissaoGCo2e < 0
+    ) {
+      return;
+    }
+
+    acumulado.energiaKwh += energiaKwh;
+    acumulado.emissaoGCo2e += emissaoGCo2e;
+  };
+
+  for (const servico of servicos) {
+    let acumulado = acumulados.get(servico.regiaoCodigo);
+    if (!acumulado) {
+      acumulado = {
+        codigo: servico.regiaoCodigo,
+        local: servico.local,
+        quantidadeServicos: 0,
+        energiaKwh: 0,
+        emissaoGCo2e: 0,
+      };
+      acumulados.set(servico.regiaoCodigo, acumulado);
+    }
+
+    acumulado.quantidadeServicos += 1;
+    adicionarTotais(acumulado, servico.totais);
+  }
+
+  for (const servico of semCoordenadas) {
+    const codigo = servico.regiaoCodigo.trim();
+    if (
+      codigo === '' ||
+      ['desconhecida', 'desconhecido', 'unknown'].includes(
+        codigo.toLocaleLowerCase('pt-BR'),
+      )
+    ) {
+      continue;
+    }
+
+    let acumulado = acumulados.get(codigo);
+    if (!acumulado) {
+      acumulado = {
+        codigo,
+        local: `Região ${codigo}`,
+        quantidadeServicos: 0,
+        energiaKwh: 0,
+        emissaoGCo2e: 0,
+      };
+      acumulados.set(codigo, acumulado);
+    }
+
+    acumulado.quantidadeServicos += 1;
+    adicionarTotais(acumulado, servico.totais);
+  }
+
+  return [...acumulados.values()]
+    .map(({ codigo, local, quantidadeServicos, energiaKwh, emissaoGCo2e }) => ({
+      codigo,
+      local,
+      quantidadeServicos,
+      intensidadeGCo2ePorKwh: energiaKwh > 0 ? emissaoGCo2e / energiaKwh : null,
+    }))
+    .toSorted((a, b) => {
+      const intensidadeA = a.intensidadeGCo2ePorKwh;
+      const intensidadeB = b.intensidadeGCo2ePorKwh;
+      if (intensidadeA === null) return intensidadeB === null ? 0 : 1;
+      if (intensidadeB === null) return -1;
+      return (
+        intensidadeB - intensidadeA || a.local.localeCompare(b.local, 'pt-BR')
+      );
+    });
+}
+
+export function formatarIntensidadeRegional(valor: number | null) {
+  return valor === null
+    ? 'Sem dados'
+    : `${formatoIntensidade.format(valor)} gCO₂e/kWh`;
+}
+
+export function resumoDaIntensidadeRegional(regioes: IntensidadePorRegiao[]) {
+  const comparaveis = regioes
+    .filter(
+      (
+        regiao,
+      ): regiao is IntensidadePorRegiao & {
+        intensidadeGCo2ePorKwh: number;
+      } => regiao.intensidadeGCo2ePorKwh !== null,
+    )
+    .toSorted((a, b) => a.intensidadeGCo2ePorKwh - b.intensidadeGCo2ePorKwh);
+  const menor = comparaveis[0];
+  const maior = comparaveis.at(-1);
+
+  if (!menor || !maior || menor === maior) {
+    return 'Não há dados em pelo menos duas regiões para comparar as intensidades.';
+  }
+  if (menor.intensidadeGCo2ePorKwh === maior.intensidadeGCo2ePorKwh) {
+    return 'As regiões com dados apresentam a mesma intensidade de carbono por kWh.';
+  }
+  if (menor.intensidadeGCo2ePorKwh === 0) {
+    return `${maior.local} tem maior intensidade de carbono que ${menor.local}; como a menor intensidade é zero, não é possível expressar a diferença em vezes.`;
+  }
+
+  const vezes = maior.intensidadeGCo2ePorKwh / menor.intensidadeGCo2ePorKwh;
+  return `Por kWh consumido, ${maior.local} emite ${formatoComparacao.format(vezes)} vezes mais CO₂e por kWh que ${menor.local}. A diferença ocorre porque a intensidade de carbono da eletricidade varia entre regiões.`;
 }
 
 export function filtrarPorRegiao<T extends { regiaoCodigo: string }>(

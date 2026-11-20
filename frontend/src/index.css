@@ -32,6 +32,12 @@
   --login-alert-border: #a17b1b;
   --login-alert-text: #6a5010;
   --radius: 16px;
+  --serie-0: #00661c;
+  --serie-1: #a65f00;
+  --serie-2: #1f5f99;
+  --serie-3: #8a3fa0;
+  --serie-4: #b0283c;
+  --serie-5: #5f6b66;
   --chart-energia: var(--green-forest);
   --chart-emissao: #a65f00;
   --treemap-0: #cfe8d4;
@@ -391,6 +397,17 @@ h1 {
   font-weight: 550;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+.methodology-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green-forest);
+  text-underline-offset: 3px;
+}
+.methodology-link:hover {
+  text-decoration-thickness: 2px;
 }
 .dashboard-columns {
   display: grid;

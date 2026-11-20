@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
 import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import Icon from '../components/common/Icon';
+import MethodologyLink from '../components/common/MethodologyLink';
 import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
 import VariacaoPeriodo from '../components/common/VariacaoPeriodo';
@@ -100,6 +101,7 @@ export default function Dashboard() {
               tone="leaf"
             >
               <VariacaoPeriodo valor={null} />
+              <MethodologyLink />
             </MetricCard>
             <MetricCard
               label="Emissão total de CO₂e"
@@ -111,6 +113,7 @@ export default function Dashboard() {
             >
               <VariacaoPeriodo valor={null} />
               <EmissionEquivalences emissaoGCo2e={demoTotals.carbonKg * 1000} />
+              <MethodologyLink />
             </MetricCard>
             <MetricCard
               label="Serviços ativos"

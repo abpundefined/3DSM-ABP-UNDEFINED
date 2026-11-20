@@ -8,7 +8,7 @@ Esta página descreve as rotas implementadas e suas limitações. Os exemplos s�
 - Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
 - Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-O Swagger está disponível no backend em [http://localhost:3000/docs](http://localhost:3000/docs), com o documento OpenAPI em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). Acesse `POST /auth/login` para obter um JWT e informe-o em **Authorize** para testar `PUT /configuracao`. As operações de escrita alteram dados reais. O Compose publica o backend em `127.0.0.1`.
+O Swagger está disponível no backend em [http://localhost:3000/docs](http://localhost:3000/docs), com o documento OpenAPI em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). Acesse `POST /auth/login` para obter um JWT e informe-o em **Authorize** para testar as rotas protegidas (`PUT /configuracao`, `POST /servicos/sync`, `POST /coletas` e `GET /saude`). As operações de escrita alteram dados reais. O Compose publica o backend em `127.0.0.1`.
 
 ## Endpoints
 
@@ -16,16 +16,17 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | --- | --- | --- | --- |
 | GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
 | POST | `/auth/login` | 200, objeto | Autentica com e-mail e senha e retorna `accessToken`. |
-| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais ou os valores padrão; público. |
-| PUT | `/configuracao` | 200, objeto | Atualiza os intervalos; aplicado pelo monitoramento a partir do próximo ciclo. Requer JWT Bearer. |
-| GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
-| GET | `/servicos/:id/historico` | 200, array | Retorna a série temporal de um serviço por hora ou dia. |
+| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais, `metaMensalKgCo2e` e os valores padrão; público. |
+| PUT | `/configuracao` | 200, objeto | Atualiza intervalos e `metaMensalKgCo2e` opcional; aplicado pelo monitoramento a partir do próximo ciclo. Requer JWT Bearer. |
+| GET | `/servicos` | 200, array | Lista registros persistidos com `localizacao` e `componentes` de potência, ordenados por atualização decrescente. |
+| GET | `/servicos/:id/historico` | 200, array | Retorna a série temporal de um serviço por hora ou dia (incluindo `componentes`). |
 | POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo; requer JWT Bearer. |
 | POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO; requer JWT Bearer. |
-| GET | `/coletas` | 200, array | Consulta histórico. |
+| GET | `/coletas` | 200, objeto | Consulta histórico paginado com itens e metadados. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
+| GET | `/indicadores/meta` | 200, objeto | Retorna a meta mensal de carbono configurada (`metaMensal`), o acumulado no mês atual e a projeção linear em kgCO₂e. |
 | GET | `/indicadores/serie` | 200, objeto | Retorna a série temporal de energia e emissão do período, global e, opcionalmente, por serviço. |
 | GET | `/ranking` | 200, objeto | Ordena os serviços por energia ou emissão no período e lista à parte os serviços sem dados. |
 | GET | `/intensidade/horarios` | 200, objeto | Retorna a intensidade de carbono média por dia da semana e hora (matriz 7 × 24) e a melhor janela de 3 horas. |
@@ -34,7 +35,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
 | GET | `/saude` | 200, objeto | Mostra a última consulta ao agregador e à API de carbono, a taxa de falha das coletas na última hora e os serviços por estado. Requer JWT Bearer. |
 
-O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
+O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. A listagem de coletas é paginada; a de serviços continua retornando um array.
 
 ## Histórico temporal de serviço
 
@@ -58,6 +59,7 @@ Cada item do array de resposta contém:
 | `emissaoGCo2e` | Número ou `null`; emissão em gramas de CO₂e. |
 | `cpuMedia` | Número ou `null`; média de CPU. |
 | `memoriaMediaMb` | Número ou `null`; média de memória em MB. |
+| `componentes` | Objeto com potência média estimada em watts (`cpuW`, `memoriaW`, `discoW`, `redeW`, `totalW`), ou `null` quando não há medições válidas no intervalo. |
 | `coletas` | Contagem numérica de coletas; `null` quando não há dados no intervalo. |
 | `ativo` | Contagem numérica de coletas bem-sucedidas; zero em intervalos vazios. |
 | `indisponivel` | Contagem numérica de coletas com falha; zero em intervalos vazios. |
@@ -88,7 +90,7 @@ O administrador inicial é criado no boot quando `ADMIN_EMAIL` e `ADMIN_PASSWORD
 
 `POST /auth/login` aceita até 5 tentativas por minuto. A 6ª tentativa na mesma janela retorna HTTP 429 com a mensagem "Muitas tentativas de login. Aguarde um minuto e tente novamente.". A senha aceita no máximo 128 caracteres; acima disso, a resposta é HTTP 400.
 
-`GET /configuracao` retorna `intervaloDescobertaSegundos`, `intervaloColetaSegundos`, `atualizadaEm` e `padrao`. Para atualizar, envie `PUT /configuracao` com os dois campos inteiros; o intervalo de descoberta aceita de 10 a 86400 segundos e o de coleta de 10 a 3600 segundos:
+`GET /configuracao` retorna `intervaloDescobertaSegundos`, `intervaloColetaSegundos`, `metaMensalKgCo2e` (número em kgCO₂e ou `null`), `atualizadaEm` e `padrao`. Para atualizar, envie `PUT /configuracao` com os dois campos inteiros obrigatórios (descoberta de 10 a 86400 segundos; coleta de 10 a 3600 segundos) e, opcionalmente, `metaMensalKgCo2e` (número maior ou igual a 0, ou `null` para limpar a meta):
 
 ```http
 Authorization: Bearer <JWT>
@@ -98,7 +100,8 @@ Content-Type: application/json
 ```json
 {
   "intervaloDescobertaSegundos": 120,
-  "intervaloColetaSegundos": 60
+  "intervaloColetaSegundos": 60,
+  "metaMensalKgCo2e": 500.5
 }
 ```
 
@@ -106,17 +109,18 @@ O JWT é emitido em `accessToken`; credenciais inválidas ou token ausente/invá
 
 ## Serviços e estados
 
-`GET /servicos` retorna campos do modelo `Servico`: `id`, `idExterno`, `nome`, `regiaoCodigo`, `caminhoMetricas`, `estadoAtual`, `descobertoEm`, `ultimaVezListadoEm` e `atualizadoEm`. Não inclui automaticamente a relação `regiao` nem as coletas.
+`GET /servicos` retorna os campos do modelo `Servico` (`id`, `idExterno`, `nome`, `regiaoCodigo`, `caminhoMetricas`, `estadoAtual`, `descobertoEm`, `ultimaVezListadoEm` e `atualizadoEm`), acrescidos de:
 
-| Estado | Significado esperado |
+- `localizacao`: objeto com `codigo`, `pais`, `regiao`, `cidade`, `latitude` e `longitude` da região vinculada.
+- `componentes`: composição de potência estimada em watts (`cpuW`, `memoriaW`, `discoW`, `redeW`, `totalW`) a partir da coleta mais recente válida, ou `null` quando o serviço ainda não possui coleta válida ou a última coleta falhou / ficou sem métricas.
+
+| Estado | Significado |
 | --- | --- |
 | `DESCONHECIDO` | Serviço novo ou retornado, aguardando confirmação por coleta. |
 | `DISPONIVEL` | Coleta encontrou métricas consideradas válidas. |
-| `INDISPONIVEL` | Falha de acesso/coleta. |
-| `SEM_METRICAS` | Serviço acessível sem medições válidas. |
+| `INDISPONIVEL` | Falha de acesso/coleta (HTTP 5xx, erro de rede ou timeout de 8 s). |
+| `SEM_METRICAS` | Serviço acessível sem medições válidas (HTTP 404 ou payload sem medições). |
 | `REMOVIDO` | Não consta na última descoberta válida; histórico permanece armazenado. |
-
-O coletor ainda confunde alguns erros de ausência de métricas com indisponibilidade. Além disso, o normalizador não lê corretamente `location` do contrato oficial; a localização pode ser desconhecida mesmo quando existe na origem. Ver #1 e #5.
 
 ## Registrar coleta
 
@@ -139,14 +143,12 @@ Exemplo de `POST /coletas`, usando um `servicoId` existente:
 
 - `regiaoCodigoNaColeta`: código da região, opcional.
 - `iniciadaEm`, `finalizadaEm`: datas ISO convertidas pelo DTO; a primeira recebe a data atual se omitida.
-- `intervaloColetaSegundos`: intervalo da medição, em segundos.
+- `intervaloColetaSegundos`: intervalo da medição em segundos (inteiro `>= 1`).
 - `codigoErro`, `mensagemErro`: detalhes de falha.
-- `cpuPercent`: percentual; memória, disco e rede em GB, conforme a fonte.
-- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh` e `emissaoGCo2e` são calculados e persistidos quando a coleta contém medições. Nessa situação, `estadoCalculo` é salvo como `CONCLUIDO`; sem medições, permanece `PENDENTE`.
+- `cpuPercent`: percentual (`0` a `100`); `memoryGb`, `diskGb` e `networkGb` em GB (`>= 0`), conforme a fonte.
+- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh` e `emissaoGCo2e` são calculados e persistidos quando a coleta contém medições e `intervaloColetaSegundos`. Em sucesso, `estadoCalculo` é salvo como `CONCLUIDO`; sem medições ou sem intervalo, permanece `PENDENTE`; se a API de carbono falhar ou exceder o timeout de 8 s, as medições brutas e `energiaKwh` são preservadas com `estadoColeta = SUCESSO` e `estadoCalculo = FALHA`.
 
-Há validação de tipos/enum/datas e rejeição de propriedades desconhecidas nas rotas de coletas. Ainda faltam limites de faixa, IDs inteiros positivos e validação de coerência temporal. Não considerar validado um valor apenas porque o endpoint o aceitou.
-
-O service manual pode reclassificar um payload com zeros ou sem CPU como `SEM_METRICAS`, mesmo havendo outros valores. Essa é uma pendência da #5. A coleta automática usa outro caminho de persistência e não herda essa regra.
+O DTO valida tipos, enum, datas, faixas numéricas (`cpuPercent` entre 0 e 100, demais medições `>= 0` e `intervaloColetaSegundos >= 1`) e rejeita propriedades desconhecidas. A regra de presença de medições (`possuiMedicoes`) é compartilhada entre a coleta automática e o registro manual.
 
 ## Histórico e última coleta válida
 
@@ -157,8 +159,28 @@ Filtros opcionais de `GET /coletas`:
 | `servicoId` | Número do ID interno. |
 | `dataInicio` | Data ISO; limite inferior inclusivo de `iniciadaEm`. |
 | `dataFim` | Data ISO; limite superior inclusivo de `iniciadaEm`. |
+| `pagina` | Inteiro maior ou igual a 1; padrão 1. |
+| `tamanho` | Inteiro de 1 a 100; padrão 20. |
 
-O retorno é ordenado por `iniciadaEm` decrescente e inclui nome/identificador externo do serviço. O detalhe por ID também inclui relações disponíveis de serviço e região.
+O retorno é um objeto com `itens`, `pagina`, `tamanho`, `total` e
+`totalPaginas`. Os itens preservam os campos da coleta e o nome/identificador
+externo do serviço. A ordenação é por `iniciadaEm` decrescente e depois por
+`id` decrescente para desempatar datas iguais. `total` conta apenas as coletas
+que atendem aos filtros; `totalPaginas` é arredondado para cima.
+Uma consulta sem resultados retorna `itens: []`, `total: 0` e
+`totalPaginas: 0`. Uma página além da última retorna `itens: []`, preservando
+os metadados. Parâmetros de paginação inválidos retornam 400.
+
+Exemplo sem resultados:
+
+```json
+{ "itens": [], "pagina": 1, "tamanho": 20, "total": 0, "totalPaginas": 0 }
+```
+
+Essa mudança substitui o antigo array de `GET /coletas`. O frontend usa
+`GET /servicos/:id/historico` para os gráficos e
+`GET /coletas/servico/:id/ultima-valida` para a última coleta; essas rotas não
+mudam. O detalhe por ID continua incluindo as relações de serviço e região.
 
 `GET /coletas/servico/1/ultima-valida` retorna:
 
@@ -240,6 +262,26 @@ Exemplo de resposta:
 ```
 
 `energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
+
+## Meta mensal de carbono e projeção
+
+`GET /indicadores/meta` consulta a meta mensal configurada em `ConfiguracaoMonitoramento.metaMensalKgCo2e` e calcula o acumulado de emissões no mês calendário atual (fuso `America/Sao_Paulo`, apenas coletas com `estadoCalculo = CONCLUIDO`) junto com a projeção linear para o fechamento do mês:
+
+- `acumuladoMes` = soma de `emissaoGCo2e` no mês atual ÷ 1000 (em kgCO₂e).
+- `projecaoMes` = `(acumuladoMes / diasDecorridos) * diasNoMes` (ou `0` quando `acumuladoMes` é `0`).
+- `metaMensal` vem como `null` quando nenhuma meta foi definida em `PUT /configuracao`.
+
+Exemplo de resposta:
+
+```json
+{
+  "metaMensal": 500.5,
+  "acumuladoMes": 120.25,
+  "diasDecorridos": 12,
+  "diasNoMes": 30,
+  "projecaoMes": 300.625
+}
+```
 
 ## Série temporal de indicadores
 
@@ -457,7 +499,7 @@ Exemplo de resposta:
 
 ## Erros
 
-Nas rotas de coletas, o filtro retorna:
+O filtro global `HttpExceptionFilter` (registrado em `backend/src/main.ts`) padroniza as respostas de erro em todas as rotas:
 
 ```json
 {
@@ -469,8 +511,8 @@ Nas rotas de coletas, o filtro retorna:
 }
 ```
 
-`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados retornam 500 com mensagem genérica. O filtro é registrado globalmente na aplicação. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
+`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados retornam 500 com mensagem genérica. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
 
-## Integrações e endpoints futuros
+## Integrações externas
 
-A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
+A API externa de métricas usa `/services` e `/metrics/{id}`, e a API de intensidade de carbono usa `/regions/{code}/carbon-intensity`; esses caminhos pertencem aos serviços externos e não devem ser confundidos com as rotas locais em português. As documentações oficiais estão em [https://metrics.unilaunch.org/docs](https://metrics.unilaunch.org/docs) e [https://carbon.unilaunch.org/docs](https://carbon.unilaunch.org/docs).

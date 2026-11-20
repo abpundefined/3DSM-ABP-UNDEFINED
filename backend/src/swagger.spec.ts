@@ -298,9 +298,17 @@ describe("Swagger", () => {
         "application/json"
       ].schema,
     ).toEqual({
-      type: "array",
-      items: { $ref: "#/components/schemas/HistoricoColetaRespostaDto" },
+      $ref: "#/components/schemas/HistoricoColetasPaginadoRespostaDto",
     });
+    expect(
+      document.components.schemas.HistoricoColetasPaginadoRespostaDto.required,
+    ).toEqual(["itens", "pagina", "tamanho", "total", "totalPaginas"]);
+    expect(document.paths["/coletas"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "pagina" }),
+        expect.objectContaining({ name: "tamanho" }),
+      ]),
+    );
     expect(
       document.paths["/servicos/sync"].post.responses["201"].content?.[
         "application/json"

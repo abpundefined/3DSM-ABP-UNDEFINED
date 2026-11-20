@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import FeedbackPanel from '../components/common/FeedbackPanel';
+import MethodologyLink from '../components/common/MethodologyLink';
 import ComparisonCharts from '../components/comparacao/ComparisonCharts';
 import PeriodSelector from '../components/common/PeriodSelector';
 import useComparisonData from '../hooks/useComparisonData';
@@ -69,6 +70,7 @@ function ComparisonSummaryCard({
           <dd>{service.totais.coletasValidas}</dd>
         </div>
       </dl>
+      <MethodologyLink />
     </article>
   );
 }
@@ -89,6 +91,11 @@ function ComparisonTable({
     'CO₂e total',
     'Intensidade de carbono',
   ];
+  const estimatedIndicators = new Set([
+    'Energia total',
+    'CO₂e total',
+    'Intensidade de carbono',
+  ]);
 
   function valueFor(service: ServicoComparacao, indicator: string) {
     const metadata = metadataById.get(service.servicoId);
@@ -152,7 +159,12 @@ function ComparisonTable({
           <tbody>
             {indicators.map((indicator) => (
               <tr key={indicator}>
-                <th scope="row">{indicator}</th>
+                <th scope="row">
+                  <span>{indicator}</span>
+                  {estimatedIndicators.has(indicator) && (
+                    <MethodologyLink className="comparison-table-methodology-link" />
+                  )}
+                </th>
                 {services.map((service) => (
                   <td key={service.servicoId}>
                     {valueFor(service, indicator)}

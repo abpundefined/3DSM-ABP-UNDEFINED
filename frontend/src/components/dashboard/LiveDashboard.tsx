@@ -1,10 +1,13 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
+import useMetaCarbono from '../../hooks/useMetaCarbono';
+import useSerie from '../../hooks/useSerie';
 import { ApiError, apiRequest } from '../../services/api';
 import {
   formatEmission,
@@ -21,11 +24,14 @@ import {
   ehVariacaoPercentual,
 } from '../../utils/variacao';
 import Icon from '../common/Icon';
+import MethodologyLink from '../common/MethodologyLink';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
 import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
 import ServiceQuickDrawer from './ServiceQuickDrawer';
+import PainelMetaCarbono from './PainelMetaCarbono';
+import PainelDaTendencia from '../tendencia/PainelDaTendencia';
 import type {
   BackendCollection,
   BackendService,
@@ -210,6 +216,24 @@ export default function LiveDashboard({
     useState<ServiceStateFilter>('all');
   const [serviceSort, setServiceSort] = useState<ServiceSort>('default');
   const activeRequest = useRef<object | null>(null);
+  const { estado: serie, recarregar: recarregarSerie } = useSerie(
+    periodQuery,
+    true,
+  );
+  const { estado: meta, recarregar: recarregarMeta } = useMetaCarbono(true);
+  const tendencias = useMemo(
+    () =>
+      serie.status === 'pronto'
+        ? new Map(
+            serie.dados.servicos.map(({ servicoId, serie: pontos }) => [
+              servicoId,
+              pontos.map((ponto) => ponto.emissaoGCo2e),
+            ]),
+          )
+        : null,
+    [serie],
+  );
+
   const { serviceIds, toggleService } = useComparisonSelection();
 
   const refresh = useCallback(
@@ -472,7 +496,11 @@ export default function LiveDashboard({
         <button
           className="button button--accent"
           type="button"
-          onClick={() => void refresh()}
+          onClick={() => {
+            void refresh();
+            recarregarSerie();
+            recarregarMeta();
+          }}
           disabled={isLoading}
         >
           Atualizar agora
@@ -495,6 +523,7 @@ export default function LiveDashboard({
               periodo={indicators.periodo}
             />
           )}
+          <MethodologyLink />
         </MetricSummary>
         <MetricSummary
           label="Emissão total de CO₂e"
@@ -513,6 +542,7 @@ export default function LiveDashboard({
           <EmissionEquivalences
             emissaoGCo2e={toFiniteNumber(indicators?.emissaoTotalGCo2e)}
           />
+          <MethodologyLink />
         </MetricSummary>
         <MetricSummary
           label="Serviços ativos"
@@ -533,6 +563,10 @@ export default function LiveDashboard({
           tone="olive"
         />
       </section>
+
+      <PainelMetaCarbono estado={meta} onRecarregar={recarregarMeta} />
+
+      <PainelDaTendencia estado={serie} onRecarregar={recarregarSerie} />
 
       <section
         className="live-services-panel"
@@ -691,6 +725,7 @@ export default function LiveDashboard({
                     <ServiceCard
                       service={service}
                       onSelect={handleSelectService}
+                      tendencia={tendencias?.get(service.id)}
                       comparisonSelected={serviceIds.includes(service.id)}
                       onToggleComparison={toggleService}
                     />

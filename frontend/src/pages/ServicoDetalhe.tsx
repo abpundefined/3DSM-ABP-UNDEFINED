@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
+import MethodologyLink from '../components/common/MethodologyLink';
 import PeriodSelector from '../components/common/PeriodSelector';
 import ServiceHistoryChart from '../components/servico/ServiceHistoryChart';
 import MelhorHorarioDoServico from '../components/horarios/MelhorHorarioDoServico';
@@ -247,6 +248,7 @@ export default function ServicoDetalhe() {
               <p className="service-detail-total-description">
                 Soma das medições válidas no período.
               </p>
+              <MethodologyLink />
             </article>
             <article className="service-detail-total-card">
               <div className="service-detail-total-heading">
@@ -264,6 +266,7 @@ export default function ServicoDetalhe() {
                   summary.possuiEmissao ? summary.totalEmissaoGCo2e : null
                 }
               />
+              <MethodologyLink />
             </article>
           </section>
 

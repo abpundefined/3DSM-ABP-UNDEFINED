@@ -4,6 +4,7 @@ jest.mock("../../database/prisma.service", () => ({
 
 import { PrismaService } from "../../database/prisma.service";
 import { ColetasRepository } from "./coletas.repository";
+import { FilterColetasDto } from "./dto/filter-coleta.dto";
 import {
   CreateColetaDto,
   EstadoCalculoEnum,
@@ -22,12 +23,19 @@ describe("ColetasRepository", () => {
   const findMany = jest.fn();
   const findUnique = jest.fn();
   const findFirst = jest.fn();
+  const count = jest.fn();
+  const transaction = jest.fn((consultas: Promise<unknown>[]) =>
+    Promise.all(consultas),
+  );
   const repository = new ColetasRepository({
-    coleta: { create, findMany, findUnique, findFirst },
+    coleta: { create, findMany, findUnique, findFirst, count },
+    $transaction: transaction,
   } as unknown as PrismaService);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    findMany.mockResolvedValue([]);
+    count.mockResolvedValue(0);
   });
 
   it("mapeia os dados recebidos ao criar uma coleta", async () => {
@@ -103,19 +111,79 @@ describe("ColetasRepository", () => {
         servicoId: 7,
         iniciadaEm: { gte: dataInicio, lte: dataFim },
       },
-      orderBy: { iniciadaEm: "desc" },
+      orderBy: [{ iniciadaEm: "desc" }, { id: "desc" }],
+      skip: 0,
+      take: 20,
       include: { servico: { select: { idExterno: true, nome: true } } },
+    });
+    expect(count).toHaveBeenCalledWith({
+      where: {
+        servicoId: 7,
+        iniciadaEm: { gte: dataInicio, lte: dataFim },
+      },
     });
   });
 
   it("lista coletas sem filtros", async () => {
-    await repository.findMany({});
+    await expect(repository.findMany({})).resolves.toEqual({
+      itens: [],
+      pagina: 1,
+      tamanho: 20,
+      total: 0,
+      totalPaginas: 0,
+    });
 
     expect(findMany).toHaveBeenCalledWith({
       where: {},
-      orderBy: { iniciadaEm: "desc" },
+      orderBy: [{ iniciadaEm: "desc" }, { id: "desc" }],
+      skip: 0,
+      take: 20,
       include: { servico: { select: { idExterno: true, nome: true } } },
     });
+  });
+
+  it("consulta apenas a página pedida e arredonda o total de páginas para cima", async () => {
+    const itens = [{ id: 21, servico: { nome: "API", idExterno: "api" } }];
+    findMany.mockResolvedValue(itens);
+    count.mockResolvedValue(41);
+
+    await expect(
+      repository.findMany(
+        Object.assign(new FilterColetasDto(), { pagina: 2, tamanho: 20 }),
+      ),
+    ).resolves.toEqual({
+      itens,
+      pagina: 2,
+      tamanho: 20,
+      total: 41,
+      totalPaginas: 3,
+    });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 20, take: 20 }),
+    );
+    expect(count).toHaveBeenCalledWith({ where: {} });
+    expect(transaction).toHaveBeenCalledWith(expect.any(Array), {
+      isolationLevel: "RepeatableRead",
+    });
+  });
+
+  it("retorna página vazia além da última sem perder os metadados", async () => {
+    count.mockResolvedValue(40);
+
+    await expect(
+      repository.findMany(
+        Object.assign(new FilterColetasDto(), { pagina: 5, tamanho: 10 }),
+      ),
+    ).resolves.toEqual({
+      itens: [],
+      pagina: 5,
+      tamanho: 10,
+      total: 40,
+      totalPaginas: 4,
+    });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 40, take: 10 }),
+    );
   });
 
   it("aplica somente o limite inicial quando não há data final", async () => {

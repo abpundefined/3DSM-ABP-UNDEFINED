@@ -146,7 +146,9 @@ test('funciona no modo demonstração sem chamar o backend', async ({ page }) =>
 
   await expect(page.getByRole('radio', { name: /Canadá/ })).toBeChecked();
   await expect(
-    page.getByRole('link', { name: 'Como calculamos' }),
+    page
+      .locator('.simulador')
+      .getByRole('link', { name: 'Como calculamos', exact: true }),
   ).toHaveAttribute('href', '/metodologia?demo=1');
   expect(chamadas.filter((url) => url.includes('simulacao-regiao'))).toEqual(
     [],

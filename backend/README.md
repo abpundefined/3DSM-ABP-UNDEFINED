@@ -50,7 +50,7 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /servicos`: registros persistidos de serviços, incluindo estados removidos.
 - `POST /servicos/sync`: sincroniza a descoberta externa.
 - `POST /coletas`: registra uma coleta pelo DTO.
-- `GET /coletas`: histórico com filtros opcionais.
+- `GET /coletas`: histórico paginado com filtros opcionais; `pagina=1` e `tamanho=20` por padrão (máximo 100). Retorna `itens`, `pagina`, `tamanho`, `total` e `totalPaginas`.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
 - `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. Sempre retorna `periodoAnterior` e `variacaoPercentual` de energia/emissão contra uma janela de mesma duração; sem base ou base zero, o percentual é `null`. O campo legado `variacao` de `mes-anterior` segue essa mesma janela.
