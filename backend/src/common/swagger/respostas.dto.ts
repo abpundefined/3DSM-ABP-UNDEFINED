@@ -99,6 +99,16 @@ export class HistoricoColetaRespostaDto extends ColetaRespostaDto {
   servico!: ServicoResumoRespostaDto;
 }
 
+export class HistoricoColetasPaginadoRespostaDto {
+  @ApiProperty({ type: [HistoricoColetaRespostaDto] })
+  itens!: HistoricoColetaRespostaDto[];
+  @ApiProperty({ type: Number, minimum: 1, example: 1 }) pagina!: number;
+  @ApiProperty({ type: Number, minimum: 1, maximum: 100, example: 20 })
+  tamanho!: number;
+  @ApiProperty({ type: Number, minimum: 0, example: 41 }) total!: number;
+  @ApiProperty({ type: Number, minimum: 0, example: 3 }) totalPaginas!: number;
+}
+
 export class DetalheColetaRespostaDto extends ColetaRespostaDto {
   @ApiProperty({ type: ServicoRespostaDto }) servico!: ServicoRespostaDto;
   @ApiProperty({ type: RegiaoRespostaDto, nullable: true })
