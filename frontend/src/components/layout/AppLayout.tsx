@@ -1,4 +1,10 @@
-import { type MouseEvent, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { flushSync } from 'react-dom';
 import {
   NavLink,
@@ -11,9 +17,11 @@ import Brand from '../common/Brand';
 import BackToTopButton from '../common/BackToTopButton';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
+import GuidedTour from '../tour/GuidedTour';
 import useAuth from '../../hooks/useAuth';
 import usePeriod from '../../hooks/usePeriod';
 import { getNavItems } from '../../navigation';
+import { jaViuTour, marcarTourComoVisto } from '../../utils/tour';
 import {
   ehCliqueSimplesNavegacao,
   executarComViewTransition,
@@ -39,6 +47,17 @@ export default function AppLayout() {
   const navigationSearch = navigationQuery ? `?${navigationQuery}` : '';
   const previousPath = useRef(pathname);
   const mainRef = useRef<HTMLElement>(null);
+  const [tourState, setTourState] = useState<{
+    aberto: boolean;
+    focarAoAbrir: boolean;
+    returnFocusEl: HTMLElement | null;
+    chave: number;
+  }>(() => ({
+    aberto: pathname === '/' && !jaViuTour(),
+    focarAoAbrir: false,
+    returnFocusEl: null,
+    chave: 0,
+  }));
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
       return window.localStorage.getItem('greener-theme') === 'dark'
@@ -89,6 +108,30 @@ export default function AppLayout() {
     });
   }
 
+  function iniciarTour(event: MouseEvent<HTMLButtonElement>) {
+    const trigger = event.currentTarget;
+    if (pathname !== '/') {
+      void navigate({ pathname: '/', search: navigationSearch });
+    }
+    setTourState((atual) => ({
+      aberto: true,
+      focarAoAbrir: true,
+      returnFocusEl: trigger,
+      chave: atual.chave + 1,
+    }));
+  }
+
+  const fecharTour = useCallback(() => {
+    marcarTourComoVisto();
+    setTourState((atual) => ({
+      ...atual,
+      aberto: false,
+      focarAoAbrir: false,
+    }));
+  }, []);
+
+  const tourVisivel = tourState.aberto && pathname === '/';
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#conteudo">
@@ -117,6 +160,16 @@ export default function AppLayout() {
                 );
               })}
             </div>
+            <button
+              type="button"
+              className="nav-tour"
+              aria-label="Fazer tour"
+              title="Fazer tour guiado"
+              onClick={iniciarTour}
+            >
+              <Icon name="compass" />
+              <span>Fazer tour</span>
+            </button>
             {isAuthenticated ? (
               <button type="button" className="nav-login" onClick={logout}>
                 <Icon name="lock" />
@@ -180,6 +233,13 @@ export default function AppLayout() {
           </span>
         </div>
       </footer>
+      <GuidedTour
+        key={tourState.chave}
+        aberto={tourVisivel}
+        focarAoAbrir={tourState.focarAoAbrir}
+        returnFocusTo={tourState.returnFocusEl}
+        onFechar={fecharTour}
+      />
       <BackToTopButton />
       <nav className="bottom-nav" aria-label="Navegação inferior">
         {navItems.map((item) => {
