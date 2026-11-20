@@ -15,6 +15,7 @@ import {
   toFiniteNumber,
 } from '../../utils/formatters';
 import EmissionEquivalences from '../common/EmissionEquivalences';
+import ComposicaoEnergia from '../common/ComposicaoEnergia';
 import FeedbackPanel from '../common/FeedbackPanel';
 import VariacaoPeriodo from '../common/VariacaoPeriodo';
 import type { PeriodoConsultado } from '../../types/mapa';
@@ -26,6 +27,7 @@ import {
 import Icon from '../common/Icon';
 import MethodologyLink from '../common/MethodologyLink';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
+import { somarComponentes } from '../../utils/composicaoEnergia';
 import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
@@ -567,6 +569,15 @@ export default function LiveDashboard({
       <PainelMetaCarbono estado={meta} onRecarregar={recarregarMeta} />
 
       <PainelDaTendencia estado={serie} onRecarregar={recarregarSerie} />
+
+      {services.length > 0 && (
+        <ComposicaoEnergia
+          componentes={somarComponentes(
+            services.map((service) => service.componentes),
+          )}
+          subtitulo="Soma da potência estimada por recurso entre todos os serviços monitorados com coleta válida."
+        />
+      )}
 
       <section
         className="live-services-panel"

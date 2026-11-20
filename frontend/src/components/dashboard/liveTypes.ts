@@ -1,4 +1,5 @@
 import type { ServiceLocation } from '../../utils/formatters';
+import type { ComponentesEnergia } from '../../utils/composicaoEnergia';
 
 export type BackendService = {
   id: number;
@@ -14,6 +15,7 @@ export type BackendService = {
     | 'DESCONHECIDO';
   energiaKwh?: number | string | null;
   emissaoGCo2e?: number | string | null;
+  componentes?: ComponentesEnergia | null;
 };
 
 export type BackendCollection = {

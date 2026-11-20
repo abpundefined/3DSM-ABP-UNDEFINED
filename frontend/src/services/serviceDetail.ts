@@ -3,11 +3,16 @@ import type {
   BackendCollection,
   BackendService,
 } from '../components/dashboard/liveTypes';
+import {
+  isComponentesEnergia,
+  type ComponentesEnergia,
+} from '../utils/composicaoEnergia';
 
 export type ServiceHistoryPoint = {
   inicio: string;
   energiaKwh: number | null;
   emissaoGCo2e: number | null;
+  componentes?: ComponentesEnergia | null;
 };
 
 export type ServiceDetailData = {
@@ -124,6 +129,13 @@ function parseHistory(value: unknown): ServiceHistoryPoint[] {
       energiaKwh: point.energiaKwh === null ? null : Number(point.energiaKwh),
       emissaoGCo2e:
         point.emissaoGCo2e === null ? null : Number(point.emissaoGCo2e),
+      ...('componentes' in point
+        ? {
+            componentes: isComponentesEnergia(point.componentes)
+              ? point.componentes
+              : null,
+          }
+        : {}),
     };
   });
 }
