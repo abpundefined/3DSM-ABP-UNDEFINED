@@ -310,6 +310,7 @@ export default function Comparacao() {
         {servicesState.status === 'carregando' && (
           <FeedbackPanel
             kind="loading"
+            skeleton="cards"
             title="Carregando serviços"
             description="Aguarde enquanto preparamos a lista para comparação."
           />
@@ -372,6 +373,7 @@ export default function Comparacao() {
       ) : comparisonState.status === 'carregando' ? (
         <FeedbackPanel
           kind="loading"
+          skeleton="table"
           title="Carregando comparação"
           description="Consultando totais e séries do período selecionado."
         />

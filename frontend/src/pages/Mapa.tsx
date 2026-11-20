@@ -347,6 +347,7 @@ export default function Mapa() {
       {exibido.status === 'carregando' && (
         <FeedbackPanel
           kind="loading"
+          skeleton="chart"
           title="Carregando o mapa"
           description="Buscando a localização e a emissão dos serviços no período."
         />

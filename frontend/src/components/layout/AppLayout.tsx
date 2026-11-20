@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { type MouseEvent, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import {
+  NavLink,
+  Outlet,
+  type To,
+  useLocation,
+  useNavigate,
+} from 'react-router';
 import Brand from '../common/Brand';
 import BackToTopButton from '../common/BackToTopButton';
 import Icon from '../common/Icon';
@@ -7,9 +14,16 @@ import AppErrorBoundary from '../common/AppErrorBoundary';
 import useAuth from '../../hooks/useAuth';
 import usePeriod from '../../hooks/usePeriod';
 import { getNavItems } from '../../navigation';
+import {
+  ehCliqueSimplesNavegacao,
+  executarComViewTransition,
+  suportaViewTransition,
+} from '../../utils/viewTransitions';
+import '../common/view-transitions.css';
 
 export default function AppLayout() {
   const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   const isLoginPage = pathname === '/login';
   const { isAuthenticated, logout } = useAuth();
   const navItems = getNavItems(isAuthenticated);
@@ -53,6 +67,28 @@ export default function AppLayout() {
     }
   }, [theme]);
 
+  function handleNavClick(
+    event: MouseEvent<HTMLAnchorElement>,
+    target: To,
+    targetPathname: string,
+    targetSearch = '',
+  ) {
+    if (
+      !ehCliqueSimplesNavegacao(event) ||
+      !suportaViewTransition() ||
+      (pathname === targetPathname && search === targetSearch)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    executarComViewTransition(() => {
+      flushSync(() => {
+        void navigate(target);
+      });
+    });
+  }
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#conteudo">
@@ -63,17 +99,23 @@ export default function AppLayout() {
           <Brand />
           <nav aria-label="Navegação principal">
             <div className="nav-pages">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={{ pathname: item.to, search: navigationSearch }}
-                  end={item.to === '/'}
-                  className="nav-page"
-                >
-                  <Icon name={item.icon} />
-                  {item.label}
-                </NavLink>
-              ))}
+              {navItems.map((item) => {
+                const target = { pathname: item.to, search: navigationSearch };
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={target}
+                    end={item.to === '/'}
+                    className="nav-page"
+                    onClick={(event) =>
+                      handleNavClick(event, target, item.to, navigationSearch)
+                    }
+                  >
+                    <Icon name={item.icon} />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
             </div>
             {isAuthenticated ? (
               <button type="button" className="nav-login" onClick={logout}>
@@ -81,7 +123,11 @@ export default function AppLayout() {
                 <span>Sair</span>
               </button>
             ) : (
-              <NavLink to="/login" className="nav-login">
+              <NavLink
+                to="/login"
+                className="nav-login"
+                onClick={(event) => handleNavClick(event, '/login', '/login')}
+              >
                 <Icon name="lock" />
                 <span>Entrar</span>
               </NavLink>
@@ -136,17 +182,23 @@ export default function AppLayout() {
       </footer>
       <BackToTopButton />
       <nav className="bottom-nav" aria-label="Navegação inferior">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={{ pathname: item.to, search: navigationSearch }}
-            end={item.to === '/'}
-            aria-label={item.shortLabel ? item.label : undefined}
-          >
-            <Icon name={item.icon} />
-            <span>{item.shortLabel ?? item.label}</span>
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const target = { pathname: item.to, search: navigationSearch };
+          return (
+            <NavLink
+              key={item.to}
+              to={target}
+              end={item.to === '/'}
+              aria-label={item.shortLabel ? item.label : undefined}
+              onClick={(event) =>
+                handleNavClick(event, target, item.to, navigationSearch)
+              }
+            >
+              <Icon name={item.icon} />
+              <span>{item.shortLabel ?? item.label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
     </div>
   );

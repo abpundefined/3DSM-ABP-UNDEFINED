@@ -6,6 +6,7 @@ import {
   formatarPercentualMeta,
 } from '../../utils/metaCarbono';
 import Icon from '../common/Icon';
+import LoadingSkeleton from '../common/LoadingSkeleton';
 import MethodologyLink from '../common/MethodologyLink';
 import './meta-carbono.css';
 
@@ -37,9 +38,11 @@ export default function PainelMetaCarbono({
           <MethodologyLink />
         </div>
         {estado.status === 'carregando' ? (
-          <p className="meta-carbono-aviso">
-            Carregando a meta mensal e a projeção de emissões...
-          </p>
+          <LoadingSkeleton
+            variant="cards"
+            description="Carregando a meta mensal e a projeção de emissões..."
+            compact
+          />
         ) : (
           <div className="meta-carbono-erro">
             <p className="meta-carbono-aviso">

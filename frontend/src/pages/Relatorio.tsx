@@ -306,6 +306,7 @@ export default function Relatorio() {
       {exibido.status === 'carregando' && (
         <FeedbackPanel
           kind="loading"
+          skeleton="detail"
           title="Gerando o relatório"
           description="Consolidando indicadores, tendência e serviços do período."
         />
