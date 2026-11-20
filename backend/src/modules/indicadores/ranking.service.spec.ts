@@ -241,6 +241,45 @@ describe("RankingService", () => {
     );
   });
 
+  it.each([null, 0])(
+    "distingue emissão atual ausente (%s) de zero medido na variação por serviço",
+    async (emissaoAtual) => {
+      somarImpactoPorServico
+        .mockResolvedValueOnce([
+          {
+            servicoId: 1,
+            energiaKwh: 10,
+            emissaoGCo2e: emissaoAtual,
+            coletasValidas: 1,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            servicoId: 1,
+            energiaKwh: 10,
+            emissaoGCo2e: 100,
+            coletasValidas: 1,
+          },
+        ]);
+
+      expect(
+        await service.obterRanking(
+          Object.assign(new RankingQueryDto(), { inicio, fim }),
+        ),
+      ).toMatchObject({
+        variacaoPorServico: [
+          {
+            servicoId: 1,
+            emissaoAtualGCo2e: emissaoAtual,
+            emissaoAnteriorGCo2e: 100,
+            diferencaGCo2e: emissaoAtual === null ? null : -100,
+            variacaoPercentual: emissaoAtual === null ? null : -100,
+          },
+        ],
+      });
+    },
+  );
+
   it.each([
     { anteriores: [] },
     {

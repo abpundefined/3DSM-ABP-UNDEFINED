@@ -26,7 +26,7 @@ interface ServicoSemDados {
 }
 
 export interface VariacaoPorServico extends ServicoSemDados {
-  emissaoAtualGCo2e: number;
+  emissaoAtualGCo2e: number | null;
   emissaoAnteriorGCo2e: number | null;
   diferencaGCo2e: number | null;
   variacaoPercentual: number | null;
@@ -112,7 +112,7 @@ export class RankingService {
       const anterior = anterioresPorServico.get(servico.id);
 
       if (impacto || anterior) {
-        const emissaoAtualGCo2e = impacto?.emissaoGCo2e ?? 0;
+        const emissaoAtualGCo2e = impacto ? impacto.emissaoGCo2e : 0;
         const emissaoAnteriorGCo2e = anterior?.emissaoGCo2e ?? null;
         variacaoPorServico.push({
           servicoId: servico.id,
@@ -120,13 +120,16 @@ export class RankingService {
           emissaoAtualGCo2e,
           emissaoAnteriorGCo2e,
           diferencaGCo2e:
-            emissaoAnteriorGCo2e === null
+            emissaoAtualGCo2e === null || emissaoAnteriorGCo2e === null
               ? null
               : emissaoAtualGCo2e - emissaoAnteriorGCo2e,
-          variacaoPercentual: calcularVariacaoPercentual(
-            emissaoAtualGCo2e,
-            emissaoAnteriorGCo2e,
-          ),
+          variacaoPercentual:
+            emissaoAtualGCo2e === null
+              ? null
+              : calcularVariacaoPercentual(
+                  emissaoAtualGCo2e,
+                  emissaoAnteriorGCo2e,
+                ),
         });
       }
 

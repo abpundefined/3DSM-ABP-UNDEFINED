@@ -76,11 +76,31 @@ test('valida os novos dados de comparação e permite percentuais negativos e ba
   assert.equal(
     ehRespostaRanking({
       ...comparacao,
+      variacaoPorServico: [
+        {
+          ...comparacao.variacaoPorServico[0],
+          emissaoAtualGCo2e: null,
+          diferencaGCo2e: null,
+          variacaoPercentual: null,
+        },
+      ],
+    }),
+    true,
+  );
+  assert.equal(
+    ehRespostaRanking({
+      ...comparacao,
       variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
     }),
     true,
   );
   for (const invalida of [
+    {
+      ...comparacao,
+      variacaoPorServico: [
+        { ...comparacao.variacaoPorServico[0], emissaoAtualGCo2e: -1 },
+      ],
+    },
     {
       ...comparacao,
       variacaoPercentual: { energiaKwh: Infinity, emissaoGCo2e: -5 },

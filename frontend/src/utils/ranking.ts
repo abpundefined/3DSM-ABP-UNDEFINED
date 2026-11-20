@@ -93,7 +93,8 @@ export function ehRespostaRanking(valor: unknown): valor is RespostaRanking {
         valor.variacaoPorServico.every(
           (item: unknown) =>
             ehServico(item) &&
-            ehNumeroNaoNegativo(item.emissaoAtualGCo2e) &&
+            (item.emissaoAtualGCo2e === null ||
+              ehNumeroNaoNegativo(item.emissaoAtualGCo2e)) &&
             ehNumeroOuNulo(item.emissaoAnteriorGCo2e) &&
             (item.emissaoAnteriorGCo2e === null ||
               item.emissaoAnteriorGCo2e >= 0) &&

@@ -225,6 +225,10 @@ describe("Swagger", () => {
     expect(rankingSchema).toHaveProperty("properties.periodoAnterior");
     expect(rankingSchema).toHaveProperty("properties.variacaoPercentual");
     expect(rankingSchema).toHaveProperty("properties.variacaoPorServico");
+    expect(rankingSchema).toHaveProperty(
+      "properties.variacaoPorServico.items.properties.emissaoAtualGCo2e.nullable",
+      true,
+    );
     expect(
       document.components.schemas.IndicadoresRespostaDto.properties,
     ).toHaveProperty("variacaoPercentual");

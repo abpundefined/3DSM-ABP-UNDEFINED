@@ -25,7 +25,7 @@ export class RankingController {
   @ApiOperation({
     summary: "Consultar o ranking de serviços por impacto no período",
     description:
-      "Soma coletas concluídas no período e compara com a janela anterior de mesma duração. Variação global considera todos os serviços, não só o top limitado. variacaoPorServico inclui dados em qualquer janela, inclusive removidos, sem limite. Percentual null quando não há base ou ela é zero; emissão atual sem coleta é zero.",
+      "Soma coletas concluídas no período e compara com a janela anterior de mesma duração. Variação global considera todos os serviços, não só o top limitado. variacaoPorServico inclui dados em qualquer janela, inclusive removidos, sem limite. Percentual null quando não há base ou ela é zero. Na variação por serviço, ausência de impacto atual representa zero; impacto existente com emissão ausente preserva null na emissão, diferença e percentual.",
   })
   @ApiQuery({
     name: "periodo",
@@ -85,7 +85,7 @@ export class RankingController {
             properties: {
               servicoId: { type: "integer" },
               nome: { type: "string" },
-              emissaoAtualGCo2e: { type: "number" },
+              emissaoAtualGCo2e: { type: "number", nullable: true },
               emissaoAnteriorGCo2e: { type: "number", nullable: true },
               diferencaGCo2e: { type: "number", nullable: true },
               variacaoPercentual: { type: "number", nullable: true },

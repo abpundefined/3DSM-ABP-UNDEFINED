@@ -271,8 +271,10 @@ não mudam ao trocar a métrica de ordenação.
 `variacaoPorServico` alimenta a tabela de emissão: inclui todo serviço com
 coletas em ao menos uma das duas janelas, inclusive removidos, independentemente
 do top 10. É ordenada inicialmente por nome e ID; o frontend permite ordenar
-qualquer coluna. Serviços sem coleta atual têm emissão atual zero. Sem emissão
-anterior, valor anterior, diferença e percentual são `null`; com anterior zero,
+qualquer coluna. Serviços sem impacto atual têm emissão atual zero. Se existe
+impacto atual com emissão ausente, `emissaoAtualGCo2e`, diferença e percentual
+permanecem `null`, evitando uma redução falsa de -100%. Um zero medido continua
+sendo zero. Sem emissão anterior, valor anterior, diferença e percentual são `null`; com anterior zero,
 a diferença é calculada, mas o percentual é `null`.
 
 Exemplo de item:

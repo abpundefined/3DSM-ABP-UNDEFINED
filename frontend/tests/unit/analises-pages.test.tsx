@@ -263,6 +263,34 @@ describe('Ranking', () => {
     expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Beta');
   });
 
+  it('preserva emissão ausente na tabela sem mostrar uma redução falsa', async () => {
+    buscarRankingMock.mockResolvedValue(
+      Object.assign({}, resposta, {
+        variacaoPorServico: [
+          {
+            servicoId: 1,
+            nome: 'Emissão ausente',
+            emissaoAtualGCo2e: null,
+            emissaoAnteriorGCo2e: 100,
+            diferencaGCo2e: null,
+            variacaoPercentual: null,
+          },
+        ],
+      }),
+    );
+    renderRanking();
+    const tabela = within(
+      await screen.findByRole('table', { name: 'Variação por serviço' }),
+    );
+    expect(tabela.getAllByRole('cell', { name: '—' })).toHaveLength(2);
+    expect(tabela.getByText('sem base de comparação')).toBeVisible();
+    expect(tabela.queryByText(/100%/)).not.toBeInTheDocument();
+    await userEvent
+      .setup()
+      .click(tabela.getByRole('button', { name: 'Emissão atual' }));
+    expect(tabela.getByRole('link', { name: 'Emissão ausente' })).toBeVisible();
+  });
+
   it('mantém a tabela com serviços que só tiveram dados na janela anterior', async () => {
     buscarRankingMock.mockResolvedValue(
       Object.assign({}, resposta, {

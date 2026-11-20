@@ -147,7 +147,10 @@ efetivamente retornado pela API, inclusive em intervalos personalizados.
 No ranking, **Variação por serviço** mostra emissão atual, anterior, diferença
 e percentual para todos os serviços com dados em qualquer janela, não apenas
 o top 10. Clique no cabeçalho de qualquer coluna para alternar a ordenação;
-valores sem base ficam ao final. Sem coleta atual, a emissão é zero.
+valores sem base ficam ao final. Sem impacto atual, a emissão é zero.
+Se há impacto, mas a emissão está ausente, ela permanece `null`: a tabela
+mostra `—` na emissão e na diferença e **sem base de comparação** no
+percentual, sem apresentar uma redução falsa de -100%.
 A tabela permanece disponível quando só há dados na janela anterior.
 As comparações não são inventadas para respostas antigas da API: os blocos
 só aparecem quando os novos campos estão presentes. Na demonstração, não há

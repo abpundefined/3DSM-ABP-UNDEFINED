@@ -58,7 +58,8 @@ export default function TabelaVariacao({
       <h2 id={tituloId}>Variação por serviço</h2>
       <p className="ranking-resumo">
         Todos os serviços com coletas em pelo menos uma das duas janelas, sem o
-        limite do top 10. Sem coleta atual, a emissão é zero.
+        limite do top 10. Sem impacto atual, a emissão é zero; com impacto mas
+        sem emissão, o valor permanece ausente.
       </p>
       <div
         className="ranking-tabela"
