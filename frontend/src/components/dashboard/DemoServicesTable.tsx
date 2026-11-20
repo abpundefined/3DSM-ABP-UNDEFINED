@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import useFlipList from '../../hooks/useFlipList';
 import type { DashboardService } from '../../types/dashboard';
 import { formatRegionName, toFiniteNumber } from '../../utils/formatters';
 import FeedbackPanel from '../common/FeedbackPanel';
@@ -41,6 +42,9 @@ export default function DemoServicesTable({
         .toLocaleLowerCase('pt-BR')
         .includes(search.trim().toLocaleLowerCase('pt-BR')) &&
       (status === 'all' || service.status === status),
+  );
+  const tbodyRef = useFlipList<HTMLTableSectionElement>(
+    matchingServices.map((service) => service.id).join(','),
   );
 
   return (
@@ -112,9 +116,9 @@ export default function DemoServicesTable({
                   <th scope="col">Emissões</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody ref={tbodyRef}>
                 {matchingServices.map((service) => (
-                  <tr key={service.id}>
+                  <tr key={service.id} data-flip-id={service.id}>
                     <th scope="row">
                       <span className="service-name">{service.name}</span>
                       <span className="service-region">
