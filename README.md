@@ -149,6 +149,7 @@ erDiagram
         int id PK
         int intervaloDescobertaSegundos
         int intervaloColetaSegundos
+        float metaMensalKgCo2e "opcional"
         datetime atualizadaEm
     }
 ```
@@ -168,14 +169,26 @@ erDiagram
     <tr><td><code>CARBON_API_URL</code></td><td><code>https://carbon.unilaunch.org</code></td><td>Base da API de intensidade de carbono por região (<code>/regions/:code/carbon-intensity</code>).</td></tr>
     <tr><td><code>METRICS_POLL_INTERVAL_MS</code></td><td><code>30000</code></td><td>Intervalo padrão entre ciclos automáticos de coleta (em ms), sobrescrito em runtime via <code>PUT /configuracao</code>.</td></tr>
     <tr><td><code>JWT_SECRET</code> / <code>JWT_EXPIRES_IN</code></td><td>Hex 64 chars / <code>3600</code></td><td>Chave de assinatura dos tokens JWT e tempo de expiração em segundos.</td></tr>
-    <tr><td><code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code></td><td><code>admin@greener.local</code></td><td>Credenciais do administrador inicial criado pelo <code>AdminSeedService</code> no boot.</td></tr>
+    <tr><td><code>ADMIN_NOME</code> / <code>ADMIN_EMAIL</code> / <code>ADMIN_PASSWORD</code></td><td><code>Administrador</code> / <code>admin@greener.local</code></td><td>Dados do administrador inicial criado pelo <code>AdminSeedService</code> no boot.</td></tr>
     <tr><td><code>DATABASE_URL</code> / <code>DB_*</code></td><td>PostgreSQL 17</td><td>Conexão relacional usada pelo Prisma (no Compose usa rede interna <code>postgres:5432</code>).</td></tr>
     <tr><td><code>CORS_ORIGIN</code></td><td><code>http://localhost:5173</code></td><td>Origens permitidas para requisições diretas ao backend.</td></tr>
 </table>
 
+<h4>Timeouts e política de fallback das APIs externas</h4>
+<ul>
+    <li><strong>Timeout explícito de 8 segundos (<code>8000 ms</code>):</strong> aplicado nas chamadas de descoberta (<code>/services</code>), métricas (<code>/metrics/:id</code>) e intensidade de carbono (<code>/regions/:code/carbon-intensity</code>) via <code>comTimeout</code> / <code>AbortController</code>.</li>
+    <li><strong>Falha na descoberta (<code>METRICS_API_URL/services</code>):</strong> o backend registra o erro, atualiza <code>agregador.estado = FALHA</code> em <code>GET /saude</code> e preserva os serviços já persistidos no PostgreSQL sem interromper a aplicação.</li>
+    <li><strong>Falha ou ausência de métricas (<code>METRICS_API_URL/metrics/:id</code>):</strong> HTTP 5xx, erro de rede ou timeout marcam o serviço como <code>INDISPONIVEL</code>, gravam a coleta com <code>estadoColeta = FALHA</code> e continuam o ciclo para os demais serviços. HTTP 404 ou payload sem medições válidas classificam o serviço como <code>SEM_METRICAS</code>.</li>
+    <li><strong>Falha na API de carbono (<code>CARBON_API_URL</code>):</strong> as métricas brutas e a energia (<code>energiaKwh</code>) são preservadas com <code>estadoColeta = SUCESSO</code> e <code>estadoCalculo = FALHA</code>, atualizando <code>apiCarbono.estado = FALHA</code> em <code>GET /saude</code>.</li>
+    <li><strong>Fallback de configuração e interface:</strong> se a leitura de <code>ConfiguracaoMonitoramento</code> falhar, o agendador recorre a <code>METRICS_POLL_INTERVAL_MS</code> (padrão <code>30000 ms</code>). No frontend, <code>GET /coletas/servico/:id/ultima-valida</code> recupera a última coleta válida (<code>CACHE_FALLBACK</code>) e a rota <code>/?demo=1</code> oferece demonstração completa sem depender do backend.</li>
+</ul>
+
 <h3>2. Execução Completa com Docker Compose (Recomendado)</h3>
 <pre><code>docker compose config --quiet
 docker compose up --build
+
+# Para testar a partir de um banco vazio (apaga o volume local do PostgreSQL):
+docker compose down -v && docker compose up --build
 </code></pre>
 <p>O container do backend gera o Prisma Client, aplica as migrações pendentes e inicia a API; o frontend e o PostgreSQL sobem integrados na mesma rede.</p>
 <ul>
@@ -205,25 +218,25 @@ npm.cmd run dev
 <p>A documentação interativa OpenAPI está disponível em <code>GET /docs</code> e o contrato completo com exemplos em <a href="./docs/api.md">docs/api.md</a>. Resumo das rotas:</p>
 <table>
     <tr><th>Método</th><th>Rota (Backend)</th><th>Autenticação</th><th>Finalidade</th></tr>
-    <tr><td><code>POST</code></td><td><code>/auth/login</code></td><td>Pública</td><td>Autentica administrador e retorna <code>accessToken</code> JWT.</td></tr>
-    <tr><td><code>GET</code> / <code>PUT</code></td><td><code>/configuracao</code></td><td><code>GET</code> público / <code>PUT</code> JWT</td><td>Consulta ou altera intervalos de descoberta e coleta em runtime.</td></tr>
-    <tr><td><code>GET</code></td><td><code>/servicos</code></td><td>Pública</td><td>Lista serviços descobertos com região e estado operacional.</td></tr>
-    <tr><td><code>GET</code></td><td><code>/servicos/:id/historico</code></td><td>Pública</td><td>Série temporal de energia, emissão, CPU, memória e estados por intervalo.</td></tr>
+    <tr><td><code>POST</code></td><td><code>/auth/login</code></td><td>Pública</td><td>Autentica administrador e retorna <code>accessToken</code> JWT (limite de 5 tentativas/min).</td></tr>
+    <tr><td><code>GET</code> / <code>PUT</code></td><td><code>/configuracao</code></td><td><code>GET</code> público / <code>PUT</code> JWT</td><td>Consulta ou altera intervalos de descoberta/coleta e <code>metaMensalKgCo2e</code> em runtime.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/servicos</code></td><td>Pública</td><td>Lista serviços descobertos com estado operacional, <code>localizacao</code> e <code>componentes</code> de potência.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/servicos/:id/historico</code></td><td>Pública</td><td>Série temporal de energia, emissão, CPU, memória, <code>componentes</code> e estados por intervalo.</td></tr>
     <tr><td><code>GET</code></td><td><code>/servicos/:id/simulacao-regiao</code></td><td>Pública</td><td>Simula emissões e economia estimada caso o serviço rodasse em outra região.</td></tr>
     <tr><td><code>POST</code></td><td><code>/servicos/sync</code></td><td>JWT Bearer</td><td>Dispara descoberta externa e sincronização imediata no banco.</td></tr>
-    <tr><td><code>GET</code> / <code>POST</code></td><td><code>/coletas</code> e <code>/coletas/servico/:id/ultima-valida</code></td><td><code>GET</code> público / <code>POST</code> JWT</td><td>Registra coletas e consulta histórico ou última coleta válida.</td></tr>
-    <tr><td><code>GET</code></td><td><code>/indicadores</code> e <code>/indicadores/serie</code></td><td>Pública</td><td>Totais consolidados e séries temporais por período (<code>24h</code>, <code>7d</code>, <code>30d</code>, etc.).</td></tr>
+    <tr><td><code>GET</code> / <code>POST</code></td><td><code>/coletas</code>, <code>/coletas/:id</code> e <code>/coletas/servico/:id/ultima-valida</code></td><td><code>GET</code> público / <code>POST</code> JWT</td><td>Registra coletas e consulta histórico paginado (<code>pagina</code>/<code>tamanho</code>), detalhe por ID ou última coleta válida.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/indicadores</code>, <code>/indicadores/serie</code> e <code>/indicadores/meta</code></td><td>Pública</td><td>Totais consolidados (com variação em <code>mes-anterior</code>), séries temporais por período e meta mensal com projeção.</td></tr>
     <tr><td><code>GET</code></td><td><code>/ranking</code></td><td>Pública</td><td>Ranking de serviços por energia ou emissão no período e lista sem dados.</td></tr>
     <tr><td><code>GET</code></td><td><code>/comparacao</code></td><td>Pública</td><td>Comparação alinhada de 2 a 5 serviços no mesmo intervalo.</td></tr>
     <tr><td><code>GET</code></td><td><code>/mapa</code></td><td>Pública</td><td>Serviços geolocalizados, série por intervalo e lista sem coordenadas.</td></tr>
     <tr><td><code>GET</code></td><td><code>/intensidade/horarios</code></td><td>Pública</td><td>Matriz 7×24 de intensidade média por dia/hora e melhor janela de 3h.</td></tr>
-    <tr><td><code>GET</code></td><td><code>/saude</code></td><td>JWT Bearer</td><td>Estado das integrações (agregador e API de carbono) e taxa de falha.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/saude</code></td><td>JWT Bearer</td><td>Estado das integrações (agregador e API de carbono), taxa de falha e serviços por estado.</td></tr>
 </table>
 
 <hr>
 
 <h2 id="ci-testes">✅ CI e Testes</h2>
-<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa quatro jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, lint, Prettier, typecheck e build), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker).</p>
+<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa quatro jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, artefato <code>backend-coverage</code>, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, artefato <code>frontend-coverage</code>, lint, Prettier, typecheck e build), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker). Os testes E2E de navegador do frontend (Playwright + Axe em desktop e celular) são executados localmente antes de abrir ou aprovar PRs de interface para evitar o download de navegadores e manter o tempo de feedback do CI reduzido.</p>
 <pre><code># Backend (na pasta backend/)
 npm.cmd run test:cov   # unitários + cobertura >= 80% (services e repositories)
 npm.cmd run test:e2e   # requer PostgreSQL de teste (*_e2e)
@@ -240,12 +253,47 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
 <hr>
 
 <h2 id="telas-evidencias">🖼️ Telas Principais e Evidências</h2>
-<p>As capturas das telas principais e dos ciclos de avaliação heurística e usabilidade estão catalogadas no repositório:</p>
+<p>Capturas das telas principais da Sprint 3 em modo demonstração (<code>?demo=1</code>, dados fictícios identificados) nos tamanhos padrão de desktop (<code>1440×900</code>) e celular (<code>375×812</code>), além do acervo de evidências das Sprints 2 e 3:</p>
+<table>
+    <tr>
+        <th>Dashboard — Desktop (tema claro)</th>
+        <th>Dashboard — Desktop (tema escuro)</th>
+    </tr>
+    <tr>
+        <td><img src="./docs/evidencias/sprint-3-dashboard-desktop.png" alt="Dashboard do GreenER em desktop (1440x900) com KPIs, equivalências de CO2e, gráficos e lista de serviços" width="420"><br><em>Indicadores consolidados, equivalências de CO₂e, evolução temporal, distribuição por estado e lista de serviços (<code>/?demo=1</code>).</em></td>
+        <td><img src="./docs/evidencias/sprint-3-dashboard-dark.png" alt="Dashboard do GreenER em desktop no tema escuro (1440x900)" width="420"><br><em>Mesma visão do dashboard com tema escuro persistido e contraste validado (<code>/?demo=1</code>).</em></td>
+    </tr>
+    <tr>
+        <th>Dashboard — Mobile (375×812)</th>
+        <th>Ranking de impacto ambiental</th>
+    </tr>
+    <tr>
+        <td><img src="./docs/evidencias/sprint-3-dashboard-mobile.png" alt="Dashboard do GreenER em celular (375x812) com navegação inferior" width="220"><br><em>Layout responsivo em 375×812 com barra de navegação inferior acessível (<code>/?demo=1</code>).</em></td>
+        <td><img src="./docs/evidencias/sprint-3-ranking-desktop.png" alt="Página de Ranking em desktop (1440x900) com gráficos de energia, emissão, participação e tabela" width="420"><br><em>Barras por energia/emissão, comparação lado a lado, treemap de participação por região, tabela e serviços sem dados (<code>/ranking?demo=1</code>).</em></td>
+    </tr>
+    <tr>
+        <th>Comparação entre serviços</th>
+        <th>Mapa de emissões e melhor horário</th>
+    </tr>
+    <tr>
+        <td><img src="./docs/evidencias/sprint-3-comparacao-desktop.png" alt="Página de Comparação entre 3 serviços em desktop (1440x900)" width="420"><br><em>Seleção de 2 a 5 serviços, destaque da maior emissão, tabela indicador × serviço e gráficos sincronizados (<code>/comparar?demo=1</code>).</em></td>
+        <td><img src="./docs/evidencias/sprint-3-mapa-desktop.png" alt="Página de Mapa de emissões em desktop (1440x900) com globo interativo, linha do tempo e mapa de calor" width="420"><br><em>Globo interativo, filtro regional, linha do tempo, lista sem coordenadas e matriz 7×24 do melhor horário (<code>/mapa?demo=1</code>).</em></td>
+    </tr>
+    <tr>
+        <th>Detalhe do serviço e simulador de região</th>
+        <th>Administração e saúde das integrações</th>
+    </tr>
+    <tr>
+        <td><img src="./docs/evidencias/sprint-3-detalhe-simulador-desktop.png" alt="Detalhe do serviço em desktop (1440x900) com histórico temporal, simulador de região e matriz horária" width="420"><br><em>Série histórica de energia e emissão, simulador “E se rodasse em outra região?” e melhor janela horária (<code>/servicos/1?demo=1</code>).</em></td>
+        <td><img src="./docs/evidencias/sprint-3-admin-saude-desktop.png" alt="Página de Administração em desktop (1440x900) com intervalos de monitoramento e saúde das integrações" width="420"><br><em>Área restrita com JWT para configurar intervalos de coleta/descoberta e monitorar agregador e API de carbono (<code>/admin?demo=1</code>).</em></td>
+    </tr>
+</table>
+<p><strong>Demonstração em GIF (#21):</strong> após gravar o fluxo completo de navegação (<code>dashboard → período → ranking → comparação → mapa animado → detalhe → admin</code>), salve o arquivo em <code>docs/evidencias/demo-greener.gif</code> e incorpore-o acima desta tabela.</p>
 <ul>
     <li><strong>Sprint 2 (Dashboard, Login, 404 e Responsividade 1920px/375px):</strong> <a href="./docs/evidencias/frontend-25/">docs/evidencias/frontend-25/</a></li>
-    <li><strong>Sprint 3 (Avaliação Heurística e Melhorias P01–P08 — Antes e Depois):</strong> <a href="./docs/evidencias/issue-101/">issue-101</a>, <a href="./docs/evidencias/issue-101-2026-11-16/">2026-11-16</a> e <a href="./docs/evidencias/issue-101-2026-11-17/">2026-11-17</a></li>
+    <li><strong>Backend (Coleta com falha HTTP 500 e estado indisponível no PostgreSQL):</strong> <a href="./docs/evidencias/backend/">docs/evidencias/backend/</a></li>
+    <li><strong>Sprint 3 (Avaliação Heurística e Melhorias P01–P08 — Antes e Depois):</strong> <a href="./docs/evidencias/issue-101/">issue-101</a>, <a href="./docs/evidencias/issue-101-2026-11-16/">2026-11-16</a>, <a href="./docs/evidencias/issue-101-2026-11-17/">2026-11-17</a> e <a href="./docs/evidencias/issue-101-2026-11-18/">2026-11-18</a></li>
     <li><strong>Relatório de IHC, Protótipos e Testes com Usuários:</strong> <a href="./docs/interface.md">docs/interface.md</a></li>
-    <li><em>Demonstração em GIF e capturas finais da Sprint 3 (ranking, mapa animado, detalhe com simulador e admin): atualização final prevista antes do corte de 21/11 (#21).</em></li>
 </ul>
 
 <hr>
@@ -612,15 +660,19 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
 <h2 id="documentacao">🖺 Documentação</h2>
 <p>Toda a documentação técnica e de processos está organizada no diretório <a href="./docs/README.md"><code>docs/</code></a>:</p>
 <ul>
-    <li>📋 <a href="./docs/plano-de-entregas.md"><strong>Plano de Entregas das Sprints</strong></a> — Distribuição dos 28 critérios da rubrica e participação dos integrantes.</li>
+    <li>📋 <a href="./docs/plano-de-entregas.md"><strong>Plano de Entregas das Sprints</strong></a> — Distribuição dos 27 critérios da rubrica (100 pontos) e participação dos integrantes.</li>
     <li>✅ <a href="./docs/definicao-de-pronto.md"><strong>Definição de Pronto (DoD)</strong></a> — Critérios de aceite e qualidade para conclusão de tarefas (GA07).</li>
-    <li>🏗️ <a href="./docs/arquitetura.md"><strong>Arquitetura de Software</strong></a> — Estrutura NestJS, React, PostgreSQL, Docker e fluxo de dados.</li>
+    <li>🚀 <a href="./docs/execucao.md"><strong>Guia de Execução e Verificação</strong></a> — Docker Compose, desenvolvimento nativo, variáveis de ambiente e comandos de teste.</li>
+    <li>🏗️ <a href="./docs/arquitetura.md"><strong>Arquitetura de Software e Modelo ER</strong></a> — Estrutura NestJS, React, PostgreSQL, integrações externas e fluxo de dados.</li>
     <li>⚡ <a href="./docs/calculos.md"><strong>Memória de Cálculo Ambiental</strong></a> — Fórmulas matemáticas de kWh, emissão de CO₂e e fatores regionais.</li>
-    <li>🔌 <a href="./docs/api.md"><strong>Documentação da API REST</strong></a> — Endpoints, métodos HTTP, DTOs e autenticação JWT.</li>
-    <li>🎨 <a href="./docs/interface.md"><strong>Interface e Usabilidade (IHC)</strong></a> — Personas, fluxos, protótipos Figma e testes de usabilidade.</li>
-    <li>⏱️ <strong>Sprints:</strong>
-        <a href="./docs/sprints/sprint-1.md">Sprint 1</a> | 
-        <a href="./docs/sprints/sprint-2.md">Sprint 2</a> | 
-        <a href="./docs/sprints/sprint-3.md">Sprint 3</a>
+    <li>🔌 <a href="./docs/api.md"><strong>Documentação da API REST</strong></a> — Endpoints, métodos HTTP, DTOs, paginação e autenticação JWT.</li>
+    <li>🔒 <a href="./docs/seguranca.md"><strong>Segurança</strong></a> — Controles implementados no backend (JWT, bcrypt, Helmet, CORS, limite de login e validação de ambiente).</li>
+    <li>🎨 <a href="./docs/interface.md"><strong>Interface e Usabilidade (IHC)</strong></a> — Personas, fluxos, protótipos Figma, avaliação heurística e testes com usuários.</li>
+    <li>🖼️ <a href="./docs/evidencias/"><strong>Evidências Visuais</strong></a> — Capturas de backend, frontend e ciclos de melhorias P01–P08.</li>
+    <li>⏱️ <strong>Sprints e Burndowns:</strong>
+        <a href="./docs/sprints/sprint-1.md">Sprint 1</a> |
+        <a href="./docs/sprints/sprint-2.md">Sprint 2</a> |
+        <a href="./docs/sprints/sprint-3.md">Sprint 3</a> |
+        <a href="./docs/burndown-sprint-3.md">Burndown Sprint 3</a>
     </li>
 </ul>
