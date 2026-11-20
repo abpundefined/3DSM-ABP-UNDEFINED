@@ -196,6 +196,11 @@
   color: var(--text-muted);
   font-weight: 600;
 }
+.comparison-table-methodology-link {
+  display: block;
+  margin-top: 4px;
+  font-weight: 600;
+}
 .comparison-table-scroll td {
   min-width: 150px;
   font-variant-numeric: tabular-nums;

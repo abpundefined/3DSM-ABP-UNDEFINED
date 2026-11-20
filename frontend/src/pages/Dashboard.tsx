@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
 import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import Icon from '../components/common/Icon';
+import MethodologyLink from '../components/common/MethodologyLink';
 import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
@@ -97,7 +98,9 @@ export default function Dashboard() {
               description="Total ilustrativo de 07/10/2026"
               icon="bolt"
               tone="leaf"
-            />
+            >
+              <MethodologyLink />
+            </MetricCard>
             <MetricCard
               label="Emissão total de CO₂e"
               value={demoTotals.carbonKg}
@@ -107,6 +110,7 @@ export default function Dashboard() {
               tone="olive"
             >
               <EmissionEquivalences emissaoGCo2e={demoTotals.carbonKg * 1000} />
+              <MethodologyLink />
             </MetricCard>
             <MetricCard
               label="Serviços ativos"

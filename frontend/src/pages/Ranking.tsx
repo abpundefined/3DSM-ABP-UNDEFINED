@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
+import MethodologyLink from '../components/common/MethodologyLink';
 import PeriodSelector from '../components/common/PeriodSelector';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import GraficoEnergiaEmissao from '../components/ranking/GraficoEnergiaEmissao';
@@ -100,7 +101,7 @@ export default function Ranking() {
           <h1>Ranking</h1>
           <p className="page-subtitle">
             Os {LIMITE_DO_RANKING} serviços que mais consomem energia e mais
-            emitem CO₂e no período.
+            emitem CO₂e no período. <MethodologyLink />
           </p>
         </div>
         <Link

@@ -1,0 +1,123 @@
+.methodology-page {
+  display: grid;
+  gap: 20px;
+}
+
+.methodology-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid #c9dec1;
+  border-radius: var(--radius);
+  background: var(--soft-green);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.methodology-disclaimer .icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--green-forest);
+}
+
+.methodology-card {
+  display: grid;
+  gap: 14px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.methodology-card h2 {
+  font-size: 19px;
+  font-weight: 680;
+  letter-spacing: -0.3px;
+}
+
+.methodology-card p,
+.methodology-card li {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.methodology-card ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.methodology-formulas {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fafbf8;
+}
+
+.methodology-formulas code,
+.methodology-card code {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.methodology-factors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.methodology-factors-grid > div {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-green);
+}
+
+.methodology-factors-grid dt {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.methodology-factors-grid dd {
+  margin: 4px 0 0;
+  color: var(--green-forest);
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.methodology-example-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.methodology-example-box {
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.methodology-example-box h3 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+:root[data-theme='dark'] .methodology-disclaimer {
+  border-color: #3d5a45;
+  background: #1b2f21;
+}
+
+:root[data-theme='dark'] .methodology-formulas {
+  background: #141d17;
+}

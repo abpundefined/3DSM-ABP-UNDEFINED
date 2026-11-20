@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { ServicoNoMapa, ServicoSemCoordenadas } from '../../types/mapa';
+import MethodologyLink from '../common/MethodologyLink';
 import {
   formatarIntensidadeRegional,
   intensidadesPorRegiao,
@@ -34,7 +35,7 @@ export default function GraficoIntensidadeRegiao({
         </h2>
         <p className="mapa-intensidade-nota">
           Emissão total dividida pela energia total no período (média ponderada
-          pelo consumo).
+          pelo consumo). <MethodologyLink />
         </p>
       </div>
       <p className="mapa-intensidade-resumo">

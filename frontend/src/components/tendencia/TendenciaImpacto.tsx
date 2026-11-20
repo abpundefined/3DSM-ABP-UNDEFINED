@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import type { RespostaSerie } from '../../types/serie';
+import MethodologyLink from '../common/MethodologyLink';
 import {
   escalaDaEmissao,
   escalaDaEnergia,
@@ -37,6 +38,7 @@ export default function TendenciaImpacto({ serie }: { serie: RespostaSerie }) {
         <div>
           <p className="eyebrow">EVOLUÇÃO DO IMPACTO</p>
           <h2 id={tituloId}>Tendência no período</h2>
+          <MethodologyLink />
         </div>
         <div
           className="tendencia-visoes"
