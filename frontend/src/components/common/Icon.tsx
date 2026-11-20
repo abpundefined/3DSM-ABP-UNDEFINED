@@ -32,6 +32,7 @@ const paths = {
   ),
   moon: <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z" />,
   arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
+  arrowUp: <path d="M12 19V5m-6 6 6-6 6 6" />,
   back: <path d="M20 12H4m6-6-6 6 6 6" />,
   lock: (
     <>

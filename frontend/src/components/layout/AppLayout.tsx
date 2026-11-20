@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import Brand from '../common/Brand';
+import BackToTopButton from '../common/BackToTopButton';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
 import useAuth from '../../hooks/useAuth';
@@ -133,6 +134,7 @@ export default function AppLayout() {
           </span>
         </div>
       </footer>
+      <BackToTopButton />
       <nav className="bottom-nav" aria-label="Navegação inferior">
         {navItems.map((item) => (
           <NavLink
