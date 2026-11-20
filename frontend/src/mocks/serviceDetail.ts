@@ -34,11 +34,39 @@ export function getDemoServiceDetail(
         });
   const history = mapaDemo.intervalos.map((inicio, index) => {
     const emissaoGCo2e = service.serie[index];
+    if (emissaoGCo2e === null) {
+      const indisponivel = service.estado === 'INDISPONIVEL' ? 12 : 0;
+      const semMetricas = service.estado === 'SEM_METRICAS' ? 12 : 0;
+      const coletas = indisponivel + semMetricas;
+      return {
+        inicio,
+        energiaKwh: null,
+        emissaoGCo2e: null,
+        componentes: null,
+        coletas: coletas === 0 ? null : coletas,
+        ativo: 0,
+        indisponivel,
+        semMetricas,
+      };
+    }
+
+    const intervaloComFalha =
+      service.serie.length >= 6 && index === service.serie.length - 4;
+    const intervaloSemMetricas =
+      service.serie.length >= 8 && index === service.serie.length - 2;
+    const ativo = intervaloComFalha ? 4 : intervaloSemMetricas ? 9 : 12;
+    const indisponivel = intervaloComFalha ? 8 : 0;
+    const semMetricas = intervaloSemMetricas ? 3 : 0;
+
     return {
       inicio,
-      energiaKwh: emissaoGCo2e === null ? null : energyPerInterval,
+      energiaKwh: energyPerInterval,
       emissaoGCo2e,
-      componentes: emissaoGCo2e === null ? null : demoComponentes,
+      componentes: demoComponentes,
+      coletas: ativo + indisponivel + semMetricas,
+      ativo,
+      indisponivel,
+      semMetricas,
     };
   });
   const lastValidIndex = service.serie.findLastIndex((value) => value !== null);
