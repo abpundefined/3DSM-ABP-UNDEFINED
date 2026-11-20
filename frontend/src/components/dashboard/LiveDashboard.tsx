@@ -15,6 +15,7 @@ import {
   toFiniteNumber,
 } from '../../utils/formatters';
 import EmissionEquivalences from '../common/EmissionEquivalences';
+import AnimatedMetricValue from '../common/AnimatedMetricValue';
 import ComposicaoEnergia from '../common/ComposicaoEnergia';
 import FeedbackPanel from '../common/FeedbackPanel';
 import VariacaoPeriodo from '../common/VariacaoPeriodo';
@@ -27,6 +28,7 @@ import {
 import Icon from '../common/Icon';
 import MethodologyLink from '../common/MethodologyLink';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
+import useFlipList from '../../hooks/useFlipList';
 import { somarComponentes } from '../../utils/composicaoEnergia';
 import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
@@ -470,6 +472,9 @@ export default function LiveDashboard({
       : 'Coletas calculadas no período analisado';
 
   const serviceCount = countServices(services);
+  const serviceCardsListRef = useFlipList<HTMLUListElement>(
+    visibleServices.map((service) => service.id).join(','),
+  );
 
   return (
     <>
@@ -728,11 +733,12 @@ export default function LiveDashboard({
               </FeedbackPanel>
             ) : (
               <ul
+                ref={serviceCardsListRef}
                 className="service-card-grid"
                 aria-label="Cards dos serviços monitorados"
               >
                 {visibleServices.map((service) => (
-                  <li key={service.id}>
+                  <li key={service.id} data-flip-id={service.id}>
                     <ServiceCard
                       service={service}
                       onSelect={handleSelectService}
@@ -779,9 +785,6 @@ function MetricSummary({
   tone: 'forest' | 'leaf' | 'olive';
   children?: ReactNode;
 }) {
-  const separator = withUnit ? value.lastIndexOf(' ') : -1;
-  const number = separator < 0 ? value : value.slice(0, separator);
-  const unit = separator < 0 ? undefined : value.slice(separator + 1);
   return (
     <div className={`metric-card metric-card--${tone}`}>
       <div className="metric-heading">
@@ -791,8 +794,7 @@ function MetricSummary({
         </span>
       </div>
       <p className="metric-value">
-        <span>{number}</span>
-        {unit && <span className="metric-unit"> {unit}</span>}
+        <AnimatedMetricValue value={value} withUnit={withUnit} />
       </p>
       <p className="metric-description">{description}</p>
       {children}

@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router';
+import useFlipList from '../../hooks/useFlipList';
 import usePeriod from '../../hooks/usePeriod';
 import type { VariacaoPorServico } from '../../types/variacao';
 import { formatEmission } from '../../utils/formatters';
@@ -52,6 +53,9 @@ export default function TabelaVariacao({
             a.servicoId - b.servicoId
           );
         });
+  const tbodyRef = useFlipList<HTMLTableSectionElement>(
+    ordenados.map((item) => item.servicoId).join(','),
+  );
 
   return (
     <section className="ranking-bloco" aria-labelledby={tituloId}>
@@ -100,9 +104,9 @@ export default function TabelaVariacao({
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tbodyRef}>
             {ordenados.map((item) => (
-              <tr key={item.servicoId}>
+              <tr key={item.servicoId} data-flip-id={item.servicoId}>
                 <th scope="row">
                   <Link to={`/servicos/${item.servicoId}${linkSearch}`}>
                     {item.nome}

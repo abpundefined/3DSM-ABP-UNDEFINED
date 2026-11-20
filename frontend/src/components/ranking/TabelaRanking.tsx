@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { Link } from 'react-router';
+import useFlipList from '../../hooks/useFlipList';
 import usePeriod from '../../hooks/usePeriod';
 import type { ItemRanking, MetricaRanking } from '../../types/ranking';
 import { formatEmission, formatEnergy } from '../../utils/formatters';
@@ -15,6 +16,9 @@ export default function TabelaRanking({ itens, metrica }: TabelaRankingProps) {
   const tituloId = useId();
   const { linkSearch } = usePeriod();
   const { serviceIds, toggleService } = useComparisonSelection();
+  const tbodyRef = useFlipList<HTMLTableSectionElement>(
+    itens.map((item) => item.servicoId).join(','),
+  );
 
   return (
     <section className="ranking-bloco" aria-labelledby={tituloId}>
@@ -40,9 +44,9 @@ export default function TabelaRanking({ itens, metrica }: TabelaRankingProps) {
               <th scope="col">Comparação</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tbodyRef}>
             {itens.map((item) => (
-              <tr key={item.servicoId}>
+              <tr key={item.servicoId} data-flip-id={item.servicoId}>
                 <td>{item.posicao}º</td>
                 <th scope="row">
                   <Link
