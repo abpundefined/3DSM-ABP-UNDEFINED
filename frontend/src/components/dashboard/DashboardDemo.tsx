@@ -3,11 +3,13 @@ import {
   calcularComponentesPorMetricas,
   somarComponentes,
 } from '../../utils/composicaoEnergia';
+import { META_CARBONO_DEMO } from '../../utils/metaCarbono';
 import ComposicaoEnergia from '../common/ComposicaoEnergia';
 import ImpactTrendChart from '../charts/ImpactTrendChart';
 import ServiceStatusChart from '../charts/ServiceStatusChart';
 import ImpactRanking from '../charts/ImpactRanking';
 import DemoServicesTable from './DemoServicesTable';
+import PainelMetaCarbono from './PainelMetaCarbono';
 
 const demoComposicao = somarComponentes(
   demoServices.map((service, index) =>
@@ -25,6 +27,10 @@ const demoComposicao = somarComponentes(
 export default function DashboardDemo() {
   return (
     <div className="demo-dashboard">
+      <PainelMetaCarbono
+        estado={{ status: 'pronto', dados: META_CARBONO_DEMO }}
+        isDemo
+      />
       <div className="demo-chart-grid">
         <ImpactTrendChart history={demoHistory} />
         <ServiceStatusChart services={demoServices} />

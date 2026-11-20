@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import useMetaCarbono from '../../hooks/useMetaCarbono';
 import useSerie from '../../hooks/useSerie';
 import { ApiError, apiRequest } from '../../services/api';
 import {
@@ -24,6 +25,7 @@ import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
 import ServiceQuickDrawer from './ServiceQuickDrawer';
+import PainelMetaCarbono from './PainelMetaCarbono';
 import PainelDaTendencia from '../tendencia/PainelDaTendencia';
 import type {
   BackendCollection,
@@ -207,6 +209,7 @@ export default function LiveDashboard({
     periodQuery,
     true,
   );
+  const { estado: meta, recarregar: recarregarMeta } = useMetaCarbono(true);
   const tendencias = useMemo(
     () =>
       serie.status === 'pronto'
@@ -485,6 +488,7 @@ export default function LiveDashboard({
           onClick={() => {
             void refresh();
             recarregarSerie();
+            recarregarMeta();
           }}
           disabled={isLoading}
         >
@@ -536,6 +540,8 @@ export default function LiveDashboard({
           tone="olive"
         />
       </section>
+
+      <PainelMetaCarbono estado={meta} onRecarregar={recarregarMeta} />
 
       <PainelDaTendencia estado={serie} onRecarregar={recarregarSerie} />
 
