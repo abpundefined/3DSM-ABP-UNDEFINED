@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
+import GraficoIntensidadeRegiao from '../components/mapa/GraficoIntensidadeRegiao';
 import GloboInterativo, {
   ZOOM_DE_RETORNO,
   type CentroDoGlobo,
@@ -182,96 +183,102 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
   }
 
   return (
-    <section className="mapa-painel" aria-label="Mapa de emissões">
-      <div className="mapa-barra">
-        <p className="mapa-resumo">
-          {regiao
-            ? `${servicos.length} ${servicos.length === 1 ? 'serviço' : 'serviços'} em ${regiao.local}`
-            : `${dados.servicos.length} de ${total} serviços com localização no mapa`}
-        </p>
-        {regioes.length > 0 && (
-          <label className="mapa-regiao">
-            <span>Região</span>
-            <select
-              value={codigoDaRegiao ?? ''}
-              onChange={(evento) => trocarRegiao(evento.target.value)}
+    <>
+      <section className="mapa-painel" aria-label="Mapa de emissões">
+        <div className="mapa-barra">
+          <p className="mapa-resumo">
+            {regiao
+              ? `${servicos.length} ${servicos.length === 1 ? 'serviço' : 'serviços'} em ${regiao.local}`
+              : `${dados.servicos.length} de ${total} serviços com localização no mapa`}
+          </p>
+          {regioes.length > 0 && (
+            <label className="mapa-regiao">
+              <span>Região</span>
+              <select
+                value={codigoDaRegiao ?? ''}
+                onChange={(evento) => trocarRegiao(evento.target.value)}
+              >
+                <option value="">Todas as regiões</option>
+                {regioes.map(({ codigo, local }) => (
+                  <option key={codigo} value={codigo}>
+                    {local}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="mapa-visoes" role="group" aria-label="Visualização">
+            <button
+              type="button"
+              aria-pressed={visao === 'globo'}
+              onClick={() => trocarVisao('globo')}
             >
-              <option value="">Todas as regiões</option>
-              {regioes.map(({ codigo, local }) => (
-                <option key={codigo} value={codigo}>
-                  {local}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <div className="mapa-visoes" role="group" aria-label="Visualização">
-          <button
-            type="button"
-            aria-pressed={visao === 'globo'}
-            onClick={() => trocarVisao('globo')}
-          >
-            Globo
-          </button>
-          <button
-            type="button"
-            aria-pressed={visao === 'mapa'}
-            onClick={() => trocarVisao('mapa')}
-          >
-            Mapa
-          </button>
+              Globo
+            </button>
+            <button
+              type="button"
+              aria-pressed={visao === 'mapa'}
+              onClick={() => trocarVisao('mapa')}
+            >
+              Mapa
+            </button>
+          </div>
         </div>
-      </div>
-      {rotulos.length > 0 && servicos.length > 0 && (
-        <LinhaDoTempo
-          rotulos={rotulos}
-          indice={indice}
-          emissaoNoMomento={somarNoMomento(servicos, indice)}
-          onMudar={setIndice}
-        />
-      )}
-      <div className="mapa-conteudo">
-        {visao === 'globo' ? (
-          <GloboInterativo
-            key={codigoDaRegiao ?? 'todas'}
-            servicos={servicos}
-            escala={escalaDoGlobo}
-            momento={momento}
-            rotacaoInicial={retornoAoGlobo ?? rotacaoDaRegiao}
-            zoomInicial={retornoAoGlobo ? ZOOM_DE_RETORNO : undefined}
-            onSelecionar={aproximar}
-            onEntrarNoMapa={entrarNoMapa}
-          />
-        ) : (
-          <MapaLeaflet
-            servicos={servicos}
-            escala={escala}
-            momento={momento}
-            foco={foco}
-            onVoltarAoGlobo={voltarAoGlobo}
+        {rotulos.length > 0 && servicos.length > 0 && (
+          <LinhaDoTempo
+            rotulos={rotulos}
+            indice={indice}
+            emissaoNoMomento={somarNoMomento(servicos, indice)}
+            onMudar={setIndice}
           />
         )}
-        <aside
-          className="mapa-laterais"
-          aria-label="Legenda e serviços fora do mapa"
-        >
-          <LegendaEmissao
-            escala={visao === 'globo' ? escalaDoGlobo : escala}
-            porIntervalo={porIntervalo}
-            porLocal={visao === 'globo'}
-          />
-          <ListaSemCoordenadas
-            servicos={semCoordenadas}
-            referenciaEmissao={referenciaEmissao}
-          />
-        </aside>
-      </div>
-      <TabelaMapa
-        servicos={servicos}
-        semCoordenadas={semCoordenadas}
-        referenciaEmissao={referenciaEmissao}
+        <div className="mapa-conteudo">
+          {visao === 'globo' ? (
+            <GloboInterativo
+              key={codigoDaRegiao ?? 'todas'}
+              servicos={servicos}
+              escala={escalaDoGlobo}
+              momento={momento}
+              rotacaoInicial={retornoAoGlobo ?? rotacaoDaRegiao}
+              zoomInicial={retornoAoGlobo ? ZOOM_DE_RETORNO : undefined}
+              onSelecionar={aproximar}
+              onEntrarNoMapa={entrarNoMapa}
+            />
+          ) : (
+            <MapaLeaflet
+              servicos={servicos}
+              escala={escala}
+              momento={momento}
+              foco={foco}
+              onVoltarAoGlobo={voltarAoGlobo}
+            />
+          )}
+          <aside
+            className="mapa-laterais"
+            aria-label="Legenda e serviços fora do mapa"
+          >
+            <LegendaEmissao
+              escala={visao === 'globo' ? escalaDoGlobo : escala}
+              porIntervalo={porIntervalo}
+              porLocal={visao === 'globo'}
+            />
+            <ListaSemCoordenadas
+              servicos={semCoordenadas}
+              referenciaEmissao={referenciaEmissao}
+            />
+          </aside>
+        </div>
+        <TabelaMapa
+          servicos={servicos}
+          semCoordenadas={semCoordenadas}
+          referenciaEmissao={referenciaEmissao}
+        />
+      </section>
+      <GraficoIntensidadeRegiao
+        servicos={dados.servicos}
+        semCoordenadas={dados.semCoordenadas}
       />
-    </section>
+    </>
   );
 }
 

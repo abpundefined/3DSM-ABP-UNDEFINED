@@ -168,6 +168,88 @@
   font-size: 0.8rem;
 }
 
+.mapa-intensidade {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.mapa-intensidade-titulo {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mapa-intensidade-nota,
+.mapa-intensidade-servicos,
+.mapa-intensidade-vazio {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.mapa-intensidade-resumo {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--soft-green);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mapa-intensidade-lista {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-intensidade-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mapa-intensidade-cabecalho {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.mapa-intensidade-cabecalho strong {
+  min-width: 0;
+}
+
+.mapa-intensidade-cabecalho span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mapa-intensidade-servicos {
+  margin-top: 0;
+  font-size: 0.8rem;
+}
+
+.mapa-intensidade-barra {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.mapa-intensidade-barra span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green-forest);
+}
+
 .mapa-legenda,
 .mapa-sem-coordenadas {
   display: grid;
