@@ -135,7 +135,30 @@ export class ServicosIndicadoresRespostaDto {
   @ApiProperty() removidos!: number;
 }
 
+export class VariacaoPercentualRespostaDto {
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 12,
+    description:
+      "Variação da energia em %. Sem dados anteriores ou base zero: null.",
+  })
+  energiaKwh!: number | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: -5,
+    description:
+      "Variação da emissão em %. Sem dados anteriores ou base zero: null.",
+  })
+  emissaoGCo2e!: number | null;
+}
+
 export class IndicadoresRespostaDto {
+  @ApiProperty({ type: PeriodoIndicadoresRespostaDto })
+  periodoAnterior!: PeriodoIndicadoresRespostaDto;
+  @ApiProperty({ type: VariacaoPercentualRespostaDto })
+  variacaoPercentual!: VariacaoPercentualRespostaDto;
   @ApiProperty({ type: PeriodoIndicadoresRespostaDto })
   periodo!: PeriodoIndicadoresRespostaDto;
   @ApiProperty({ description: "Energia total em kWh." })

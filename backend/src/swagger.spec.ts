@@ -222,6 +222,15 @@ describe("Swagger", () => {
     expect(rankingSchema).toHaveProperty("properties.metrica");
     expect(rankingSchema).toHaveProperty("properties.itens");
     expect(rankingSchema).toHaveProperty("properties.semDados");
+    expect(rankingSchema).toHaveProperty("properties.periodoAnterior");
+    expect(rankingSchema).toHaveProperty("properties.variacaoPercentual");
+    expect(rankingSchema).toHaveProperty("properties.variacaoPorServico");
+    expect(
+      document.components.schemas.IndicadoresRespostaDto.properties,
+    ).toHaveProperty("variacaoPercentual");
+    expect(
+      document.components.schemas.IndicadoresRespostaDto.properties,
+    ).toHaveProperty("periodoAnterior");
     expect(document.paths["/auth/login"].post.responses["429"]).toBeDefined();
     expect(document.components.schemas.LoginDto.required).toEqual(
       expect.arrayContaining(["email", "senha"]),

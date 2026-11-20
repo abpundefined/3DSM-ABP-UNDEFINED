@@ -3,6 +3,7 @@ import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import Icon from '../components/common/Icon';
 import MetricCard from '../components/common/MetricCard';
 import PeriodSelector from '../components/common/PeriodSelector';
+import VariacaoPeriodo from '../components/common/VariacaoPeriodo';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import DashboardDemo from '../components/dashboard/DashboardDemo';
 import LiveDashboard from '../components/dashboard/LiveDashboard';
@@ -97,7 +98,9 @@ export default function Dashboard() {
               description="Total ilustrativo de 07/10/2026"
               icon="bolt"
               tone="leaf"
-            />
+            >
+              <VariacaoPeriodo valor={null} />
+            </MetricCard>
             <MetricCard
               label="Emissão total de CO₂e"
               value={demoTotals.carbonKg}
@@ -106,6 +109,7 @@ export default function Dashboard() {
               icon="cloud"
               tone="olive"
             >
+              <VariacaoPeriodo valor={null} />
               <EmissionEquivalences emissaoGCo2e={demoTotals.carbonKg * 1000} />
             </MetricCard>
             <MetricCard

@@ -13,6 +13,13 @@ import {
 } from '../../utils/formatters';
 import EmissionEquivalences from '../common/EmissionEquivalences';
 import FeedbackPanel from '../common/FeedbackPanel';
+import VariacaoPeriodo from '../common/VariacaoPeriodo';
+import type { PeriodoConsultado } from '../../types/mapa';
+import type { VariacaoPercentual } from '../../types/variacao';
+import {
+  ehPeriodoConsultado,
+  ehVariacaoPercentual,
+} from '../../utils/variacao';
 import Icon from '../common/Icon';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
 import { countServices } from '../../utils/serviceCounter';
@@ -34,6 +41,8 @@ type BackendConfiguration = {
 };
 
 type BackendIndicators = {
+  periodo?: PeriodoConsultado;
+  variacaoPercentual?: VariacaoPercentual;
   energiaTotalKwh: number;
   emissaoTotalGCo2e: number;
   servicos: {
@@ -96,7 +105,11 @@ function isBackendIndicators(value: unknown): value is BackendIndicators {
     isFiniteNumber(value.servicos.disponiveis) &&
     isFiniteNumber(value.servicos.indisponiveis) &&
     isFiniteNumber(value.servicos.semMetricas) &&
-    isFiniteNumber(value.servicos.removidos)
+    isFiniteNumber(value.servicos.removidos) &&
+    (!('variacaoPercentual' in value) ||
+      (ehVariacaoPercentual(value.variacaoPercentual) &&
+        'periodo' in value &&
+        ehPeriodoConsultado(value.periodo)))
   );
 }
 
@@ -475,7 +488,14 @@ export default function LiveDashboard({
           description={indicatorsDescription}
           icon="bolt"
           tone="leaf"
-        />
+        >
+          {indicators?.variacaoPercentual && indicators.periodo && (
+            <VariacaoPeriodo
+              valor={indicators.variacaoPercentual.energiaKwh}
+              periodo={indicators.periodo}
+            />
+          )}
+        </MetricSummary>
         <MetricSummary
           label="Emissão total de CO₂e"
           value={formatEmission(toFiniteNumber(indicators?.emissaoTotalGCo2e))}
@@ -484,6 +504,12 @@ export default function LiveDashboard({
           icon="cloud"
           tone="olive"
         >
+          {indicators?.variacaoPercentual && indicators.periodo && (
+            <VariacaoPeriodo
+              valor={indicators.variacaoPercentual.emissaoGCo2e}
+              periodo={indicators.periodo}
+            />
+          )}
           <EmissionEquivalences
             emissaoGCo2e={toFiniteNumber(indicators?.emissaoTotalGCo2e)}
           />

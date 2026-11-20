@@ -197,6 +197,96 @@ describe('Ranking', () => {
     expect(document.title).toBe('Ranking · demonstração | GreenER');
     expect(buscarRankingMock).not.toHaveBeenCalled();
   });
+
+  it('mostra variações globais e ordena todas as colunas da tabela por serviço', async () => {
+    const user = userEvent.setup();
+    buscarRankingMock.mockResolvedValue(
+      Object.assign({}, resposta, {
+        variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
+        variacaoPorServico: [
+          {
+            servicoId: 1,
+            nome: 'Alpha',
+            emissaoAtualGCo2e: 80,
+            emissaoAnteriorGCo2e: 100,
+            diferencaGCo2e: -20,
+            variacaoPercentual: -20,
+          },
+          {
+            servicoId: 2,
+            nome: 'Beta',
+            emissaoAtualGCo2e: 120,
+            emissaoAnteriorGCo2e: 50,
+            diferencaGCo2e: 70,
+            variacaoPercentual: 140,
+          },
+          {
+            servicoId: 3,
+            nome: 'Novo',
+            emissaoAtualGCo2e: 10,
+            emissaoAnteriorGCo2e: null,
+            diferencaGCo2e: null,
+            variacaoPercentual: null,
+          },
+        ],
+      }),
+    );
+    renderRanking('/ranking?periodo=7d');
+
+    const tabela = within(
+      await screen.findByRole('table', { name: 'Variação por serviço' }),
+    );
+    expect(
+      screen.getByText('▲ 12% em relação aos 7 dias anteriores'),
+    ).toBeVisible();
+    expect(
+      screen.getByText('▼ 5% em relação aos 7 dias anteriores'),
+    ).toBeVisible();
+    expect(tabela.getByText('sem base de comparação')).toBeVisible();
+    expect(tabela.getAllByRole('row')).toHaveLength(4);
+    for (const [coluna, primeiro] of [
+      ['Serviço', 'Alpha'],
+      ['Emissão atual', 'Novo'],
+      ['Emissão anterior', 'Beta'],
+      ['Diferença', 'Alpha'],
+      ['Variação (%)', 'Alpha'],
+    ]) {
+      await user.click(tabela.getByRole('button', { name: coluna }));
+      expect(tabela.getAllByRole('row')[1]).toHaveTextContent(primeiro);
+      expect(
+        tabela.getByRole('columnheader', {
+          name: new RegExp(coluna.replace(/[()%]/g, '\\$&')),
+        }),
+      ).toHaveAttribute('aria-sort', 'ascending');
+    }
+    await user.click(tabela.getByRole('button', { name: 'Variação (%)' }));
+    expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Beta');
+  });
+
+  it('mantém a tabela com serviços que só tiveram dados na janela anterior', async () => {
+    buscarRankingMock.mockResolvedValue(
+      Object.assign({}, resposta, {
+        itens: [],
+        variacaoPercentual: { energiaKwh: -100, emissaoGCo2e: -100 },
+        variacaoPorServico: [
+          {
+            servicoId: 2,
+            nome: 'Worker antigo',
+            emissaoAtualGCo2e: 0,
+            emissaoAnteriorGCo2e: 50,
+            diferencaGCo2e: -50,
+            variacaoPercentual: -100,
+          },
+        ],
+      }),
+    );
+    renderRanking();
+    expect(
+      within(
+        await screen.findByRole('table', { name: 'Variação por serviço' }),
+      ).getByText('Worker antigo'),
+    ).toBeVisible();
+  });
 });
 
 describe('Comparação', () => {

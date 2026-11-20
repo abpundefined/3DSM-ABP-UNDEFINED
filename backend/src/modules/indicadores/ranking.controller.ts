@@ -1,11 +1,17 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
+  ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  getSchemaPath,
 } from "@nestjs/swagger";
+import {
+  PeriodoIndicadoresRespostaDto,
+  VariacaoPercentualRespostaDto,
+} from "../../common/swagger/respostas.dto";
 import { MetricaRanking, RankingQueryDto } from "./dto/ranking-query.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { RankingService } from "./ranking.service";
@@ -19,7 +25,7 @@ export class RankingController {
   @ApiOperation({
     summary: "Consultar o ranking de serviços por impacto no período",
     description:
-      "Soma as coletas válidas por serviço no período e retorna energia, emissão e quantidade de coletas.",
+      "Soma coletas concluídas no período e compara com a janela anterior de mesma duração. Variação global considera todos os serviços, não só o top limitado. variacaoPorServico inclui dados em qualquer janela, inclusive removidos, sem limite. Percentual null quando não há base ou ela é zero; emissão atual sem coleta é zero.",
   })
   @ApiQuery({
     name: "periodo",
@@ -46,11 +52,46 @@ export class RankingController {
     minimum: 1,
     maximum: 100,
   })
+  @ApiExtraModels(PeriodoIndicadoresRespostaDto, VariacaoPercentualRespostaDto)
   @ApiOkResponse({
     schema: {
       type: "object",
-      required: ["periodo", "metrica", "itens", "semDados"],
+      required: [
+        "periodo",
+        "periodoAnterior",
+        "variacaoPercentual",
+        "variacaoPorServico",
+        "metrica",
+        "itens",
+        "semDados",
+      ],
       properties: {
+        periodoAnterior: { $ref: getSchemaPath(PeriodoIndicadoresRespostaDto) },
+        variacaoPercentual: {
+          $ref: getSchemaPath(VariacaoPercentualRespostaDto),
+        },
+        variacaoPorServico: {
+          type: "array",
+          items: {
+            type: "object",
+            required: [
+              "servicoId",
+              "nome",
+              "emissaoAtualGCo2e",
+              "emissaoAnteriorGCo2e",
+              "diferencaGCo2e",
+              "variacaoPercentual",
+            ],
+            properties: {
+              servicoId: { type: "integer" },
+              nome: { type: "string" },
+              emissaoAtualGCo2e: { type: "number" },
+              emissaoAnteriorGCo2e: { type: "number", nullable: true },
+              diferencaGCo2e: { type: "number", nullable: true },
+              variacaoPercentual: { type: "number", nullable: true },
+            },
+          },
+        },
         periodo: {
           type: "object",
           required: ["inicio", "fim"],

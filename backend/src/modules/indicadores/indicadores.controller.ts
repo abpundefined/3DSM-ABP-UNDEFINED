@@ -26,7 +26,8 @@ export class IndicadoresController {
   @ApiOperation({
     summary: "Consultar indicadores consolidados",
     description: `Soma coletas com cálculo concluído no período; por padrão, as últimas 24 horas.
-      Para mes-anterior, também compara os indicadores com o mês calendário anterior.`,
+      Compara com a janela imediatamente anterior de mesma duração, sem sobreposição.
+      variacaoPercentual retorna null quando não há dados anteriores ou o total anterior é zero.`,
   })
   @ApiQuery({
     name: "periodo",
@@ -54,7 +55,7 @@ export class IndicadoresController {
   @ApiResponse({
     status: 200,
     description:
-      "Totais ambientais, contagem de serviços e, para mes-anterior, variação contra o mês calendário anterior.",
+      "Totais ambientais, contagem de serviços e variação contra a janela anterior de mesma duração.",
     schema: {
       allOf: [
         { $ref: getSchemaPath(IndicadoresRespostaDto) },
@@ -64,7 +65,7 @@ export class IndicadoresController {
             variacao: {
               type: "object",
               description:
-                "Variação do mês anterior em relação ao mês calendário anterior a ele.",
+                "Campo legado de mes-anterior, agora comparado à janela anterior de mesma duração.",
               required: [
                 "energiaTotalKwh",
                 "emissaoTotalGCo2e",

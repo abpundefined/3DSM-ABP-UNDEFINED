@@ -57,6 +57,56 @@ test('recusa resposta fora do contrato', () => {
   }
 });
 
+test('valida os novos dados de comparação e permite percentuais negativos e base nula', () => {
+  const comparacao = {
+    ...resposta,
+    variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
+    variacaoPorServico: [
+      {
+        servicoId: 5,
+        nome: 'Video Processor',
+        emissaoAtualGCo2e: 95,
+        emissaoAnteriorGCo2e: 100,
+        diferencaGCo2e: -5,
+        variacaoPercentual: -5,
+      },
+    ],
+  };
+  assert.equal(ehRespostaRanking(comparacao), true);
+  assert.equal(
+    ehRespostaRanking({
+      ...comparacao,
+      variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
+    }),
+    true,
+  );
+  for (const invalida of [
+    {
+      ...comparacao,
+      variacaoPercentual: { energiaKwh: Infinity, emissaoGCo2e: -5 },
+    },
+    { ...comparacao, variacaoPercentual: { energiaKwh: 12 } },
+    {
+      ...comparacao,
+      variacaoPorServico: [
+        { ...comparacao.variacaoPorServico[0], diferencaGCo2e: '5' },
+      ],
+    },
+    {
+      ...comparacao,
+      variacaoPorServico: [
+        { ...comparacao.variacaoPorServico[0], emissaoAnteriorGCo2e: -1 },
+      ],
+    },
+    {
+      ...comparacao,
+      periodoAnterior: { inicio: 'inválido', fim: '2026-11-01' },
+    },
+  ]) {
+    assert.equal(ehRespostaRanking(invalida), false);
+  }
+});
+
 test('lê a métrica da URL e usa energia quando ela falta ou é inválida', () => {
   assert.equal(lerMetrica(new URLSearchParams('metrica=emissao')), 'emissao');
   assert.equal(lerMetrica(new URLSearchParams('metrica=energia')), 'energia');

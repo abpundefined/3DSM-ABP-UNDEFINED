@@ -42,6 +42,15 @@ const porNome = (a: ServicoSemDados, b: ServicoSemDados) =>
 export function rankingDemo(metrica: MetricaRanking): RespostaRanking {
   return {
     periodo: mapaDemo.periodo,
+    variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
+    variacaoPorServico: itens.toSorted(porNome).map((item) => ({
+      servicoId: item.servicoId,
+      nome: item.nome,
+      emissaoAtualGCo2e: item.emissaoGCo2e,
+      emissaoAnteriorGCo2e: null,
+      diferencaGCo2e: null,
+      variacaoPercentual: null,
+    })),
     metrica,
     itens: itens
       .toSorted(

@@ -1,0 +1,18 @@
+.variacao {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.variacao--alerta {
+  color: #9a3412;
+}
+.variacao--melhoria {
+  color: var(--green-forest);
+}
+.variacao--estavel,
+.variacao--sem-base {
+  color: var(--text-muted);
+}
+:root[data-theme='dark'] .variacao--alerta {
+  color: #fdba74;
+}
