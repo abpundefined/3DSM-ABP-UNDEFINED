@@ -253,6 +253,10 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
 <hr>
 
 <h2 id="telas-evidencias">🖼️ Telas Principais e Evidências</h2>
+<h3>🎬 Demonstração da Plataforma</h3>
+<p align="center">
+    <img src="./docs/evidencias/demo-greener.gif" alt="Demonstração em GIF da navegação completa pelo GreenER" width="850">
+</p>
 <p>Capturas das telas principais da Sprint 3 em modo demonstração (<code>?demo=1</code>, dados fictícios identificados) nos tamanhos padrão de desktop (<code>1440×900</code>) e celular (<code>375×812</code>), além do acervo de evidências das Sprints 2 e 3:</p>
 <table>
     <tr>
@@ -294,7 +298,6 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
         <td colspan="2" align="center"><img src="./docs/evidencias/sprint-3-metodologia-desktop.png" alt="Página Como calculamos em desktop (1440x900) com fórmulas, exemplo numérico, Carbon Intensity API, SCI, equivalências EPA e time-shifting" width="420"><br><em>Fórmulas de potência, energia e emissão, exemplo numérico conferido com o <code>CalculosService</code>, tratamento de falhas da Carbon API, relação com SCI, equivalências EPA e <em>time-shifting</em> (<code>/metodologia?demo=1</code>).</em></td>
     </tr>
 </table>
-<p><strong>Demonstração em GIF (#21):</strong> após gravar o fluxo completo de navegação (<code>dashboard → período → ranking → comparação → mapa animado → detalhe → admin</code>), salve o arquivo em <code>docs/evidencias/demo-greener.gif</code> e incorpore-o acima desta tabela.</p>
 <ul>
     <li><strong>Sprint 2 (Dashboard, Login, 404 e Responsividade 1920px/375px):</strong> <a href="./docs/evidencias/frontend-25/">docs/evidencias/frontend-25/</a></li>
     <li><strong>Backend (Coleta com falha HTTP 500 e estado indisponível no PostgreSQL):</strong> <a href="./docs/evidencias/backend/">docs/evidencias/backend/</a></li>

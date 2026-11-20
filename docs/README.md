@@ -18,7 +18,7 @@ Os documentos distinguem implementação atual, evidência disponível e planeja
 | [Sprint 3](sprints/sprint-3.md) | Planejamento, backlog comprometido (51 itens / 178 SP), regras e acompanhamento. |
 | [Burndown Sprint 3](burndown-sprint-3.md) | Acompanhamento diário da queima de Story Points e gráfico da Sprint 3. |
 | [Interface e IHC](interface.md) | Personas, protótipos, avaliação heurística, testes com usuários (SUS) e melhorias P01–P08. |
-| [Evidências visuais](evidencias/) | Capturas de [backend](evidencias/backend/), [frontend Sprint 2](evidencias/frontend-25/) e melhorias da [#101](evidencias/issue-101/) ([16/11](evidencias/issue-101-2026-11-16/), [17/11](evidencias/issue-101-2026-11-17/) e [18/11](evidencias/issue-101-2026-11-18/)). |
+| [Evidências visuais](evidencias/) | [GIF de demonstração](evidencias/demo-greener.gif), prints finais da Sprint 3 e capturas de [backend](evidencias/backend/), [frontend Sprint 2](evidencias/frontend-25/) e melhorias da [#101](evidencias/issue-101/) ([16/11](evidencias/issue-101-2026-11-16/), [17/11](evidencias/issue-101-2026-11-17/) e [18/11](evidencias/issue-101-2026-11-18/)). |
 | [Teste de retorno com PostgreSQL](teste-integracao-problema1.md) | Execução isolada e registro de seis testes em 18/10. |
 | [Memória de cálculo ambiental](calculos.md) | Fórmulas, fatores, unidades de medida e premissas implementadas no CalculosService. |
 | [Setup inicial do frontend](frontend-setup.md) | Registro histórico da base da #25. |
