@@ -1,7 +1,10 @@
 export type IntervalField =
   'intervaloColetaSegundos' | 'intervaloDescobertaSegundos';
-export type IntervalValues = Record<IntervalField, string>;
-export type IntervalErrors = Partial<Record<IntervalField, string>>;
+export type ConfigFormField = IntervalField | 'metaMensalKgCo2e';
+export type IntervalValues = Record<IntervalField, string> & {
+  metaMensalKgCo2e?: string;
+};
+export type IntervalErrors = Partial<Record<ConfigFormField, string>>;
 
 export const INTERVAL_FIELDS = [
   {
@@ -26,6 +29,27 @@ export const INTERVAL_FIELDS = [
   max: number;
 }[];
 
+function parseMetaNumber(text: string): number {
+  return Number(text.trim().replace(',', '.'));
+}
+
+export function validateMetaMensal(rawValue: string): string | undefined {
+  const text = rawValue.trim();
+  if (!text) {
+    return undefined;
+  }
+
+  const value = parseMetaNumber(text);
+  if (!Number.isFinite(value)) {
+    return 'A meta mensal deve ser um número válido em kgCO₂e.';
+  }
+  if (value <= 0) {
+    return 'A meta mensal deve ser maior que zero, ou deixe em branco para remover.';
+  }
+
+  return undefined;
+}
+
 export function validateIntervals(values: IntervalValues): IntervalErrors {
   const errors: IntervalErrors = {};
 
@@ -44,12 +68,37 @@ export function validateIntervals(values: IntervalValues): IntervalErrors {
     }
   }
 
+  if (values.metaMensalKgCo2e !== undefined) {
+    const metaError = validateMetaMensal(values.metaMensalKgCo2e);
+    if (metaError) {
+      errors.metaMensalKgCo2e = metaError;
+    }
+  }
+
   return errors;
 }
 
-export function toIntervalPayload(values: IntervalValues) {
-  return {
+export function toIntervalPayload(
+  values: IntervalValues,
+  metaInicial: number | null = null,
+) {
+  const payload: {
+    intervaloColetaSegundos: number;
+    intervaloDescobertaSegundos: number;
+    metaMensalKgCo2e?: number | null;
+  } = {
     intervaloColetaSegundos: Number(values.intervaloColetaSegundos),
     intervaloDescobertaSegundos: Number(values.intervaloDescobertaSegundos),
   };
+
+  if (values.metaMensalKgCo2e !== undefined) {
+    const text = values.metaMensalKgCo2e.trim();
+    if (text) {
+      payload.metaMensalKgCo2e = parseMetaNumber(text);
+    } else if (metaInicial !== null) {
+      payload.metaMensalKgCo2e = null;
+    }
+  }
+
+  return payload;
 }

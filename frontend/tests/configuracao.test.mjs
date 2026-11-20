@@ -40,6 +40,55 @@ test('converte o formulário no corpo do PUT /configuracao', () => {
     intervaloColetaSegundos: 60,
     intervaloDescobertaSegundos: 300,
   });
+  assert.deepEqual(
+    toIntervalPayload({ ...values('60', '300'), metaMensalKgCo2e: '500,5' }),
+    {
+      intervaloColetaSegundos: 60,
+      intervaloDescobertaSegundos: 300,
+      metaMensalKgCo2e: 500.5,
+    },
+  );
+  assert.deepEqual(
+    toIntervalPayload({ ...values('60', '300'), metaMensalKgCo2e: '' }, 500.5),
+    {
+      intervaloColetaSegundos: 60,
+      intervaloDescobertaSegundos: 300,
+      metaMensalKgCo2e: null,
+    },
+  );
+  assert.deepEqual(
+    toIntervalPayload({ ...values('60', '300'), metaMensalKgCo2e: '' }, null),
+    {
+      intervaloColetaSegundos: 60,
+      intervaloDescobertaSegundos: 300,
+    },
+  );
+});
+
+test('valida meta mensal opcional na configuração administrativa', () => {
+  assert.deepEqual(
+    validateIntervals({ ...values('30', '60'), metaMensalKgCo2e: '' }),
+    {},
+  );
+  assert.deepEqual(
+    validateIntervals({ ...values('30', '60'), metaMensalKgCo2e: '250.5' }),
+    {},
+  );
+  assert.equal(
+    validateIntervals({ ...values('30', '60'), metaMensalKgCo2e: '-5' })
+      .metaMensalKgCo2e,
+    'A meta mensal deve ser maior que zero, ou deixe em branco para remover.',
+  );
+  assert.equal(
+    validateIntervals({ ...values('30', '60'), metaMensalKgCo2e: '0' })
+      .metaMensalKgCo2e,
+    'A meta mensal deve ser maior que zero, ou deixe em branco para remover.',
+  );
+  assert.equal(
+    validateIntervals({ ...values('30', '60'), metaMensalKgCo2e: 'abc' })
+      .metaMensalKgCo2e,
+    'A meta mensal deve ser um número válido em kgCO₂e.',
+  );
 });
 
 test('lê o destino e a mensagem do redirecionamento para o login', () => {

@@ -13,8 +13,8 @@ import {
   INTERVAL_FIELDS,
   toIntervalPayload,
   validateIntervals,
+  type ConfigFormField,
   type IntervalErrors,
-  type IntervalField,
   type IntervalValues,
 } from '../utils/configuracao';
 
@@ -26,6 +26,10 @@ function toFormValues(configuracao: Configuracao): IntervalValues {
     intervaloDescobertaSegundos: String(
       configuracao.intervaloDescobertaSegundos,
     ),
+    metaMensalKgCo2e:
+      configuracao.metaMensalKgCo2e === null
+        ? ''
+        : String(configuracao.metaMensalKgCo2e),
   };
 }
 
@@ -38,6 +42,7 @@ export default function Admin() {
   const [values, setValues] = useState<IntervalValues>({
     intervaloColetaSegundos: '',
     intervaloDescobertaSegundos: '',
+    metaMensalKgCo2e: '',
   });
   const [errors, setErrors] = useState<IntervalErrors>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -65,7 +70,7 @@ export default function Admin() {
     setLoadAttempt((attempt) => attempt + 1);
   }
 
-  function handleChange(field: IntervalField, value: string) {
+  function handleChange(field: ConfigFormField, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setSaveStatus('idle');
@@ -76,9 +81,11 @@ export default function Admin() {
     const nextErrors = validateIntervals(values);
     setErrors(nextErrors);
 
-    const firstInvalid = INTERVAL_FIELDS.find(({ field }) => nextErrors[field]);
-    if (firstInvalid) {
-      document.getElementById(firstInvalid.field)?.focus();
+    const firstInvalidField: ConfigFormField | undefined =
+      INTERVAL_FIELDS.find(({ field }) => nextErrors[field])?.field ??
+      (nextErrors.metaMensalKgCo2e ? 'metaMensalKgCo2e' : undefined);
+    if (firstInvalidField) {
+      document.getElementById(firstInvalidField)?.focus();
       return;
     }
     if (!token) {
@@ -87,7 +94,10 @@ export default function Admin() {
 
     setSaveStatus('saving');
     try {
-      const saved = await saveConfiguracao(toIntervalPayload(values), token);
+      const saved = await saveConfiguracao(
+        toIntervalPayload(values, configuracao?.metaMensalKgCo2e ?? null),
+        token,
+      );
       setConfiguracao(saved);
       setValues(toFormValues(saved));
       setSaveStatus('success');
@@ -178,6 +188,33 @@ export default function Admin() {
               )}
             </div>
           ))}
+
+          <div className="admin-field">
+            <label htmlFor="metaMensalKgCo2e">Meta mensal (kgCO₂e)</label>
+            <input
+              id="metaMensalKgCo2e"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="any"
+              placeholder="Sem meta definida"
+              value={values.metaMensalKgCo2e ?? ''}
+              onChange={(event) =>
+                handleChange('metaMensalKgCo2e', event.target.value)
+              }
+              aria-invalid={errors.metaMensalKgCo2e ? true : undefined}
+              aria-describedby={`metaMensalKgCo2e-hint${errors.metaMensalKgCo2e ? ' metaMensalKgCo2e-error' : ''}`}
+            />
+            <p id="metaMensalKgCo2e-hint" className="admin-field-hint">
+              Opcional. Limite mensal de emissões acompanhado no dashboard.
+              Deixe em branco para remover a meta.
+            </p>
+            {errors.metaMensalKgCo2e && (
+              <p id="metaMensalKgCo2e-error" className="admin-field-error">
+                {errors.metaMensalKgCo2e}
+              </p>
+            )}
+          </div>
 
           <div className="admin-form-actions">
             <button
