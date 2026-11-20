@@ -146,6 +146,36 @@ test('mapa carregado não tem violações do Axe', async ({ page }) => {
   expect(resultado.violations).toEqual([]);
 });
 
+test('compara intensidades por região, mostra serviços e passa no Axe', async ({
+  page,
+}) => {
+  await simularMapa(page);
+  await page.goto('/mapa');
+
+  const grafico = page.getByRole('region', {
+    name: 'Intensidade de carbono por região',
+  });
+  const regioes = grafico.getByRole('listitem');
+  await expect(regioes).toHaveCount(5);
+  await expect(regioes.nth(0)).toContainText('Japão · Tóquio');
+  await expect(regioes.nth(0)).toContainText('471 gCO₂e/kWh');
+  await expect(regioes.nth(1)).toContainText('Estados Unidos · Ashburn');
+  await expect(regioes.nth(2)).toContainText('Brasil · São Paulo');
+  await expect(regioes.nth(2)).toContainText('3 serviços');
+  await expect(regioes.nth(3)).toContainText('Canadá · Toronto');
+  await expect(regioes.nth(3)).toContainText('41 gCO₂e/kWh');
+  await expect(regioes.nth(4)).toContainText('Irlanda · Dublin');
+  await expect(regioes.nth(4)).toContainText('Sem dados');
+  await expect(grafico).toContainText(
+    'Japão · Tóquio emite 11,5 vezes mais CO₂e por kWh que Canadá · Toronto',
+  );
+
+  const resultado = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(resultado.violations).toEqual([]);
+});
+
 test('legenda mostra as faixas de emissão com unidade', async ({ page }) => {
   await simularMapa(page);
   await page.goto('/mapa');
@@ -693,7 +723,10 @@ test('filtro por região centraliza o globo e filtra a lista e a tabela', async 
 }) => {
   await simularMapa(page);
   await page.goto('/mapa?periodo=7d');
-  const regiao = page.getByLabel('Região');
+  const regiao = page.getByRole('combobox', {
+    name: 'Região',
+    exact: true,
+  });
 
   await regiao.selectOption({ label: 'Brasil · São Paulo' });
   await expect(page).toHaveURL(/periodo=7d&regiao=br-sudeste$/);
@@ -724,7 +757,9 @@ test('no mapa, a região da URL enquadra só os marcadores dela', async ({
   await simularMapa(page);
   await page.goto('/mapa?visao=mapa&regiao=jp-east');
 
-  await expect(page.getByLabel('Região')).toHaveValue('jp-east');
+  await expect(
+    page.getByRole('combobox', { name: 'Região', exact: true }),
+  ).toHaveValue('jp-east');
   await expect(page.locator('path.mapa-marcador')).toHaveCount(1);
   await page.locator('path.mapa-marcador').click({ force: true });
   await expect(page.locator('.leaflet-popup-content')).toContainText(
@@ -736,7 +771,9 @@ test('região inexistente na URL mostra todas as regiões', async ({ page }) => 
   await simularMapa(page);
   await page.goto('/mapa?regiao=inexistente');
 
-  await expect(page.getByLabel('Região')).toHaveValue('');
+  await expect(
+    page.getByRole('combobox', { name: 'Região', exact: true }),
+  ).toHaveValue('');
   await expect(page.locator('.mapa-resumo')).toHaveText(
     '8 de 10 serviços com localização no mapa',
   );
