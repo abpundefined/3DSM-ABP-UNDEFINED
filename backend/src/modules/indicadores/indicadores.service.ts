@@ -73,7 +73,7 @@ export interface IndicadoresConsolidados {
 }
 
 export interface VariacaoIndicador {
-  absoluta: number;
+  absoluta: number | null;
   percentual: number | null;
 }
 
@@ -377,11 +377,11 @@ export class IndicadoresService {
       tipoPeriodo === PeriodoPredefinido.MES_ANTERIOR
         ? {
             energiaTotalKwh: this.calcularVariacao(
-              energiaTotalKwh,
+              totais.energiaKwh,
               totaisComparacao.energiaKwh,
             ),
             emissaoTotalGCo2e: this.calcularVariacao(
-              emissaoTotalGCo2e,
+              totais.emissaoGCo2e,
               totaisComparacao.emissaoGCo2e,
             ),
             coletasCalculadas: this.calcularVariacao(
@@ -399,11 +399,11 @@ export class IndicadoresService {
       },
       variacaoPercentual: {
         energiaKwh: calcularVariacaoPercentual(
-          energiaTotalKwh,
+          totais.energiaKwh,
           totaisComparacao.energiaKwh,
         ),
         emissaoGCo2e: calcularVariacaoPercentual(
-          emissaoTotalGCo2e,
+          totais.emissaoGCo2e,
           totaisComparacao.emissaoGCo2e,
         ),
       },
@@ -418,10 +418,13 @@ export class IndicadoresService {
   }
 
   private calcularVariacao(
-    valorAtual: number,
+    valorAtual: number | null,
     valorComparacao: number | null,
   ): VariacaoIndicador {
-    const absoluta = valorAtual - (valorComparacao ?? 0);
+    const absoluta =
+      valorAtual === null || valorComparacao === null
+        ? null
+        : valorAtual - valorComparacao;
 
     return {
       absoluta,

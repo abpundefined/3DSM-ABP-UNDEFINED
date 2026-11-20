@@ -112,7 +112,7 @@ export class RankingService {
       const anterior = anterioresPorServico.get(servico.id);
 
       if (impacto || anterior) {
-        const emissaoAtualGCo2e = impacto ? impacto.emissaoGCo2e : 0;
+        const emissaoAtualGCo2e = impacto?.emissaoGCo2e ?? null;
         const emissaoAnteriorGCo2e = anterior?.emissaoGCo2e ?? null;
         variacaoPorServico.push({
           servicoId: servico.id,
@@ -170,11 +170,11 @@ export class RankingService {
       },
       variacaoPercentual: {
         energiaKwh: calcularVariacaoPercentual(
-          somarMetrica(impactos, MetricaRanking.ENERGIA) ?? 0,
+          somarMetrica(impactos, MetricaRanking.ENERGIA),
           somarMetrica(impactosAnteriores, MetricaRanking.ENERGIA),
         ),
         emissaoGCo2e: calcularVariacaoPercentual(
-          somarMetrica(impactos, MetricaRanking.EMISSAO) ?? 0,
+          somarMetrica(impactos, MetricaRanking.EMISSAO),
           somarMetrica(impactosAnteriores, MetricaRanking.EMISSAO),
         ),
       },

@@ -12,10 +12,10 @@ export function periodoAnterior(inicio: Date, fim: Date) {
 }
 
 export function calcularVariacaoPercentual(
-  atual: number,
+  atual: number | null,
   anterior: number | null,
 ): number | null {
-  return anterior === null || anterior === 0
+  return atual === null || anterior === null || anterior === 0
     ? null
     : ((atual - anterior) / anterior) * 100;
 }

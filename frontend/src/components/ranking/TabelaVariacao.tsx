@@ -58,8 +58,8 @@ export default function TabelaVariacao({
       <h2 id={tituloId}>Variação por serviço</h2>
       <p className="ranking-resumo">
         Todos os serviços com coletas em pelo menos uma das duas janelas, sem o
-        limite do top 10. Sem impacto atual, a emissão é zero; com impacto mas
-        sem emissão, o valor permanece ausente.
+        limite do top 10. Sem emissão no período atual, não há variação
+        calculada; emissão medida igual a zero permanece zero.
       </p>
       <div
         className="ranking-tabela"
@@ -116,7 +116,13 @@ export default function TabelaVariacao({
                     : `${item.diferencaGCo2e < 0 ? '−' : item.diferencaGCo2e > 0 ? '+' : ''}${formatEmission(Math.abs(item.diferencaGCo2e))}`}
                 </td>
                 <td>
-                  <VariacaoPeriodo valor={item.variacaoPercentual} />
+                  {item.emissaoAtualGCo2e === null ? (
+                    <span className="variacao variacao--sem-base">
+                      sem dados no período atual
+                    </span>
+                  ) : (
+                    <VariacaoPeriodo valor={item.variacaoPercentual} />
+                  )}
                 </td>
               </tr>
             ))}

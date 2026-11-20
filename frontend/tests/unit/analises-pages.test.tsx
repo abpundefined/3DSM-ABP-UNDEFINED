@@ -283,7 +283,7 @@ describe('Ranking', () => {
       await screen.findByRole('table', { name: 'Variação por serviço' }),
     );
     expect(tabela.getAllByRole('cell', { name: '—' })).toHaveLength(2);
-    expect(tabela.getByText('sem base de comparação')).toBeVisible();
+    expect(tabela.getByText('sem dados no período atual')).toBeVisible();
     expect(tabela.queryByText(/100%/)).not.toBeInTheDocument();
     await userEvent
       .setup()
@@ -295,25 +295,26 @@ describe('Ranking', () => {
     buscarRankingMock.mockResolvedValue(
       Object.assign({}, resposta, {
         itens: [],
-        variacaoPercentual: { energiaKwh: -100, emissaoGCo2e: -100 },
+        variacaoPercentual: { energiaKwh: null, emissaoGCo2e: null },
         variacaoPorServico: [
           {
             servicoId: 2,
             nome: 'Worker antigo',
-            emissaoAtualGCo2e: 0,
+            emissaoAtualGCo2e: null,
             emissaoAnteriorGCo2e: 50,
-            diferencaGCo2e: -50,
-            variacaoPercentual: -100,
+            diferencaGCo2e: null,
+            variacaoPercentual: null,
           },
         ],
       }),
     );
     renderRanking();
-    expect(
-      within(
-        await screen.findByRole('table', { name: 'Variação por serviço' }),
-      ).getByText('Worker antigo'),
-    ).toBeVisible();
+    const tabela = within(
+      await screen.findByRole('table', { name: 'Variação por serviço' }),
+    );
+    expect(tabela.getByText('Worker antigo')).toBeVisible();
+    expect(tabela.getByText('sem dados no período atual')).toBeVisible();
+    expect(tabela.queryByText(/100%/)).not.toBeInTheDocument();
   });
 });
 

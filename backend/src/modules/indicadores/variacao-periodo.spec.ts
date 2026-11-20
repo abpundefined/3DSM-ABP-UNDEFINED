@@ -9,6 +9,7 @@ describe("Comparação entre períodos", () => {
     [95, 100, -5],
     [100, 100, 0],
     [0, 100, -100],
+    [null, 100, null],
     [100, null, null],
     [100, 0, null],
     [0, 0, null],

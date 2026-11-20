@@ -27,7 +27,7 @@ export class IndicadoresController {
     summary: "Consultar indicadores consolidados",
     description: `Soma coletas com cálculo concluído no período; por padrão, as últimas 24 horas.
       Compara com a janela imediatamente anterior de mesma duração, sem sobreposição.
-      variacaoPercentual retorna null quando não há dados anteriores ou o total anterior é zero.`,
+      variacaoPercentual retorna null quando não há dados atuais ou anteriores, ou o total anterior é zero.`,
   })
   @ApiQuery({
     name: "periodo",
@@ -76,7 +76,7 @@ export class IndicadoresController {
                   type: "object",
                   required: ["absoluta", "percentual"],
                   properties: {
-                    absoluta: { type: "number" },
+                    absoluta: { type: "number", nullable: true },
                     percentual: { type: "number", nullable: true },
                   },
                 },
@@ -84,7 +84,7 @@ export class IndicadoresController {
                   type: "object",
                   required: ["absoluta", "percentual"],
                   properties: {
-                    absoluta: { type: "number" },
+                    absoluta: { type: "number", nullable: true },
                     percentual: { type: "number", nullable: true },
                   },
                 },

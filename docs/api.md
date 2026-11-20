@@ -217,9 +217,11 @@ Sem parâmetros, considera as últimas 24 horas. `24h`, `7d` e `30d` representam
 
 Todos os períodos incluem `periodoAnterior` e `variacaoPercentual`, com
 `energiaKwh` e `emissaoGCo2e`. O cálculo é `(atual - anterior) / anterior * 100`.
-Sem dados anteriores para a métrica, ou com total anterior zero (inclusive
-quando ambos são zero), o percentual é `null`, nunca infinito.
-Sem coletas atuais, o total atual continua zero, podendo resultar em -100%.
+Sem dados atuais ou anteriores para a métrica, ou com total anterior zero
+(inclusive quando ambos são zero), o percentual é `null`, nunca infinito.
+Os totais públicos permanecem zero quando não há coletas atuais, por
+compatibilidade, mas a comparação usa os agregados originais e não inventa
+uma redução. Um zero realmente medido pode resultar em -100%.
 
 A janela anterior é imediatamente adjacente, sem sobreposição, e tem a mesma
 duração em milissegundos. Como os limites são inclusivos, seu fim é
@@ -230,7 +232,8 @@ exclusivamente coletas com cálculo concluído.
 
 O campo legado `variacao` permanece para `periodo=mes-anterior`, com
 `energiaTotalKwh`, `emissaoTotalGCo2e` e `coletasCalculadas` contendo `absoluta`
-e `percentual`, mas passa a seguir a mesma janela e regra de base zero.
+e `percentual`, seguindo a mesma janela e regra de base zero. Para energia e
+emissão, `absoluta` também é `null` quando falta valor em alguma janela.
 
 Exemplo de resposta:
 
@@ -313,10 +316,10 @@ não mudam ao trocar a métrica de ordenação.
 `variacaoPorServico` alimenta a tabela de emissão: inclui todo serviço com
 coletas em ao menos uma das duas janelas, inclusive removidos, independentemente
 do top 10. É ordenada inicialmente por nome e ID; o frontend permite ordenar
-qualquer coluna. Serviços sem impacto atual têm emissão atual zero. Se existe
-impacto atual com emissão ausente, `emissaoAtualGCo2e`, diferença e percentual
-permanecem `null`, evitando uma redução falsa de -100%. Um zero medido continua
-sendo zero. Sem emissão anterior, valor anterior, diferença e percentual são `null`; com anterior zero,
+qualquer coluna. Sem emissão atual, haja impacto registrado ou não,
+`emissaoAtualGCo2e`, diferença e percentual são `null`, evitando uma redução
+falsa de -100%. Um zero medido continua sendo zero. Sem emissão anterior,
+valor anterior, diferença e percentual são `null`; com anterior zero,
 a diferença é calculada, mas o percentual é `null`.
 
 Exemplo de item:

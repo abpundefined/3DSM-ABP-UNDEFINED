@@ -392,6 +392,69 @@ describe("IndicadoresService", () => {
     },
   );
 
+  it.each([null, 0])(
+    "compara totais atuais %s sem confundir ausência e zero medido",
+    async (atual) => {
+      repository.somarImpactoNoPeriodo
+        .mockResolvedValueOnce({
+          energiaKwh: atual,
+          emissaoGCo2e: atual,
+          coletasCalculadas: atual === null ? 0 : 1,
+        })
+        .mockResolvedValueOnce({
+          energiaKwh: 10,
+          emissaoGCo2e: 100,
+          coletasCalculadas: 1,
+        });
+      expect(
+        await service.obter(
+          inicioPadrao,
+          agora,
+          PeriodoPredefinido.MES_ANTERIOR,
+        ),
+      ).toMatchObject({
+        energiaTotalKwh: 0,
+        emissaoTotalGCo2e: 0,
+        variacaoPercentual: {
+          energiaKwh: atual === null ? null : -100,
+          emissaoGCo2e: atual === null ? null : -100,
+        },
+        variacao: {
+          energiaTotalKwh: {
+            absoluta: atual === null ? null : -10,
+            percentual: atual === null ? null : -100,
+          },
+          emissaoTotalGCo2e: {
+            absoluta: atual === null ? null : -100,
+            percentual: atual === null ? null : -100,
+          },
+        },
+      });
+    },
+  );
+
+  it("não inventa diferença absoluta quando falta o agregado anterior", async () => {
+    repository.somarImpactoNoPeriodo
+      .mockResolvedValueOnce({
+        energiaKwh: 10,
+        emissaoGCo2e: 20,
+        coletasCalculadas: 1,
+      })
+      .mockResolvedValueOnce({
+        energiaKwh: null,
+        emissaoGCo2e: null,
+        coletasCalculadas: 0,
+      });
+    expect(
+      await service.obter(inicioPadrao, agora, PeriodoPredefinido.MES_ANTERIOR),
+    ).toMatchObject({
+      variacao: {
+        energiaTotalKwh: { absoluta: null, percentual: null },
+        emissaoTotalGCo2e: { absoluta: null, percentual: null },
+      },
+    });
+  });
+
   describe("obterSerieTemporal", () => {
     const inicio = "2026-11-01T00:00:00.000Z";
     const servicos = [
