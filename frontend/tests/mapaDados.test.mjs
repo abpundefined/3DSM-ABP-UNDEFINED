@@ -5,9 +5,12 @@ import {
   ehRespostaMapa,
   filtrarPorRegiao,
   formatarEnergia,
+  formatarIntensidadeRegional,
+  intensidadesPorRegiao,
   limitesDosServicos,
   ordenarPorEmissao,
   regioesDoMapa,
+  resumoDaIntensidadeRegional,
   rotuloEstado,
   zoomMinimoDoMapa,
 } from '../src/utils/mapaDados.ts';
@@ -121,6 +124,81 @@ test('lists each monitored region once, sorted by location', () => {
     { codigo: 'jp-east', local: 'Japão · Tóquio' },
   ]);
   assert.deepEqual(regioesDoMapa([]), []);
+});
+
+test('aggregates regional intensity by total energy and includes known unlocated services', () => {
+  const { servicos } = copia();
+  const intensidades = intensidadesPorRegiao(servicos, [
+    {
+      servicoId: 11,
+      nome: 'Worker in São Paulo',
+      estado: 'DISPONIVEL',
+      regiaoCodigo: 'br-sudeste',
+      totais: { energiaKwh: 1, emissaoGCo2e: 98 },
+    },
+    {
+      servicoId: 12,
+      nome: 'Unknown location',
+      estado: 'DISPONIVEL',
+      regiaoCodigo: 'desconhecida',
+      totais: { energiaKwh: 1, emissaoGCo2e: 1 },
+    },
+  ]);
+  const saoPaulo = intensidades.find(({ codigo }) => codigo === 'br-sudeste');
+  const toronto = intensidades.find(({ codigo }) => codigo === 'ca-central');
+
+  assert.equal(saoPaulo?.quantidadeServicos, 4);
+  assert.ok(Math.abs((saoPaulo?.intensidadeGCo2ePorKwh ?? 0) - 98) < 0.001);
+  assert.ok(Math.abs((toronto?.intensidadeGCo2ePorKwh ?? 0) - 41) < 0.01);
+  assert.equal(intensidades[0].codigo, 'jp-east');
+  assert.equal(intensidades.at(-1)?.codigo, 'eu-west');
+  assert.equal(
+    intensidades.some(({ codigo }) => codigo === 'desconhecida'),
+    false,
+  );
+});
+
+test('keeps regions without measurable energy and formats intensity explicitly', () => {
+  const { servicos } = copia();
+  const semEnergia = {
+    ...servicos[0],
+    totais: { energiaKwh: null, emissaoGCo2e: null },
+  };
+  const intensidades = intensidadesPorRegiao([semEnergia]);
+
+  assert.equal(intensidades[0].intensidadeGCo2ePorKwh, null);
+  assert.equal(formatarIntensidadeRegional(null), 'Sem dados');
+  assert.equal(formatarIntensidadeRegional(384.44), '384,4 gCO₂e/kWh');
+});
+
+test('summarizes the largest regional intensity and handles zero or insufficient data', () => {
+  const regioes = intensidadesPorRegiao(copia().servicos);
+
+  assert.match(
+    resumoDaIntensidadeRegional(regioes),
+    /Japão · Tóquio emite 11,5 vezes mais CO₂e por kWh que Canadá · Toronto/,
+  );
+  assert.match(
+    resumoDaIntensidadeRegional([
+      {
+        codigo: 'zero',
+        local: 'Região zero',
+        intensidadeGCo2ePorKwh: 0,
+        quantidadeServicos: 1,
+      },
+      {
+        codigo: 'positive',
+        local: 'Região positiva',
+        intensidadeGCo2ePorKwh: 20,
+        quantidadeServicos: 1,
+      },
+    ]),
+    /não é possível expressar a diferença em vezes/,
+  );
+  assert.match(
+    resumoDaIntensidadeRegional(regioes.slice(0, 1)),
+    /pelo menos duas regiões/,
+  );
 });
 
 test('filters items by region and keeps all of them without a region', () => {
