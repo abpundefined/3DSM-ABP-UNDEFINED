@@ -15,6 +15,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const Metodologia = lazy(() => import('./pages/Metodologia'));
 const Relatorio = lazy(() => import('./pages/Relatorio'));
 const QrCodeDemo = lazy(() => import('./pages/QrCodeDemo'));
+const Oportunidades = lazy(() => import('./pages/Oportunidades'));
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="ranking" element={<Ranking />} />
           <Route path="comparar" element={<Comparacao />} />
           <Route path="mapa" element={<Mapa />} />
+          <Route path="oportunidades" element={<Oportunidades />} />
           <Route path="servicos/:id" element={<ServicoDetalhe />} />
           <Route
             path="admin"
