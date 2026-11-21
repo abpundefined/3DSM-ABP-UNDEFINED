@@ -64,37 +64,31 @@ export default function Dashboard() {
         </div>
       </div>
       <ComparisonSelectionBar />
-      <section
-        className={`demo-toolbar${isDemo ? ' demo-toolbar--active' : ''}`}
-        aria-label="Modo de visualização"
-      >
-        <div>
-          <span className="demo-toolbar-icon">
-            <Icon name={isDemo ? 'info' : 'grid'} />
-          </span>
+      {isDemo && (
+        <section
+          className="demo-toolbar demo-toolbar--active"
+          aria-label="Modo de visualização"
+        >
           <div>
-            <strong>
-              {isDemo
-                ? 'Modo demonstração · Dados fictícios'
-                : 'Explore uma prévia do dashboard'}
-            </strong>
-            <p>
-              {isDemo
-                ? 'Valores ilustrativos para avaliar os gráficos, os indicadores e o layout.'
-                : 'Veja como os indicadores e gráficos ficam com dados de exemplo.'}
-            </p>
+            <span className="demo-toolbar-icon">
+              <Icon name="info" />
+            </span>
+            <div>
+              <strong>Modo demonstração · Dados fictícios</strong>
+              <p>
+                Valores ilustrativos para avaliar os gráficos, os indicadores e
+                o layout.
+              </p>
+            </div>
           </div>
-        </div>
-        {!MODO_DEMO_ESTATICO && (
-          <Link
-            to={isDemo ? '/' : '/?demo=1'}
-            className="button button--secondary"
-          >
-            {isDemo ? 'Sair da demonstração' : 'Ver demonstração'}
-            <Icon name={isDemo ? 'back' : 'arrow'} />
-          </Link>
-        )}
-      </section>
+          {!MODO_DEMO_ESTATICO && (
+            <Link to="/" className="button button--secondary">
+              Sair da demonstração
+              <Icon name="back" />
+            </Link>
+          )}
+        </section>
+      )}
       {isDemo ? (
         <>
           <ServiceCounter

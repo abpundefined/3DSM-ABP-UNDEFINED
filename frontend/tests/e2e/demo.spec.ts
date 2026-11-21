@@ -27,12 +27,7 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
       }),
     }),
   );
-  await page.goto('/');
-  await expect(
-    page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
-  ).toBeVisible();
-  apiRequests.length = 0;
-  await page.getByRole('link', { name: 'Ver demonstração' }).click();
+  await page.goto('/?demo=1');
   await expect(page).toHaveURL(/\?demo=1$/);
   await expect(page).toHaveTitle('Dashboard · demonstração | GreenER');
   await expect(page.getByLabel('Modo de visualização')).toContainText(
