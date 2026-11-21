@@ -155,6 +155,55 @@
   transition: width 350ms linear;
 }
 
+.modo-tv-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.modo-tv-qr {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.modo-tv-qr-codigo {
+  flex: none;
+  padding: 3px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #d7dfd9;
+}
+
+.modo-tv-qr-codigo svg {
+  display: block;
+}
+
+.modo-tv-qr-legenda {
+  display: grid;
+  gap: 2px;
+  max-width: 240px;
+}
+
+.modo-tv-qr-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modo-tv-qr-url {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  word-break: break-all;
+  line-height: 1.25;
+}
+
 .modo-tv-sair {
   min-height: 38px;
   padding: 6px 12px;
