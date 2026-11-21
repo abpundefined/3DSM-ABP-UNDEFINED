@@ -95,6 +95,39 @@ test('dashboard mostra Redução potencial no período, 4 maiores oportunidades 
   ).toHaveAttribute('href', '/servicos/4?periodo=7d');
 });
 
+test('falha das oportunidades no dashboard fica só no painel, sem novo alerta e com recarga própria', async ({
+  page,
+}) => {
+  await mockApiOportunidades(page);
+  let falhar = true;
+  await page.route('**/api/oportunidades**', (route) =>
+    falhar
+      ? route.fulfill({
+          status: 500,
+          json: { statusCode: 500, message: 'Erro interno' },
+        })
+      : route.fulfill({ json: oportunidadesDemo }),
+  );
+  await page.goto('/?periodo=7d');
+
+  const painel = page.getByRole('region', {
+    name: 'Oportunidades de redução de emissão',
+  });
+  await expect(painel).toContainText(
+    'Não foi possível carregar as oportunidades.',
+  );
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Tentar novamente' }),
+  ).toHaveCount(0);
+
+  falhar = false;
+  await painel
+    .getByRole('button', { name: 'Recarregar as oportunidades' })
+    .click();
+  await expect(painel.getByRole('article')).toHaveCount(4);
+});
+
 test('página /oportunidades e seção em /metodologia passam no Axe em claro/escuro e sem rolagem em 375 px', async ({
   page,
 }) => {

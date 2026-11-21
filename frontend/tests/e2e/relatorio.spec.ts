@@ -253,7 +253,9 @@ test('funciona no modo ?demo=1 sem chamar a API e sem rolagem horizontal', async
 
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
     ),
   ).toBe(true);
 });

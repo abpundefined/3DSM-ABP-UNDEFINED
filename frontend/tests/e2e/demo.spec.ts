@@ -43,7 +43,9 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
   await expect(metrics).toContainText('1,26');
   await expect(metrics).toContainText('Serviços ativos');
   await expect(metrics).toContainText('Serviços indisponíveis');
+  await expect(metrics.getByText('10', { exact: true })).toHaveCount(1);
   await expect(metrics.getByText('10', { exact: true })).toBeVisible();
+  await expect(metrics.getByText('1', { exact: true })).toHaveCount(1);
   await expect(metrics.getByText('1', { exact: true })).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Status dos serviços' }),

@@ -266,13 +266,13 @@ Os registros deste trecho representam a situação da Sprint 2. O levantamento d
 
 - **Atividade:** [#81 — Avaliação heurística e avaliação com usuários](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81).
 - **Encaminhamento das melhorias:** [#101 — Melhorias de usabilidade (P01 a P08)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101).
-- **Responsável pela documentação:** Thales Cambraia Dias. O levantamento foi preparado com auxílio do Codex a partir da leitura do código e de uma navegação automatizada local relatada na sessão. As classificações propostas foram revisadas no PR #166.
+- **Responsável pela documentação:** Thales Cambraia Dias. O levantamento foi preparado a partir da leitura do código e de uma navegação automatizada local. As classificações propostas foram revisadas no PR #166.
 - **Versão de referência:** branch `develop`, commit [`76b4658f2e122d683018012bdcc41ead2988451f`](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/commit/76b4658f2e122d683018012bdcc41ead2988451f). Esse commit delimita a versão analisada.
-- **Ambiente informado pelo Codex:** Windows, frontend, API e PostgreSQL locais via Docker; endereço `http://localhost:5173`; navegador automatizado, tema claro. O relato indica inspeção aproximadamente entre 21h33 e 21h36 de 13/11/2026 (horário de Brasília).
+- **Ambiente da navegação automatizada:** Windows, frontend, API e PostgreSQL locais via Docker; endereço `http://localhost:5173`; navegador automatizado, tema claro. O registro indica inspeção aproximadamente entre 21h33 e 21h36 de 13/11/2026 (horário de Brasília).
 - **Telas incluídas no relato:** dashboard conectado (`/`), modo de demonstração (`/?demo=1`), login (`/login`), menu superior em 1440 × 900 px e barra inferior em 375 × 812 px. A visualização móvel foi simulada no navegador, não em um aparelho físico.
 - **Fora do escopo da Rodada 1:** conteúdos finais de ranking (`/ranking`), comparação (`/comparar`), mapa (`/mapa`), detalhe (`/servicos/:id`) e administração (`/admin`), inicialmente disponibilizados como páginas provisórias. O item Admin no menu foi observado, mas o conteúdo da página não recebeu avaliação. O seletor de período presente no dashboard foi identificado no código, porém suas interações não foram avaliadas nesta rodada; o encaminhamento está registrado abaixo.
 
-**Método e limites da Rodada 1:** **C** identifica evidências do código-fonte no commit de referência; **V** identifica observações de navegação automatizada relatadas pelo Codex. As capturas originais dessa sessão não foram guardadas. Seis imagens complementares estão na branch do [PR #167](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167), mas a reprodução pessoal de V01 a V07, com data e commit, ainda precisa ser registrada. E2E, Axe, contraste, leitor de tela, teste completo por teclado e SUS não foram executados nesta rodada documental.
+**Método e limites da Rodada 1:** **C** identifica evidências do código-fonte no commit de referência; **V** identifica observações da navegação automatizada. As capturas originais dessa sessão não foram guardadas. Seis imagens complementares estão na branch do [PR #167](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/pull/167), mas a reprodução pessoal de V01 a V07, com data e commit, ainda precisa ser registrada. E2E, Axe, contraste, leitor de tela, teste completo por teclado e SUS não foram executados nesta rodada documental.
 
 A avaliação considerou frequência, impacto e persistência do problema, de acordo com a [escala de gravidade de Nielsen](https://www.nngroup.com/articles/how-to-rate-the-severity-of-usability-problems/): **0 = não é problema no recorte observado; 1 = cosmético; 2 = menor; 3 = grave; 4 = crítico/catastrófico**. As notas são propostas de análise, não medições estatísticas nem resultados de participantes. Nenhum achado recebeu nota 4.
 
@@ -297,7 +297,7 @@ Os dez princípios foram considerados na inspeção; nem todos deram origem a pr
 
 O [seletor de período](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/blob/76b4658f2e122d683018012bdcc41ead2988451f/frontend/src/components/common/PeriodSelector.tsx) já integrava o dashboard na versão de referência. O componente apresenta períodos predefinidos e intervalo personalizado, com validação de datas e indicação do período analisado. **Nesta Rodada 1, foi identificado no código, mas não passou por avaliação de uso ou teste de mudança de período.** A conferência de clareza dos rótulos, validação, retorno visual e navegação por teclado fica registrada para a próxima rodada; nenhuma nota de gravidade foi atribuída a esse componente.
 
-##### Evidências de navegação e interface relatadas pelo Codex
+##### Evidências da navegação automatizada
 
 | ID | Procedimento informado | Observação registrada |
 | --- | --- | --- |

@@ -168,6 +168,7 @@ erDiagram
 <p>Na raiz do repositório, crie seu arquivo de ambiente a partir do modelo:</p>
 <pre><code>Copy-Item .env.example .env
 </code></pre>
+<p>Preencha também <code>DB_PORT</code>, <code>DB_USER</code>, <code>DB_PASS</code> e <code>DB_NAME</code>, que vêm vazios no modelo e são usados pelo Compose para criar o banco (exemplo em <a href="./docs/execucao.md">docs/execucao.md</a>).</p>
 <p>Defina as URLs das duas APIs externas e segredos de inicialização antes de subir os containers (o backend valida no boot que <code>JWT_SECRET</code> tem ao menos 32 caracteres e <code>ADMIN_PASSWORD</code> ao menos 12 caracteres, sem manter valores padrão):</p>
 <table>
     <tr><th>Variável</th><th>Padrão / Exemplo</th><th>Descrição</th></tr>
@@ -297,7 +298,7 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
     </tr>
     <tr>
         <td><img src="./docs/evidencias/sprint-3-detalhe-simulador-desktop.png" alt="Detalhe do serviço em desktop (1440x900) com histórico temporal, simulador de região e matriz horária" width="420"><br><em>Série histórica de energia e emissão, simulador “E se rodasse em outra região?” e melhor janela horária (<code>/servicos/1?demo=1</code>).</em></td>
-        <td><img src="./docs/evidencias/sprint-3-admin-saude-desktop.png" alt="Página de Administração em desktop (1440x900) com intervalos de monitoramento e saúde das integrações" width="420"><br><em>Área restrita com JWT para configurar intervalos de coleta/descoberta e monitorar agregador e API de carbono (<code>/admin?demo=1</code>).</em></td>
+        <td><img src="./docs/evidencias/sprint-3-admin-saude-desktop.png" alt="Página de Administração em desktop (1440x900) com intervalos de monitoramento e saúde das integrações" width="420"><br><em>Área restrita com JWT para configurar intervalos de coleta/descoberta e monitorar agregador e API de carbono (<code>/admin</code>, após o login).</em></td>
     </tr>
     <tr>
         <th colspan="2">Metodologia (“Como calculamos”)</th>

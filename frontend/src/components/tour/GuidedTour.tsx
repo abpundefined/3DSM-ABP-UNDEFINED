@@ -144,7 +144,10 @@ export default function GuidedTour({
     }
 
     alvo.classList.add('tour-target-highlight');
-    if (typeof alvo.scrollIntoView === 'function') {
+    if (
+      houveInteracaoRef.current &&
+      typeof alvo.scrollIntoView === 'function'
+    ) {
       alvo.scrollIntoView({
         block: 'nearest',
         inline: 'nearest',
