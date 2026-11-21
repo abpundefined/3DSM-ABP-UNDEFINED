@@ -17,6 +17,12 @@ export interface ServicoParaRanking {
   id: number;
   nome: string;
   estadoAtual: EstadoMonitoramento;
+  regiaoCodigo?: string;
+  regiao?: {
+    pais: string;
+    regiao: string;
+    cidade: string | null;
+  };
 }
 
 export interface TotaisAmbientais {
@@ -268,7 +274,19 @@ export class IndicadoresRepository {
 
   listarServicosParaRanking(): Promise<ServicoParaRanking[]> {
     return this.prisma.servico.findMany({
-      select: { id: true, nome: true, estadoAtual: true },
+      select: {
+        id: true,
+        nome: true,
+        estadoAtual: true,
+        regiaoCodigo: true,
+        regiao: {
+          select: {
+            pais: true,
+            regiao: true,
+            cidade: true,
+          },
+        },
+      },
     });
   }
 }

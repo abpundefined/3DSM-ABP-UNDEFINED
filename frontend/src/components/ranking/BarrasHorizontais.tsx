@@ -12,7 +12,7 @@ import usePeriod from '../../hooks/usePeriod';
 import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import { abreviarNome, formatarNumero } from '../../utils/ranking';
 
-export type Barra = { servicoId: number; nome: string; valor: number };
+export type Barra = { servicoId?: number; nome: string; valor: number };
 
 type BarrasHorizontaisProps = {
   barras: Barra[];
@@ -86,9 +86,12 @@ export default function BarrasHorizontais({
           radius={[0, 4, 4, 0]}
           maxBarSize={24}
           isAnimationActive={!reduceMotion}
-          onClick={(_, indice) =>
-            navigate(`/servicos/${barras[indice].servicoId}${linkSearch}`)
-          }
+          onClick={(_, indice) => {
+            const servicoId = barras[indice]?.servicoId;
+            if (servicoId !== undefined) {
+              navigate(`/servicos/${servicoId}${linkSearch}`);
+            }
+          }}
         />
       </BarChart>
     </ResponsiveContainer>

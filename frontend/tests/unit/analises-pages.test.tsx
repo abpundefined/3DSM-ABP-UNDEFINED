@@ -239,6 +239,61 @@ describe('Ranking', () => {
     expect(buscarRankingMock).not.toHaveBeenCalled();
   });
 
+  it('agrupa o ranking por região e país mantendo o grupo na URL e somando totais', async () => {
+    const user = userEvent.setup();
+    renderRanking('/ranking?demo=1');
+
+    const grupoControles = screen.getByRole('group', {
+      name: 'Agrupar o ranking por',
+    });
+    const abaServico = within(grupoControles).getByRole('button', {
+      name: 'Serviço',
+    });
+    const abaRegiao = within(grupoControles).getByRole('button', {
+      name: 'Região',
+    });
+    const abaPais = within(grupoControles).getByRole('button', {
+      name: 'País',
+    });
+
+    expect(abaServico).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(abaRegiao);
+    expect(abaRegiao).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      new URLSearchParams(
+        screen.getByLabelText('Consulta atual').textContent ?? '',
+      ).get('grupo'),
+    ).toBe('regiao');
+
+    const tabela = within(
+      screen.getByRole('region', { name: 'Tabela do ranking' }),
+    );
+    expect(tabela.getByRole('columnheader', { name: 'Região' })).toBeVisible();
+    expect(
+      tabela.getByRole('columnheader', { name: 'Serviços' }),
+    ).toBeVisible();
+    expect(
+      tabela.getByRole('rowheader', { name: 'Estados Unidos · Ashburn' }),
+    ).toBeVisible();
+    expect(
+      tabela.getByRole('rowheader', { name: 'Brasil · São Paulo' }),
+    ).toBeVisible();
+
+    await user.click(abaPais);
+    expect(abaPais).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      new URLSearchParams(
+        screen.getByLabelText('Consulta atual').textContent ?? '',
+      ).get('grupo'),
+    ).toBe('pais');
+    expect(tabela.getByRole('columnheader', { name: 'País' })).toBeVisible();
+    expect(
+      tabela.getByRole('rowheader', { name: 'Estados Unidos' }),
+    ).toBeVisible();
+    expect(tabela.getByRole('rowheader', { name: 'Brasil' })).toBeVisible();
+  });
+
   it('mostra variações globais e ordena todas as colunas da tabela por serviço', async () => {
     const user = userEvent.setup();
     buscarRankingMock.mockResolvedValue(

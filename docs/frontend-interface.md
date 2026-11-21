@@ -31,7 +31,7 @@ As páginas são carregadas com `lazy`. Enquanto seu arquivo JavaScript chega, `
 | `/`                    | Dashboard     | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                                                                                                           |
 | `/login`               | Login         | Formulário com validação e mostrar/ocultar senha. Envia `POST /auth/login` e volta à página de origem.                                                                                    |
 | `/admin`               | Administração | Exige login. Lê e salva os intervalos de coleta e de descoberta.                                                                                                                          |
-| `/ranking`             | Ranking       | Os 10 serviços de maior energia ou emissão no período (`GET /ranking`), com gráficos, tabela, lista sem dados e participação por região. Funciona com `?demo=1`.                       |
+| `/ranking`             | Ranking       | Os 10 serviços de maior energia ou emissão no período (`GET /ranking`), com abas de agrupamento por Serviço, Região ou País (`?grupo=regiao`, `?grupo=pais`), gráficos, tabela, lista sem dados e participação por região. Funciona com `?demo=1`. |
 | `/servicos/:id`        | Detalhe       | Cabeçalho com estado, localização e última coleta; totais e séries de energia/emissão (`GET /servicos/:id/historico`), com seletor de período, estados de feedback e acesso à comparação. |
 | Qualquer outro caminho | NotFound      | Mensagem de página não encontrada e retorno ao dashboard.                                                                                                                                 |
 
