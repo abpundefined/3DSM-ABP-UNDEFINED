@@ -18,6 +18,7 @@ const services = [
     regiao: 'São Paulo',
     cidade: 'São Paulo',
   },
+  selo: 'A',
   estadoAtual: 'DISPONIVEL',
 }));
 
@@ -187,6 +188,7 @@ test('acumula seleções do ranking no dashboard e abre a comparação', async (
           energiaKwh: 0.002,
           emissaoGCo2e: 0.4,
           coletasValidas: 2,
+          selo: service.selo,
         })),
         semDados: [],
       },

@@ -8,6 +8,7 @@ const servicosMock = [
     nome: 'Video Engine',
     regiaoCodigo: 'br-sudeste',
     localizacao: { pais: 'Brasil', regiao: 'Sudeste', cidade: 'São Paulo' },
+    selo: 'B',
     estadoAtual: 'DISPONIVEL',
     componentes: {
       cpuW: 0.4,
@@ -27,6 +28,7 @@ const servicosMock = [
       regiao: 'Virginia',
       cidade: 'Ashburn',
     },
+    selo: 'A',
     estadoAtual: 'DISPONIVEL',
     componentes: {
       cpuW: 0.1,
@@ -42,6 +44,7 @@ const servicosMock = [
     nome: 'Email Worker',
     regiaoCodigo: 'br-sudeste',
     localizacao: { pais: 'Brasil', regiao: 'Sudeste', cidade: 'São Paulo' },
+    selo: '—',
     estadoAtual: 'SEM_METRICAS',
     componentes: null,
   },
@@ -125,6 +128,7 @@ async function mockServiceDetailApi(page: Page) {
           inicio: '2026-11-20T10:00:00.000Z',
           energiaKwh: 0.001,
           emissaoGCo2e: 0.1,
+          selo: 'A',
           componentes: {
             cpuW: 0.78,
             memoriaW: 0.12,
@@ -137,6 +141,7 @@ async function mockServiceDetailApi(page: Page) {
           inicio: '2026-11-20T11:00:00.000Z',
           energiaKwh: 0.0012,
           emissaoGCo2e: 0.12,
+          selo: 'A',
           componentes: {
             cpuW: 0.78,
             memoriaW: 0.12,

@@ -10,11 +10,13 @@ export type ItemRanking = {
   energiaKwh: number;
   emissaoGCo2e: number;
   coletasValidas: number;
+  selo: string;
 };
 
 export type ServicoSemDados = {
   servicoId: number;
   nome: string;
+  selo: string;
 };
 
 export type RespostaRanking = {

@@ -1,3 +1,17 @@
+export type Selo = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | '—';
+
+export function isSelo(value: unknown): value is Selo {
+  return (
+    value === 'A' ||
+    value === 'B' ||
+    value === 'C' ||
+    value === 'D' ||
+    value === 'E' ||
+    value === 'F' ||
+    value === '—'
+  );
+}
+
 export function getSeloColor(selo: string): string {
   switch (selo) {
     case 'A':

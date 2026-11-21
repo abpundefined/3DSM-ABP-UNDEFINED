@@ -88,6 +88,7 @@ function mockApiRelatorio(page: Page) {
               energiaKwh: 6.1,
               emissaoGCo2e: 2500,
               coletasValidas: 40,
+              selo: 'B',
             },
             {
               posicao: 2,
@@ -96,6 +97,7 @@ function mockApiRelatorio(page: Page) {
               energiaKwh: 3.1,
               emissaoGCo2e: 1300,
               coletasValidas: 35,
+              selo: 'A',
             },
             {
               posicao: 3,
@@ -104,6 +106,7 @@ function mockApiRelatorio(page: Page) {
               energiaKwh: 1.8,
               emissaoGCo2e: 640,
               coletasValidas: 25,
+              selo: 'A',
             },
             {
               posicao: 4,
@@ -112,6 +115,7 @@ function mockApiRelatorio(page: Page) {
               energiaKwh: 0.9,
               emissaoGCo2e: 280,
               coletasValidas: 12,
+              selo: 'A',
             },
             {
               posicao: 5,
@@ -120,6 +124,7 @@ function mockApiRelatorio(page: Page) {
               energiaKwh: 0.5,
               emissaoGCo2e: 164,
               coletasValidas: 8,
+              selo: 'A',
             },
           ],
           semDados: [],

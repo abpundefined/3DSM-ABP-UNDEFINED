@@ -23,9 +23,16 @@ function adicionar(
   const { energiaKwh, emissaoGCo2e } = totais;
 
   if (energiaKwh === null || emissaoGCo2e === null) {
-    semDados.push({ servicoId, nome });
+    semDados.push({ servicoId, nome, selo: '—' });
   } else {
-    itens.push({ servicoId, nome, energiaKwh, emissaoGCo2e, coletasValidas });
+    itens.push({
+      servicoId,
+      nome,
+      energiaKwh,
+      emissaoGCo2e,
+      coletasValidas,
+      selo: 'A',
+    });
   }
 }
 
@@ -50,6 +57,7 @@ export function rankingDemo(metrica: MetricaRanking): RespostaRanking {
       emissaoAnteriorGCo2e: null,
       diferencaGCo2e: null,
       variacaoPercentual: null,
+      selo: item.selo,
     })),
     metrica,
     itens: itens

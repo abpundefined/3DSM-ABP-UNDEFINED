@@ -187,10 +187,53 @@ export default function Metodologia() {
 
       <section
         className="methodology-card"
+        aria-labelledby="metodologia-selo-title"
+      >
+        <h2 id="metodologia-selo-title">3. Selo de eficiência</h2>
+        <p>
+          O selo classifica a emissão média por hora em gCO₂e/h. No ranking,
+          divide-se a emissão total do período pela duração do período em horas;
+          nos cards, considera-se o intervalo da última coleta válida. A letra A
+          representa a menor emissão e a F, a maior.
+        </p>
+        <dl className="methodology-factors-grid">
+          <div>
+            <dt>A — Melhor eficiência</dt>
+            <dd>Até 10 gCO₂e/h</dd>
+          </div>
+          <div>
+            <dt>B</dt>
+            <dd>Acima de 10 até 20 gCO₂e/h</dd>
+          </div>
+          <div>
+            <dt>C</dt>
+            <dd>Acima de 20 até 30 gCO₂e/h</dd>
+          </div>
+          <div>
+            <dt>D</dt>
+            <dd>Acima de 30 até 40 gCO₂e/h</dd>
+          </div>
+          <div>
+            <dt>E</dt>
+            <dd>Acima de 40 até 50 gCO₂e/h</dd>
+          </div>
+          <div>
+            <dt>F — Maior emissão</dt>
+            <dd>Acima de 50 gCO₂e/h</dd>
+          </div>
+        </dl>
+        <p>
+          <strong>—</strong> significa que não há emissão válida no período para
+          calcular o selo; não significa emissão zero.
+        </p>
+      </section>
+
+      <section
+        className="methodology-card"
         aria-labelledby="metodologia-carbono-title"
       >
         <h2 id="metodologia-carbono-title">
-          3. Origem da intensidade de carbono e tratamento de falhas
+          4. Origem da intensidade de carbono e tratamento de falhas
         </h2>
         <p>
           A intensidade regional em <code>gCO₂e/kWh</code> é consultada na{' '}
@@ -220,7 +263,7 @@ export default function Metodologia() {
         aria-labelledby="metodologia-sci-title"
       >
         <h2 id="metodologia-sci-title">
-          4. Relação com a especificação SCI (Green Software Foundation) e
+          5. Relação com a especificação SCI (Green Software Foundation) e
           limites do modelo
         </h2>
         <p>
@@ -255,7 +298,7 @@ export default function Metodologia() {
         aria-labelledby="metodologia-equivalencias-title"
       >
         <h2 id="metodologia-equivalencias-title">
-          5. Equivalências do CO₂e no dia a dia
+          6. Equivalências do CO₂e no dia a dia
         </h2>
         <p>
           Para facilitar a leitura de emissões em gramas ou quilogramas, os
@@ -296,7 +339,7 @@ export default function Metodologia() {
         aria-labelledby="metodologia-timeshifting-title"
       >
         <h2 id="metodologia-timeshifting-title">
-          6. Melhor horário e <em>time-shifting</em>
+          7. Melhor horário e <em>time-shifting</em>
         </h2>
         <p>
           O mapa de calor de horários organiza as coletas em uma{' '}
@@ -321,7 +364,7 @@ export default function Metodologia() {
         aria-labelledby="metodologia-picos-title"
       >
         <h2 id="metodologia-picos-title">
-          7. Detecção de picos incomuns nos gráficos
+          8. Detecção de picos incomuns nos gráficos
         </h2>
         <p>
           Nos gráficos de tendência do dashboard e de histórico no detalhe do

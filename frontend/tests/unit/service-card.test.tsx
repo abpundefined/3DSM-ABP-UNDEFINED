@@ -9,6 +9,7 @@ const service: LiveService = {
   idExterno: 'api',
   nome: 'API de pagamentos',
   regiaoCodigo: 'br-sudeste',
+  selo: 'F',
   localizacao: { pais: 'Brasil', regiao: 'Sudeste', cidade: 'São Paulo' },
   estadoAtual: 'DISPONIVEL',
   latestCollection: {
@@ -34,6 +35,11 @@ describe('ServiceCard', () => {
     expect(screen.getByText('2,00 GB')).toBeVisible();
     expect(screen.getByText('12,30 Wh')).toBeVisible();
     expect(screen.getByText('1,00 kgCO₂e')).toBeVisible();
+    expect(
+      screen.getByRole('img', {
+        name: 'Selo de eficiência F: > 50g CO2e/h',
+      }),
+    ).toBeVisible();
     expect(screen.getByText('—')).toBeVisible();
   });
 
@@ -42,6 +48,7 @@ describe('ServiceCard', () => {
     const onSelect = vi.fn();
     const semColeta: LiveService = {
       ...service,
+      selo: '—',
       localizacao: null,
       estadoAtual: 'SEM_METRICAS',
       latestCollection: null,
@@ -51,7 +58,7 @@ describe('ServiceCard', () => {
     const button = screen.getByRole('button', { name: semColeta.nome });
     expect(screen.getByText('Sem métricas')).toBeVisible();
     expect(screen.getByText('Cidade não informada')).toBeVisible();
-    expect(screen.getAllByText('—')).toHaveLength(6);
+    expect(screen.getAllByText('—')).toHaveLength(7);
     await user.click(button);
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenLastCalledWith(semColeta, button);
