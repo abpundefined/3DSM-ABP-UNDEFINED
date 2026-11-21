@@ -28,6 +28,7 @@ import {
   formatEmission,
   formatEnergy,
 } from '../utils/formatters';
+import { exportDataToCsv } from '../utils/csv-export.utils';
 import { summarizeServiceHistory } from '../utils/serviceHistory';
 import './service-detail.css';
 
@@ -37,11 +38,29 @@ type ViewState =
   | { status: 'notFound' }
   | { status: 'ready'; data: ServiceDetailData };
 
+function dateForCsv(isoDate: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(isoDate));
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  if (!year || !month || !day) {
+    throw new Error('Não foi possível determinar a data do histórico.');
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
 export default function ServicoDetalhe() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
-  const { apiQuery, linkSearch } = usePeriod();
+  const { apiQuery, linkSearch, period } = usePeriod();
   const serviceId = Number(id);
   const validServiceId =
     typeof id === 'string' &&
@@ -124,6 +143,40 @@ export default function ServicoDetalhe() {
     view.status === 'ready' ? summarizeServiceHistory(view.data.history) : null;
   const historyHasData =
     summary?.possuiEnergia === true || summary?.possuiEmissao === true;
+  const historyForExport =
+    view.status === 'ready'
+      ? view.data.history.map(({ inicio, energiaKwh, emissaoGCo2e }) => ({
+          inicio,
+          energiaKwh,
+          emissaoGCo2e,
+        }))
+      : [];
+  const firstHistoryPoint = historyForExport[0];
+  const lastHistoryPoint = historyForExport.at(-1);
+  const exportPeriod =
+    period.kind === 'custom'
+      ? { startDate: period.inicio, endDate: period.fim }
+      : {
+          startDate: firstHistoryPoint
+            ? dateForCsv(firstHistoryPoint.inicio)
+            : '',
+          endDate: lastHistoryPoint ? dateForCsv(lastHistoryPoint.inicio) : '',
+        };
+  const exportDisabled =
+    view.status !== 'ready' || historyForExport.length === 0;
+
+  function exportHistory() {
+    if (exportDisabled) {
+      return;
+    }
+
+    exportDataToCsv(
+      historyForExport,
+      'greener-detalhe',
+      exportPeriod.startDate,
+      exportPeriod.endDate,
+    );
+  }
 
   function getCompareHref() {
     if (!service) {
@@ -153,20 +206,30 @@ export default function ServicoDetalhe() {
           </h1>
           {locationLabel && <p className="page-subtitle">{locationLabel}</p>}
         </div>
-        {service && status && (
-          <div className="service-detail-actions">
-            <span
-              className={`service-detail-status service-detail-status--${status.className}`}
-            >
-              <Icon name={status.icon} />
-              {status.label}
-            </span>
-            <Link to={getCompareHref()} className="button button--secondary">
-              Comparar com outro serviço
-              <Icon name="compare" />
-            </Link>
-          </div>
-        )}
+        <div className="service-detail-actions">
+          <button
+            className="button button--secondary"
+            type="button"
+            disabled={exportDisabled}
+            onClick={exportHistory}
+          >
+            Exportar CSV
+          </button>
+          {service && status && (
+            <>
+              <span
+                className={`service-detail-status service-detail-status--${status.className}`}
+              >
+                <Icon name={status.icon} />
+                {status.label}
+              </span>
+              <Link to={getCompareHref()} className="button button--secondary">
+                Comparar com outro serviço
+                <Icon name="compare" />
+              </Link>
+            </>
+          )}
+        </div>
       </header>
 
       {view.status === 'loading' && (
