@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-test('abre automaticamente só na primeira visita, persiste no localStorage e reabre pelo cabeçalho', async ({
+test('abre automaticamente só na primeira visita, persiste no localStorage e reabre pelo rodapé', async ({
   page,
 }) => {
   await page.route('**/api/servicos', (route) => route.fulfill({ json: [] }));
@@ -42,8 +42,10 @@ test('abre automaticamente só na primeira visita, persiste no localStorage e re
   ).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  // Reabre pelo botão "Fazer tour" no cabeçalho com foco gerenciado e fecha com Esc
-  const botaoTour = page.getByRole('button', { name: 'Fazer tour' });
+  // Reabre pelo botão "Fazer tour" no rodapé com foco gerenciado e fecha com Esc
+  const botaoTour = page
+    .getByRole('contentinfo')
+    .getByRole('button', { name: 'Fazer tour' });
   await botaoTour.click();
   await expect(dialog).toBeVisible();
   await expect(dialog).toBeFocused();
