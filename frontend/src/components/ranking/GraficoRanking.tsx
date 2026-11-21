@@ -1,5 +1,9 @@
 import { useId } from 'react';
-import type { ItemRanking, MetricaRanking } from '../../types/ranking';
+import type {
+  AgrupamentoRanking,
+  ItemRanking,
+  MetricaRanking,
+} from '../../types/ranking';
 import {
   METRICAS,
   escalaDaMetrica,
@@ -11,11 +15,13 @@ import BarrasHorizontais from './BarrasHorizontais';
 type GraficoRankingProps = {
   itens: ItemRanking[];
   metrica: MetricaRanking;
+  grupo?: AgrupamentoRanking;
 };
 
 export default function GraficoRanking({
   itens,
   metrica,
+  grupo = 'servico',
 }: GraficoRankingProps) {
   const tituloId = useId();
   const { nome, rotulo } = METRICAS[metrica];
@@ -25,10 +31,10 @@ export default function GraficoRanking({
   return (
     <section className="ranking-bloco" aria-labelledby={tituloId}>
       <h2 id={tituloId}>Ranking por {nome}</h2>
-      <p className="ranking-resumo">{resumoDoRanking(itens, metrica)}</p>
+      <p className="ranking-resumo">{resumoDoRanking(itens, metrica, grupo)}</p>
       <BarrasHorizontais
         barras={itens.map((item, indice) => ({
-          servicoId: item.servicoId,
+          servicoId: grupo === 'servico' ? item.servicoId : undefined,
           nome: item.nome,
           valor: valores[indice] * fator,
         }))}
