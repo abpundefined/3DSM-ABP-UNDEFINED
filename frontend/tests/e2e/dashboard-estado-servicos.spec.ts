@@ -11,6 +11,7 @@ const servicos = [
     idExterno: 'api-ativa',
     nome: 'API Ativa',
     regiaoCodigo: 'br-sudeste',
+    selo: 'A',
     estadoAtual: 'DISPONIVEL',
   },
   {
@@ -18,6 +19,7 @@ const servicos = [
     idExterno: 'worker-parado',
     nome: 'Worker Parado',
     regiaoCodigo: 'br-sudeste',
+    selo: '—',
     estadoAtual: 'INDISPONIVEL',
   },
   {
@@ -25,6 +27,7 @@ const servicos = [
     idExterno: 'fila-nova',
     nome: 'Fila Nova',
     regiaoCodigo: 'br-sudeste',
+    selo: '—',
     estadoAtual: 'SEM_METRICAS',
   },
   {
@@ -32,6 +35,7 @@ const servicos = [
     idExterno: 'cron-removido',
     nome: 'Cron Removido',
     regiaoCodigo: 'br-sudeste',
+    selo: '—',
     estadoAtual: 'REMOVIDO',
   },
 ];

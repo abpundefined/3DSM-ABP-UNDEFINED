@@ -22,6 +22,7 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
             latitude: -23.55,
             longitude: -46.63,
           },
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
         {
@@ -37,6 +38,7 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
             latitude: null,
             longitude: null,
           },
+          selo: '—',
           estadoAtual: 'INDISPONIVEL',
         },
       ]),
@@ -115,7 +117,12 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(payment).toContainText('Indisponível');
   await expect(payment).toContainText('Irlanda · Leinster');
   await expect(payment).toContainText('Cidade não informada');
-  await expect(payment.getByText('—', { exact: true })).toHaveCount(6);
+  await expect(
+    payment.getByRole('img', {
+      name: 'Selo de eficiência —: Sem coleta válida no período',
+    }),
+  ).toBeVisible();
+  await expect(payment.getByText('—', { exact: true })).toHaveCount(7);
   const indicators = page.getByLabel('Indicadores gerais');
   await expect(indicators).toContainText('3,75');
   await expect(indicators).toContainText('2,35');
@@ -134,6 +141,7 @@ test('lista conectada filtra e ordena serviços pelos dados retornados', async (
       idExterno: 'beta',
       nome: 'Beta API',
       regiaoCodigo: 'br-sudeste',
+      selo: 'D',
       estadoAtual: 'INDISPONIVEL',
       energiaKwh: 4,
       emissaoGCo2e: 1000,
@@ -143,6 +151,7 @@ test('lista conectada filtra e ordena serviços pelos dados retornados', async (
       idExterno: 'alpha',
       nome: 'Alpha API',
       regiaoCodigo: 'br-sudeste',
+      selo: 'E',
       estadoAtual: 'DISPONIVEL',
       energiaKwh: 2,
       emissaoGCo2e: 2000,
@@ -152,6 +161,7 @@ test('lista conectada filtra e ordena serviços pelos dados retornados', async (
       idExterno: 'gamma',
       nome: 'Gamma API',
       regiaoCodigo: 'br-sudeste',
+      selo: '—',
       estadoAtual: 'SEM_METRICAS',
       energiaKwh: null,
       emissaoGCo2e: null,
@@ -161,6 +171,7 @@ test('lista conectada filtra e ordena serviços pelos dados retornados', async (
       idExterno: 'delta',
       nome: 'Delta API',
       regiaoCodigo: 'br-sudeste',
+      selo: 'C',
       estadoAtual: 'DISPONIVEL',
       energiaKwh: 1,
       emissaoGCo2e: 500,
@@ -170,6 +181,7 @@ test('lista conectada filtra e ordena serviços pelos dados retornados', async (
       idExterno: 'archive',
       nome: 'Archive API',
       regiaoCodigo: 'br-sudeste',
+      selo: 'B',
       estadoAtual: 'REMOVIDO',
       energiaKwh: 8,
       emissaoGCo2e: 4000,
@@ -321,6 +333,7 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
           idExterno: 'billing-api',
           nome: 'Billing API',
           regiaoCodigo: 'br-sudeste',
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
       ]),
@@ -479,6 +492,7 @@ test('serviço sem localização usa o código da região e não quebra o card',
           nome: 'Legacy API',
           regiaoCodigo: 'jp-east',
           localizacao: null,
+          selo: '—',
           estadoAtual: 'SEM_METRICAS',
         },
       ]),

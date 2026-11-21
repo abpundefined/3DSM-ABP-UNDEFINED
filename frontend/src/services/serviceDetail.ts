@@ -7,11 +7,13 @@ import {
   isComponentesEnergia,
   type ComponentesEnergia,
 } from '../utils/composicaoEnergia';
+import { isSelo } from '../utils/selo';
 
 export type ServiceHistoryPoint = {
   inicio: string;
   energiaKwh: number | null;
   emissaoGCo2e: number | null;
+  selo: string;
   componentes?: ComponentesEnergia | null;
   coletas?: number | null;
   ativo?: number;
@@ -82,6 +84,7 @@ function isBackendService(value: unknown): value is BackendService {
     typeof value.idExterno === 'string' &&
     typeof value.nome === 'string' &&
     typeof value.regiaoCodigo === 'string' &&
+    isSelo(value.selo) &&
     isServiceStatus(value.estadoAtual) &&
     isServiceLocation(value.localizacao)
   );
@@ -127,7 +130,8 @@ function parseHistory(value: unknown): ServiceHistoryPoint[] {
       !('energiaKwh' in point) ||
       !isNullableNumber(point.energiaKwh) ||
       !('emissaoGCo2e' in point) ||
-      !isNullableNumber(point.emissaoGCo2e)
+      !isNullableNumber(point.emissaoGCo2e) ||
+      !isSelo(point.selo)
     ) {
       throw new Error('A resposta do histórico do serviço é inválida.');
     }
@@ -148,6 +152,7 @@ function parseHistory(value: unknown): ServiceHistoryPoint[] {
       energiaKwh: point.energiaKwh === null ? null : Number(point.energiaKwh),
       emissaoGCo2e:
         point.emissaoGCo2e === null ? null : Number(point.emissaoGCo2e),
+      selo: point.selo,
       ...('componentes' in point
         ? {
             componentes: isComponentesEnergia(point.componentes)

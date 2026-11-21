@@ -18,6 +18,7 @@ import {
 import { converterPeriodo, TIME_ZONE } from "./date-conversion.helper";
 import { HistoricoServicoQueryDto } from "./dto/historico-servico-query.dto";
 import { IntensidadeHorariosQueryDto } from "./dto/intensidade-horarios-query.dto";
+import { calcularSeloEficiencia } from "./ranking.service";
 import { MetaCarbonoResponseDto } from "./dto/meta-carbono-response.dto";
 import { PeriodoPredefinido } from "./dto/periodo.dto";
 import { SerieTemporalQueryDto } from "./dto/serie-temporal-query.dto";
@@ -37,6 +38,7 @@ export interface ItemHistoricoServico {
   inicio: string;
   energiaKwh: number | null;
   emissaoGCo2e: number | null;
+  selo: string;
   cpuMedia: number | null;
   memoriaMediaMb: number | null;
   componentes: ComponentesPotencia | null;
@@ -309,6 +311,7 @@ export class IndicadoresService {
     const seriePorInicio = new Map(
       serie.map((ponto) => [ponto.inicio.getTime(), ponto]),
     );
+    const duracaoIntervaloEmHoras = granularidade === "hora" ? 1 : 24;
 
     return intervalos.map((intervalo) => {
       const ponto = seriePorInicio.get(intervalo.getTime());
@@ -332,6 +335,11 @@ export class IndicadoresService {
         inicio: intervalo.toISOString(),
         energiaKwh: ponto?.energiaKwh ?? null,
         emissaoGCo2e: ponto?.emissaoGCo2e ?? null,
+        selo: calcularSeloEficiencia(
+          ponto?.emissaoGCo2e == null
+            ? null
+            : ponto.emissaoGCo2e / duracaoIntervaloEmHoras,
+        ),
         cpuMedia: ponto?.cpuMedia ?? null,
         memoriaMediaMb: ponto?.memoriaMediaMb ?? null,
         componentes,

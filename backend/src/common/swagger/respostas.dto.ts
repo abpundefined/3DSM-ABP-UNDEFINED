@@ -33,6 +33,8 @@ export class ServicoRespostaDto {
   @ApiProperty({ type: String, format: "date-time" }) atualizadoEm!: Date;
   @ApiProperty({ type: ComponentesEnergiaRespostaDto, nullable: true })
   componentes!: ComponentesEnergiaRespostaDto | null;
+  @ApiProperty({ type: String, example: "A" })
+  selo!: string;
 }
 
 export class ServicoDescobertoRespostaDto {

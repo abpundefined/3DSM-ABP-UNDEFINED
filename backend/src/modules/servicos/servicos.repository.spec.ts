@@ -256,6 +256,8 @@ describe("ServicosRepository", () => {
           orderBy: { iniciadaEm: "desc" },
           take: 1,
           select: {
+            emissaoGCo2e: true,
+            intervaloColetaSegundos: true,
             cpuPercent: true,
             memoryGb: true,
             diskGb: true,

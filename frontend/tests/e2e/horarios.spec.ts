@@ -57,6 +57,7 @@ async function simularDetalheDoServico(page: Page) {
           nome: servico.nome,
           regiaoCodigo: servico.regiaoCodigo,
           localizacao: null,
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
       ],

@@ -9,6 +9,7 @@ import {
   ehPeriodoConsultado,
   ehVariacaoPercentual,
 } from './variacao.ts';
+import { isSelo } from './selo.ts';
 import {
   type Escala,
   escalaDeEmissao,
@@ -58,7 +59,8 @@ function ehServico(valor: unknown): valor is Record<string, unknown> {
   return (
     ehObjeto(valor) &&
     Number.isInteger(valor.servicoId) &&
-    typeof valor.nome === 'string'
+    typeof valor.nome === 'string' &&
+    isSelo(valor.selo)
   );
 }
 

@@ -77,6 +77,7 @@ export class RankingController {
             required: [
               "servicoId",
               "nome",
+              "selo",
               "emissaoAtualGCo2e",
               "emissaoAnteriorGCo2e",
               "diferencaGCo2e",
@@ -85,6 +86,7 @@ export class RankingController {
             properties: {
               servicoId: { type: "integer" },
               nome: { type: "string" },
+              selo: { type: "string" },
               emissaoAtualGCo2e: { type: "number", nullable: true },
               emissaoAnteriorGCo2e: { type: "number", nullable: true },
               diferencaGCo2e: { type: "number", nullable: true },
@@ -112,6 +114,7 @@ export class RankingController {
               "energiaKwh",
               "emissaoGCo2e",
               "coletasValidas",
+              "selo",
             ],
             properties: {
               posicao: { type: "integer" },
@@ -120,6 +123,7 @@ export class RankingController {
               energiaKwh: { type: "number" },
               emissaoGCo2e: { type: "number" },
               coletasValidas: { type: "integer" },
+              selo: { type: "string" },
             },
           },
         },
@@ -127,10 +131,11 @@ export class RankingController {
           type: "array",
           items: {
             type: "object",
-            required: ["servicoId", "nome"],
+            required: ["servicoId", "nome", "selo"],
             properties: {
               servicoId: { type: "integer" },
               nome: { type: "string" },
+              selo: { type: "string" },
             },
           },
         },

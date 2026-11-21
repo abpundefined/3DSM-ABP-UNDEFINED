@@ -6,6 +6,7 @@ export type VariacaoPercentual = {
 export type VariacaoPorServico = {
   servicoId: number;
   nome: string;
+  selo: string;
   emissaoAtualGCo2e: number | null;
   emissaoAnteriorGCo2e: number | null;
   diferencaGCo2e: number | null;

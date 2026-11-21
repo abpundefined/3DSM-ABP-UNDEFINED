@@ -7,11 +7,20 @@ import type {
 } from '../types/ranking';
 import type { RespostaSerie } from '../types/serie';
 import { LIMITE_DO_RANKING, valorDaMetrica } from '../utils/ranking.ts';
+import type { Selo } from '../utils/selo.ts';
 import { mapaDemo } from './mapa.ts';
 
 // Mesmos serviços e totais do mapa de demonstração. Não representam coletas reais.
 const itens: Omit<ItemRanking, 'posicao'>[] = [];
 const semDados: ServicoSemDados[] = [];
+const SELOS_DEMO = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+] as const satisfies readonly Selo[];
 
 function adicionar(
   {
@@ -24,9 +33,16 @@ function adicionar(
   const { energiaKwh, emissaoGCo2e } = totais;
 
   if (energiaKwh === null || emissaoGCo2e === null) {
-    semDados.push({ servicoId, nome });
+    semDados.push({ servicoId, nome, selo: '—' });
   } else {
-    itens.push({ servicoId, nome, energiaKwh, emissaoGCo2e, coletasValidas });
+    itens.push({
+      servicoId,
+      nome,
+      energiaKwh,
+      emissaoGCo2e,
+      coletasValidas,
+      selo: SELOS_DEMO[itens.length % SELOS_DEMO.length],
+    });
   }
 }
 
@@ -51,6 +67,7 @@ export function rankingDemo(metrica: MetricaRanking): RespostaRanking {
       emissaoAnteriorGCo2e: null,
       diferencaGCo2e: null,
       variacaoPercentual: null,
+      selo: item.selo,
     })),
     metrica,
     itens: itens

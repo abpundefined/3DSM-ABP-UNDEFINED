@@ -31,6 +31,7 @@ async function dashboardApi(page: Page) {
           idExterno: 'billing-api',
           nome: 'Billing API',
           regiaoCodigo: 'br-sudeste',
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
       ],

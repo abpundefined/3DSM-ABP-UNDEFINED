@@ -10,6 +10,7 @@ const servicos = [...mapaDemo.servicos, ...mapaDemo.semCoordenadas].map(
     idExterno: `servico-${servicoId}`,
     nome,
     regiaoCodigo,
+    selo: 'A',
     estadoAtual: estado,
   }),
 );

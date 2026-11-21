@@ -12,6 +12,7 @@ const service = {
     regiao: 'Virgínia',
     cidade: 'Ashburn',
   },
+  selo: 'F',
   estadoAtual: 'DISPONIVEL',
 };
 
@@ -20,6 +21,7 @@ const history = [
     inicio: '2026-11-15T13:00:00.000Z',
     energiaKwh: 1.25,
     emissaoGCo2e: 1200,
+    selo: 'F',
     coletas: 992,
     ativo: 992,
     indisponivel: 0,
@@ -29,6 +31,7 @@ const history = [
     inicio: '2026-11-15T14:00:00.000Z',
     energiaKwh: 0.75,
     emissaoGCo2e: 800,
+    selo: 'F',
     coletas: 5,
     ativo: 0,
     indisponivel: 5,
@@ -38,6 +41,7 @@ const history = [
     inicio: '2026-11-15T15:00:00.000Z',
     energiaKwh: null,
     emissaoGCo2e: null,
+    selo: '—',
     coletas: 3,
     ativo: 0,
     indisponivel: 0,
@@ -100,6 +104,11 @@ test('exibe metadados, totais, histórico e preserva o período na comparação'
 
   await expect(
     page.getByRole('heading', { level: 1, name: 'Search API' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('img', {
+      name: 'Selo de eficiência F: > 50g CO2e/h',
+    }),
   ).toBeVisible();
   await expect(
     page.getByText('Estados Unidos · Virgínia — Ashburn'),

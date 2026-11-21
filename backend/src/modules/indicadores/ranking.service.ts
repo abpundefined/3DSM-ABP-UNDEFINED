@@ -16,6 +16,7 @@ interface ItemRanking {
   energiaKwh: number;
   emissaoGCo2e: number;
   coletasValidas: number;
+  selo: string;
 }
 
 type ItemRankingSemPosicao = Omit<ItemRanking, "posicao">;
@@ -23,6 +24,7 @@ type ItemRankingSemPosicao = Omit<ItemRanking, "posicao">;
 interface ServicoSemDados {
   servicoId: number;
   nome: string;
+  selo: string;
 }
 
 export interface VariacaoPorServico extends ServicoSemDados {
@@ -40,6 +42,27 @@ export interface RankingResultado {
   metrica: MetricaRanking;
   itens: ItemRanking[];
   semDados: ServicoSemDados[];
+}
+
+const LIMITE_SELO_A = 10;
+const LIMITE_SELO_B = 20;
+const LIMITE_SELO_C = 30;
+const LIMITE_SELO_D = 40;
+const LIMITE_SELO_E = 50;
+
+export function calcularSeloEficiencia(
+  emissaoMediaPorHora: number | null | undefined,
+): string {
+  if (emissaoMediaPorHora == null) {
+    return "—";
+  }
+
+  if (emissaoMediaPorHora <= LIMITE_SELO_A) return "A";
+  if (emissaoMediaPorHora <= LIMITE_SELO_B) return "B";
+  if (emissaoMediaPorHora <= LIMITE_SELO_C) return "C";
+  if (emissaoMediaPorHora <= LIMITE_SELO_D) return "D";
+  if (emissaoMediaPorHora <= LIMITE_SELO_E) return "E";
+  return "F";
 }
 
 function valorDaMetrica(
@@ -86,6 +109,7 @@ export class RankingService {
     const { inicio, fim } = converterPeriodo(query);
     const janelaAnterior = periodoAnterior(inicio, fim);
     const metrica = query.metrica ?? MetricaRanking.ENERGIA;
+    const duracaoEmHoras = (fim.getTime() - inicio.getTime()) / 3_600_000;
 
     const [servicos, impactos, impactosAnteriores] = await Promise.all([
       this.indicadoresRepository.listarServicosParaRanking(),
@@ -110,13 +134,19 @@ export class RankingService {
     for (const servico of servicos) {
       const impacto = impactosPorServico.get(servico.id);
       const anterior = anterioresPorServico.get(servico.id);
+      const emissaoAtualGCo2e = impacto?.emissaoGCo2e ?? null;
+      const selo = calcularSeloEficiencia(
+        emissaoAtualGCo2e === null || duracaoEmHoras <= 0
+          ? null
+          : emissaoAtualGCo2e / duracaoEmHoras,
+      );
 
       if (impacto || anterior) {
-        const emissaoAtualGCo2e = impacto?.emissaoGCo2e ?? null;
         const emissaoAnteriorGCo2e = anterior?.emissaoGCo2e ?? null;
         variacaoPorServico.push({
           servicoId: servico.id,
           nome: servico.nome,
+          selo,
           emissaoAtualGCo2e,
           emissaoAnteriorGCo2e,
           diferencaGCo2e:
@@ -135,7 +165,7 @@ export class RankingService {
 
       if (!impacto || valorDaMetrica(impacto, metrica) === null) {
         if (servico.estadoAtual !== "REMOVIDO") {
-          semDados.push({ servicoId: servico.id, nome: servico.nome });
+          semDados.push({ servicoId: servico.id, nome: servico.nome, selo });
         }
         continue;
       }
@@ -146,6 +176,7 @@ export class RankingService {
         energiaKwh: impacto.energiaKwh ?? 0,
         emissaoGCo2e: impacto.emissaoGCo2e ?? 0,
         coletasValidas: impacto.coletasValidas,
+        selo,
       });
     }
 

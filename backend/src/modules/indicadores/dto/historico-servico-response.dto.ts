@@ -15,4 +15,6 @@ export class HistoricoServicoRespostaDto {
   @ApiProperty({ type: Number }) semMetricas!: number;
   @ApiProperty({ type: ComponentesEnergiaRespostaDto, nullable: true })
   componentes!: ComponentesEnergiaRespostaDto | null;
+  @ApiProperty({ type: String, example: "A" })
+  selo!: string;
 }

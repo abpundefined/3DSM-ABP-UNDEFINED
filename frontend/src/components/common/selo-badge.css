@@ -1,0 +1,15 @@
+.selo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgb(0 0 0 / 15%);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
