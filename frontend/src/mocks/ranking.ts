@@ -40,7 +40,7 @@ function adicionar(
     semDados.push({ servicoId, nome, selo: '—' });
   } else {
     const regiao = local ?? 'Localização não informada';
-    const [paisExtraido] = local ? local.split(' • ') : [];
+    const [paisExtraido] = local ? local.split(' · ') : [];
     const pais = paisExtraido ?? 'Localização não informada';
     itens.push({
       servicoId,
