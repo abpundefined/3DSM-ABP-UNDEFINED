@@ -262,7 +262,6 @@ export default function ServicoDetalhe() {
               medições reais.
             </p>
           )}
-          {!isDemo && <PeriodSelector />}
           <section
             className="service-detail-facts"
             aria-label="Informações do serviço"
@@ -319,6 +318,8 @@ export default function ServicoDetalhe() {
               <MethodologyLink />
             </article>
           </section>
+
+          {!isDemo && <PeriodSelector />}
 
           <section
             className="service-detail-history"

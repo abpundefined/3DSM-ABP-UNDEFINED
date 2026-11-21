@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import useMetaCarbono from '../../hooks/useMetaCarbono';
+import useOportunidades from '../../hooks/useOportunidades';
 import useSerie from '../../hooks/useSerie';
 import { ApiError, apiRequest } from '../../services/api';
 import {
@@ -28,9 +29,17 @@ import {
 } from '../../utils/variacao';
 import Icon from '../common/Icon';
 import MethodologyLink from '../common/MethodologyLink';
+import PeriodSelector from '../common/PeriodSelector';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
+import useEventosSse from '../../hooks/useEventosSse';
 import useFlipList from '../../hooks/useFlipList';
+import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
 import { somarComponentes } from '../../utils/composicaoEnergia';
+import {
+  aplicarEventoSseEmServicos,
+  DURACAO_PULSO_CARD_MS,
+  type EventoTempoRealSse,
+} from '../../utils/eventosSse';
 import {
   calcularTaxaEmissaoGPorSegundo,
   calcularTaxaPorTotalEPeriodo,
@@ -40,6 +49,7 @@ import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
 import ServiceQuickDrawer from './ServiceQuickDrawer';
 import PainelMetaCarbono from './PainelMetaCarbono';
+import PainelOportunidadesDashboard from '../oportunidades/PainelOportunidadesDashboard';
 import PainelDaTendencia from '../tendencia/PainelDaTendencia';
 import type {
   BackendCollection,
@@ -198,8 +208,10 @@ function parseServiceSort(value: string): ServiceSort {
 
 export default function LiveDashboard({
   periodQuery,
+  linkSearch = '',
 }: {
   periodQuery: string;
+  linkSearch?: string;
 }) {
   const [services, setServices] = useState<LiveService[]>([]);
   const [indicators, setIndicators] = useState<BackendIndicators>();
@@ -230,6 +242,8 @@ export default function LiveDashboard({
     true,
   );
   const { estado: meta, recarregar: recarregarMeta } = useMetaCarbono(true);
+  const { estado: oportunidades, recarregar: recarregarOportunidades } =
+    useOportunidades(periodQuery, true);
   const tendencias = useMemo(
     () =>
       serie.status === 'pronto'
@@ -244,6 +258,124 @@ export default function LiveDashboard({
   );
 
   const { serviceIds, toggleService } = useComparisonSelection();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [pulsandoIds, setPulsandoIds] = useState<Record<number, boolean>>({});
+  const pulsoTimersRef = useRef<Map<number, number>>(new Map());
+
+  const acionarPulsoCard = useCallback(
+    (servicoId: number) => {
+      if (prefersReducedMotion) {
+        return;
+      }
+
+      const timerAnterior = pulsoTimersRef.current.get(servicoId);
+      if (timerAnterior !== undefined) {
+        window.clearTimeout(timerAnterior);
+      }
+
+      setPulsandoIds((anterior) => ({
+        ...anterior,
+        [servicoId]: true,
+      }));
+
+      const novoTimer = window.setTimeout(() => {
+        pulsoTimersRef.current.delete(servicoId);
+        setPulsandoIds((anterior) => {
+          if (!anterior[servicoId]) {
+            return anterior;
+          }
+          const copia = { ...anterior };
+          delete copia[servicoId];
+          return copia;
+        });
+      }, DURACAO_PULSO_CARD_MS);
+
+      pulsoTimersRef.current.set(servicoId, novoTimer);
+    },
+    [prefersReducedMotion],
+  );
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      for (const timer of pulsoTimersRef.current.values()) {
+        window.clearTimeout(timer);
+      }
+      pulsoTimersRef.current.clear();
+    }
+  }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    const timers = pulsoTimersRef.current;
+    return () => {
+      for (const timer of timers.values()) {
+        window.clearTimeout(timer);
+      }
+      timers.clear();
+    };
+  }, []);
+
+  const handleEventoSse = useCallback(
+    (evento: EventoTempoRealSse) => {
+      setServices((atuais) => {
+        const resultado = aplicarEventoSseEmServicos(atuais, evento);
+        if (resultado.servicoAtualizadoId === null) {
+          return atuais;
+        }
+
+        if (evento.tipo === 'estado-alterado') {
+          const disponiveis = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'DISPONIVEL',
+          ).length;
+          const indisponiveis = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'INDISPONIVEL',
+          ).length;
+          const semMetricas = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'SEM_METRICAS',
+          ).length;
+          const removidos = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'REMOVIDO',
+          ).length;
+
+          setIndicators((indAtual) =>
+            indAtual
+              ? {
+                  ...indAtual,
+                  servicos: {
+                    ...indAtual.servicos,
+                    disponiveis,
+                    indisponiveis,
+                    semMetricas,
+                    removidos,
+                  },
+                }
+              : indAtual,
+          );
+        } else if (evento.coleta.estadoColeta === 'SUCESSO') {
+          setIndicators((indAtual) => {
+            if (!indAtual) {
+              return indAtual;
+            }
+            const deltaEnergia = evento.coleta.energiaKwh ?? 0;
+            const deltaEmissao = evento.coleta.emissaoGCo2e ?? 0;
+            return {
+              ...indAtual,
+              energiaTotalKwh: indAtual.energiaTotalKwh + deltaEnergia,
+              emissaoTotalGCo2e: indAtual.emissaoTotalGCo2e + deltaEmissao,
+            };
+          });
+        }
+
+        return resultado.servicos;
+      });
+      setLastUpdated(new Date());
+      acionarPulsoCard(evento.servicoId);
+    },
+    [acionarPulsoCard],
+  );
+
+  const { status: statusSse } = useEventosSse({
+    onEvento: handleEventoSse,
+  });
 
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
@@ -510,7 +642,7 @@ export default function LiveDashboard({
     <>
       {services.length > 0 && <ServiceCounter {...serviceCount} />}
       <ContadorCo2AoVivo taxaGPorSegundo={taxaEmissaoAtual} />
-      <div className="live-dashboard-toolbar">
+      <div className="live-dashboard-toolbar" data-sse-status={statusSse}>
         <div
           className={
             hasError ? 'live-connection-error live-refresh-error' : undefined
@@ -538,6 +670,7 @@ export default function LiveDashboard({
             void refresh();
             recarregarSerie();
             recarregarMeta();
+            recarregarOportunidades();
           }}
           disabled={isLoading}
         >
@@ -601,6 +734,8 @@ export default function LiveDashboard({
           tone="olive"
         />
       </section>
+
+      <PeriodSelector />
 
       <PainelMetaCarbono estado={meta} onRecarregar={recarregarMeta} />
 
@@ -777,6 +912,10 @@ export default function LiveDashboard({
                       tendencia={tendencias?.get(service.id)}
                       comparisonSelected={serviceIds.includes(service.id)}
                       onToggleComparison={toggleService}
+                      pulsando={
+                        !prefersReducedMotion &&
+                        Boolean(pulsandoIds[service.id])
+                      }
                     />
                   </li>
                 ))}
@@ -790,6 +929,13 @@ export default function LiveDashboard({
           </>
         )}
       </section>
+
+      <PainelOportunidadesDashboard
+        estado={oportunidades}
+        linkSearch={linkSearch}
+        onRecarregar={recarregarOportunidades}
+      />
+
       <ServiceQuickDrawer
         service={selectedService}
         collectionIntervalSeconds={collectionIntervalSeconds}

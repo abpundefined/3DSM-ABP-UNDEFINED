@@ -50,9 +50,13 @@ export default function AppLayout() {
   const navigationParams = new URLSearchParams(
     linkSearch.startsWith('?') ? linkSearch.slice(1) : linkSearch,
   );
-  const selectedServices = new URLSearchParams(search).get('servicos');
+  const currentParams = new URLSearchParams(search);
+  const selectedServices = currentParams.get('servicos');
   if (selectedServices) {
     navigationParams.set('servicos', selectedServices);
+  }
+  if (currentParams.get('demo') === '1') {
+    navigationParams.set('demo', '1');
   }
   const navigationQuery = navigationParams.toString();
   const navigationSearch = navigationQuery ? `?${navigationQuery}` : '';

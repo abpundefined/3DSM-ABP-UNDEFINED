@@ -136,6 +136,25 @@
   border-color: var(--green-forest);
   box-shadow: 0 6px 18px rgb(0 102 28 / 8%);
 }
+@keyframes service-card-pulso {
+  0% {
+    border-color: var(--green-forest);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green-forest) 38%, transparent);
+  }
+  50% {
+    border-color: var(--green-forest);
+    box-shadow: 0 0 0 6px
+      color-mix(in srgb, var(--green-forest) 0%, transparent);
+  }
+  100% {
+    border-color: var(--border);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.service-card--pulsando {
+  border-color: var(--green-forest);
+  animation: service-card-pulso 1.2s ease-out;
+}
 .service-card-title-button {
   padding: 0;
   border: 0;
@@ -435,7 +454,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .service-card {
+  .service-card,
+  .service-card--pulsando {
     transition: none;
+    animation: none;
   }
 }

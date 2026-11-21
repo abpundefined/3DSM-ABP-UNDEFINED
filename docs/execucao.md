@@ -169,6 +169,8 @@ npx.cmd playwright install chromium
 npm.cmd run test:e2e
 ```
 
+- `npm.cmd run test:e2e` gera o build do frontend e executa a suíte de navegador Playwright (com verificação de acessibilidade Axe) em Chromium para os projetos `desktop` e `mobile` — é o mesmo comando executado automaticamente pelo job `frontend-e2e` no GitHub Actions (que publica os traces de `frontend/test-results/` como artefato quando ocorre falha).
+
 No backend, após gerar o Prisma Client:
 
 ```powershell

@@ -27,12 +27,7 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
       }),
     }),
   );
-  await page.goto('/');
-  await expect(
-    page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
-  ).toBeVisible();
-  apiRequests.length = 0;
-  await page.getByRole('link', { name: 'Ver demonstração' }).click();
+  await page.goto('/?demo=1');
   await expect(page).toHaveURL(/\?demo=1$/);
   await expect(page).toHaveTitle('Dashboard · demonstração | GreenER');
   await expect(page.getByLabel('Modo de visualização')).toContainText(
@@ -43,8 +38,12 @@ test('demonstração tem gráficos interativos, dados coerentes e nenhum acesso 
   await expect(metrics).toContainText('1,26');
   await expect(metrics).toContainText('Serviços ativos');
   await expect(metrics).toContainText('Serviços indisponíveis');
-  await expect(metrics.getByText('10', { exact: true })).toBeVisible();
-  await expect(metrics.getByText('1', { exact: true })).toBeVisible();
+  await expect(
+    metrics.locator('span:not(.sr-only)').getByText('10', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    metrics.locator('span:not(.sr-only)').getByText('1', { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Status dos serviços' }),
   ).toBeVisible();

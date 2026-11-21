@@ -57,42 +57,49 @@ function ConteudoDoRanking({
     );
   }
 
+  const variacaoGlobal = dados.variacaoPercentual ? (
+    <section className="ranking-bloco" aria-label="Variação global">
+      <h2>Em relação ao período anterior</h2>
+      <p>
+        Energia:{' '}
+        <VariacaoPeriodo
+          valor={dados.variacaoPercentual.energiaKwh}
+          periodo={periodo}
+        />
+      </p>
+      <p>
+        Emissão:{' '}
+        <VariacaoPeriodo
+          valor={dados.variacaoPercentual.emissaoGCo2e}
+          periodo={periodo}
+        />
+      </p>
+      <p className="ranking-resumo">
+        Totais de todos os serviços, não apenas os do top 10.
+      </p>
+    </section>
+  ) : null;
+
   return (
     <div className="ranking-conteudo" aria-busy={atualizando || undefined}>
       <p className="ranking-periodo">
         Dados de {formatarPeriodoConsiderado(periodo)}, no horário de Brasília.
       </p>
-      {dados.variacaoPercentual && (
-        <section className="ranking-bloco" aria-label="Variação global">
-          <h2>Em relação ao período anterior</h2>
-          <p>
-            Energia:{' '}
-            <VariacaoPeriodo
-              valor={dados.variacaoPercentual.energiaKwh}
-              periodo={periodo}
-            />
-          </p>
-          <p>
-            Emissão:{' '}
-            <VariacaoPeriodo
-              valor={dados.variacaoPercentual.emissaoGCo2e}
-              periodo={periodo}
-            />
-          </p>
-          <p className="ranking-resumo">
-            Totais de todos os serviços, não apenas os do top 10.
-          </p>
-        </section>
-      )}
       {itens.length === 0 ? (
-        <FeedbackPanel
-          kind="empty"
-          title="Nenhuma coleta no período"
-          description="Nenhum serviço teve coletas válidas neste período. Escolha um período maior ou aguarde as próximas coletas."
-        />
+        <>
+          <FeedbackPanel
+            kind="empty"
+            title="Nenhuma coleta no período"
+            description="Nenhum serviço teve coletas válidas neste período. Escolha um período maior ou aguarde as próximas coletas."
+          />
+          {!isDemo && <PeriodSelector />}
+          {variacaoGlobal}
+        </>
       ) : (
         <>
           <GraficoRanking itens={itens} metrica={metrica} />
+          {!isDemo && <PeriodSelector />}
+          {variacaoGlobal}
           <GraficoEnergiaEmissao itens={itens} />
           <ParticipacaoEmissoes isDemo={isDemo} />
           <TabelaRanking itens={itens} metrica={metrica} />
@@ -194,7 +201,6 @@ const exportacaoDesabilitada =
         </div>
       </div>
       <ComparisonSelectionBar />
-      {!isDemo && <PeriodSelector />}
       <div className="ranking-controles-topo">
         <div
           className="ranking-modos"
@@ -236,38 +242,47 @@ const exportacaoDesabilitada =
         )}
       </div>
       {modo === 'evolucao' ? (
-        <CorridaDeBarras
-          isDemo={isDemo}
-          apiQuery={apiQuery}
-          linkSearch={linkSearch}
-        />
+        <>
+          <CorridaDeBarras
+            isDemo={isDemo}
+            apiQuery={apiQuery}
+            linkSearch={linkSearch}
+          />
+          {!isDemo && <PeriodSelector />}
+        </>
       ) : (
         <>
           <p className="ranking-status" role="status">
             {atualizando ? 'Atualizando o ranking...' : ''}
           </p>
           {exibido.status === 'carregando' && (
-            <FeedbackPanel
-              kind="loading"
-              skeleton="table"
-              title="Carregando o ranking"
-              description="Somando a energia e a emissão de cada serviço no período."
-            />
+            <>
+              <FeedbackPanel
+                kind="loading"
+                skeleton="table"
+                title="Carregando o ranking"
+                description="Somando a energia e a emissão de cada serviço no período."
+              />
+              {!isDemo && <PeriodSelector />}
+            </>
           )}
           {exibido.status === 'erro' && (
-            <FeedbackPanel
-              kind="error"
-              title="Não foi possível carregar o ranking"
-              description={exibido.mensagem}
-            >
-              <button
-                className="button button--primary"
-                type="button"
-                onClick={recarregar}
+            <>
+              <FeedbackPanel
+                kind="error"
+                title="Não foi possível carregar o ranking"
+                description={exibido.mensagem}
               >
-                Tentar novamente
-              </button>
-            </FeedbackPanel>
+                <button
+                  className="button button--primary"
+                  type="button"
+                  onClick={recarregar}
+                >
+                  Tentar novamente
+                </button>
+              </FeedbackPanel>
+              {!isDemo && <PeriodSelector />}
+            </>
           )}
           {exibido.status === 'pronto' && (
             <ConteudoDoRanking

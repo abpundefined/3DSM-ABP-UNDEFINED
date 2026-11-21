@@ -323,7 +323,6 @@ export default function Comparacao() {
           </button>
         </div>
       </div>
-      {!isDemo && <PeriodSelector />}
       <section
         className="comparison-selection"
         aria-labelledby="comparison-selection-title"
@@ -443,8 +442,10 @@ export default function Comparacao() {
           setMetric={setMetric}
           hourly={comparisonState.dados.granularidade === 'hora'}
           periodLabel={formatComparisonPeriod(period)}
+          isDemo={isDemo}
         />
       ) : null}
+      {!isDemo && comparisonState.status !== 'pronto' && <PeriodSelector />}
     </div>
   );
 }
@@ -456,6 +457,7 @@ function ComparisonResults({
   setMetric,
   hourly,
   periodLabel,
+  isDemo,
 }: {
   services: ServicoComparacao[];
   metadataById: Map<number, ServicoSelecionavel>;
@@ -463,6 +465,7 @@ function ComparisonResults({
   setMetric: (metric: MetricaRanking) => void;
   hourly: boolean;
   periodLabel: string;
+  isDemo: boolean;
 }) {
   const emissions = services
     .map((service) => toFiniteNumber(service.totais.emissaoGCo2e))
@@ -489,6 +492,7 @@ function ComparisonResults({
           />
         ))}
       </section>
+      {!isDemo && <PeriodSelector />}
       <ComparisonTable services={services} metadataById={metadataById} />
       <ComparisonCharts
         services={services}

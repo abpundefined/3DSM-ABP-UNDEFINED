@@ -80,6 +80,9 @@ export default defineConfig(({ mode }) => {
       react(),
       ...(demoStatic ? [pluginFallbackGitHubPages(basePath)] : []),
     ],
+    build: {
+      chunkSizeWarningLimit: 1100,
+    },
     server: {
       host: 'localhost',
       port: 5173,

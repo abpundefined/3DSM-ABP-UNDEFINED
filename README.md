@@ -168,6 +168,7 @@ erDiagram
 <p>Na raiz do repositório, crie seu arquivo de ambiente a partir do modelo:</p>
 <pre><code>Copy-Item .env.example .env
 </code></pre>
+<p>Preencha também <code>DB_PORT</code>, <code>DB_USER</code>, <code>DB_PASS</code> e <code>DB_NAME</code>, que vêm vazios no modelo e são usados pelo Compose para criar o banco (exemplo em <a href="./docs/execucao.md">docs/execucao.md</a>).</p>
 <p>Defina as URLs das duas APIs externas e segredos de inicialização antes de subir os containers (o backend valida no boot que <code>JWT_SECRET</code> tem ao menos 32 caracteres e <code>ADMIN_PASSWORD</code> ao menos 12 caracteres, sem manter valores padrão):</p>
 <table>
     <tr><th>Variável</th><th>Padrão / Exemplo</th><th>Descrição</th></tr>
@@ -236,13 +237,15 @@ npm.cmd run dev
     <tr><td><code>GET</code></td><td><code>/comparacao</code></td><td>Pública</td><td>Comparação alinhada de 2 a 5 serviços no mesmo intervalo.</td></tr>
     <tr><td><code>GET</code></td><td><code>/mapa</code></td><td>Pública</td><td>Serviços geolocalizados, série por intervalo e lista sem coordenadas.</td></tr>
     <tr><td><code>GET</code></td><td><code>/intensidade/horarios</code></td><td>Pública</td><td>Matriz 7×24 de intensidade média por dia/hora e melhor janela de 3h.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/oportunidades</code></td><td>Pública</td><td>Lista oportunidades estimadas de redução (migração de região, superdimensionamento e horário), ordenadas pelo ganho no período.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/eventos</code></td><td>Pública</td><td>Fluxo em tempo real via Server-Sent Events (SSE) emitindo <code>coleta-registrada</code> e <code>estado-alterado</code>.</td></tr>
     <tr><td><code>GET</code></td><td><code>/saude</code></td><td>JWT Bearer</td><td>Estado das integrações (agregador e API de carbono), taxa de falha e serviços por estado.</td></tr>
 </table>
 
 <hr>
 
 <h2 id="ci-testes">✅ CI e Testes</h2>
-<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa quatro jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, artefato <code>backend-coverage</code>, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, artefato <code>frontend-coverage</code>, lint, Prettier, typecheck e build), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker). Os testes E2E de navegador do frontend (Playwright + Axe em desktop e celular) são executados localmente antes de abrir ou aprovar PRs de interface para evitar o download de navegadores e manter o tempo de feedback do CI reduzido.</p>
+<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa cinco jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, artefato <code>backend-coverage</code>, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, artefato <code>frontend-coverage</code>, lint, Prettier, typecheck e build), <strong>frontend-e2e</strong> (testes E2E de navegador e acessibilidade Axe com Playwright em Chromium para desktop e celular via <code>npm run test:e2e</code>, publicando os traces de <code>frontend/test-results/</code> como artefato em caso de falha), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker). Além disso, o workflow <a href="./.github/workflows/deploy-pages.yml">.github/workflows/deploy-pages.yml</a> gera o build estático do frontend em modo demonstração (<code>VITE_DEMO_MODE=true</code>, com <code>404.html</code> e <code>.nojekyll</code> para rotas SPA e zero chamadas ao backend) e publica automaticamente no GitHub Pages a cada merge na <code>main</code>.</p>
 <pre><code># Backend (na pasta backend/)
 npm.cmd run test:cov   # unitários + cobertura >= 80% (services e repositories)
 npm.cmd run test:e2e   # requer PostgreSQL de teste (*_e2e)
@@ -253,7 +256,7 @@ npm.cmd test               # testes unitários Node e hooks/componentes (CI)
 npm.cmd run test:coverage  # cobertura Vitest (CI)
 npm.cmd run lint
 npm.cmd run format:check
-npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local em desktop e celular)
+npm.cmd run test:e2e       # Playwright + acessibilidade Axe em desktop e celular (CI e local)
 </code></pre>
 
 <hr>
@@ -295,7 +298,7 @@ npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local e
     </tr>
     <tr>
         <td><img src="./docs/evidencias/sprint-3-detalhe-simulador-desktop.png" alt="Detalhe do serviço em desktop (1440x900) com histórico temporal, simulador de região e matriz horária" width="420"><br><em>Série histórica de energia e emissão, simulador “E se rodasse em outra região?” e melhor janela horária (<code>/servicos/1?demo=1</code>).</em></td>
-        <td><img src="./docs/evidencias/sprint-3-admin-saude-desktop.png" alt="Página de Administração em desktop (1440x900) com intervalos de monitoramento e saúde das integrações" width="420"><br><em>Área restrita com JWT para configurar intervalos de coleta/descoberta e monitorar agregador e API de carbono (<code>/admin?demo=1</code>).</em></td>
+        <td><img src="./docs/evidencias/sprint-3-admin-saude-desktop.png" alt="Página de Administração em desktop (1440x900) com intervalos de monitoramento e saúde das integrações" width="420"><br><em>Área restrita com JWT para configurar intervalos de coleta/descoberta e monitorar agregador e API de carbono (<code>/admin</code>, após o login).</em></td>
     </tr>
     <tr>
         <th colspan="2">Metodologia (“Como calculamos”)</th>

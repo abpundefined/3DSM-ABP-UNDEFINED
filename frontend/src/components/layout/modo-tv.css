@@ -57,7 +57,8 @@
 .app-shell--tv .mapa-barra,
 .app-shell--tv .linha-do-tempo,
 .app-shell--tv .mapa-tabela,
-.app-shell--tv .contador-co2--dashboard {
+.app-shell--tv .contador-co2--dashboard,
+.app-shell--tv .oportunidades-dashboard {
   display: none;
 }
 
