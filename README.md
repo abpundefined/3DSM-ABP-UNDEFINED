@@ -233,7 +233,7 @@ npm.cmd run dev
     <tr><td><code>POST</code></td><td><code>/servicos/sync</code></td><td>JWT Bearer</td><td>Dispara descoberta externa e sincronização imediata no banco.</td></tr>
     <tr><td><code>GET</code> / <code>POST</code></td><td><code>/coletas</code>, <code>/coletas/:id</code> e <code>/coletas/servico/:id/ultima-valida</code></td><td><code>GET</code> público / <code>POST</code> JWT</td><td>Registra coletas e consulta histórico paginado (<code>pagina</code>/<code>tamanho</code>), detalhe por ID ou última coleta válida.</td></tr>
     <tr><td><code>GET</code></td><td><code>/indicadores</code>, <code>/indicadores/serie</code> e <code>/indicadores/meta</code></td><td>Pública</td><td>Totais consolidados (com variação em <code>mes-anterior</code>), séries temporais por período e meta mensal com projeção.</td></tr>
-    <tr><td><code>GET</code></td><td><code>/ranking</code></td><td>Pública</td><td>Ranking de serviços por energia ou emissão no período e lista sem dados.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/ranking</code></td><td>Pública</td><td>Ranking de serviços por energia ou emissão no período (com metadados de região e país para agrupamento) e lista sem dados.</td></tr>
     <tr><td><code>GET</code></td><td><code>/comparacao</code></td><td>Pública</td><td>Comparação alinhada de 2 a 5 serviços no mesmo intervalo.</td></tr>
     <tr><td><code>GET</code></td><td><code>/mapa</code></td><td>Pública</td><td>Serviços geolocalizados, série por intervalo e lista sem coordenadas.</td></tr>
     <tr><td><code>GET</code></td><td><code>/intensidade/horarios</code></td><td>Pública</td><td>Matriz 7×24 de intensidade média por dia/hora e melhor janela de 3h.</td></tr>
