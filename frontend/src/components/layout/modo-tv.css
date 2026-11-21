@@ -4,7 +4,7 @@
 
 .app-shell--tv .main-content {
   width: min(100% - 48px, 1600px);
-  padding-block: 16px 96px;
+  padding-block: 16px 148px;
 }
 
 .app-shell--tv .mapa-page {
@@ -55,15 +55,20 @@
 .app-shell--tv .page-heading a.button,
 .app-shell--tv .mapa-barra,
 .app-shell--tv .linha-do-tempo,
-.app-shell--tv .mapa-tabela {
+.app-shell--tv .mapa-tabela,
+.app-shell--tv .contador-co2--dashboard {
   display: none;
 }
 
-.modo-tv-barra {
+.modo-tv-rodape {
   position: fixed;
   inset-inline: 0;
   bottom: 0;
   z-index: 25;
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 8%);
+}
+
+.modo-tv-barra {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -73,7 +78,6 @@
   border-top: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 -4px 16px rgb(0 0 0 / 8%);
 }
 
 .modo-tv-identidade {

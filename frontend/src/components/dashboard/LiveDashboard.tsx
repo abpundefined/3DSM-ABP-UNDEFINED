@@ -17,6 +17,7 @@ import {
 import EmissionEquivalences from '../common/EmissionEquivalences';
 import AnimatedMetricValue from '../common/AnimatedMetricValue';
 import ComposicaoEnergia from '../common/ComposicaoEnergia';
+import ContadorCo2AoVivo from '../common/ContadorCo2AoVivo';
 import FeedbackPanel from '../common/FeedbackPanel';
 import VariacaoPeriodo from '../common/VariacaoPeriodo';
 import type { PeriodoConsultado } from '../../types/mapa';
@@ -30,6 +31,10 @@ import MethodologyLink from '../common/MethodologyLink';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
 import useFlipList from '../../hooks/useFlipList';
 import { somarComponentes } from '../../utils/composicaoEnergia';
+import {
+  calcularTaxaEmissaoGPorSegundo,
+  calcularTaxaPorTotalEPeriodo,
+} from '../../utils/contadorCo2';
 import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
@@ -472,6 +477,31 @@ export default function LiveDashboard({
       : 'Coletas calculadas no período analisado';
 
   const serviceCount = countServices(services);
+  const taxaEmissaoAtual = useMemo(() => {
+    const taxaPorServicos = calcularTaxaEmissaoGPorSegundo(
+      services.map((service) => ({
+        emissaoGCo2e:
+          toFiniteNumber(service.latestCollection?.emissaoGCo2e) ??
+          toFiniteNumber(service.emissaoGCo2e),
+        intervaloSegundos: toFiniteNumber(
+          service.latestCollection?.intervaloColetaSegundos,
+        ),
+      })),
+      collectionIntervalSeconds,
+    );
+    if (taxaPorServicos > 0) {
+      return taxaPorServicos;
+    }
+    return calcularTaxaPorTotalEPeriodo(
+      indicators?.emissaoTotalGCo2e,
+      indicators?.periodo,
+    );
+  }, [
+    collectionIntervalSeconds,
+    indicators?.emissaoTotalGCo2e,
+    indicators?.periodo,
+    services,
+  ]);
   const serviceCardsListRef = useFlipList<HTMLUListElement>(
     visibleServices.map((service) => service.id).join(','),
   );
@@ -479,6 +509,7 @@ export default function LiveDashboard({
   return (
     <>
       {services.length > 0 && <ServiceCounter {...serviceCount} />}
+      <ContadorCo2AoVivo taxaGPorSegundo={taxaEmissaoAtual} />
       <div className="live-dashboard-toolbar">
         <div
           className={
