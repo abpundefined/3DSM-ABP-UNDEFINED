@@ -18,9 +18,19 @@ import BackToTopButton from '../common/BackToTopButton';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
 import GuidedTour from '../tour/GuidedTour';
+import ModoTvBarra from './ModoTvBarra';
 import useAuth from '../../hooks/useAuth';
 import usePeriod from '../../hooks/usePeriod';
 import { getNavItems } from '../../navigation';
+import {
+  estaEmModoTv,
+  INTERVALO_MODO_TV_MS,
+  MEDIA_MODO_TV_DESKTOP,
+  montarSearchModoTv,
+  removerModoTvDoSearch,
+  resolverTelaModoTv,
+  TELAS_MODO_TV,
+} from '../../utils/modoTv';
 import { jaViuTour, marcarTourComoVisto } from '../../utils/tour';
 import {
   ehCliqueSimplesNavegacao,
@@ -53,7 +63,7 @@ export default function AppLayout() {
     returnFocusEl: HTMLElement | null;
     chave: number;
   }>(() => ({
-    aberto: pathname === '/' && !jaViuTour(),
+    aberto: pathname === '/' && !estaEmModoTv(search) && !jaViuTour(),
     focarAoAbrir: false,
     returnFocusEl: null,
     chave: 0,
@@ -130,88 +140,184 @@ export default function AppLayout() {
     }));
   }, []);
 
-  const tourVisivel = tourState.aberto && pathname === '/';
+  const [isDesktopForTv, setIsDesktopForTv] = useState(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return true;
+    }
+    return window.matchMedia(MEDIA_MODO_TV_DESKTOP).matches;
+  });
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return;
+    }
+    const mediaQuery = window.matchMedia(MEDIA_MODO_TV_DESKTOP);
+    const atualizar = (event: MediaQueryListEvent) =>
+      setIsDesktopForTv(event.matches);
+    mediaQuery.addEventListener('change', atualizar);
+    return () => mediaQuery.removeEventListener('change', atualizar);
+  }, []);
+
+  const isTvMode = isDesktopForTv && estaEmModoTv(search);
+
+  function ativarModoTv(event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    const rotaDestino = TELAS_MODO_TV.some((tela) => tela.rota === pathname)
+      ? pathname
+      : '/';
+    void navigate({
+      pathname: rotaDestino,
+      search: montarSearchModoTv(search),
+    });
+  }
+
+  const sairDoModoTv = useCallback(() => {
+    const currentPathname =
+      typeof window !== 'undefined' ? window.location.pathname : pathname;
+    const currentSearch =
+      typeof window !== 'undefined' ? window.location.search : search;
+    void navigate(
+      {
+        pathname: currentPathname,
+        search: removerModoTvDoSearch(currentSearch),
+      },
+      { replace: true },
+    );
+  }, [navigate, pathname, search]);
+
+  useEffect(() => {
+    if (!isTvMode) {
+      return;
+    }
+
+    const { proxima } = resolverTelaModoTv(pathname);
+    const destino = {
+      pathname: proxima.rota,
+      search: montarSearchModoTv(search),
+    };
+    const timer = window.setTimeout(() => {
+      executarComViewTransition(() => {
+        flushSync(() => {
+          void navigate(destino, { replace: true });
+        });
+      });
+    }, INTERVALO_MODO_TV_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isTvMode, navigate, pathname, search]);
+
+  useEffect(() => {
+    if (!isTvMode) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        sairDoModoTv();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isTvMode, sairDoModoTv]);
+
+  const tourVisivel = !isTvMode && tourState.aberto && pathname === '/';
 
   return (
-    <div className="app-shell">
+    <div
+      className={isTvMode ? 'app-shell app-shell--tv' : 'app-shell'}
+      onClick={isTvMode ? sairDoModoTv : undefined}
+    >
       <a className="skip-link" href="#conteudo">
         Pular para o conteúdo
       </a>
-      <header className="site-header">
-        <div className="header-inner">
-          <Brand />
-          <nav aria-label="Navegação principal">
-            <div className="nav-pages">
-              {navItems.map((item) => {
-                const target = { pathname: item.to, search: navigationSearch };
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={target}
-                    end={item.to === '/'}
-                    className="nav-page"
-                    onClick={(event) =>
-                      handleNavClick(event, target, item.to, navigationSearch)
-                    }
-                  >
-                    <Icon name={item.icon} />
-                    {item.label}
-                  </NavLink>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              className="nav-tour"
-              aria-label="Fazer tour"
-              title="Fazer tour guiado"
-              onClick={iniciarTour}
-            >
-              <Icon name="compass" />
-              <span>Fazer tour</span>
-            </button>
-            {isAuthenticated ? (
-              <button type="button" className="nav-login" onClick={logout}>
-                <Icon name="lock" />
-                <span>Sair</span>
-              </button>
-            ) : (
-              <NavLink
-                to="/login"
-                className="nav-login"
-                onClick={(event) => handleNavClick(event, '/login', '/login')}
-              >
-                <Icon name="lock" />
-                <span>Entrar</span>
-              </NavLink>
-            )}
-            <div
-              className="theme-toggle"
-              role="group"
-              aria-label="Tema da interface"
-            >
+      {!isTvMode && (
+        <header className="site-header">
+          <div className="header-inner">
+            <Brand />
+            <nav aria-label="Navegação principal">
+              <div className="nav-pages">
+                {navItems.map((item) => {
+                  const target = {
+                    pathname: item.to,
+                    search: navigationSearch,
+                  };
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={target}
+                      end={item.to === '/'}
+                      className="nav-page"
+                      onClick={(event) =>
+                        handleNavClick(event, target, item.to, navigationSearch)
+                      }
+                    >
+                      <Icon name={item.icon} />
+                      {item.label}
+                    </NavLink>
+                  );
+                })}
+              </div>
               <button
                 type="button"
-                aria-label="Modo escuro"
-                aria-pressed={theme === 'dark'}
-                title="Modo escuro"
-                onClick={() => setTheme('dark')}
+                className="nav-tour"
+                aria-label="Fazer tour"
+                title="Fazer tour guiado"
+                onClick={iniciarTour}
               >
-                <Icon name="moon" />
+                <Icon name="compass" />
+                <span>Fazer tour</span>
               </button>
-              <button
-                type="button"
-                aria-label="Modo claro"
-                aria-pressed={theme === 'light'}
-                title="Modo claro"
-                onClick={() => setTheme('light')}
+              {isAuthenticated ? (
+                <button type="button" className="nav-login" onClick={logout}>
+                  <Icon name="lock" />
+                  <span>Sair</span>
+                </button>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className="nav-login"
+                  onClick={(event) => handleNavClick(event, '/login', '/login')}
+                >
+                  <Icon name="lock" />
+                  <span>Entrar</span>
+                </NavLink>
+              )}
+              <div
+                className="theme-toggle"
+                role="group"
+                aria-label="Tema da interface"
               >
-                <Icon name="sun" />
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
+                <button
+                  type="button"
+                  aria-label="Modo escuro"
+                  aria-pressed={theme === 'dark'}
+                  title="Modo escuro"
+                  onClick={() => setTheme('dark')}
+                >
+                  <Icon name="moon" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Modo claro"
+                  aria-pressed={theme === 'light'}
+                  title="Modo claro"
+                  onClick={() => setTheme('light')}
+                >
+                  <Icon name="sun" />
+                </button>
+              </div>
+            </nav>
+          </div>
+        </header>
+      )}
       <main
         id="conteudo"
         ref={mainRef}
@@ -222,44 +328,63 @@ export default function AppLayout() {
           <Outlet />
         </AppErrorBoundary>
       </main>
-      <footer className="site-footer">
-        <div className="footer-inner">
-          <span>
-            <Icon name="leaf" />
-            Tecnologia com uma perspectiva mais verde.
-          </span>
-          <span>
-            GreenER <span aria-hidden="true">·</span> Equipe Undefined
-          </span>
-        </div>
-      </footer>
-      <GuidedTour
-        key={tourState.chave}
-        aberto={tourVisivel}
-        focarAoAbrir={tourState.focarAoAbrir}
-        returnFocusTo={tourState.returnFocusEl}
-        onFechar={fecharTour}
-      />
-      <BackToTopButton />
-      <nav className="bottom-nav" aria-label="Navegação inferior">
-        {navItems.map((item) => {
-          const target = { pathname: item.to, search: navigationSearch };
-          return (
-            <NavLink
-              key={item.to}
-              to={target}
-              end={item.to === '/'}
-              aria-label={item.shortLabel ? item.label : undefined}
-              onClick={(event) =>
-                handleNavClick(event, target, item.to, navigationSearch)
-              }
-            >
-              <Icon name={item.icon} />
-              <span>{item.shortLabel ?? item.label}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
+      {isTvMode ? (
+        <ModoTvBarra key={pathname} pathname={pathname} onSair={sairDoModoTv} />
+      ) : (
+        <>
+          <footer className="site-footer">
+            <div className="footer-inner">
+              <span>
+                <Icon name="leaf" />
+                Tecnologia com uma perspectiva mais verde.
+              </span>
+              <div className="footer-meta-group">
+                {isDesktopForTv && (
+                  <button
+                    type="button"
+                    className="footer-tv-button"
+                    title="Ativar modo TV para exibição em tela cheia"
+                    onClick={ativarModoTv}
+                  >
+                    <Icon name="tv" />
+                    <span>Modo TV</span>
+                  </button>
+                )}
+                <span>
+                  GreenER <span aria-hidden="true">·</span> Equipe Undefined
+                </span>
+              </div>
+            </div>
+          </footer>
+          <GuidedTour
+            key={tourState.chave}
+            aberto={tourVisivel}
+            focarAoAbrir={tourState.focarAoAbrir}
+            returnFocusTo={tourState.returnFocusEl}
+            onFechar={fecharTour}
+          />
+          <BackToTopButton />
+          <nav className="bottom-nav" aria-label="Navegação inferior">
+            {navItems.map((item) => {
+              const target = { pathname: item.to, search: navigationSearch };
+              return (
+                <NavLink
+                  key={item.to}
+                  to={target}
+                  end={item.to === '/'}
+                  aria-label={item.shortLabel ? item.label : undefined}
+                  onClick={(event) =>
+                    handleNavClick(event, target, item.to, navigationSearch)
+                  }
+                >
+                  <Icon name={item.icon} />
+                  <span>{item.shortLabel ?? item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        </>
+      )}
     </div>
   );
 }
