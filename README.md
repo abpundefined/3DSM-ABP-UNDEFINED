@@ -1,4 +1,5 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/abpundefined/3DSM-ABP-UNDEFINED/ci.yml?branch=develop&label=CI%20Build%20%26%20Tests)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Demo Online](https://img.shields.io/badge/Demo%20Online-GitHub%20Pages-00661c?logo=githubpages&logoColor=white)](https://abpundefined.github.io/3DSM-ABP-UNDEFINED/)
 [![Backend Coverage](https://img.shields.io/badge/cobertura%20backend-%E2%89%A5%2080%25%20Jest-176b30?logo=jest)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
 [![Frontend Tests](https://img.shields.io/badge/frontend-Node%20%2B%20Vitest-2f7b45)](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/actions/workflows/ci.yml?query=branch%3Adevelop)
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?logo=docker&logoColor=white)](./compose.yaml)
@@ -32,6 +33,11 @@
 
 <h2>📎 Links</h2>
 <ul>
+    <li>
+        <strong>Demonstração Online (GitHub Pages):</strong>
+        <a href="https://abpundefined.github.io/3DSM-ABP-UNDEFINED/" target="_blank">Acessar Demonstração Interativa</a>
+        (<a href="https://abpundefined.github.io/3DSM-ABP-UNDEFINED/qr-code" target="_blank">QR Code para impressão</a>)
+    </li>
     <li>
         <strong>GitHub Projects (Kanban):</strong>
         <a href="https://github.com/users/abpundefined/projects/2" target="_blank">Acessar Kanban</a>

@@ -17,6 +17,7 @@ import usePeriod from '../hooks/usePeriod';
 import useRanking, { type EstadoDoRanking } from '../hooks/useRanking';
 import { rankingDemo } from '../mocks/ranking';
 import type { MetricaRanking, RespostaRanking } from '../types/ranking';
+import { ehModoDemo } from '../utils/modoDemo';
 import {
   LIMITE_DO_RANKING,
   METRICAS,
@@ -106,7 +107,7 @@ function ConteudoDoRanking({
 
 export default function Ranking() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const modo = searchParams.get('modo') === 'evolucao' ? 'evolucao' : 'ranking';
   const metrica = lerMetrica(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
