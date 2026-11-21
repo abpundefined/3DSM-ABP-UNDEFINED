@@ -15,6 +15,13 @@ import {
 } from '../../utils/mapaDados';
 import { emissaoNoMomento, type Momento } from '../../utils/linhaDoTempo';
 import { formatarEmissao, type EscalaEmissao } from '../../utils/mapaEscala';
+import {
+  encontrarRegiaoMaisProxima,
+  formatarIntensidadeAlvo,
+  posicoesSemSobreposicao,
+  type RegiaoAlvoMapa,
+  type SimulacaoRegiaoMapa,
+} from '../../utils/simulacaoMapa';
 import ControlesDeZoom from './ControlesDeZoom';
 
 const URL_DOS_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -48,11 +55,49 @@ type MapaLeafletProps = {
   momento?: Momento | null;
   foco?: FocoDoMapa | null;
   onVoltarAoGlobo?: (centro: { latitude: number; longitude: number }) => void;
+  modoSimular?: boolean;
+  regioesAlvo?: readonly RegiaoAlvoMapa[];
+  simulacoes?: ReadonlyMap<number, SimulacaoRegiaoMapa>;
+  onSimularArrasto?: (servicoId: number, regiaoDestinoCodigo: string) => void;
 };
 
 type EstadoDoZoom = { atual: number; minimo: number; maximo: number };
 
 type Marcador = { servico: ServicoNoMapa; camada: L.CircleMarker };
+
+function siglaDoServico(nome: string) {
+  const palavras = nome
+    .trim()
+    .split(/\s+/)
+    .filter((parte) => parte.length > 0);
+  if (palavras.length >= 2) {
+    return `${palavras[0][0]}${palavras[1][0]}`.toLocaleUpperCase('pt-BR');
+  }
+  return nome.trim().slice(0, 2).toLocaleUpperCase('pt-BR') || 'SV';
+}
+
+function criarIconeArrastavel(
+  servico: ServicoNoMapa,
+  valor: number | null,
+  escala: EscalaEmissao,
+  simulado: boolean,
+) {
+  const faixa = escala.faixa(valor);
+  const tamanho = Math.max(26, Math.round(escala.raio(valor) * 2));
+  const classeFaixa =
+    faixa === null
+      ? 'mapa-marcador-arrastavel--sem-dados'
+      : `mapa-marcador-arrastavel--faixa-${faixa}`;
+  const classeSimulado = simulado ? ' mapa-marcador-arrastavel--simulado' : '';
+  const sigla = siglaDoServico(servico.nome);
+
+  return L.divIcon({
+    html: `<span class="mapa-marcador-arrastavel-sigla" data-servico-id="${servico.servicoId}" aria-hidden="true">${sigla}</span>`,
+    className: `mapa-marcador-arrastavel ${classeFaixa}${classeSimulado}`,
+    iconSize: [tamanho, tamanho],
+    iconAnchor: [tamanho / 2, tamanho / 2],
+  });
+}
 
 function criarElemento<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -101,14 +146,22 @@ export default function MapaLeaflet({
   momento = null,
   foco = null,
   onVoltarAoGlobo,
+  modoSimular = false,
+  regioesAlvo = [],
+  simulacoes,
+  onSimularArrasto,
 }: MapaLeafletProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<L.Map | null>(null);
   const grupoRef = useRef<L.MarkerClusterGroup | null>(null);
+  const camadaSimulacaoRef = useRef<L.LayerGroup | null>(null);
   const marcadoresRef = useRef<Marcador[]>([]);
   const escalaRef = useRef(escala);
   const momentoRef = useRef<Momento | null>(momento);
   const aoVoltarRef = useRef(onVoltarAoGlobo);
+  const regioesAlvoRef = useRef(regioesAlvo);
+  const onSimularArrastoRef = useRef(onSimularArrasto);
+  const ajusteSimulacaoRef = useRef(false);
   const [zoom, setZoom] = useState<EstadoDoZoom | null>(null);
   const navigate = useNavigate();
   const { linkSearch } = usePeriod();
@@ -137,6 +190,7 @@ export default function MapaLeaflet({
       iconCreateFunction: criarIconeDoGrupo,
     });
     grupo.addTo(mapa);
+    const camadaSimulacao = L.layerGroup().addTo(mapa);
 
     const atualizarZoom = () =>
       setZoom({
@@ -187,6 +241,7 @@ export default function MapaLeaflet({
 
     mapaRef.current = mapa;
     grupoRef.current = grupo;
+    camadaSimulacaoRef.current = camadaSimulacao;
 
     return () => {
       window.clearTimeout(temporizadorDaRolagem);
@@ -196,15 +251,109 @@ export default function MapaLeaflet({
       mapa.remove();
       mapaRef.current = null;
       grupoRef.current = null;
+      camadaSimulacaoRef.current = null;
     };
   }, []);
 
   useEffect(() => {
+    escalaRef.current = escala;
+  }, [escala]);
+
+  useEffect(() => {
+    regioesAlvoRef.current = regioesAlvo;
+  }, [regioesAlvo]);
+
+  useEffect(() => {
+    onSimularArrastoRef.current = onSimularArrasto;
+  }, [onSimularArrasto]);
+
+  useEffect(() => {
     const mapa = mapaRef.current;
     const grupo = grupoRef.current;
-    if (!mapa || !grupo) {
+    const camadaSimulacao = camadaSimulacaoRef.current;
+    if (!mapa || !grupo || !camadaSimulacao) {
       return;
     }
+
+    if (modoSimular) {
+      grupo.clearLayers();
+      marcadoresRef.current = [];
+      camadaSimulacao.clearLayers();
+
+      for (const regiao of regioesAlvo) {
+        const alvo = L.circleMarker([regiao.latitude, regiao.longitude], {
+          radius: 20,
+          weight: 2,
+          className: 'mapa-alvo-regiao',
+        });
+        alvo.on('add', () => {
+          alvo.getElement()?.setAttribute('data-regiao-alvo', regiao.codigo);
+        });
+        alvo.bindTooltip(
+          `${regiao.local} · ${formatarIntensidadeAlvo(regiao.intensidadeGCo2ePorKwh)}`,
+          { direction: 'bottom', offset: [0, 12] },
+        );
+        alvo.addTo(camadaSimulacao);
+      }
+
+      const posicoes = posicoesSemSobreposicao(servicos);
+      for (const servico of servicos) {
+        const posicao = posicoes.get(servico.servicoId) ?? {
+          latitude: servico.latitude,
+          longitude: servico.longitude,
+        };
+        const simulado = simulacoes?.has(servico.servicoId) ?? false;
+        const valor = servico.totais.emissaoGCo2e;
+        const marcador = L.marker([posicao.latitude, posicao.longitude], {
+          draggable: true,
+          keyboard: true,
+          title: `${servico.nome} — arraste para simular outra região`,
+          alt: `${servico.nome} em ${servico.local}`,
+          icon: criarIconeArrastavel(
+            servico,
+            valor,
+            escalaRef.current,
+            simulado,
+          ),
+        });
+        marcador.bindTooltip(
+          `${servico.nome} · ${servico.local}${simulado ? ' (simulado)' : ''} — arraste para simular outra região`,
+          { direction: 'top', offset: [0, -10] },
+        );
+        marcador.on('dragend', () => {
+          const destinoAtual = marcador.getLatLng();
+          const regiaoDestino = encontrarRegiaoMaisProxima(
+            destinoAtual.lat,
+            destinoAtual.lng,
+            regioesAlvoRef.current,
+          );
+          marcador.setLatLng([posicao.latitude, posicao.longitude]);
+          if (regiaoDestino) {
+            onSimularArrastoRef.current?.(
+              servico.servicoId,
+              regiaoDestino.codigo,
+            );
+          }
+        });
+        marcador.addTo(camadaSimulacao);
+      }
+
+      if (!ajusteSimulacaoRef.current) {
+        ajusteSimulacaoRef.current = true;
+        const limites = limitesDosServicos(servicos);
+        if (limites) {
+          mapa.fitBounds(limites, {
+            padding: [56, 56],
+            maxZoom: ZOOM_MAXIMO_AO_AJUSTAR,
+            animate: false,
+          });
+        }
+      }
+      return;
+    }
+
+    ajusteSimulacaoRef.current = false;
+    camadaSimulacao.clearLayers();
 
     const criarPopup = (servico: ServicoNoMapa) => {
       const conteudo = criarElemento('div', 'mapa-popup');
@@ -299,7 +448,16 @@ export default function MapaLeaflet({
     } else {
       mapa.setView(VISTA_INICIAL, ZOOM_INICIAL, { animate: false });
     }
-  }, [foco, linkSearch, movimentoReduzido, navigate, servicos]);
+  }, [
+    foco,
+    linkSearch,
+    modoSimular,
+    movimentoReduzido,
+    navigate,
+    regioesAlvo,
+    servicos,
+    simulacoes,
+  ]);
 
   useEffect(() => {
     const mapa = mapaRef.current;
