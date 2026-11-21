@@ -137,16 +137,20 @@ test('P06: sem serviços ou sem resposta do backend o contador não aparece', as
   await expect(page.getByText(/ativos? de .* monitorados?/)).toHaveCount(0);
 });
 
-test('P06: "Ver demonstração" é botão secundário e a saída diz para onde leva', async ({
+test('P06: dashboard conectado não exibe banner de prévia e a saída da demonstração diz para onde leva', async ({
   page,
 }) => {
   await page.route('**/api/**', (route) => route.fulfill({ json: [] }));
   await page.goto('/');
 
-  const entrar = page.getByRole('link', { name: 'Ver demonstração' });
-  await expect(entrar).toHaveClass(/button--secondary/);
-  await expect(entrar).not.toHaveClass(/button--accent/);
-  await entrar.click();
+  await expect(page.getByText('Explore uma prévia do dashboard')).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByRole('link', { name: 'Ver demonstração' }),
+  ).toHaveCount(0);
+
+  await page.goto('/?demo=1');
 
   await expect(
     page.getByText(
@@ -158,9 +162,12 @@ test('P06: "Ver demonstração" é botão secundário e a saída diz para onde l
   ).toBeVisible();
   const sair = page.getByRole('link', { name: 'Sair da demonstração' });
   await expect(sair).toHaveClass(/button--secondary/);
+  await expect(sair).not.toHaveClass(/button--accent/);
   await expect(
     page.getByRole('link', { name: 'Voltar ao estado vazio' }),
   ).toHaveCount(0);
+  await sair.click();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test('P06: no celular o aviso da demonstração fica compacto e mantém o essencial', async ({

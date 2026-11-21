@@ -4,7 +4,7 @@ Adicionado a pedido do PO para avaliar como os gráficos ficam sobre a interface
 
 ## Abrir a demonstração
 
-Com o frontend em execução, acesse **http://localhost:5173/?demo=1** ou clique em **Ver demonstração** no dashboard. **Voltar ao estado vazio** retorna ao painel inicial. O parâmetro da URL preserva o modo ao atualizar ou compartilhar o endereço local; não é gravado em storage.
+Com o frontend em execução, acesse **http://localhost:5173/?demo=1**. **Sair da demonstração** retorna ao painel conectado. O parâmetro da URL preserva o modo ao atualizar ou compartilhar o endereço local; não é gravado em storage.
 
 O aviso **Modo demonstração · Dados fictícios** permanece acima dos indicadores. Datas, status e valores são exemplos, identificados como simulados. O modo padrão `/` agora consulta serviços e coletas reais no backend; os gráficos desta demonstração continuam fictícios e separados da integração.
 
@@ -16,8 +16,6 @@ O aviso **Modo demonstração · Dados fictícios** permanece acima dos indicado
 - Controles com resultados concretos: alternar o indicador, consultar valores em tabela, ordenar o ranking, buscar serviços, filtrar status e limpar uma busca sem resultados.
 - Pontos do gráfico podem ser explorados com mouse, toque ou foco por teclado. Uma tabela de valores oferece alternativa textual.
 - Layout empilhado no celular; a tabela de serviços permite rolagem horizontal dentro da própria região, sem alargar a página.
-
-Aplicado o mesmo contrato da skill Uizze e as referências já revisadas na parte 2. Não houve envio de código ou dados ao Uizze.
 
 ## Dados e coerência
 
