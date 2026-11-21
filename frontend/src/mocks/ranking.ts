@@ -17,8 +17,12 @@ function adicionar(
   {
     servicoId,
     nome,
+    regiaoCodigo,
+    local,
     totais,
-  }: Pick<ServicoNoMapa, 'servicoId' | 'nome' | 'totais'>,
+  }: Pick<ServicoNoMapa, 'servicoId' | 'nome' | 'regiaoCodigo' | 'totais'> & {
+    local?: string;
+  },
   coletasValidas: number,
 ) {
   const { energiaKwh, emissaoGCo2e } = totais;
@@ -26,7 +30,19 @@ function adicionar(
   if (energiaKwh === null || emissaoGCo2e === null) {
     semDados.push({ servicoId, nome });
   } else {
-    itens.push({ servicoId, nome, energiaKwh, emissaoGCo2e, coletasValidas });
+    const regiao = local ?? 'Localização não informada';
+    const [paisExtraido] = local ? local.split(' · ') : [];
+    const pais = paisExtraido ?? 'Localização não informada';
+    itens.push({
+      servicoId,
+      nome,
+      energiaKwh,
+      emissaoGCo2e,
+      coletasValidas,
+      regiaoCodigo,
+      regiao,
+      pais,
+    });
   }
 }
 

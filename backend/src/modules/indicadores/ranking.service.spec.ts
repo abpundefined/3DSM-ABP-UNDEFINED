@@ -370,4 +370,87 @@ describe("RankingService", () => {
       });
     },
   );
+
+  it("inclui código de região, região formatada e país nos itens do ranking", async () => {
+    listarServicosParaRanking.mockResolvedValue([
+      {
+        id: 1,
+        nome: "Auth Service",
+        estadoAtual: "DISPONIVEL",
+        regiaoCodigo: "br-sudeste",
+        regiao: {
+          pais: "Brasil",
+          regiao: "Sudeste",
+          cidade: "São Paulo",
+        },
+      },
+      {
+        id: 2,
+        nome: "Regional Service",
+        estadoAtual: "DISPONIVEL",
+        regiaoCodigo: "eu-west",
+        regiao: {
+          pais: "Irlanda",
+          regiao: "Leinster",
+          cidade: null,
+        },
+      },
+      {
+        id: 3,
+        nome: "Email Worker",
+        estadoAtual: "DISPONIVEL",
+        regiaoCodigo: "desconhecida",
+        regiao: {
+          pais: "desconhecido",
+          regiao: "desconhecida",
+          cidade: null,
+        },
+      },
+    ]);
+    somarImpactoPorServico.mockResolvedValue([
+      { servicoId: 1, energiaKwh: 10, emissaoGCo2e: 50, coletasValidas: 5 },
+      { servicoId: 2, energiaKwh: 8, emissaoGCo2e: 40, coletasValidas: 4 },
+      { servicoId: 3, energiaKwh: 2, emissaoGCo2e: 10, coletasValidas: 1 },
+    ]);
+
+    const resultado = await service.obterRanking(
+      Object.assign(new RankingQueryDto(), { inicio, fim }),
+    );
+
+    expect(resultado.itens).toEqual([
+      {
+        posicao: 1,
+        servicoId: 1,
+        nome: "Auth Service",
+        energiaKwh: 10,
+        emissaoGCo2e: 50,
+        coletasValidas: 5,
+        regiaoCodigo: "br-sudeste",
+        regiao: "Brasil · São Paulo",
+        pais: "Brasil",
+      },
+      {
+        posicao: 2,
+        servicoId: 2,
+        nome: "Regional Service",
+        energiaKwh: 8,
+        emissaoGCo2e: 40,
+        coletasValidas: 4,
+        regiaoCodigo: "eu-west",
+        regiao: "Irlanda · Leinster",
+        pais: "Irlanda",
+      },
+      {
+        posicao: 3,
+        servicoId: 3,
+        nome: "Email Worker",
+        energiaKwh: 2,
+        emissaoGCo2e: 10,
+        coletasValidas: 1,
+        regiaoCodigo: "desconhecida",
+        regiao: "Localização não informada",
+        pais: "Localização não informada",
+      },
+    ]);
+  });
 });

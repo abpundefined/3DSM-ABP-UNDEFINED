@@ -308,7 +308,7 @@ A resposta contém `periodo`, `granularidade`, `intervalos` (início de cada int
 | `metrica` | Opcional: `energia` (padrão) ou `emissao`. |
 | `limite` | Opcional: inteiro de 1 a 100; padrão 10. |
 
-A resposta contém `periodo`, `metrica`, `itens` e `semDados`. Cada item traz `posicao`, `servicoId`, `nome`, `energiaKwh`, `emissaoGCo2e` e `coletasValidas`. Os totais somam apenas coletas com `estadoCalculo = CONCLUIDO`. A ordem é decrescente pela métrica escolhida; no empate, por nome e depois por `servicoId`. Serviços sem valor na métrica vão para `semDados`, ordenados por nome; um serviço `REMOVIDO` sem dados não aparece em nenhuma das listas. Parâmetros inválidos retornam 400.
+A resposta contém `periodo`, `metrica`, `itens` e `semDados`. Cada item traz `posicao`, `servicoId`, `nome`, `energiaKwh`, `emissaoGCo2e`, `coletasValidas` e os metadados de localização (`regiaoCodigo`, `regiao` e `pais`, usados pelo agrupamento por serviço, região ou país no frontend). Os totais somam apenas coletas com `estadoCalculo = CONCLUIDO`. A ordem é decrescente pela métrica escolhida; no empate, por nome e depois por `servicoId`. Serviços sem valor na métrica vão para `semDados`, ordenados por nome; um serviço `REMOVIDO` sem dados não aparece em nenhuma das listas. Parâmetros inválidos retornam 400.
 
 Também retorna `periodoAnterior` e `variacaoPercentual: { energiaKwh,
 emissaoGCo2e }`, com as mesmas regras de comparação de `GET /indicadores`.
