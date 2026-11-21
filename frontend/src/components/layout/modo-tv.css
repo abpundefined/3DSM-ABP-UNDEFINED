@@ -4,7 +4,7 @@
 
 .app-shell--tv .main-content {
   width: min(100% - 48px, 1600px);
-  padding-block: 16px 148px;
+  padding-block: 16px 96px;
 }
 
 .app-shell--tv .mapa-page {

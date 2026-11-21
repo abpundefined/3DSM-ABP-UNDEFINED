@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import GraficoIntensidadeRegiao from '../components/mapa/GraficoIntensidadeRegiao';
 import GloboInterativo, {
@@ -33,16 +33,49 @@ import {
 } from '../utils/linhaDoTempo';
 import { filtrarPorRegiao, regioesDoMapa } from '../utils/mapaDados';
 import { criarEscalaEmissao, maiorEmissao } from '../utils/mapaEscala';
+import { estaEmModoTv, MEDIA_MODO_TV_DESKTOP } from '../utils/modoTv';
 import '../components/mapa/mapa.css';
+
+const Globo3dModoTv = lazy(() => import('../components/mapa/Globo3dModoTv'));
 
 type Visao = 'globo' | 'mapa';
 
 function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
+  const { search } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const visao: Visao = searchParams.get('visao') === 'mapa' ? 'mapa' : 'globo';
   const [foco, setFoco] = useState<FocoDoMapa | null>(null);
   const [retornoAoGlobo, setRetornoAoGlobo] = useState<Rotacao | null>(null);
   const [indice, setIndice] = useState<number | null>(null);
+  const [fallback2dTv, setFallback2dTv] = useState(false);
+  const [ehDesktopTv, setEhDesktopTv] = useState(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return true;
+    }
+    return window.matchMedia(MEDIA_MODO_TV_DESKTOP).matches;
+  });
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return;
+    }
+    const media = window.matchMedia(MEDIA_MODO_TV_DESKTOP);
+    const atualizar = (evento: MediaQueryListEvent) =>
+      setEhDesktopTv(evento.matches);
+    media.addEventListener('change', atualizar);
+    return () => media.removeEventListener('change', atualizar);
+  }, []);
+
+  const modoTvAtivo = ehDesktopTv && estaEmModoTv(search);
+  const usarGlobo3dTv = modoTvAtivo && visao === 'globo' && !fallback2dTv;
+  const mostrarMapa2d =
+    visao === 'mapa' || (modoTvAtivo && visao === 'globo' && fallback2dTv);
 
   const regioes = useMemo(
     () => regioesDoMapa(dados.servicos),
@@ -185,7 +218,37 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
   return (
     <section className="mapa-painel" aria-label="Mapa de emissões">
       <div className="mapa-conteudo">
-        {visao === 'globo' ? (
+        {usarGlobo3dTv ? (
+          <Suspense
+            fallback={
+              <GloboInterativo
+                key={codigoDaRegiao ?? 'todas'}
+                servicos={servicos}
+                escala={escalaDoGlobo}
+                momento={momento}
+                rotacaoInicial={retornoAoGlobo ?? rotacaoDaRegiao}
+                zoomInicial={retornoAoGlobo ? ZOOM_DE_RETORNO : undefined}
+                onSelecionar={aproximar}
+                onEntrarNoMapa={entrarNoMapa}
+              />
+            }
+          >
+            <Globo3dModoTv
+              servicos={servicos}
+              escala={escalaDoGlobo}
+              momento={momento}
+              onFallback2d={() => setFallback2dTv(true)}
+            />
+          </Suspense>
+        ) : mostrarMapa2d ? (
+          <MapaLeaflet
+            servicos={servicos}
+            escala={escala}
+            momento={momento}
+            foco={foco}
+            onVoltarAoGlobo={voltarAoGlobo}
+          />
+        ) : (
           <GloboInterativo
             key={codigoDaRegiao ?? 'todas'}
             servicos={servicos}
@@ -196,28 +259,26 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
             onSelecionar={aproximar}
             onEntrarNoMapa={entrarNoMapa}
           />
-        ) : (
-          <MapaLeaflet
-            servicos={servicos}
-            escala={escala}
-            momento={momento}
-            foco={foco}
-            onVoltarAoGlobo={voltarAoGlobo}
-          />
         )}
         <aside
           className="mapa-laterais"
           aria-label="Legenda e serviços fora do mapa"
         >
           <LegendaEmissao
-            escala={visao === 'globo' ? escalaDoGlobo : escala}
+            escala={mostrarMapa2d ? escala : escalaDoGlobo}
             porIntervalo={porIntervalo}
-            porLocal={visao === 'globo'}
+            porLocal={!mostrarMapa2d}
           />
           <ListaSemCoordenadas
             servicos={semCoordenadas}
             referenciaEmissao={referenciaEmissao}
           />
+          {modoTvAtivo && fallback2dTv && (
+            <p className="mapa-tv-fallback-nota" role="status">
+              Mapa 2D ativado automaticamente para manter o desempenho no modo
+              TV.
+            </p>
+          )}
         </aside>
       </div>
       {rotulos.length > 0 && servicos.length > 0 && (

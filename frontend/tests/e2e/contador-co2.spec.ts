@@ -110,34 +110,19 @@ test('contador ao vivo no dashboard soma a taxa em g/s, aumenta a cada segundo e
   await expect(contador.locator('.contador-co2-valor')).toHaveText('0,00 g');
 });
 
-test('contador ao vivo no modo TV continua acumulando entre telas e Recomeçar não fecha o modo TV', async ({
+test('modo TV não exibe o painel do contador ao vivo', async ({
   page,
   isMobile,
 }) => {
   test.skip(isMobile, 'Modo TV disponível apenas em telas desktop.');
-  await page.clock.install({ time: new Date('2026-11-20T12:00:00Z') });
-  await page.clock.pauseAt(new Date('2026-11-20T12:00:00Z'));
   await mockApiContador(page);
 
   await page.goto('/?tv=1');
-  await page.clock.runFor(10);
-
-  const contadorTv = page.locator('.contador-co2--tv');
-  await expect(contadorTv).toBeVisible();
-  await expect(contadorTv.locator('.contador-co2-valor')).toHaveText('0,00 g');
-
-  await page.clock.runFor(4_000);
-  await expect(contadorTv.locator('.contador-co2-valor')).toHaveText('4,00 g');
-
-  // Troca de tela após 10 s sem zerar o contador
-  await page.clock.runFor(6_000);
-  await expect(page).toHaveURL(/\/mapa\?tv=1$/);
-  await expect(contadorTv.locator('.contador-co2-valor')).toHaveText('10,00 g');
-
-  // Recomeçar zera sem sair do modo TV
-  await contadorTv.getByRole('button', { name: 'Recomeçar' }).click();
-  await expect(page).toHaveURL(/\/mapa\?tv=1$/);
-  await expect(contadorTv.locator('.contador-co2-valor')).toHaveText('0,00 g');
+  await expect(page.getByLabel('Status do modo TV')).toBeVisible();
+  await expect(page.locator('.contador-co2--tv')).toHaveCount(0);
+  await expect(
+    page.getByRole('region', { name: 'Contador ao vivo de CO₂e' }),
+  ).toBeHidden();
 });
 
 test('versão mobile não exibe o contador ao vivo nem no dashboard nem em ?tv=1', async ({
