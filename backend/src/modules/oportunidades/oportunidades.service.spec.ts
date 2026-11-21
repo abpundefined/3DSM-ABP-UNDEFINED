@@ -140,4 +140,48 @@ describe("OportunidadesService", () => {
     expect(resposta.resumo.totalOportunidades).toBe(0);
     expect(resposta.resumo.reducaoPotencialGCo2e).toBe(0);
   });
+
+  it("trata serviços sem métricas, regiões sem cidade/país e intensidades ausentes", async () => {
+    repository.listarServicos.mockResolvedValue([
+      {
+        id: 1,
+        nome: "Sem Coletas",
+        estadoAtual: "SEM_METRICAS",
+        regiaoCodigo: "eu-west",
+      },
+      {
+        id: 2,
+        nome: "Worker Isolado",
+        estadoAtual: "DISPONIVEL",
+        regiaoCodigo: "custom-1",
+      },
+    ]);
+    repository.agregarMetricasPorServico.mockResolvedValue([
+      {
+        servicoId: 2,
+        energiaKwh: 0.2,
+        emissaoGCo2e: 100,
+        cpuMediaPercent: 50,
+      },
+    ]);
+    repository.listarRegioesMonitoradas.mockResolvedValue([
+      { codigo: "eu-west", pais: "Irlanda", regiao: "Leinster", cidade: null },
+      { codigo: "custom-1", pais: "", regiao: "", cidade: null },
+      { codigo: "only-pais", pais: "Canadá", regiao: "", cidade: null },
+    ]);
+    repository.mediaIntensidadePorRegiao.mockResolvedValue([
+      { regiaoCodigo: "custom-1", intensidadeMedia: 400 },
+      { regiaoCodigo: "only-pais", intensidadeMedia: 100 },
+    ]);
+    repository.obterMatrizHorariaPorRegiao.mockResolvedValue([]);
+
+    const resposta = await service.listar(
+      new Date("2026-11-10T00:00:00.000Z"),
+      new Date("2026-11-11T00:00:00.000Z"),
+    );
+
+    expect(resposta.resumo.totalOportunidades).toBe(1);
+    expect(resposta.oportunidades[0].titulo).toContain("Canadá");
+    expect(resposta.oportunidades[0].explicacao).toContain("custom-1");
+  });
 });

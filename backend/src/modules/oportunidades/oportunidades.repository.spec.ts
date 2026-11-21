@@ -46,6 +46,10 @@ describe("OportunidadesRepository", () => {
           regiaoCodigo: "us-east",
           intensidadeMedia: 300,
         },
+        {
+          regiaoCodigo: "eu-west",
+          intensidadeMedia: null,
+        },
       ])
       .mockResolvedValueOnce([
         {
@@ -78,6 +82,7 @@ describe("OportunidadesRepository", () => {
     expect(regioes).toHaveLength(1);
     expect(intensidades).toEqual([
       { regiaoCodigo: "us-east", intensidadeMedia: 300 },
+      { regiaoCodigo: "eu-west", intensidadeMedia: null },
     ]);
     expect(matriz).toEqual([
       {
