@@ -80,6 +80,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           inicio: new Date("2026-11-10T10:00:00.000Z"),
           energiaKwh: 0.1,
           emissaoGCo2e: 8.5,
+          selo: "A",
           cpuMedia: 12,
           memoriaMediaMb: 256,
           discoMediaGb: 2,
@@ -125,6 +126,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           inicio: "2026-11-10T11:00:00.000Z",
           energiaKwh: null,
           emissaoGCo2e: null,
+          selo: "—",
           cpuMedia: null,
           memoriaMediaMb: null,
           coletas: null,
@@ -136,6 +138,7 @@ describe("IndicadoresService.obterHistoricoServico", () => {
           inicio: "2026-11-10T12:00:00.000Z",
           energiaKwh: 0.2,
           emissaoGCo2e: 17,
+          selo: "B",
           cpuMedia: 24,
           memoriaMediaMb: 512,
           coletas: 2,
@@ -159,6 +162,35 @@ describe("IndicadoresService.obterHistoricoServico", () => {
         redeW: 0.1,
       });
       expect(resultado[2].componentes?.totalW).toBeCloseTo(0.4475, 10);
+    });
+  });
+
+  it("calcula o selo diário usando a média por hora do dia", async () => {
+    obterSerieTemporal.mockResolvedValue([
+      {
+        inicio: new Date("2026-11-11T03:00:00.000Z"),
+        energiaKwh: 1,
+        emissaoGCo2e: 480,
+        cpuMedia: null,
+        memoriaMediaMb: null,
+        discoMediaGb: null,
+        redeMediaGb: null,
+        coletas: 1,
+        ativo: 1,
+        indisponivel: 0,
+        semMetricas: 0,
+      },
+    ]);
+
+    const resultado = await service.obterHistoricoServico("7", {
+      inicio: "2026-11-10T03:00:00.000Z",
+      fim: "2026-11-13T02:59:59.999Z",
+      granularidade: "dia",
+    });
+
+    expect(resultado[1]).toMatchObject({
+      inicio: "2026-11-11T03:00:00.000Z",
+      selo: "B",
     });
   });
 });

@@ -38,6 +38,8 @@ describe("ServicosService.listarServicos", () => {
     atualizadoEm: new Date("2026-11-08T00:00:00.000Z"),
   };
   const coletaRecente = {
+    emissaoGCo2e: 20,
+    intervaloColetaSegundos: 3600,
     cpuPercent: 50,
     memoryGb: 2,
     diskGb: 10,
@@ -91,6 +93,7 @@ describe("ServicosService.listarServicos", () => {
         longitude: -46.63,
       },
       componentes,
+      selo: "B",
     });
     expect(servico).not.toHaveProperty("regiao");
     expect(calcularPotencia).toHaveBeenCalledWith(50, 2, 10, 5);
@@ -104,6 +107,7 @@ describe("ServicosService.listarServicos", () => {
     const [servico] = await service.listarServicos();
 
     expect(servico.componentes).toBeNull();
+    expect(servico.selo).toBe("—");
   });
 
   it.each(["SEM_METRICAS", "FALHA"])(
@@ -126,6 +130,7 @@ describe("ServicosService.listarServicos", () => {
       const [servico] = await service.listarServicos();
 
       expect(servico.componentes).toBeNull();
+      expect(servico.selo).toBe("—");
     },
   );
 
@@ -147,6 +152,7 @@ describe("ServicosService.listarServicos", () => {
     const [servico] = await service.listarServicos();
 
     expect(servico.componentes).toBeNull();
+    expect(servico.selo).toBe("—");
   });
 
   it("mantém a cidade e as coordenadas como null quando a API não informa", async () => {

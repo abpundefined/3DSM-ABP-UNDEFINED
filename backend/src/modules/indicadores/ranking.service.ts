@@ -16,6 +16,7 @@ interface ItemRanking {
   energiaKwh: number;
   emissaoGCo2e: number;
   coletasValidas: number;
+  selo: string;
 }
 
 type ItemRankingSemPosicao = Omit<ItemRanking, "posicao">;
@@ -23,6 +24,7 @@ type ItemRankingSemPosicao = Omit<ItemRanking, "posicao">;
 interface ServicoSemDados {
   servicoId: number;
   nome: string;
+  selo: string;
 }
 
 export interface VariacaoPorServico extends ServicoSemDados {
@@ -107,6 +109,7 @@ export class RankingService {
     const { inicio, fim } = converterPeriodo(query);
     const janelaAnterior = periodoAnterior(inicio, fim);
     const metrica = query.metrica ?? MetricaRanking.ENERGIA;
+    const duracaoEmHoras = (fim.getTime() - inicio.getTime()) / 3_600_000;
 
     const [servicos, impactos, impactosAnteriores] = await Promise.all([
       this.indicadoresRepository.listarServicosParaRanking(),
@@ -131,13 +134,19 @@ export class RankingService {
     for (const servico of servicos) {
       const impacto = impactosPorServico.get(servico.id);
       const anterior = anterioresPorServico.get(servico.id);
+      const emissaoAtualGCo2e = impacto?.emissaoGCo2e ?? null;
+      const selo = calcularSeloEficiencia(
+        emissaoAtualGCo2e === null || duracaoEmHoras <= 0
+          ? null
+          : emissaoAtualGCo2e / duracaoEmHoras,
+      );
 
       if (impacto || anterior) {
-        const emissaoAtualGCo2e = impacto?.emissaoGCo2e ?? null;
         const emissaoAnteriorGCo2e = anterior?.emissaoGCo2e ?? null;
         variacaoPorServico.push({
           servicoId: servico.id,
           nome: servico.nome,
+          selo,
           emissaoAtualGCo2e,
           emissaoAnteriorGCo2e,
           diferencaGCo2e:
@@ -156,7 +165,7 @@ export class RankingService {
 
       if (!impacto || valorDaMetrica(impacto, metrica) === null) {
         if (servico.estadoAtual !== "REMOVIDO") {
-          semDados.push({ servicoId: servico.id, nome: servico.nome });
+          semDados.push({ servicoId: servico.id, nome: servico.nome, selo });
         }
         continue;
       }
@@ -167,6 +176,7 @@ export class RankingService {
         energiaKwh: impacto.energiaKwh ?? 0,
         emissaoGCo2e: impacto.emissaoGCo2e ?? 0,
         coletasValidas: impacto.coletasValidas,
+        selo,
       });
     }
 
