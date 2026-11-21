@@ -17,7 +17,7 @@ import usePeriod from '../hooks/usePeriod';
 import useRanking, { type EstadoDoRanking } from '../hooks/useRanking';
 import { rankingDemo } from '../mocks/ranking';
 import type { MetricaRanking, RespostaRanking } from '../types/ranking';
-import { exportDataToCsv } from '../utils/csv-export.utils';
+import { dateForCsv, exportDataToCsv } from '../utils/csv-export.utils';
 import { ehModoDemo } from '../utils/modoDemo';
 import {
   LIMITE_DO_RANKING,
@@ -142,8 +142,8 @@ const exportacaoDesabilitada =
     exportDataToCsv(
       dadosParaExportar.itens,
       'greener-ranking',
-      dadosParaExportar.periodo.inicio.slice(0, 10),
-      dadosParaExportar.periodo.fim.slice(0, 10),
+      dateForCsv(dadosParaExportar.periodo.inicio),
+      dateForCsv(dadosParaExportar.periodo.fim),
     );
   };
   const trocarModo = (proximo: 'ranking' | 'evolucao') =>

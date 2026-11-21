@@ -29,7 +29,7 @@ import {
   formatComparisonPeriod,
   MAX_SERVICES_TO_COMPARE,
 } from '../utils/comparacao';
-import { exportDataToCsv } from '../utils/csv-export.utils';
+import { dateForCsv, exportDataToCsv } from '../utils/csv-export.utils';
 import '../components/comparacao/comparacao.css';
 
 function getLocation(service: ServicoSelecionavel | undefined) {
@@ -284,11 +284,21 @@ export default function Comparacao() {
       return;
     }
 
+    const dadosAchatados = comparisonState.dados.servicos.map((servico) => ({
+      servicoId: servico.servicoId,
+      nome: servico.nome,
+      energiaKwh: servico.totais.energiaKwh,
+      emissaoGCo2e: servico.totais.emissaoGCo2e,
+      cpuMedia: servico.totais.cpuMedia,
+      memoriaMediaMb: servico.totais.memoriaMediaMb,
+      coletasValidas: servico.totais.coletasValidas,
+    }));
+
     exportDataToCsv(
-      comparisonState.dados.servicos,
+      dadosAchatados,
       'greener-comparacao',
-      comparisonState.dados.periodo.inicio.slice(0, 10),
-      comparisonState.dados.periodo.fim.slice(0, 10),
+      dateForCsv(comparisonState.dados.periodo.inicio),
+      dateForCsv(comparisonState.dados.periodo.fim),
     );
   };
 

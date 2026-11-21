@@ -13,9 +13,14 @@ import { exportDataToCsv } from '../../src/utils/csv-export.utils';
 vi.mock('../../src/services/serviceDetail', () => ({
   fetchServiceDetail: vi.fn(),
 }));
-vi.mock('../../src/utils/csv-export.utils', () => ({
-  exportDataToCsv: vi.fn(),
-}));
+vi.mock('../../src/utils/csv-export.utils', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../src/utils/csv-export.utils')>();
+  return {
+    ...actual,
+    exportDataToCsv: vi.fn(),
+  };
+});
 vi.mock('../../src/components/servico/ServiceHistoryChart', () => ({
   default: () => null,
 }));

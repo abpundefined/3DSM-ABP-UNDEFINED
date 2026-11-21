@@ -29,7 +29,7 @@ import {
   formatEmission,
   formatEnergy,
 } from '../utils/formatters';
-import { exportDataToCsv } from '../utils/csv-export.utils';
+import { dateForCsv, exportDataToCsv } from '../utils/csv-export.utils';
 import { summarizeServiceHistory } from '../utils/serviceHistory';
 import './service-detail.css';
 
@@ -38,24 +38,6 @@ type ViewState =
   | { status: 'error'; message: string }
   | { status: 'notFound' }
   | { status: 'ready'; data: ServiceDetailData };
-
-function dateForCsv(isoDate: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Sao_Paulo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date(isoDate));
-  const year = parts.find((part) => part.type === 'year')?.value;
-  const month = parts.find((part) => part.type === 'month')?.value;
-  const day = parts.find((part) => part.type === 'day')?.value;
-
-  if (!year || !month || !day) {
-    throw new Error('Não foi possível determinar a data do histórico.');
-  }
-
-  return `${year}-${month}-${day}`;
-}
 
 export default function ServicoDetalhe() {
   const { id } = useParams();

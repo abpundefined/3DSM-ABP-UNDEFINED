@@ -75,5 +75,6 @@ describe('exportDataToCsv', () => {
     expect(anchor.href).toBe('blob:csv-export');
     expect(anchor.click).toHaveBeenCalledOnce();
     expect(createObjectURLMock).toHaveBeenCalledWith(expect.any(Blob));
+    expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:csv-export');
   });
 });

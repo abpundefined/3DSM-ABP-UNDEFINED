@@ -19,9 +19,11 @@ import type { RespostaRanking } from '../../src/types/ranking';
 
 vi.mock('../../src/services/mapa', () => ({ buscarMapa: vi.fn() }));
 vi.mock('../../src/services/ranking', () => ({ buscarRanking: vi.fn() }));
-vi.mock('../../src/utils/csv-export.utils', () => ({
-  exportDataToCsv: vi.fn(),
-}));
+vi.mock('../../src/utils/csv-export.utils', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../src/utils/csv-export.utils')>();
+  return { ...actual, exportDataToCsv: vi.fn() };
+});
 
 vi.mock('../../src/hooks/useComparisonData', () => ({ default: vi.fn() }));
 
@@ -136,8 +138,8 @@ describe('Ranking', () => {
     expect(exportDataToCsvMock).toHaveBeenCalledWith(
       itensOrdenados,
       'greener-ranking',
-      '2026-11-10',
-      '2026-11-17',
+      '2026-11-09',
+      '2026-11-16',
     );
   });
 
@@ -461,10 +463,29 @@ describe('Comparação', () => {
     await user.click(screen.getByRole('button', { name: 'Exportar CSV' }));
 
     expect(exportDataToCsvMock).toHaveBeenCalledWith(
-      dadosComparacao.servicos,
+      [
+        {
+          servicoId: 1,
+          nome: 'API de pagamentos',
+          energiaKwh: 2,
+          emissaoGCo2e: 500,
+          cpuMedia: 12,
+          memoriaMediaMb: 512,
+          coletasValidas: 4,
+        },
+        {
+          servicoId: 2,
+          nome: 'Worker de relatórios',
+          energiaKwh: 3,
+          emissaoGCo2e: 700,
+          cpuMedia: 20,
+          memoriaMediaMb: 1024,
+          coletasValidas: 6,
+        },
+      ],
       'greener-comparacao',
-      '2026-11-10',
-      '2026-11-17',
+      '2026-11-09',
+      '2026-11-16',
     );
   });
 
