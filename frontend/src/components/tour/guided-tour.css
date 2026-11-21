@@ -148,14 +148,14 @@
   border-radius: 10px;
 }
 
-.nav-tour {
+.footer-tour-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 36px;
-  padding: 7px 11px;
+  padding: 6px 12px;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--surface);
   color: var(--text);
   font-size: 13px;
@@ -163,12 +163,12 @@
   white-space: nowrap;
 }
 
-.nav-tour:hover {
+.footer-tour-button:hover {
   border-color: var(--green-forest);
   color: var(--green-forest);
 }
 
-.nav-tour .icon {
+.footer-tour-button .icon {
   width: 16px;
   height: 16px;
 }
@@ -182,27 +182,9 @@
   }
 }
 
-@media (max-width: 600px) {
-  .nav-tour {
-    padding: 7px 8px;
-  }
-
-  .nav-tour span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-}
-
 @media print {
   .guided-tour,
-  .nav-tour {
+  .footer-tour-button {
     display: none;
   }
 }
