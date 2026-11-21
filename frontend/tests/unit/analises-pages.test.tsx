@@ -4,24 +4,28 @@ import { MemoryRouter, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Comparacao from '../../src/pages/Comparacao';
 import Ranking from '../../src/pages/Ranking';
+import useComparisonData from '../../src/hooks/useComparisonData';
 import ComparisonSelectionProvider from '../../src/providers/ComparisonSelectionProvider';
 import PeriodProvider from '../../src/providers/PeriodProvider';
 import { buscarMapa } from '../../src/services/mapa';
 import { buscarRanking } from '../../src/services/ranking';
+import { exportDataToCsv } from '../../src/utils/csv-export.utils';
 import { mapaDemo } from '../../src/mocks/mapa';
+import type {
+  RespostaComparacao,
+  ServicoSelecionavel,
+} from '../../src/types/comparacao';
 import type { RespostaRanking } from '../../src/types/ranking';
 
 vi.mock('../../src/services/mapa', () => ({ buscarMapa: vi.fn() }));
 vi.mock('../../src/services/ranking', () => ({ buscarRanking: vi.fn() }));
+vi.mock('../../src/utils/csv-export.utils', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../src/utils/csv-export.utils')>();
+  return { ...actual, exportDataToCsv: vi.fn() };
+});
 
-vi.mock('../../src/hooks/useComparisonData', () => ({
-  default: () => ({
-    servicesState: { status: 'pronto', dados: [] },
-    comparisonState: { status: 'ocioso' },
-    retryServices: vi.fn(),
-    retryComparison: vi.fn(),
-  }),
-}));
+vi.mock('../../src/hooks/useComparisonData', () => ({ default: vi.fn() }));
 
 vi.mock('../../src/hooks/usePrefersReducedMotion', () => ({
   default: () => true,
@@ -53,6 +57,8 @@ const resposta: RespostaRanking = {
 
 const buscarRankingMock = vi.mocked(buscarRanking);
 const buscarMapaMock = vi.mocked(buscarMapa);
+const exportDataToCsvMock = vi.mocked(exportDataToCsv);
+const useComparisonDataMock = vi.mocked(useComparisonData);
 
 function ConsultaAtual() {
   const { search } = useLocation();
@@ -89,6 +95,7 @@ describe('Ranking', () => {
   beforeEach(() => {
     buscarRankingMock.mockReset();
     buscarMapaMock.mockReset().mockResolvedValue(mapaDemo);
+    exportDataToCsvMock.mockReset();
   });
 
   it('mostra o carregamento enquanto a consulta não responde', () => {
@@ -99,9 +106,41 @@ describe('Ranking', () => {
     expect(
       screen.getByRole('heading', { name: 'Carregando o ranking' }),
     ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(
       screen.queryByRole('region', { name: 'Tabela do ranking' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('exporta os itens exibidos com o período consultado', async () => {
+    const user = userEvent.setup();
+    const itensOrdenados = [
+      { ...resposta.itens[0], servicoId: 3, posicao: 1, nome: 'Maior' },
+      { ...resposta.itens[0], servicoId: 8, posicao: 2, nome: 'Menor' },
+    ];
+    buscarRankingMock.mockResolvedValue({
+      ...resposta,
+      metrica: 'emissao',
+      itens: itensOrdenados,
+    });
+    renderRanking('/ranking?periodo=7d&metrica=emissao');
+
+    const tabela = within(
+      await screen.findByRole('region', { name: 'Tabela do ranking' }),
+    );
+    expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Maior');
+    expect(tabela.getAllByRole('row')[2]).toHaveTextContent('Menor');
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Exportar CSV' }),
+    );
+
+    expect(exportDataToCsvMock).toHaveBeenCalledWith(
+      itensOrdenados,
+      'greener-ranking',
+      '2026-11-09',
+      '2026-11-16',
+    );
   });
 
   it('mostra as métricas na tabela e separa os serviços sem dados', async () => {
@@ -134,6 +173,7 @@ describe('Ranking', () => {
     renderRanking();
 
     expect(await screen.findByRole('heading', { name: titulo })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(
       screen.queryByRole('region', { name: 'Tabela do ranking' }),
     ).not.toBeInTheDocument();
@@ -181,6 +221,7 @@ describe('Ranking', () => {
     expect(params.get('metrica')).toBe('emissao');
     expect(params.get('periodo')).toBe('7d');
     expect(screen.getByText('Atualizando o ranking...')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(
       screen.getByRole('region', { name: 'Tabela do ranking' }),
     ).toBeVisible();
@@ -374,6 +415,66 @@ describe('Ranking', () => {
 });
 
 describe('Comparação', () => {
+  const dadosComparacao: RespostaComparacao = {
+    periodo: {
+      inicio: '2026-11-10T00:00:00Z',
+      fim: '2026-11-17T00:00:00Z',
+    },
+    granularidade: 'hora',
+    servicos: [
+      {
+        servicoId: 1,
+        nome: 'API de pagamentos',
+        totais: {
+          energiaKwh: 2,
+          emissaoGCo2e: 500,
+          cpuMedia: 12,
+          memoriaMediaMb: 512,
+          coletasValidas: 4,
+        },
+        serie: [],
+      },
+      {
+        servicoId: 2,
+        nome: 'Worker de relatórios',
+        totais: {
+          energiaKwh: 3,
+          emissaoGCo2e: 700,
+          cpuMedia: 20,
+          memoriaMediaMb: 1024,
+          coletasValidas: 6,
+        },
+        serie: [],
+      },
+    ],
+  };
+  const servicosSelecionaveis: ServicoSelecionavel[] = [
+    {
+      id: 1,
+      nome: 'API de pagamentos',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'DISPONIVEL',
+      localizacao: null,
+    },
+    {
+      id: 2,
+      nome: 'Worker de relatórios',
+      regiaoCodigo: 'br-sudeste',
+      estadoAtual: 'DISPONIVEL',
+      localizacao: null,
+    },
+  ];
+
+  beforeEach(() => {
+    exportDataToCsvMock.mockReset();
+    useComparisonDataMock.mockReset().mockReturnValue({
+      servicesState: { status: 'pronto', dados: [] },
+      comparisonState: { status: 'ocioso' },
+      retryServices: vi.fn(),
+      retryComparison: vi.fn(),
+    });
+  });
+
   it('mostra o estado vazio quando não há serviços disponíveis', () => {
     renderComparacao();
     expect(
@@ -385,6 +486,76 @@ describe('Comparação', () => {
     expect(
       screen.getByRole('heading', { name: 'Selecione ao menos dois serviços' }),
     ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(document.title).toBe('Comparar serviços | GreenER');
+  });
+
+  it('desabilita exportação enquanto os dados da comparação carregam', () => {
+    useComparisonDataMock.mockReturnValue({
+      servicesState: { status: 'pronto', dados: servicosSelecionaveis },
+      comparisonState: { status: 'carregando' },
+      retryServices: vi.fn(),
+      retryComparison: vi.fn(),
+    });
+    renderComparacao('/comparar?servicos=1,2&periodo=7d');
+
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
+    expect(
+      screen.getByRole('heading', { name: 'Carregando comparação' }),
+    ).toBeVisible();
+  });
+
+  it('exporta os serviços comparados com o período selecionado', async () => {
+    const user = userEvent.setup();
+    useComparisonDataMock.mockReturnValue({
+      servicesState: { status: 'pronto', dados: servicosSelecionaveis },
+      comparisonState: { status: 'pronto', dados: dadosComparacao },
+      retryServices: vi.fn(),
+      retryComparison: vi.fn(),
+    });
+    renderComparacao('/comparar?servicos=1,2&periodo=7d');
+
+    await user.click(screen.getByRole('button', { name: 'Exportar CSV' }));
+
+    expect(exportDataToCsvMock).toHaveBeenCalledWith(
+      [
+        {
+          servicoId: 1,
+          nome: 'API de pagamentos',
+          energiaKwh: 2,
+          emissaoGCo2e: 500,
+          cpuMedia: 12,
+          memoriaMediaMb: 512,
+          coletasValidas: 4,
+        },
+        {
+          servicoId: 2,
+          nome: 'Worker de relatórios',
+          energiaKwh: 3,
+          emissaoGCo2e: 700,
+          cpuMedia: 20,
+          memoriaMediaMb: 1024,
+          coletasValidas: 6,
+        },
+      ],
+      'greener-comparacao',
+      '2026-11-09',
+      '2026-11-16',
+    );
+  });
+
+  it('mantém a exportação desabilitada quando a comparação não contém serviços', () => {
+    useComparisonDataMock.mockReturnValue({
+      servicesState: { status: 'pronto', dados: servicosSelecionaveis },
+      comparisonState: {
+        status: 'pronto',
+        dados: { ...dadosComparacao, servicos: [] },
+      },
+      retryServices: vi.fn(),
+      retryComparison: vi.fn(),
+    });
+    renderComparacao('/comparar?servicos=1,2&periodo=7d');
+
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
   });
 });
