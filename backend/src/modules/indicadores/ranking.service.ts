@@ -42,6 +42,27 @@ export interface RankingResultado {
   semDados: ServicoSemDados[];
 }
 
+const LIMITE_SELO_A = 10;
+const LIMITE_SELO_B = 20;
+const LIMITE_SELO_C = 30;
+const LIMITE_SELO_D = 40;
+const LIMITE_SELO_E = 50;
+
+export function calcularSeloEficiencia(
+  emissaoMediaPorHora: number | null | undefined,
+): string {
+  if (emissaoMediaPorHora == null) {
+    return "—";
+  }
+
+  if (emissaoMediaPorHora <= LIMITE_SELO_A) return "A";
+  if (emissaoMediaPorHora <= LIMITE_SELO_B) return "B";
+  if (emissaoMediaPorHora <= LIMITE_SELO_C) return "C";
+  if (emissaoMediaPorHora <= LIMITE_SELO_D) return "D";
+  if (emissaoMediaPorHora <= LIMITE_SELO_E) return "E";
+  return "F";
+}
+
 function valorDaMetrica(
   impacto: ImpactoPorServico,
   metrica: MetricaRanking,
