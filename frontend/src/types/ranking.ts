@@ -2,6 +2,7 @@ import type { PeriodoConsultado } from './mapa';
 import type { VariacaoPercentual, VariacaoPorServico } from './variacao';
 
 export type MetricaRanking = 'energia' | 'emissao';
+export type AgrupamentoRanking = 'servico' | 'regiao' | 'pais';
 
 export type ItemRanking = {
   posicao: number;
@@ -10,6 +11,10 @@ export type ItemRanking = {
   energiaKwh: number;
   emissaoGCo2e: number;
   coletasValidas: number;
+  regiaoCodigo?: string;
+  regiao?: string;
+  pais?: string;
+  quantidadeServicos?: number;
 };
 
 export type ServicoSemDados = {
