@@ -14,6 +14,7 @@ import Icon from '../common/Icon';
 import MethodologyLink from '../common/MethodologyLink';
 import SeloBadge from '../common/SeloBadge';
 import MiniTendencia from '../tendencia/MiniTendencia';
+import AnelCpu from './AnelCpu';
 import type { LiveService } from './liveTypes';
 
 export default function ServiceCard({
@@ -154,9 +155,11 @@ export default function ServiceCard({
       {tendencia && <MiniTendencia valores={tendencia} />}
 
       <dl className="service-card-metrics">
-        <div>
+        <div className="service-card-metric-cpu">
           <dt>CPU</dt>
-          <dd>{formatServiceMetric(metrics?.cpuPercent, '%', 1)}</dd>
+          <dd>
+            <AnelCpu cpuPercent={metrics?.cpuPercent} />
+          </dd>
         </div>
         <div>
           <dt>Memória</dt>

@@ -1,0 +1,243 @@
+.planeta-meta {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  flex: 0 0 auto;
+}
+
+.planeta-meta-svg {
+  width: 118px;
+  height: 118px;
+  overflow: visible;
+}
+
+.planeta-meta-halo,
+.planeta-meta-oceano,
+.planeta-meta-terra,
+.planeta-meta-caule,
+.planeta-meta-folha,
+.planeta-meta-flor,
+.planeta-meta-nuvem,
+.planeta-meta-brilhos {
+  transition:
+    fill 450ms ease,
+    stroke 450ms ease,
+    transform 450ms ease,
+    opacity 450ms ease;
+}
+
+.planeta-meta-sombra {
+  fill: rgb(0 0 0 / 12%);
+}
+
+.planeta-meta-caule {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.planeta-meta-planta {
+  transform-origin: 80px 54px;
+}
+
+/* Estado 1: abaixo da meta (floresce) */
+.planeta-meta--abaixo .planeta-meta-halo {
+  fill: rgb(47 158 68 / 16%);
+}
+
+.planeta-meta--abaixo .planeta-meta-oceano {
+  fill: #1b6b83;
+}
+
+.planeta-meta--abaixo .planeta-meta-terra {
+  fill: #2f9e44;
+}
+
+.planeta-meta--abaixo .planeta-meta-caule {
+  stroke: #1b7a34;
+}
+
+.planeta-meta--abaixo .planeta-meta-folha {
+  fill: #37b24d;
+}
+
+.planeta-meta--abaixo .planeta-meta-flor {
+  opacity: 1;
+  transform: scale(1);
+  transform-origin: 80px 21px;
+}
+
+.planeta-meta--abaixo .planeta-meta-petala {
+  fill: #f7c948;
+}
+
+.planeta-meta--abaixo .planeta-meta-miolo {
+  fill: #fff7db;
+}
+
+.planeta-meta--abaixo .planeta-meta-nuvem {
+  fill: rgb(255 255 255 / 72%);
+  opacity: 0.45;
+}
+
+.planeta-meta--abaixo .planeta-meta-brilhos {
+  fill: #37b24d;
+  opacity: 0.9;
+  animation: planeta-flutuar 3.2s ease-in-out infinite;
+}
+
+/* Estado 2: perto da meta (atenção) */
+.planeta-meta--perto .planeta-meta-halo {
+  fill: rgb(217 155 26 / 20%);
+}
+
+.planeta-meta--perto .planeta-meta-oceano {
+  fill: #3b6f7a;
+}
+
+.planeta-meta--perto .planeta-meta-terra {
+  fill: #8c9a32;
+}
+
+.planeta-meta--perto .planeta-meta-caule {
+  stroke: #8a7320;
+}
+
+.planeta-meta--perto .planeta-meta-folha {
+  fill: #b89426;
+}
+
+.planeta-meta--perto .planeta-meta-folha--esq {
+  transform: rotate(-10deg);
+  transform-origin: 79px 44px;
+}
+
+.planeta-meta--perto .planeta-meta-folha--dir {
+  transform: rotate(12deg);
+  transform-origin: 81px 42px;
+}
+
+.planeta-meta--perto .planeta-meta-flor {
+  opacity: 0.55;
+  transform: translate(5px, 6px) scale(0.72);
+  transform-origin: 80px 21px;
+}
+
+.planeta-meta--perto .planeta-meta-petala {
+  fill: #e0a82e;
+}
+
+.planeta-meta--perto .planeta-meta-miolo {
+  fill: #fff3c4;
+}
+
+.planeta-meta--perto .planeta-meta-nuvem {
+  fill: #c9b98c;
+  opacity: 0.72;
+}
+
+.planeta-meta--perto .planeta-meta-brilhos {
+  opacity: 0;
+}
+
+/* Estado 3: acima da meta (murcha) */
+.planeta-meta--acima .planeta-meta-halo {
+  fill: rgb(176 40 60 / 18%);
+}
+
+.planeta-meta--acima .planeta-meta-oceano {
+  fill: #4f5d66;
+}
+
+.planeta-meta--acima .planeta-meta-terra {
+  fill: #9b6b43;
+}
+
+.planeta-meta--acima .planeta-meta-caule {
+  stroke: #7a4b2a;
+}
+
+.planeta-meta--acima .planeta-meta-folha {
+  fill: #a0663b;
+}
+
+.planeta-meta--acima .planeta-meta-folha--esq {
+  transform: translate(4px, 4px) rotate(-36deg);
+  transform-origin: 79px 44px;
+}
+
+.planeta-meta--acima .planeta-meta-folha--dir {
+  transform: translate(4px, 6px) rotate(42deg);
+  transform-origin: 81px 42px;
+}
+
+.planeta-meta--acima .planeta-meta-flor {
+  opacity: 0;
+  transform: translate(18px, 18px) scale(0.35);
+  transform-origin: 80px 21px;
+}
+
+.planeta-meta--acima .planeta-meta-nuvem {
+  fill: #7b7f85;
+  opacity: 0.88;
+}
+
+.planeta-meta--acima .planeta-meta-brilhos {
+  opacity: 0;
+}
+
+.planeta-meta-legenda {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.planeta-meta--abaixo .planeta-meta-legenda {
+  color: var(--green-forest);
+}
+
+.planeta-meta--perto .planeta-meta-legenda {
+  color: #7c5c0c;
+}
+
+.planeta-meta--acima .planeta-meta-legenda {
+  color: #962032;
+}
+
+:root[data-theme='dark'] .planeta-meta--perto .planeta-meta-legenda {
+  color: #f0d98f;
+}
+
+:root[data-theme='dark'] .planeta-meta--acima .planeta-meta-legenda {
+  color: #f6b2bc;
+}
+
+@keyframes planeta-flutuar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planeta-meta-halo,
+  .planeta-meta-oceano,
+  .planeta-meta-terra,
+  .planeta-meta-caule,
+  .planeta-meta-folha,
+  .planeta-meta-flor,
+  .planeta-meta-nuvem,
+  .planeta-meta-brilhos {
+    transition: none;
+    animation: none;
+  }
+}

@@ -20,6 +20,7 @@ import {
   type ServiceDetailData,
 } from '../services/serviceDetail';
 import { resolverComposicaoServico } from '../utils/composicaoEnergia';
+import { ehModoDemo } from '../utils/modoDemo';
 import {
   formatServiceCollectionTimestamp,
   formatServiceStatus,
@@ -41,7 +42,7 @@ type ViewState =
 export default function ServicoDetalhe() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const serviceId = Number(id);
   const validServiceId =

@@ -4,6 +4,7 @@ import { FONTE_EQUIVALENCIAS } from '../constants/equivalencias';
 import usePageTitle from '../hooks/usePageTitle';
 import { formatEmission, formatEnergy } from '../utils/formatters';
 import { CONSTANTES_CALCULO, EXEMPLO_CALCULO_REAL } from '../utils/metodologia';
+import { ehModoDemo } from '../utils/modoDemo';
 import { MINIMO_PONTOS_PICO, MULTIPLICADOR_DESVIO_PICO } from '../utils/picos';
 import './metodologia.css';
 
@@ -16,7 +17,7 @@ function formatarDecimal(valor: number, casas = 2): string {
 
 export default function Metodologia() {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   usePageTitle('Como calculamos');
 
   const { entrada, resultado } = EXEMPLO_CALCULO_REAL;

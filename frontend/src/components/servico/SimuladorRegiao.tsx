@@ -11,6 +11,7 @@ import {
   formatEnergy,
   formatRegionName,
 } from '../../utils/formatters';
+import { ehModoDemo } from '../../utils/modoDemo';
 import {
   descreverDiferenca,
   formatarIntensidade,
@@ -117,7 +118,7 @@ function ConteudoDoSimulador({
 
 export default function SimuladorRegiao({ servicoId }: { servicoId: number }) {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const idValido = Number.isInteger(servicoId) && servicoId > 0;
   const { estado, recarregar } = useSimulacao(

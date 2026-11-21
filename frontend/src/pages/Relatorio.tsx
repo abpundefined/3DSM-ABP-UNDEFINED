@@ -12,6 +12,7 @@ import { relatorioDemo } from '../mocks/relatorio';
 import { buscarDadosRelatorio } from '../services/relatorio';
 import type { DadosRelatorio } from '../types/relatorio';
 import { formatEmission, formatEnergy } from '../utils/formatters';
+import { ehModoDemo } from '../utils/modoDemo';
 import { formatarPeriodoConsiderado } from '../utils/ranking';
 import {
   formatarContagemComConcordancia,
@@ -219,7 +220,7 @@ function ConteudoDoRelatorio({
 
 export default function Relatorio() {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const [tentativas, setTentativas] = useState(0);
   const chaveConsulta = `${apiQuery}:${tentativas}`;

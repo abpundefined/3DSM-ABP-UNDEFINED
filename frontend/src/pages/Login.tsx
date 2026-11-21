@@ -5,6 +5,7 @@ import useAuth from '../hooks/useAuth';
 import usePageTitle from '../hooks/usePageTitle';
 import { ApiError, apiRequest } from '../services/api';
 import { readLoginRedirect } from '../utils/login-redirect';
+import { MODO_DEMO_ESTATICO } from '../utils/modoDemo';
 
 interface LoginResponse {
   accessToken: string;
@@ -46,6 +47,12 @@ export default function Login() {
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (MODO_DEMO_ESTATICO) {
+      setErrorMessage(
+        'Autenticação administrativa indisponível na demonstração online estática.',
+      );
+      return;
+    }
     setErrorMessage('');
     const emailInput = emailInputRef.current;
     const passwordInput = passwordInputRef.current;

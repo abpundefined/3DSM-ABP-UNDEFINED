@@ -3,16 +3,23 @@ import { getSeloColor, getSeloTooltip } from '../../src/utils/selo';
 
 describe('getSeloColor', () => {
   it.each([
-    ['A', '#16a34a'],
-    ['B', '#65a30d'],
-    ['C', '#ca8a04'],
-    ['D', '#ea580c'],
+    ['A', '#15803d'],
+    ['B', '#4d7c0f'],
+    ['C', '#a16207'],
+    ['D', '#c2410c'],
     ['E', '#dc2626'],
     ['F', '#991b1b'],
     ['—', '#6b7280'],
   ] as const)('retorna a cor do selo %s', (selo, cor) => {
     expect(getSeloColor(selo)).toBe(cor);
   });
+
+  it.each([null, undefined, '', 'G', 42])(
+    'usa a cor do selo sem dados para valores inválidos (%s)',
+    (selo) => {
+      expect(getSeloColor(selo)).toBe(getSeloColor('—'));
+    },
+  );
 });
 
 describe('getSeloTooltip', () => {
@@ -27,4 +34,11 @@ describe('getSeloTooltip', () => {
   ] as const)('retorna a explicação do selo %s', (selo, tooltip) => {
     expect(getSeloTooltip(selo)).toBe(tooltip);
   });
+
+  it.each([null, undefined, '', 'G', 42])(
+    'usa a explicação do selo sem dados para valores inválidos (%s)',
+    (selo) => {
+      expect(getSeloTooltip(selo)).toBe(getSeloTooltip('—'));
+    },
+  );
 });

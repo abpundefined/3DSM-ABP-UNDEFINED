@@ -12,16 +12,20 @@ export function isSelo(value: unknown): value is Selo {
   );
 }
 
-export function getSeloColor(selo: string): string {
-  switch (selo) {
+export function normalizarSelo(value: unknown): Selo {
+  return isSelo(value) ? value : '—';
+}
+
+export function getSeloColor(value: unknown): string {
+  switch (normalizarSelo(value)) {
     case 'A':
-      return '#16a34a';
+      return '#15803d';
     case 'B':
-      return '#65a30d';
+      return '#4d7c0f';
     case 'C':
-      return '#ca8a04';
+      return '#a16207';
     case 'D':
-      return '#ea580c';
+      return '#c2410c';
     case 'E':
       return '#dc2626';
     case 'F':
@@ -29,12 +33,12 @@ export function getSeloColor(selo: string): string {
     case '—':
       return '#6b7280';
     default:
-      throw new Error(`Selo de eficiência inválido: ${selo}`);
+      return '#6b7280';
   }
 }
 
-export function getSeloTooltip(selo: string): string {
-  switch (selo) {
+export function getSeloTooltip(value: unknown): string {
+  switch (normalizarSelo(value)) {
     case 'A':
       return 'Melhor eficiência: <= 10g CO2e/h';
     case 'B':
@@ -50,6 +54,6 @@ export function getSeloTooltip(selo: string): string {
     case '—':
       return 'Sem coleta válida no período';
     default:
-      throw new Error(`Selo de eficiência inválido: ${selo}`);
+      return 'Sem coleta válida no período';
   }
 }

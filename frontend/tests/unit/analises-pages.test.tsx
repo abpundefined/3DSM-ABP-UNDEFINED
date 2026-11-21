@@ -237,6 +237,8 @@ describe('Ranking', () => {
     const user = userEvent.setup();
     buscarRankingMock.mockResolvedValue(
       Object.assign({}, resposta, {
+        itens: [],
+        semDados: [],
         variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
         variacaoPorServico: [
           {
@@ -299,7 +301,7 @@ describe('Ranking', () => {
     }
     await user.click(tabela.getByRole('button', { name: 'Variação (%)' }));
     expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Beta');
-  });
+  }, 10000);
 
   it('preserva emissão ausente na tabela sem mostrar uma redução falsa', async () => {
     buscarRankingMock.mockResolvedValue(

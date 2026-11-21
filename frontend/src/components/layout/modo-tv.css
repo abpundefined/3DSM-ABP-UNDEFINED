@@ -48,6 +48,7 @@
 .app-shell--tv .live-service-controls,
 .app-shell--tv .live-service-active-filters,
 .app-shell--tv .ranking-metricas,
+.app-shell--tv .ranking-modos,
 .app-shell--tv .ranking-compare-button,
 .app-shell--tv .comparison-selection-bar,
 .app-shell--tv .tendencia-visoes,
@@ -55,15 +56,20 @@
 .app-shell--tv .page-heading a.button,
 .app-shell--tv .mapa-barra,
 .app-shell--tv .linha-do-tempo,
-.app-shell--tv .mapa-tabela {
+.app-shell--tv .mapa-tabela,
+.app-shell--tv .contador-co2--dashboard {
   display: none;
 }
 
-.modo-tv-barra {
+.modo-tv-rodape {
   position: fixed;
   inset-inline: 0;
   bottom: 0;
   z-index: 25;
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 8%);
+}
+
+.modo-tv-barra {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -73,7 +79,6 @@
   border-top: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 -4px 16px rgb(0 0 0 / 8%);
 }
 
 .modo-tv-identidade {
@@ -148,6 +153,55 @@
   border-radius: 999px;
   background: var(--green-forest);
   transition: width 350ms linear;
+}
+
+.modo-tv-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.modo-tv-qr {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.modo-tv-qr-codigo {
+  flex: none;
+  padding: 3px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #d7dfd9;
+}
+
+.modo-tv-qr-codigo svg {
+  display: block;
+}
+
+.modo-tv-qr-legenda {
+  display: grid;
+  gap: 2px;
+  max-width: 240px;
+}
+
+.modo-tv-qr-titulo {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modo-tv-qr-url {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  word-break: break-all;
+  line-height: 1.25;
 }
 
 .modo-tv-sair {
