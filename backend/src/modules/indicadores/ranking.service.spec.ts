@@ -4,7 +4,10 @@ jest.mock("../../database/prisma.service", () => ({
 
 import { MetricaRanking, RankingQueryDto } from "./dto/ranking-query.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
-import { RankingService } from "./ranking.service";
+import {
+  calcularSeloEficiencia,
+  RankingService,
+} from "./ranking.service";
 
 describe("RankingService", () => {
   const inicio = "2026-11-01T00:00:00.000Z";
@@ -54,6 +57,30 @@ describe("RankingService", () => {
         coletasValidas: 1,
       },
     ]);
+  });
+
+  describe("calcularSeloEficiencia", () => {
+    it.each([
+      { emissao: 10, selo: "A" },
+      { emissao: 10.01, selo: "B" },
+      { emissao: 20, selo: "B" },
+      { emissao: 20.01, selo: "C" },
+      { emissao: 30, selo: "C" },
+      { emissao: 30.01, selo: "D" },
+      { emissao: 40, selo: "D" },
+      { emissao: 40.01, selo: "E" },
+      { emissao: 50, selo: "E" },
+      { emissao: 50.01, selo: "F" },
+    ])("classifica emissão $emissao como selo $selo", ({ emissao, selo }) => {
+      expect(calcularSeloEficiencia(emissao)).toBe(selo);
+    });
+
+    it.each([null, undefined])(
+      "retorna travessão quando a emissão é %s",
+      (emissao) => {
+        expect(calcularSeloEficiencia(emissao)).toBe("—");
+      },
+    );
   });
 
   it("retorna período, ambas as métricas, posição, desempate, limite e semDados", async () => {
