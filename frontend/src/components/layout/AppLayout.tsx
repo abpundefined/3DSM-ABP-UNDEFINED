@@ -265,16 +265,6 @@ export default function AppLayout() {
                   );
                 })}
               </div>
-              <button
-                type="button"
-                className="nav-tour"
-                aria-label="Fazer tour"
-                title="Fazer tour guiado"
-                onClick={iniciarTour}
-              >
-                <Icon name="compass" />
-                <span>Fazer tour</span>
-              </button>
               {isAuthenticated ? (
                 <button type="button" className="nav-login" onClick={logout}>
                   <Icon name="lock" />
@@ -345,6 +335,15 @@ export default function AppLayout() {
                 Tecnologia com uma perspectiva mais verde.
               </span>
               <div className="footer-meta-group">
+                <button
+                  type="button"
+                  className="footer-tour-button"
+                  title="Fazer tour guiado"
+                  onClick={iniciarTour}
+                >
+                  <Icon name="compass" />
+                  <span>Fazer tour</span>
+                </button>
                 {isDesktopForTv && (
                   <button
                     type="button"
