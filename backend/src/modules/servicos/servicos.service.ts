@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
@@ -9,6 +9,7 @@ import {
   ComponentesPotencia,
 } from "../calculos/calculos.service";
 import { calcularSeloEficiencia } from "../indicadores/ranking.service";
+import { EventosService } from "../eventos/eventos.service";
 import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosRepository } from "./servicos.repository";
 
@@ -38,6 +39,7 @@ export class ServicosService {
     private readonly configService: ConfigService,
     private readonly registro: RegistroIntegracoesService,
     private readonly calculosService: CalculosService,
+    @Optional() private readonly eventosService?: EventosService,
   ) {}
 
   discoverServices() {
@@ -163,10 +165,13 @@ export class ServicosService {
     id: number,
     estadoAtual: EstadoMonitoramento,
   ) {
-    return this.servicosRepository.atualizarEstadoMonitoramento(
-      id,
-      estadoAtual,
-    );
+    const atualizado =
+      await this.servicosRepository.atualizarEstadoMonitoramento(
+        id,
+        estadoAtual,
+      );
+    this.eventosService?.emitirEstadoAlterado(id, estadoAtual);
+    return atualizado;
   }
 
   async listarServicos(): Promise<ServicoComLocalizacao[]> {

@@ -5,6 +5,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import { formatEmission, formatEnergy } from '../utils/formatters';
 import { CONSTANTES_CALCULO, EXEMPLO_CALCULO_REAL } from '../utils/metodologia';
 import { ehModoDemo } from '../utils/modoDemo';
+import { LIMIARES_OPORTUNIDADES_UI } from '../utils/oportunidades';
 import { MINIMO_PONTOS_PICO, MULTIPLICADOR_DESVIO_PICO } from '../utils/picos';
 import './metodologia.css';
 
@@ -397,6 +398,82 @@ export default function Metodologia() {
             <em>&ldquo;pico incomum às 14h&rdquo;</em>) e aparece em uma lista
             acessível logo abaixo do gráfico com horário, valor e desvio em
             relação à média.
+          </li>
+        </ul>
+      </section>
+
+      <section
+        className="methodology-card"
+        aria-labelledby="metodologia-oportunidades-title"
+      >
+        <h2 id="metodologia-oportunidades-title">
+          8. Oportunidades de redução de emissão
+        </h2>
+        <p>
+          A página <strong>Oportunidades</strong> avalia três regras heurísticas
+          sobre os dados históricos do período selecionado e ordena as sugestões
+          pelo maior potencial estimado de economia em <code>gCO₂e</code>. Todos
+          os resultados são <strong>sugestões estimadas, não garantias</strong>.
+        </p>
+        <div className="methodology-formulas">
+          <p>
+            <strong>Migrar de região:</strong>{' '}
+            <code>
+              Economia = Emissão no período × (1 − Intensidade da melhor região
+              monitorada ÷ Intensidade atual)
+            </code>
+          </p>
+          <p>
+            <strong>Possível superdimensionamento:</strong>{' '}
+            <code>
+              Economia estimada = Emissão no período ×{' '}
+              {
+                LIMIARES_OPORTUNIDADES_UI.reducaoEstimadaSuperdimensionamentoPercentual
+              }
+              %
+            </code>
+          </p>
+          <p>
+            <strong>Mudar horário:</strong>{' '}
+            <code>
+              Economia = Emissão no período × (1 − Intensidade da melhor janela
+              de {LIMIARES_OPORTUNIDADES_UI.duracaoJanelaHorarioHoras}h ÷ Média
+              da região)
+            </code>
+          </p>
+        </div>
+        <ul>
+          <li>
+            <strong>Limiar de migração de região:</strong> dispara somente
+            quando a redução estimada ultrapassa{' '}
+            <strong>
+              {LIMIARES_OPORTUNIDADES_UI.reducaoMinimaMigrarRegiaoPercentual}%
+            </strong>
+            .
+          </li>
+          <li>
+            <strong>Limiar de superdimensionamento:</strong> dispara quando a
+            CPU média do serviço fica abaixo de{' '}
+            <strong>
+              {
+                LIMIARES_OPORTUNIDADES_UI.cpuMaximaSuperdimensionamentoPercentual
+              }
+              %
+            </strong>{' '}
+            e seu consumo energético supera a mediana dos serviços monitorados
+            no período.
+          </li>
+          <li>
+            <strong>Limiar de mudança de horário:</strong> dispara quando a
+            matriz horária da região apresenta uma janela contínua de{' '}
+            <strong>
+              {LIMIARES_OPORTUNIDADES_UI.duracaoJanelaHorarioHoras} horas
+            </strong>{' '}
+            com intensidade pelo menos{' '}
+            <strong>
+              {LIMIARES_OPORTUNIDADES_UI.reducaoMinimaMudarHorarioPercentual}%
+            </strong>{' '}
+            abaixo da média da região (aplicável a cargas flexíveis).
           </li>
         </ul>
       </section>

@@ -23,12 +23,14 @@ export default function ServiceCard({
   tendencia,
   comparisonSelected = false,
   onToggleComparison,
+  pulsando = false,
 }: {
   service: LiveService;
   onSelect?: (service: LiveService, triggerElement: HTMLElement | null) => void;
   tendencia?: (number | null)[];
   comparisonSelected?: boolean;
   onToggleComparison?: (serviceId: number) => void;
+  pulsando?: boolean;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const status = formatServiceStatus(service.estadoAtual);
@@ -60,7 +62,8 @@ export default function ServiceCard({
 
   return (
     <article
-      className={`service-card${onSelect ? ' service-card--interactive' : ''}`}
+      className={`service-card${onSelect ? ' service-card--interactive' : ''}${pulsando ? ' service-card--pulsando' : ''}`}
+      data-pulsando={pulsando ? 'true' : undefined}
       aria-labelledby={nameId}
       onClick={handleCardClick}
     >

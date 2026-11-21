@@ -84,3 +84,15 @@ Este exemplo será utilizado como *mock* e validação nos testes unitários do 
 2. **Cálculo da Emissão ($CO_2e$):**
    $$Emissão = 0.0008478333 \times 85.0$$
    $$Emissão = \mathbf{0.0720658 \text{ gCO}_2\text{e}}$$
+
+---
+
+## 💡 5. Heurísticas de Oportunidades de Redução (`GET /oportunidades`)
+
+As oportunidades de redução são **sugestões estimadas a partir do histórico do período selecionado**, implementadas em funções puras em `backend/src/common/regras/oportunidades.ts` com limiares explícitos em constantes (`LIMIARES_OPORTUNIDADES`) e documentadas também na página `/metodologia`. Não constituem garantia de economia real nem consideram latência, custo financeiro ou restrições regulatórias.
+
+| Tipo | Condição de disparo (limiar) | Fórmula de economia estimada |
+| --- | --- | --- |
+| **Migrar de região** (`MIGRAR_REGIAO`) | Redução estimada **acima de 20%** ao comparar com a melhor região monitorada no período | $\text{Emissão}_{\text{período}} \times \left(1 - \frac{I_{\text{melhor}}}{I_{\text{atual}}}\right)$ |
+| **Possível superdimensionamento** (`SUPERDIMENSIONAMENTO`) | CPU média **abaixo de 15%** no período **e** energia consumida acima da mediana dos serviços monitorados | $\text{Emissão}_{\text{período}} \times 30\%$ (estimativa conservadora ilustrativa) |
+| **Mudar horário** (`MUDAR_HORARIO`) | Matriz horária (`7 × 24`) da região apresenta janela contínua de **3 horas** com intensidade média **pelo menos 20% menor** que a média da região | $\text{Emissão}_{\text{período}} \times \left(1 - \frac{I_{\text{janela 3h}}}{I_{\text{média regional}}}\right)$ |

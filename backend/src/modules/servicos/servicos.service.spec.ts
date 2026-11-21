@@ -8,6 +8,7 @@ import {
 } from "../coletas/dto/create-coleta.dto";
 import { MonitoramentoService } from "../monitoramento/monitoramento.service";
 import type { ConfiguracaoService } from "../configuracao/configuracao.service";
+import type { EventosService } from "../eventos/eventos.service";
 import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import type { ServicosRepository } from "./servicos.repository";
 import { ServicosService } from "./servicos.service";
@@ -772,5 +773,23 @@ describe("Descoberta e retomada do monitoramento de serviços", () => {
     });
 
     expect(codigo).toBe("regiao-desconhecida");
+  });
+
+  it("emite evento SSE estado-alterado ao atualizar o estado de monitoramento quando EventosService está presente", async () => {
+    const service = seedService("DESCONHECIDO");
+    const emitirEstadoAlterado = jest.fn();
+    const comEventos = new ServicosService(
+      repository as unknown as ServicosRepository,
+      {
+        get: jest.fn(),
+      } as unknown as ConfigService,
+      registro,
+      { calcularPotencia: jest.fn() } as unknown as CalculosService,
+      { emitirEstadoAlterado } as unknown as EventosService,
+    );
+
+    await comEventos.atualizarEstadoMonitoramento(service.id, "DISPONIVEL");
+
+    expect(emitirEstadoAlterado).toHaveBeenCalledWith(service.id, "DISPONIVEL");
   });
 });

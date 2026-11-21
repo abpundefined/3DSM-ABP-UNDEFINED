@@ -97,9 +97,10 @@ Enums persistidos no schema:
 
 | Camada / Módulo | Responsabilidade |
 | --- | --- |
-| `frontend/src/pages` | Rotas públicas (`/`, `/?demo=1`, `/ranking`, `/comparar`, `/mapa`, `/servicos/:id`, `/metodologia`, `/relatorio`, `/login`) e rota protegida `/admin` via React Router. |
-| `frontend/src/components` | Layout responsivo, seletor global de período (`PeriodProvider`), cards e painel lateral de serviço, gráficos Recharts (incluindo tendência no dashboard), mapa/globo interativo (`d3-geo` + Leaflet + MapLibre), painel de administração e saúde das integrações. |
-| `frontend/src/services/api.ts` | Cliente HTTP relativo em `/api` com tratamento tipado (`ApiError`) e cancelamento por `AbortSignal`. |
+| `frontend/src/pages` | Rotas públicas (`/`, `/?demo=1`, `/ranking`, `/comparar`, `/mapa`, `/oportunidades`, `/servicos/:id`, `/metodologia`, `/relatorio`, `/qr-code`, `/login`) e rota protegida `/admin` via React Router (com `basename` e fallback SPA `404.html` + `.nojekyll` para GitHub Pages). |
+| `frontend/src/components` | Layout responsivo com Modo TV (`?tv=1`, globo 3D WebGL e QR code ISO/IEC 18004), tour guiado, seletor global de período (`PeriodProvider`), cards com anel de CPU (`role="meter"`), contador ao vivo de CO₂e, painel de meta mensal com planeta reativo, corrida de barras, gráficos Recharts, mapa/globo interativo (`d3-geo` + Leaflet + MapLibre) com modo Simular, painel de oportunidades, administração e saúde das integrações. |
+| `frontend/src/services/api.ts` | Cliente HTTP relativo em `/api` com tratamento tipado (`ApiError`), cancelamento por `AbortSignal` e bloqueio preventivo de chamadas ao backend quando `VITE_DEMO_MODE=true`. |
+| `backend/src/common/regras` | Funções puras de domínio sem acoplamento a banco/HTTP: classificação de estado, resumo de coletas, simulação regional e regras de oportunidades de redução. |
 | `backend/src/modules/servicos` | Descoberta e sincronização periódica com a API de métricas via `ServicosRepository`, retornando localização e composição de potência (`componentes`). |
 | `backend/src/modules/monitoramento` | Orquestração periódica de descoberta e coleta respeitando intervalos dinâmicos (`/configuracao`) e timeouts explícitos de 8 segundos. |
 | `backend/src/modules/calculos` | Cálculo de potência por recurso (CPU, RAM, disco e rede), energia (`kWh`) e emissões (`gCO₂e`) com consulta à API de intensidade de carbono (`CarbonApiService`). |
@@ -108,6 +109,8 @@ Enums persistidos no schema:
 | `backend/src/modules/mapa` | Agregação geográfica e série de emissões por intervalo para serviços com e sem coordenadas (`/mapa`). |
 | `backend/src/modules/comparacao` | Comparação alinhada de totais e séries temporais de 2 a 5 serviços (`/comparacao`). |
 | `backend/src/modules/simulacao` | Simulação de emissões caso um serviço rodasse em outra região monitorada (`/servicos/:id/simulacao-regiao`). |
+| `backend/src/modules/oportunidades` | Avaliação das regras puras de redução de emissão (migração de região, possível superdimensionamento e mudança de horário) ordenadas pelo ganho estimado (`/oportunidades`). |
+| `backend/src/modules/eventos` | Fluxo Server-Sent Events (`GET /eventos`) que publica em tempo real eventos `coleta-registrada` e `estado-alterado` para o frontend (`EventSource` com reconexão automática e fallback para polling de 30 s). |
 | `backend/src/modules/saude` | Monitoramento em memória do estado e tempo de resposta do agregador, da API de carbono e da taxa de falha das coletas (`/saude`). |
 | `backend/src/modules/auth` e `configuracao` | Autenticação JWT (`POST /auth/login` com limite de 5 tentativas/min), seed do administrador inicial (`AdminSeedService`) e parametrização de intervalos e `metaMensalKgCo2e` em runtime (`/configuracao`). |
 

@@ -209,7 +209,10 @@ test('dashboard conectado soma a composição de todos os serviços, mostra tabe
   await mockDashboardApi(page);
   await page.goto('/');
 
-  const secao = page.getByRole('region', { name: 'Composição da energia' });
+  const secao = page.getByRole('region', {
+    name: 'Composição da energia',
+    exact: true,
+  });
   await expect(secao).toBeVisible();
   // Soma: cpu 0.50 (16.7%), memoria 1.80 (60.0%), disco 0.30 (10.0%), rede 0.40 (13.3%), total 3.00 W
   await expect(secao).toContainText('Memória responde por 60% do consumo.');
@@ -235,7 +238,10 @@ test('detalhe do serviço exibe composição do serviço com mesmas cores fixas 
   await mockServiceDetailApi(page);
   await page.goto('/servicos/1');
 
-  const secao = page.getByRole('region', { name: 'Composição da energia' });
+  const secao = page.getByRole('region', {
+    name: 'Composição da energia',
+    exact: true,
+  });
   await expect(secao).toBeVisible();
   await expect(secao).toContainText('CPU responde por 78% do consumo.');
   await expect(secao.locator('.composicao-donut-centro')).toContainText(
@@ -268,6 +274,7 @@ test('modo demonstração exibe composição no dashboard e no detalhe sem chama
 
   const secaoDashboard = page.getByRole('region', {
     name: 'Composição da energia',
+    exact: true,
   });
   await expect(secaoDashboard).toBeVisible();
   await expect(secaoDashboard).toContainText(/responde por \d+% do consumo\./);
@@ -280,6 +287,7 @@ test('modo demonstração exibe composição no dashboard e no detalhe sem chama
   await page.goto('/servicos/1?demo=1');
   const secaoDetalhe = page.getByRole('region', {
     name: 'Composição da energia',
+    exact: true,
   });
   await expect(secaoDetalhe).toBeVisible();
   await expect(secaoDetalhe).toContainText(/responde por \d+% do consumo\./);

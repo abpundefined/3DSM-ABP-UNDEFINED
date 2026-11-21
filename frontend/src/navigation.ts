@@ -12,6 +12,12 @@ const publicItems: NavItem[] = [
   { to: '/ranking', label: 'Ranking', icon: 'bars' },
   { to: '/comparar', label: 'Comparar', icon: 'compare' },
   { to: '/mapa', label: 'Mapa', icon: 'map' },
+  {
+    to: '/oportunidades',
+    label: 'Oportunidades',
+    shortLabel: 'Ações',
+    icon: 'leaf',
+  },
   { to: '/metodologia', label: 'Metodologia', icon: 'book' },
 ];
 

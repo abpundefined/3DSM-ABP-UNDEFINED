@@ -37,10 +37,14 @@ test('usa os mesmos serviços do mapa e separa os que não têm dados', () => {
     semDados.map(({ nome }) => nome),
     ['Legacy Batch', 'Notification Worker'],
   );
-  assert.deepEqual(
-    [...new Set(itens.map(({ selo }) => selo))].sort(),
-    ['A', 'B', 'C', 'D', 'E', 'F'],
-  );
+  assert.deepEqual([...new Set(itens.map(({ selo }) => selo))].sort(), [
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+  ]);
   assert.ok(semDados.every(({ selo }) => selo === '—'));
 });
 

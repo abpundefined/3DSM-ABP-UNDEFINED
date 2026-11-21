@@ -5,6 +5,7 @@ jest.mock("../../database/prisma.service", () => ({
 
 import { Test, TestingModule } from "@nestjs/testing";
 import { CalculosService } from "../calculos/calculos.service";
+import { EventosService } from "../eventos/eventos.service";
 import { ServicosService } from "../servicos/servicos.service";
 import { ColetasRepository } from "./coletas.repository";
 import { ColetasService } from "./coletas.service";
@@ -285,6 +286,35 @@ describe("ColetasService", () => {
 
     await expect(service.buscarPorId(7)).rejects.toThrow(
       "Coleta com id 7 não encontrada.",
+    );
+  });
+
+  it("emite evento SSE coleta-registrada quando EventosService está disponível", async () => {
+    const emitirColetaRegistrada = jest.fn();
+    const eventosService = {
+      emitirColetaRegistrada,
+    } as unknown as EventosService;
+    const serviceComEventos = new ColetasService(
+      repository as unknown as ColetasRepository,
+      calculosService as unknown as CalculosService,
+      servicosService as unknown as ServicosService,
+      eventosService,
+    );
+
+    const dto: CreateColetaDto = {
+      servicoId: 7,
+      estadoColeta: EstadoColetaEnum.SUCESSO,
+      cpuPercent: 12,
+      intervaloColetaSegundos: 27,
+    };
+
+    await serviceComEventos.registrarColeta(dto);
+
+    expect(emitirColetaRegistrada).toHaveBeenCalledWith(
+      expect.objectContaining({
+        servicoId: 7,
+        estadoColeta: EstadoColetaEnum.SUCESSO,
+      }),
     );
   });
 });

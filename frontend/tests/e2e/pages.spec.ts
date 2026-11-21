@@ -138,9 +138,17 @@ test('barra inferior não cobre o fim da página no celular', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'Só existe no celular');
-  await page.goto('/metodologia');
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.goto('/metodologia');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Como calculamos' }),
+  ).toBeVisible();
+  await page.evaluate(() =>
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'instant',
+    }),
+  );
   const footer = await page.locator('.site-footer').boundingBox();
   const bar = await page
     .getByRole('navigation', { name: 'Navegação inferior' })
