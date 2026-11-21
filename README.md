@@ -245,7 +245,7 @@ npm.cmd run dev
 <hr>
 
 <h2 id="ci-testes">✅ CI e Testes</h2>
-<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa quatro jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, artefato <code>backend-coverage</code>, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, artefato <code>frontend-coverage</code>, lint, Prettier, typecheck e build), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker). Além disso, o workflow <a href="./.github/workflows/deploy-pages.yml">.github/workflows/deploy-pages.yml</a> gera o build estático do frontend em modo demonstração (<code>VITE_DEMO_MODE=true</code>, com <code>404.html</code> e <code>.nojekyll</code> para rotas SPA e zero chamadas ao backend) e publica automaticamente no GitHub Pages a cada merge na <code>main</code>. Os testes E2E de navegador do frontend (Playwright + Axe em desktop e celular) são executados localmente antes de abrir ou aprovar PRs de interface para evitar o download de navegadores e manter o tempo de feedback do CI reduzido.</p>
+<p>O pipeline em <a href="./.github/workflows/ci.yml">.github/workflows/ci.yml</a> executa cinco jobs a cada PR e push para <code>develop</code>/<code>main</code>: <strong>backend</strong> (unitários Jest com cobertura mínima de 80% em services/repositories, artefato <code>backend-coverage</code>, typecheck, lint e build), <strong>frontend</strong> (testes Node + Vitest com cobertura, artefato <code>frontend-coverage</code>, lint, Prettier, typecheck e build), <strong>frontend-e2e</strong> (testes E2E de navegador e acessibilidade Axe com Playwright em Chromium para desktop e celular via <code>npm run test:e2e</code>, publicando os traces de <code>frontend/test-results/</code> como artefato em caso de falha), <strong>backend-e2e</strong> (Supertest contra PostgreSQL 17 real) e <strong>docker-build</strong> (build das imagens Docker). Além disso, o workflow <a href="./.github/workflows/deploy-pages.yml">.github/workflows/deploy-pages.yml</a> gera o build estático do frontend em modo demonstração (<code>VITE_DEMO_MODE=true</code>, com <code>404.html</code> e <code>.nojekyll</code> para rotas SPA e zero chamadas ao backend) e publica automaticamente no GitHub Pages a cada merge na <code>main</code>.</p>
 <pre><code># Backend (na pasta backend/)
 npm.cmd run test:cov   # unitários + cobertura >= 80% (services e repositories)
 npm.cmd run test:e2e   # requer PostgreSQL de teste (*_e2e)
@@ -256,7 +256,7 @@ npm.cmd test               # testes unitários Node e hooks/componentes (CI)
 npm.cmd run test:coverage  # cobertura Vitest (CI)
 npm.cmd run lint
 npm.cmd run format:check
-npm.cmd run test:e2e       # Playwright + acessibilidade Axe (execução local em desktop e celular)
+npm.cmd run test:e2e       # Playwright + acessibilidade Axe em desktop e celular (CI e local)
 </code></pre>
 
 <hr>

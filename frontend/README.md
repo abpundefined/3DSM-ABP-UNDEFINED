@@ -177,8 +177,8 @@ Playwright testa Chromium em desktop e celular: navegação, foco, acesso direto
 refresh, formulário, carregamento e falha. Axe verifica problemas automatizáveis
 de acessibilidade. Esses testes não substituem testes com usuários.
 `test:e2e` gera o build e inicia o preview na porta 4173; `test:e2e:dev` inicia o
-Vite na 5173. As portas devem estar livres. Capturas e traces ficam em
-`test-results/` (ignorado).
+Vite na 5173. As portas devem estar livres. Capturas e traces (`trace: 'retain-on-failure'`) ficam em
+`test-results/` (ignorado pelo Git e publicado como artefato pelo job `frontend-e2e` do CI em caso de falha).
 
 Em produção, o servidor deve oferecer fallback de URLs da SPA para `index.html`,
 sem interceptar `/api`. Isso será coordenado com a configuração de publicação/Compose.
