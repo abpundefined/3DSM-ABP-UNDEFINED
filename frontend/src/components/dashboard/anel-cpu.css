@@ -1,0 +1,97 @@
+.anel-cpu {
+  --anel-cpu-cor: var(--green-forest);
+  --anel-cpu-trilha: var(--border);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.anel-cpu--baixo {
+  --anel-cpu-cor: var(--green-forest);
+}
+
+.anel-cpu--moderado {
+  --anel-cpu-cor: #8a5200;
+}
+
+.anel-cpu--alto {
+  --anel-cpu-cor: #b0283c;
+}
+
+.anel-cpu--sem-dados {
+  --anel-cpu-cor: var(--text-muted);
+}
+
+:root[data-theme='dark'] .anel-cpu--baixo {
+  --anel-cpu-cor: #5fd483;
+}
+
+:root[data-theme='dark'] .anel-cpu--moderado {
+  --anel-cpu-cor: #f2b84b;
+}
+
+:root[data-theme='dark'] .anel-cpu--alto {
+  --anel-cpu-cor: #ff8090;
+}
+
+.anel-cpu-grafico {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+}
+
+.anel-cpu-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.anel-cpu-trilha,
+.anel-cpu-progresso {
+  fill: none;
+}
+
+.anel-cpu-trilha {
+  stroke: var(--anel-cpu-trilha);
+}
+
+.anel-cpu--sem-dados .anel-cpu-trilha {
+  stroke-dasharray: 4 3;
+}
+
+.anel-cpu-progresso {
+  stroke: var(--anel-cpu-cor);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s ease;
+}
+
+.anel-cpu-valor {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.anel-cpu-faixa {
+  color: var(--anel-cpu-cor);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anel-cpu-progresso {
+    transition: none;
+  }
+}

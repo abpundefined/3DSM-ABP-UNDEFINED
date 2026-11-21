@@ -245,6 +245,13 @@
 }
 .service-card-metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+}
+.service-card-metric-cpu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 @container (min-width: 340px) {
   .service-card-metrics {
