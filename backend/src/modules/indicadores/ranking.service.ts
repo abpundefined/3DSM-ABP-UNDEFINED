@@ -2,12 +2,18 @@ import { Injectable } from "@nestjs/common";
 import { converterPeriodo } from "./date-conversion.helper";
 import { MetricaRanking, RankingQueryDto } from "./dto/ranking-query.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
-import type { ImpactoPorServico } from "./indicadores.repository";
+import type {
+  ImpactoPorServico,
+  ServicoParaRanking,
+} from "./indicadores.repository";
 import {
   calcularVariacaoPercentual,
   periodoAnterior,
   VariacaoPercentual,
 } from "./variacao-periodo";
+
+const LOCAL_NAO_INFORMADO = "Localização não informada";
+const NOMES_DESCONHECIDOS = new Set(["desconhecida", "desconhecido"]);
 
 interface ItemRanking {
   posicao: number;
@@ -17,6 +23,30 @@ interface ItemRanking {
   emissaoGCo2e: number;
   coletasValidas: number;
   selo: string;
+  regiaoCodigo?: string;
+  regiao?: string;
+  pais?: string;
+}
+
+function parteConhecida(valor?: string | null): string | null {
+  const limpo = valor?.trim();
+  if (!limpo || NOMES_DESCONHECIDOS.has(limpo.toLocaleLowerCase("pt-BR"))) {
+    return null;
+  }
+  return limpo;
+}
+
+function formatarRegiao(regiao: NonNullable<ServicoParaRanking["regiao"]>) {
+  const partes = [
+    parteConhecida(regiao.pais),
+    parteConhecida(regiao.cidade) ?? parteConhecida(regiao.regiao),
+  ].filter((parte): parte is string => parte !== null);
+
+  return partes.length > 0 ? partes.join(" • ") : LOCAL_NAO_INFORMADO;
+}
+
+function formatarPais(regiao: NonNullable<ServicoParaRanking["regiao"]>) {
+  return parteConhecida(regiao.pais) ?? LOCAL_NAO_INFORMADO;
 }
 
 type ItemRankingSemPosicao = Omit<ItemRanking, "posicao">;
@@ -177,6 +207,13 @@ export class RankingService {
         emissaoGCo2e: impacto.emissaoGCo2e ?? 0,
         coletasValidas: impacto.coletasValidas,
         selo,
+        ...(servico.regiaoCodigo ? { regiaoCodigo: servico.regiaoCodigo } : {}),
+        ...(servico.regiao
+          ? {
+              regiao: formatarRegiao(servico.regiao),
+              pais: formatarPais(servico.regiao),
+            }
+          : {}),
       });
     }
 

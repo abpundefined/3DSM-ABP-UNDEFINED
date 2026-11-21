@@ -1,12 +1,14 @@
 import { useId } from 'react';
-import type { ItemRanking } from '../../types/ranking';
+import type { AgrupamentoRanking, ItemRanking } from '../../types/ranking';
 import { escalaDaMetrica, fraseDeIntensidade } from '../../utils/ranking';
 import BarrasHorizontais from './BarrasHorizontais';
 
 export default function GraficoEnergiaEmissao({
   itens,
+  grupo = 'servico',
 }: {
   itens: ItemRanking[];
+  grupo?: AgrupamentoRanking;
 }) {
   const tituloId = useId();
   const energia = escalaDaMetrica(
@@ -30,7 +32,7 @@ export default function GraficoEnergiaEmissao({
           <h3>Energia ({energia.unidade})</h3>
           <BarrasHorizontais
             barras={itens.map(({ servicoId, nome, energiaKwh }) => ({
-              servicoId,
+              servicoId: grupo === 'servico' ? servicoId : undefined,
               nome,
               valor: energiaKwh * energia.fator,
             }))}
@@ -43,7 +45,7 @@ export default function GraficoEnergiaEmissao({
           <h3>Emissão ({emissao.unidade})</h3>
           <BarrasHorizontais
             barras={itens.map(({ servicoId, nome, emissaoGCo2e }) => ({
-              servicoId,
+              servicoId: grupo === 'servico' ? servicoId : undefined,
               nome,
               valor: emissaoGCo2e * emissao.fator,
             }))}

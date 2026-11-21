@@ -313,7 +313,7 @@ describe("IndicadoresRepository", () => {
     });
   });
 
-  it("lista serviços com identificador, nome e estado para o ranking", async () => {
+  it("lista serviços com identificador, nome, estado e localização para o ranking", async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const repository = new IndicadoresRepository({
       servico: { findMany },
@@ -322,7 +322,19 @@ describe("IndicadoresRepository", () => {
     await repository.listarServicosParaRanking();
 
     expect(findMany).toHaveBeenCalledWith({
-      select: { id: true, nome: true, estadoAtual: true },
+      select: {
+        id: true,
+        nome: true,
+        estadoAtual: true,
+        regiaoCodigo: true,
+        regiao: {
+          select: {
+            pais: true,
+            regiao: true,
+            cidade: true,
+          },
+        },
+      },
     });
   });
 });

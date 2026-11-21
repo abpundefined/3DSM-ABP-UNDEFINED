@@ -16,31 +16,43 @@ import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import useRanking, { type EstadoDoRanking } from '../hooks/useRanking';
 import { rankingDemo } from '../mocks/ranking';
-import type { MetricaRanking, RespostaRanking } from '../types/ranking';
+import type {
+  AgrupamentoRanking,
+  MetricaRanking,
+  RespostaRanking,
+} from '../types/ranking';
 import { ehModoDemo } from '../utils/modoDemo';
 import {
+  AGRUPAMENTOS,
   LIMITE_DO_RANKING,
   METRICAS,
+  agruparItensRanking,
   consultaDoRanking,
+  escreverAgrupamento,
   escreverMetrica,
   formatarPeriodoConsiderado,
+  lerAgrupamento,
   lerMetrica,
 } from '../utils/ranking';
 import '../components/ranking/ranking.css';
 import '../components/comparacao/comparacao.css';
 
 const metricas = Object.keys(METRICAS) as MetricaRanking[];
+const agrupamentos = Object.keys(AGRUPAMENTOS) as AgrupamentoRanking[];
 
 function ConteudoDoRanking({
   dados,
   atualizando,
   isDemo,
+  grupo,
 }: {
   dados: RespostaRanking;
   atualizando: boolean;
   isDemo: boolean;
+  grupo: AgrupamentoRanking;
 }) {
   const { periodo, metrica, itens, semDados } = dados;
+  const itensExibidos = agruparItensRanking(itens, grupo, metrica);
 
   if (
     itens.length === 0 &&
@@ -96,12 +108,20 @@ function ConteudoDoRanking({
         </>
       ) : (
         <>
-          <GraficoRanking itens={itens} metrica={metrica} />
+          <GraficoRanking
+            itens={itensExibidos}
+            metrica={metrica}
+            grupo={grupo}
+          />
           {!isDemo && <PeriodSelector />}
           {variacaoGlobal}
-          <GraficoEnergiaEmissao itens={itens} />
+          <GraficoEnergiaEmissao itens={itensExibidos} grupo={grupo} />
           <ParticipacaoEmissoes isDemo={isDemo} />
-          <TabelaRanking itens={itens} metrica={metrica} />
+          <TabelaRanking
+            itens={itensExibidos}
+            metrica={metrica}
+            grupo={grupo}
+          />
         </>
       )}
       {!!dados.variacaoPorServico?.length && (
@@ -117,6 +137,7 @@ export default function Ranking() {
   const isDemo = ehModoDemo(searchParams);
   const modo = searchParams.get('modo') === 'evolucao' ? 'evolucao' : 'ranking';
   const metrica = lerMetrica(searchParams);
+  const grupo = lerAgrupamento(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const { estado, recarregar } = useRanking(
     consultaDoRanking(apiQuery, metrica),
@@ -132,6 +153,11 @@ export default function Ranking() {
 
   const trocarMetrica = (proxima: MetricaRanking) =>
     setSearchParams((atuais) => escreverMetrica(atuais, proxima), {
+      replace: true,
+    });
+
+  const trocarAgrupamento = (proximo: AgrupamentoRanking) =>
+    setSearchParams((atuais) => escreverAgrupamento(atuais, proximo), {
       replace: true,
     });
 
@@ -195,22 +221,40 @@ export default function Ranking() {
           </button>
         </div>
         {modo === 'ranking' && (
-          <div
-            className="ranking-metricas"
-            role="group"
-            aria-label="Ordenar o ranking por"
-          >
-            {metricas.map((opcao) => (
-              <button
-                key={opcao}
-                type="button"
-                aria-pressed={opcao === metrica}
-                onClick={() => trocarMetrica(opcao)}
-              >
-                {METRICAS[opcao].rotulo}
-              </button>
-            ))}
-          </div>
+          <>
+            <div
+              className="ranking-agrupamentos"
+              role="group"
+              aria-label="Agrupar o ranking por"
+            >
+              {agrupamentos.map((opcao) => (
+                <button
+                  key={opcao}
+                  type="button"
+                  aria-pressed={opcao === grupo}
+                  onClick={() => trocarAgrupamento(opcao)}
+                >
+                  {AGRUPAMENTOS[opcao].rotulo}
+                </button>
+              ))}
+            </div>
+            <div
+              className="ranking-metricas"
+              role="group"
+              aria-label="Ordenar o ranking por"
+            >
+              {metricas.map((opcao) => (
+                <button
+                  key={opcao}
+                  type="button"
+                  aria-pressed={opcao === metrica}
+                  onClick={() => trocarMetrica(opcao)}
+                >
+                  {METRICAS[opcao].rotulo}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
       {modo === 'evolucao' ? (
@@ -261,6 +305,7 @@ export default function Ranking() {
               dados={exibido.dados}
               atualizando={atualizando}
               isDemo={isDemo}
+              grupo={grupo}
             />
           )}
         </>

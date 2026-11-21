@@ -7,6 +7,7 @@
 }
 
 .ranking-metricas,
+.ranking-agrupamentos,
 .ranking-modos {
   display: inline-flex;
   gap: 4px;
@@ -17,6 +18,7 @@
 }
 
 .ranking-metricas button,
+.ranking-agrupamentos button,
 .ranking-modos button {
   min-height: 40px;
   padding: 6px 14px;
@@ -31,12 +33,14 @@
 }
 
 .ranking-metricas button[aria-pressed='true'],
+.ranking-agrupamentos button[aria-pressed='true'],
 .ranking-modos button[aria-pressed='true'] {
   color: var(--green-forest);
   background: var(--soft-green);
 }
 
 .ranking-metricas button:focus-visible,
+.ranking-agrupamentos button:focus-visible,
 .ranking-modos button:focus-visible {
   outline: 3px solid var(--green-forest);
   outline-offset: 2px;

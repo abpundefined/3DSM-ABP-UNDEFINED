@@ -1,16 +1,22 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  AGRUPAMENTOS,
   METRICAS,
   abreviarNome,
+  agruparItensRanking,
   consultaDoRanking,
   ehRespostaRanking,
   escalaDaMetrica,
+  escreverAgrupamento,
   escreverMetrica,
   formatarNumero,
   formatarPeriodoConsiderado,
   fraseDeIntensidade,
+  lerAgrupamento,
   lerMetrica,
+  nomeDaRegiaoDoItem,
+  nomeDoPaisDoItem,
   resumoDoRanking,
 } from '../src/utils/ranking.ts';
 
@@ -280,4 +286,202 @@ test('escolhe a unidade do eixo pelo maior valor da métrica', () => {
     unidade: 'Wh',
     fator: 1000,
   });
+});
+
+test('lê e grava o agrupamento na URL mantendo os demais parâmetros', () => {
+  assert.equal(lerAgrupamento(new URLSearchParams()), 'servico');
+  assert.equal(lerAgrupamento(new URLSearchParams('grupo=regiao')), 'regiao');
+  assert.equal(lerAgrupamento(new URLSearchParams('grupo=pais')), 'pais');
+  assert.equal(
+    lerAgrupamento(new URLSearchParams('grupo=invalido')),
+    'servico',
+  );
+
+  const base = new URLSearchParams('periodo=7d&metrica=emissao');
+  assert.equal(
+    escreverAgrupamento(base, 'regiao').toString(),
+    'periodo=7d&metrica=emissao&grupo=regiao',
+  );
+  assert.equal(
+    escreverAgrupamento(base, 'pais').toString(),
+    'periodo=7d&metrica=emissao&grupo=pais',
+  );
+  assert.equal(
+    escreverAgrupamento(
+      new URLSearchParams('periodo=7d&grupo=regiao'),
+      'servico',
+    ).toString(),
+    'periodo=7d',
+  );
+  assert.equal(AGRUPAMENTOS.servico.rotulo, 'Serviço');
+  assert.equal(AGRUPAMENTOS.regiao.rotulo, 'Região');
+  assert.equal(AGRUPAMENTOS.pais.rotulo, 'País');
+});
+
+test('agrupa o ranking por serviço, região e país somando energia, emissão e coletas', () => {
+  const itensParaAgrupar = [
+    {
+      posicao: 1,
+      servicoId: 1,
+      nome: 'Auth Service',
+      energiaKwh: 0.01,
+      emissaoGCo2e: 1,
+      coletasValidas: 10,
+      regiaoCodigo: 'br-sudeste',
+      regiao: 'Brasil · São Paulo',
+      pais: 'Brasil',
+    },
+    {
+      posicao: 2,
+      servicoId: 2,
+      nome: 'Catalog API',
+      energiaKwh: 0.02,
+      emissaoGCo2e: 2,
+      coletasValidas: 15,
+      regiaoCodigo: 'br-sudeste',
+    },
+    {
+      posicao: 3,
+      servicoId: 3,
+      nome: 'Northeast Edge',
+      energiaKwh: 0.015,
+      emissaoGCo2e: 1.5,
+      coletasValidas: 8,
+      regiao: 'Brasil · Fortaleza',
+    },
+    {
+      posicao: 4,
+      servicoId: 4,
+      nome: 'Video Processor',
+      energiaKwh: 0.03,
+      emissaoGCo2e: 12,
+      coletasValidas: 20,
+      regiaoCodigo: 'us-east',
+      regiao: 'Estados Unidos · Ashburn',
+      pais: 'Estados Unidos',
+    },
+    {
+      posicao: 5,
+      servicoId: 5,
+      nome: 'Email Worker',
+      energiaKwh: 0.005,
+      emissaoGCo2e: 0.5,
+      coletasValidas: 4,
+      regiaoCodigo: 'desconhecida',
+    },
+  ];
+
+  assert.equal(
+    agruparItensRanking(itensParaAgrupar, 'servico', 'energia'),
+    itensParaAgrupar,
+  );
+
+  const porRegiao = agruparItensRanking(itensParaAgrupar, 'regiao', 'emissao');
+  assert.deepEqual(
+    porRegiao.map((grupo) => ({
+      posicao: grupo.posicao,
+      nome: grupo.nome,
+      energiaKwh: Number(grupo.energiaKwh.toFixed(4)),
+      emissaoGCo2e: Number(grupo.emissaoGCo2e.toFixed(4)),
+      coletasValidas: grupo.coletasValidas,
+      quantidadeServicos: grupo.quantidadeServicos,
+    })),
+    [
+      {
+        posicao: 1,
+        nome: 'Estados Unidos · Ashburn',
+        energiaKwh: 0.03,
+        emissaoGCo2e: 12,
+        coletasValidas: 20,
+        quantidadeServicos: 1,
+      },
+      {
+        posicao: 2,
+        nome: 'Brasil · São Paulo',
+        energiaKwh: 0.03,
+        emissaoGCo2e: 3,
+        coletasValidas: 25,
+        quantidadeServicos: 2,
+      },
+      {
+        posicao: 3,
+        nome: 'Brasil · Fortaleza',
+        energiaKwh: 0.015,
+        emissaoGCo2e: 1.5,
+        coletasValidas: 8,
+        quantidadeServicos: 1,
+      },
+      {
+        posicao: 4,
+        nome: 'Localização não informada',
+        energiaKwh: 0.005,
+        emissaoGCo2e: 0.5,
+        coletasValidas: 4,
+        quantidadeServicos: 1,
+      },
+    ],
+  );
+
+  const porPaisEnergia = agruparItensRanking(
+    itensParaAgrupar,
+    'pais',
+    'energia',
+  );
+  assert.deepEqual(
+    porPaisEnergia.map((grupo) => ({
+      posicao: grupo.posicao,
+      nome: grupo.nome,
+      energiaKwh: Number(grupo.energiaKwh.toFixed(4)),
+      emissaoGCo2e: Number(grupo.emissaoGCo2e.toFixed(4)),
+      coletasValidas: grupo.coletasValidas,
+      quantidadeServicos: grupo.quantidadeServicos,
+    })),
+    [
+      {
+        posicao: 1,
+        nome: 'Brasil',
+        energiaKwh: 0.045,
+        emissaoGCo2e: 4.5,
+        coletasValidas: 33,
+        quantidadeServicos: 3,
+      },
+      {
+        posicao: 2,
+        nome: 'Estados Unidos',
+        energiaKwh: 0.03,
+        emissaoGCo2e: 12,
+        coletasValidas: 20,
+        quantidadeServicos: 1,
+      },
+      {
+        posicao: 3,
+        nome: 'Localização não informada',
+        energiaKwh: 0.005,
+        emissaoGCo2e: 0.5,
+        coletasValidas: 4,
+        quantidadeServicos: 1,
+      },
+    ],
+  );
+
+  assert.equal(
+    resumoDoRanking(porRegiao, 'emissao', 'regiao'),
+    'Estados Unidos · Ashburn lidera em emissão: 12,00 gCO₂e, 70,6% do total das 4 regiões do ranking.',
+  );
+  assert.equal(
+    resumoDoRanking(porPaisEnergia, 'energia', 'pais'),
+    'Brasil lidera em energia: 45,00 Wh, 56,3% do total dos 3 países do ranking.',
+  );
+  assert.equal(
+    resumoDoRanking([porRegiao[0]], 'emissao', 'regiao'),
+    'Estados Unidos · Ashburn é a única região com coletas no período: 12,00 gCO₂e de emissão.',
+  );
+  assert.equal(
+    nomeDaRegiaoDoItem({ regiaoCodigo: 'eu-central' }),
+    'EU Central',
+  );
+  assert.equal(
+    nomeDoPaisDoItem({ regiaoCodigo: 'eu-central' }),
+    'Localização não informada',
+  );
 });

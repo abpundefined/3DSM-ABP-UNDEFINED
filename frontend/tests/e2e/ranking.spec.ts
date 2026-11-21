@@ -297,3 +297,65 @@ test('modo escuro sem violação do Axe', async ({ page }) => {
   ).toBeVisible();
   await semViolacoes(page);
 });
+
+test('agrupa por serviço, região e país mantendo o grupo na URL e atualizando gráficos e tabela sem violação do Axe', async ({
+  page,
+}) => {
+  await page.goto('/ranking?demo=1');
+
+  const grupoControles = page.getByRole('group', {
+    name: 'Agrupar o ranking por',
+  });
+  const abaServico = grupoControles.getByRole('button', {
+    name: 'Serviço',
+    exact: true,
+  });
+  const abaRegiao = grupoControles.getByRole('button', {
+    name: 'Região',
+    exact: true,
+  });
+  const abaPais = grupoControles.getByRole('button', {
+    name: 'País',
+    exact: true,
+  });
+
+  await expect(abaServico).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    page
+      .getByRole('region', { name: 'Ranking por energia' })
+      .locator('.recharts-bar-rectangle'),
+  ).toHaveCount(8);
+
+  await abaRegiao.click();
+  await expect(abaRegiao).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/\/ranking\?demo=1&grupo=regiao$/);
+  await expect(
+    page
+      .getByRole('region', { name: 'Ranking por energia' })
+      .locator('.recharts-bar-rectangle'),
+  ).toHaveCount(5);
+  await expect(
+    page.getByRole('region', { name: 'Ranking por energia' }),
+  ).toContainText('Estados Unidos · Ashburn lidera em energia');
+  await expect(linhas(page)).toHaveCount(6);
+  await expect(linhas(page).nth(1)).toContainText('Estados Unidos · Ashburn');
+  await expect(linhas(page).nth(2)).toContainText('Brasil · São Paulo');
+  await expect(linhas(page).nth(3)).toContainText('Japão · Tóquio');
+  await semViolacoes(page);
+
+  await abaPais.click();
+  await expect(abaPais).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/\/ranking\?demo=1&grupo=pais$/);
+  await expect(
+    page.getByRole('region', { name: 'Ranking por energia' }),
+  ).toContainText('Estados Unidos lidera em energia');
+  await expect(linhas(page).nth(1)).toContainText('Estados Unidos');
+  await expect(linhas(page).nth(2)).toContainText('Brasil');
+  await expect(linhas(page).nth(3)).toContainText('Japão');
+  await semViolacoes(page);
+
+  await abaServico.click();
+  await expect(abaServico).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL(/\/ranking\?demo=1$/);
+  await expect(linhas(page).nth(1)).toContainText('Video Processor');
+});
