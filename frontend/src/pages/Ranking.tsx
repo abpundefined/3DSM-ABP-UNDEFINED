@@ -5,6 +5,7 @@ import MethodologyLink from '../components/common/MethodologyLink';
 import PeriodSelector from '../components/common/PeriodSelector';
 import VariacaoPeriodo from '../components/common/VariacaoPeriodo';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
+import CorridaDeBarras from '../components/ranking/CorridaDeBarras';
 import GraficoEnergiaEmissao from '../components/ranking/GraficoEnergiaEmissao';
 import GraficoRanking from '../components/ranking/GraficoRanking';
 import ListaSemDados from '../components/ranking/ListaSemDados';
@@ -106,23 +107,39 @@ function ConteudoDoRanking({
 export default function Ranking() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isDemo = searchParams.get('demo') === '1';
+  const modo = searchParams.get('modo') === 'evolucao' ? 'evolucao' : 'ranking';
   const metrica = lerMetrica(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const { estado, recarregar } = useRanking(
     consultaDoRanking(apiQuery, metrica),
-    !isDemo,
+    !isDemo && modo === 'ranking',
   );
   usePageTitle(isDemo ? 'Ranking · demonstração' : 'Ranking');
 
   const exibido: EstadoDoRanking = isDemo
     ? { status: 'pronto', dados: rankingDemo(metrica), atualizando: false }
     : estado;
-  const atualizando = exibido.status === 'pronto' && exibido.atualizando;
+  const atualizando =
+    modo === 'ranking' && exibido.status === 'pronto' && exibido.atualizando;
 
   const trocarMetrica = (proxima: MetricaRanking) =>
     setSearchParams((atuais) => escreverMetrica(atuais, proxima), {
       replace: true,
     });
+
+  const trocarModo = (proximo: 'ranking' | 'evolucao') =>
+    setSearchParams(
+      (atuais) => {
+        const parametros = new URLSearchParams(atuais);
+        if (proximo === 'evolucao') {
+          parametros.set('modo', 'evolucao');
+        } else {
+          parametros.delete('modo');
+        }
+        return parametros;
+      },
+      { replace: true },
+    );
 
   return (
     <div className="ranking-page">
@@ -149,54 +166,88 @@ export default function Ranking() {
       </div>
       <ComparisonSelectionBar />
       {!isDemo && <PeriodSelector />}
-      <div
-        className="ranking-metricas"
-        role="group"
-        aria-label="Ordenar o ranking por"
-      >
-        {metricas.map((opcao) => (
-          <button
-            key={opcao}
-            type="button"
-            aria-pressed={opcao === metrica}
-            onClick={() => trocarMetrica(opcao)}
-          >
-            {METRICAS[opcao].rotulo}
-          </button>
-        ))}
-      </div>
-      <p className="ranking-status" role="status">
-        {atualizando ? 'Atualizando o ranking...' : ''}
-      </p>
-      {exibido.status === 'carregando' && (
-        <FeedbackPanel
-          kind="loading"
-          skeleton="table"
-          title="Carregando o ranking"
-          description="Somando a energia e a emissão de cada serviço no período."
-        />
-      )}
-      {exibido.status === 'erro' && (
-        <FeedbackPanel
-          kind="error"
-          title="Não foi possível carregar o ranking"
-          description={exibido.mensagem}
+      <div className="ranking-controles-topo">
+        <div
+          className="ranking-modos"
+          role="group"
+          aria-label="Modo de exibição do ranking"
         >
           <button
-            className="button button--primary"
             type="button"
-            onClick={recarregar}
+            aria-pressed={modo === 'ranking'}
+            onClick={() => trocarModo('ranking')}
           >
-            Tentar novamente
+            Ranking
           </button>
-        </FeedbackPanel>
-      )}
-      {exibido.status === 'pronto' && (
-        <ConteudoDoRanking
-          dados={exibido.dados}
-          atualizando={atualizando}
+          <button
+            type="button"
+            aria-pressed={modo === 'evolucao'}
+            onClick={() => trocarModo('evolucao')}
+          >
+            Evolução
+          </button>
+        </div>
+        {modo === 'ranking' && (
+          <div
+            className="ranking-metricas"
+            role="group"
+            aria-label="Ordenar o ranking por"
+          >
+            {metricas.map((opcao) => (
+              <button
+                key={opcao}
+                type="button"
+                aria-pressed={opcao === metrica}
+                onClick={() => trocarMetrica(opcao)}
+              >
+                {METRICAS[opcao].rotulo}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {modo === 'evolucao' ? (
+        <CorridaDeBarras
           isDemo={isDemo}
+          apiQuery={apiQuery}
+          linkSearch={linkSearch}
         />
+      ) : (
+        <>
+          <p className="ranking-status" role="status">
+            {atualizando ? 'Atualizando o ranking...' : ''}
+          </p>
+          {exibido.status === 'carregando' && (
+            <FeedbackPanel
+              kind="loading"
+              skeleton="table"
+              title="Carregando o ranking"
+              description="Somando a energia e a emissão de cada serviço no período."
+            />
+          )}
+          {exibido.status === 'erro' && (
+            <FeedbackPanel
+              kind="error"
+              title="Não foi possível carregar o ranking"
+              description={exibido.mensagem}
+            >
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={recarregar}
+              >
+                Tentar novamente
+              </button>
+            </FeedbackPanel>
+          )}
+          {exibido.status === 'pronto' && (
+            <ConteudoDoRanking
+              dados={exibido.dados}
+              atualizando={atualizando}
+              isDemo={isDemo}
+            />
+          )}
+        </>
       )}
     </div>
   );
