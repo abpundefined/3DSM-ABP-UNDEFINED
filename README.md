@@ -237,6 +237,7 @@ npm.cmd run dev
     <tr><td><code>GET</code></td><td><code>/mapa</code></td><td>Pública</td><td>Serviços geolocalizados, série por intervalo e lista sem coordenadas.</td></tr>
     <tr><td><code>GET</code></td><td><code>/intensidade/horarios</code></td><td>Pública</td><td>Matriz 7×24 de intensidade média por dia/hora e melhor janela de 3h.</td></tr>
     <tr><td><code>GET</code></td><td><code>/oportunidades</code></td><td>Pública</td><td>Lista oportunidades estimadas de redução (migração de região, superdimensionamento e horário), ordenadas pelo ganho no período.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/eventos</code></td><td>Pública</td><td>Fluxo em tempo real via Server-Sent Events (SSE) emitindo <code>coleta-registrada</code> e <code>estado-alterado</code>.</td></tr>
     <tr><td><code>GET</code></td><td><code>/saude</code></td><td>JWT Bearer</td><td>Estado das integrações (agregador e API de carbono), taxa de falha e serviços por estado.</td></tr>
 </table>
 

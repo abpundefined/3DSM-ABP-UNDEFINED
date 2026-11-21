@@ -37,7 +37,7 @@ da aplicação.
 
 ## Páginas e navegação
 
-- `/`: dashboard público conectado ao backend com contador de serviços, contador ao vivo de CO₂e (desktop), KPIs consolidados, seletor de período, painel de meta mensal de carbono (com planeta reativo à meta), gráfico de tendência, composição de energia por recurso, cards dos serviços (com anel de CPU `role="meter"`) e resumo das 4 maiores oportunidades de redução.
+- `/`: dashboard público conectado ao backend com atualização em tempo real via Server-Sent Events (`EventSource` em `/api/eventos` para eventos `coleta-registrada` e `estado-alterado`, pulso visual no card atualizado respeitando `prefers-reduced-motion: reduce`, reconexão automática e fallback para atualização periódica a cada 30 s), contador de serviços, contador ao vivo de CO₂e (desktop), KPIs consolidados, seletor de período, painel de meta mensal de carbono (com planeta reativo à meta), gráfico de tendência, composição de energia por recurso, cards dos serviços (com anel de CPU `role="meter"`) e resumo das 4 maiores oportunidades de redução.
 - `/?demo=1`: modo demonstração com dados fictícios identificados em todas as telas (também ativado permanentemente no build estático do GitHub Pages quando `VITE_DEMO_MODE=true`).
 - `/ranking`: ranking de impacto por energia ou emissão e modo **Evolução** (`?modo=evolucao`, corrida de barras ao longo do período), além de variação global e participação por região.
 - `/comparar`: comparação lado a lado de 2 a 5 serviços no mesmo período.

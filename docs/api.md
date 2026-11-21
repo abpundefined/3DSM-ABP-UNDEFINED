@@ -34,6 +34,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
 | GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
 | GET | `/oportunidades` | 200, objeto | Lista oportunidades estimadas de redução de emissão (migração de região, superdimensionamento e mudança de horário), ordenadas pela maior economia no período. |
+| GET | `/eventos` | 200, `text/event-stream` | Transmite eventos em tempo real via Server-Sent Events (`coleta-registrada` e `estado-alterado`). |
 | GET | `/saude` | 200, objeto | Mostra a última consulta ao agregador e à API de carbono, a taxa de falha das coletas na última hora e os serviços por estado. Requer JWT Bearer. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. A listagem de coletas é paginada; a de serviços continua retornando um array.
@@ -551,6 +552,46 @@ A resposta ordena as oportunidades pela maior economia estimada (`economiaEstima
   ]
 }
 ```
+
+## Eventos em tempo real (Server-Sent Events)
+
+`GET /eventos` estabelece um fluxo contínuo `text/event-stream` (`@Sse()` do NestJS com `Cache-Control: no-cache, no-transform` e `X-Accel-Buffering: no`) compatível com o proxy do Vite (`/api/eventos` → `/eventos`) e com o Docker Compose.
+
+O servidor emite dois tipos de eventos nomeados (`event:`):
+
+1. **`coleta-registrada`**: emitido imediatamente após `ColetasService.registrarColeta` persistir uma coleta.
+   ```json
+   {
+     "tipo": "coleta-registrada",
+     "servicoId": 1,
+     "coleta": {
+       "id": 42,
+       "servicoId": 1,
+       "iniciadaEm": "2026-11-21T12:00:30.000Z",
+       "intervaloColetaSegundos": 30,
+       "estadoColeta": "SUCESSO",
+       "estadoCalculo": "CONCLUIDO",
+       "cpuPercent": 48.5,
+       "memoryGb": 2.4,
+       "diskGb": 10,
+       "networkGb": 0.5,
+       "intensidadeCarbonoGCo2ePorKwh": 85.2,
+       "energiaKwh": 0.0042,
+       "emissaoGCo2e": 0.3578
+     }
+   }
+   ```
+2. **`estado-alterado`**: emitido quando `ServicosService.atualizarEstadoMonitoramento` altera o estado operacional de um serviço.
+   ```json
+   {
+     "tipo": "estado-alterado",
+     "servicoId": 1,
+     "estadoAtual": "INDISPONIVEL",
+     "atualizadoEm": "2026-11-21T12:01:00.000Z"
+   }
+   ```
+
+No frontend (`useEventosSse` + `LiveDashboard`), o `EventSource('/api/eventos')` atualiza o card do serviço em tempo real e aplica um pulso visual de `1,2 s` (`service-card--pulsando`, desativado quando `prefers-reduced-motion: reduce` está ativo). Se a conexão SSE cair ou falhar, o cliente agenda reconexão automática a cada `5 s` e mantém a atualização periódica de `30 s` como fallback transparente.
 
 ## Erros
 

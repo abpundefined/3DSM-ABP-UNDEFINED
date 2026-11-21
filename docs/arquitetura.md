@@ -110,6 +110,7 @@ Enums persistidos no schema:
 | `backend/src/modules/comparacao` | Comparação alinhada de totais e séries temporais de 2 a 5 serviços (`/comparacao`). |
 | `backend/src/modules/simulacao` | Simulação de emissões caso um serviço rodasse em outra região monitorada (`/servicos/:id/simulacao-regiao`). |
 | `backend/src/modules/oportunidades` | Avaliação das regras puras de redução de emissão (migração de região, possível superdimensionamento e mudança de horário) ordenadas pelo ganho estimado (`/oportunidades`). |
+| `backend/src/modules/eventos` | Fluxo Server-Sent Events (`GET /eventos`) que publica em tempo real eventos `coleta-registrada` e `estado-alterado` para o frontend (`EventSource` com reconexão automática e fallback para polling de 30 s). |
 | `backend/src/modules/saude` | Monitoramento em memória do estado e tempo de resposta do agregador, da API de carbono e da taxa de falha das coletas (`/saude`). |
 | `backend/src/modules/auth` e `configuracao` | Autenticação JWT (`POST /auth/login` com limite de 5 tentativas/min), seed do administrador inicial (`AdminSeedService`) e parametrização de intervalos e `metaMensalKgCo2e` em runtime (`/configuracao`). |
 
