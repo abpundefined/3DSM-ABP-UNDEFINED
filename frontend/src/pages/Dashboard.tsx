@@ -14,6 +14,7 @@ import { demoTotals } from '../mocks/dashboard';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import { calcularTaxaPorTotalEPeriodo } from '../utils/contadorCo2';
+import { ehModoDemo, MODO_DEMO_ESTATICO } from '../utils/modoDemo';
 import '../components/dashboard/demo.css';
 import '../components/dashboard/live.css';
 import '../components/comparacao/comparacao.css';
@@ -24,7 +25,7 @@ const DEMO_EMISSION_RATE_G_PER_SECOND = calcularTaxaPorTotalEPeriodo(
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   usePageTitle(isDemo ? 'Dashboard · demonstração' : 'Dashboard');
 
@@ -83,13 +84,15 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <Link
-          to={isDemo ? '/' : '/?demo=1'}
-          className="button button--secondary"
-        >
-          {isDemo ? 'Sair da demonstração' : 'Ver demonstração'}
-          <Icon name={isDemo ? 'back' : 'arrow'} />
-        </Link>
+        {!MODO_DEMO_ESTATICO && (
+          <Link
+            to={isDemo ? '/' : '/?demo=1'}
+            className="button button--secondary"
+          >
+            {isDemo ? 'Sair da demonstração' : 'Ver demonstração'}
+            <Icon name={isDemo ? 'back' : 'arrow'} />
+          </Link>
+        )}
       </section>
       {isDemo ? (
         <>

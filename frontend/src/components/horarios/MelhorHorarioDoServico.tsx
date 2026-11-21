@@ -4,6 +4,7 @@ import useSimulacao, { type EstadoDaSimulacao } from '../../hooks/useSimulacao';
 import usePeriod from '../../hooks/usePeriod';
 import { simulacaoDemo } from '../../mocks/simulacao';
 import { formatRegionName } from '../../utils/formatters';
+import { ehModoDemo } from '../../utils/modoDemo';
 import MelhorHorario from './MelhorHorario';
 
 export default function MelhorHorarioDoServico({
@@ -12,7 +13,7 @@ export default function MelhorHorarioDoServico({
   servicoId: number;
 }) {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const [escolhida, setEscolhida] = useState<string | null | undefined>();
   const idValido = Number.isInteger(servicoId) && servicoId > 0;

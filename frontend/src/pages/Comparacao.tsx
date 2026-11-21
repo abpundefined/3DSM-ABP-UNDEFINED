@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import FeedbackPanel from '../components/common/FeedbackPanel';
 import MethodologyLink from '../components/common/MethodologyLink';
 import ComparisonCharts from '../components/comparacao/ComparisonCharts';
@@ -7,6 +8,7 @@ import useComparisonData from '../hooks/useComparisonData';
 import useComparisonSelection from '../hooks/useComparisonSelection';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
+import { ehModoDemo } from '../utils/modoDemo';
 import type {
   ServicoComparacao,
   ServicoSelecionavel,
@@ -246,7 +248,11 @@ function ServiceSelectionList({
 }
 
 export default function Comparacao() {
-  usePageTitle('Comparar serviços');
+  const [searchParams] = useSearchParams();
+  const isDemo = ehModoDemo(searchParams);
+  usePageTitle(
+    isDemo ? 'Comparar serviços · demonstração' : 'Comparar serviços',
+  );
   const { period, apiQuery } = usePeriod();
   const {
     serviceIds,
@@ -256,7 +262,7 @@ export default function Comparacao() {
     clearSelection,
   } = useComparisonSelection();
   const { servicesState, comparisonState, retryServices, retryComparison } =
-    useComparisonData({ serviceIds, apiQuery, invalidSelection });
+    useComparisonData({ serviceIds, apiQuery, invalidSelection, isDemo });
   const [metric, setMetric] = useState<MetricaRanking>('energia');
 
   const services = useMemo(
@@ -279,7 +285,7 @@ export default function Comparacao() {
           </p>
         </div>
       </div>
-      <PeriodSelector />
+      {!isDemo && <PeriodSelector />}
       <section
         className="comparison-selection"
         aria-labelledby="comparison-selection-title"

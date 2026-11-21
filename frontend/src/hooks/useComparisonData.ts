@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { comparacaoDemo, servicosComparacaoDemo } from '../mocks/comparacao';
 import { ApiError } from '../services/api';
 import {
   buscarComparacao,
@@ -29,10 +30,12 @@ export default function useComparisonData({
   serviceIds,
   apiQuery,
   invalidSelection,
+  isDemo = false,
 }: {
   serviceIds: number[];
   apiQuery: string;
   invalidSelection: boolean;
+  isDemo?: boolean;
 }) {
   const [servicesAttempt, setServicesAttempt] = useState(0);
   const [servicesState, setServicesState] = useState<
@@ -45,6 +48,10 @@ export default function useComparisonData({
   const idsKey = serviceIds.join(',');
 
   useEffect(() => {
+    if (isDemo) {
+      return;
+    }
+
     const controller = new AbortController();
     setServicesState({ status: 'carregando' });
 
@@ -65,9 +72,13 @@ export default function useComparisonData({
       });
 
     return () => controller.abort();
-  }, [servicesAttempt]);
+  }, [isDemo, servicesAttempt]);
 
   useEffect(() => {
+    if (isDemo) {
+      return;
+    }
+
     if (
       invalidSelection ||
       serviceIds.length < 2 ||
@@ -107,7 +118,30 @@ export default function useComparisonData({
       });
 
     return () => controller.abort();
-  }, [apiQuery, comparisonAttempt, idsKey, invalidSelection, serviceIds]);
+  }, [
+    apiQuery,
+    comparisonAttempt,
+    idsKey,
+    invalidSelection,
+    isDemo,
+    serviceIds,
+  ]);
+
+  const demoServicesState = useMemo<LoadState<ServicoSelecionavel[]>>(
+    () => ({ status: 'pronto', dados: servicosComparacaoDemo }),
+    [],
+  );
+
+  const demoComparisonState = useMemo<ComparisonState>(() => {
+    if (
+      invalidSelection ||
+      serviceIds.length < 2 ||
+      serviceIds.length > MAX_SERVICES_TO_COMPARE
+    ) {
+      return { status: 'ocioso' };
+    }
+    return { status: 'pronto', dados: comparacaoDemo(serviceIds) };
+  }, [invalidSelection, serviceIds]);
 
   const retryServices = useCallback(
     () => setServicesAttempt((attempt) => attempt + 1),
@@ -119,8 +153,8 @@ export default function useComparisonData({
   );
 
   return {
-    servicesState,
-    comparisonState,
+    servicesState: isDemo ? demoServicesState : servicesState,
+    comparisonState: isDemo ? demoComparisonState : comparisonState,
     retryServices,
     retryComparison,
   };

@@ -1,3 +1,5 @@
+import { MODO_DEMO_ESTATICO } from '../utils/modoDemo.ts';
+
 const API_BASE_PATH = '/api';
 
 export class ApiError extends Error {
@@ -46,6 +48,13 @@ export async function apiRequest<T = unknown>(
 ): Promise<T | undefined> {
   if (!path.startsWith('/') || path.startsWith('//') || path.includes('\\')) {
     throw new TypeError('Informe um caminho da API, como /services.');
+  }
+
+  if (MODO_DEMO_ESTATICO) {
+    throw new ApiError(
+      503,
+      'Modo demonstração estático ativo: nenhuma requisição ao backend é enviada.',
+    );
   }
 
   const headers = new Headers(options.headers);

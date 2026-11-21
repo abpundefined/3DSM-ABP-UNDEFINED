@@ -34,6 +34,7 @@ import {
 } from '../utils/linhaDoTempo';
 import { filtrarPorRegiao, regioesDoMapa } from '../utils/mapaDados';
 import { criarEscalaEmissao, maiorEmissao } from '../utils/mapaEscala';
+import { ehModoDemo } from '../utils/modoDemo';
 import { estaEmModoTv, MEDIA_MODO_TV_DESKTOP } from '../utils/modoTv';
 import {
   aplicarSimulacoesNoMapa,
@@ -474,7 +475,7 @@ function ConteudoDoMapa({ dados }: { dados: RespostaMapa }) {
 
 function HorariosDoMapa({ dados }: { dados: RespostaMapa }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch } = usePeriod();
   const regioes = useMemo(
     () => regioesDoMapa(dados.servicos),
@@ -513,7 +514,7 @@ function HorariosDoMapa({ dados }: { dados: RespostaMapa }) {
 
 export default function Mapa() {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery } = usePeriod();
   const { estado, recarregar } = useMapa(apiQuery, !isDemo);
   usePageTitle(isDemo ? 'Mapa de emissões · demonstração' : 'Mapa de emissões');
