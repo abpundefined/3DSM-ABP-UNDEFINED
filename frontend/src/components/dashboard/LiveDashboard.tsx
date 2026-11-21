@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import useMetaCarbono from '../../hooks/useMetaCarbono';
+import useOportunidades from '../../hooks/useOportunidades';
 import useSerie from '../../hooks/useSerie';
 import { ApiError, apiRequest } from '../../services/api';
 import {
@@ -28,6 +29,7 @@ import {
 } from '../../utils/variacao';
 import Icon from '../common/Icon';
 import MethodologyLink from '../common/MethodologyLink';
+import PeriodSelector from '../common/PeriodSelector';
 import useComparisonSelection from '../../hooks/useComparisonSelection';
 import useFlipList from '../../hooks/useFlipList';
 import { somarComponentes } from '../../utils/composicaoEnergia';
@@ -40,6 +42,7 @@ import ServiceCard from './ServiceCard';
 import ServiceCounter from './ServiceCounter';
 import ServiceQuickDrawer from './ServiceQuickDrawer';
 import PainelMetaCarbono from './PainelMetaCarbono';
+import PainelOportunidadesDashboard from '../oportunidades/PainelOportunidadesDashboard';
 import PainelDaTendencia from '../tendencia/PainelDaTendencia';
 import type {
   BackendCollection,
@@ -198,8 +201,10 @@ function parseServiceSort(value: string): ServiceSort {
 
 export default function LiveDashboard({
   periodQuery,
+  linkSearch = '',
 }: {
   periodQuery: string;
+  linkSearch?: string;
 }) {
   const [services, setServices] = useState<LiveService[]>([]);
   const [indicators, setIndicators] = useState<BackendIndicators>();
@@ -230,6 +235,8 @@ export default function LiveDashboard({
     true,
   );
   const { estado: meta, recarregar: recarregarMeta } = useMetaCarbono(true);
+  const { estado: oportunidades, recarregar: recarregarOportunidades } =
+    useOportunidades(periodQuery, true);
   const tendencias = useMemo(
     () =>
       serie.status === 'pronto'
@@ -538,6 +545,7 @@ export default function LiveDashboard({
             void refresh();
             recarregarSerie();
             recarregarMeta();
+            recarregarOportunidades();
           }}
           disabled={isLoading}
         >
@@ -601,6 +609,8 @@ export default function LiveDashboard({
           tone="olive"
         />
       </section>
+
+      <PeriodSelector />
 
       <PainelMetaCarbono estado={meta} onRecarregar={recarregarMeta} />
 
@@ -790,6 +800,13 @@ export default function LiveDashboard({
           </>
         )}
       </section>
+
+      <PainelOportunidadesDashboard
+        estado={oportunidades}
+        linkSearch={linkSearch}
+        onRecarregar={recarregarOportunidades}
+      />
+
       <ServiceQuickDrawer
         service={selectedService}
         collectionIntervalSeconds={collectionIntervalSeconds}

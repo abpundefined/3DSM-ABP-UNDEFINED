@@ -120,6 +120,8 @@ function ConteudoDoRelatorio({
         </div>
       </section>
 
+      {!isDemo && <PeriodSelector />}
+
       <RelatorioTendencia serie={serie} />
 
       <section
@@ -302,31 +304,35 @@ export default function Relatorio() {
         </div>
       </header>
 
-      {!isDemo && <PeriodSelector />}
-
       {exibido.status === 'carregando' && (
-        <FeedbackPanel
-          kind="loading"
-          skeleton="detail"
-          title="Gerando o relatório"
-          description="Consolidando indicadores, tendência e serviços do período."
-        />
+        <>
+          <FeedbackPanel
+            kind="loading"
+            skeleton="detail"
+            title="Gerando o relatório"
+            description="Consolidando indicadores, tendência e serviços do período."
+          />
+          {!isDemo && <PeriodSelector />}
+        </>
       )}
 
       {exibido.status === 'erro' && (
-        <FeedbackPanel
-          kind="error"
-          title="Não foi possível gerar o relatório"
-          description={exibido.mensagem}
-        >
-          <button
-            type="button"
-            className="button button--primary"
-            onClick={() => setTentativas((atual) => atual + 1)}
+        <>
+          <FeedbackPanel
+            kind="error"
+            title="Não foi possível gerar o relatório"
+            description={exibido.mensagem}
           >
-            Tentar novamente
-          </button>
-        </FeedbackPanel>
+            <button
+              type="button"
+              className="button button--primary"
+              onClick={() => setTentativas((atual) => atual + 1)}
+            >
+              Tentar novamente
+            </button>
+          </FeedbackPanel>
+          {!isDemo && <PeriodSelector />}
+        </>
       )}
 
       {exibido.status === 'pronto' && (

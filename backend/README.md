@@ -11,13 +11,16 @@ src/
   config/
   database/                  PrismaService e verificação de schema
   common/filters/            filtro aplicado às rotas de coletas
+  common/regras/             regras puras de domínio (classificação, resumo, simulação e oportunidades)
   common/utils/              normalização das respostas externas e intervalos de período
   modules/servicos/          descoberta e sincronização
   modules/monitoramento/     agendador e coleta automática
   modules/coletas/           controller, service, repository e DTOs
-  modules/indicadores/       agregados ambientais e contagem por estado
+  modules/indicadores/       agregados ambientais, meta mensal, ranking e matriz de horários
   modules/mapa/              serviços no mapa com a série de emissão do período
+  modules/comparacao/        comparação alinhada de 2 a 5 serviços no mesmo período
   modules/simulacao/         simulação da emissão do serviço em outra região
+  modules/oportunidades/     oportunidades estimadas de redução de emissão (migração, CPU e horário)
   modules/saude/             saúde das integrações externas e das coletas
 prisma/
   schema.prisma
@@ -57,6 +60,7 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /ranking`: ranking limitado por energia/emissão, variação global antes do limite e `variacaoPorServico` de todos os serviços com dados em qualquer janela, incluindo removidos.
 - `GET /mapa`: serviços com coordenadas, totais e série de emissão por hora (até 48 horas) ou por dia, além da lista `semCoordenadas`. Aceita os mesmos parâmetros de período de `GET /indicadores`.
 - `GET /servicos/:id/simulacao-regiao`: emissão estimada do serviço em cada região monitorada (energia do período × intensidade média da região), com a diferença em g e em % e a região de menor emissão. Aceita os mesmos parâmetros de período; serviço inexistente retorna 404.
+- `GET /oportunidades`: avalia as três regras puras de redução de emissão (migrar de região com ganho `> 20%`, possível superdimensionamento com CPU média `< 15%` e energia acima da mediana, e mudar horário com janela de 3h `≥ 20%` abaixo da média regional), ordena pela maior economia estimada em `gCO₂e` e retorna `resumo`, `limiares`, `aviso` e `oportunidades`. Aceita os mesmos parâmetros do `PeriodoDto`.
 - `GET /saude`: última consulta e resultado do agregador e da API de carbono, taxa de falha das coletas na última hora e serviços por estado. Requer JWT.
 
 Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas`, `POST /servicos/sync` e `GET /saude` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
