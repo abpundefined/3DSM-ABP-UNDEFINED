@@ -34,7 +34,8 @@ export function exportDataToCsv<T extends CsvRow>(
   const linhas = data.map((item) =>
     chaves.map((chave) => formatarValor(item[chave])).join(';'),
   );
-  const csv = [cabecalho, ...linhas].join('\r\n');
+  const periodo = `Período: ${startDate} a ${endDate}`;
+  const csv = [periodo, cabecalho, ...linhas].join('\r\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

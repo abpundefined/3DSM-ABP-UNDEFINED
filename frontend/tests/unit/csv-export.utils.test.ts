@@ -45,7 +45,9 @@ describe('exportDataToCsv', () => {
       '2026-11-07',
     );
 
-    expect(csv.split(/\r?\n/)[0]).toContain('energia_kwh;emissao_gco2e');
+    const linhas = csv.split(/\r?\n/);
+    expect(linhas[0]).toBe('Período: 2026-11-01 a 2026-11-07');
+    expect(linhas[1]).toBe('inicio;energia_kwh;emissao_gco2e');
     expect(csv.replaceAll('"', '')).toContain(
       '2026-11-01T00:00:00.000Z;1,5;12,34',
     );
@@ -65,7 +67,8 @@ describe('exportDataToCsv', () => {
       '2026-11-07',
     );
 
-    expect(csv).toContain('energia_kwh;emissao_gco2e');
+    expect(csv.split(/\r?\n/)[0]).toBe('Período: 2026-11-01 a 2026-11-07');
+    expect(csv.split(/\r?\n/)[1]).toBe('inicio;energia_kwh;emissao_gco2e');
     expect(anchor.download).toBe(
       'relatorio-servicos-2026-11-01_a_2026-11-07.csv',
     );
