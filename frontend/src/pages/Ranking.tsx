@@ -128,13 +128,13 @@ export default function Ranking() {
   const exibido: EstadoDoRanking = isDemo
     ? { status: 'pronto', dados: rankingDemo(metrica), atualizando: false }
     : estado;
-const atualizando =
-  modo === 'ranking' && exibido.status === 'pronto' && exibido.atualizando;
-const dadosParaExportar = exibido.status === 'pronto' ? exibido.dados : null;
-const exportacaoDesabilitada =
-  dadosParaExportar === null ||
-  atualizando ||
-  dadosParaExportar.itens.length === 0;
+  const atualizando =
+    modo === 'ranking' && exibido.status === 'pronto' && exibido.atualizando;
+  const dadosParaExportar = exibido.status === 'pronto' ? exibido.dados : null;
+  const exportacaoDesabilitada =
+    dadosParaExportar === null ||
+    atualizando ||
+    dadosParaExportar.itens.length === 0;
 
   const trocarMetrica = (proxima: MetricaRanking) =>
     setSearchParams((atuais) => escreverMetrica(atuais, proxima), {
