@@ -16,6 +16,7 @@ import usePeriod from '../hooks/usePeriod';
 import useRanking, { type EstadoDoRanking } from '../hooks/useRanking';
 import { rankingDemo } from '../mocks/ranking';
 import type { MetricaRanking, RespostaRanking } from '../types/ranking';
+import { exportDataToCsv } from '../utils/csv-export.utils';
 import {
   LIMITE_DO_RANKING,
   METRICAS,
@@ -118,11 +119,29 @@ export default function Ranking() {
     ? { status: 'pronto', dados: rankingDemo(metrica), atualizando: false }
     : estado;
   const atualizando = exibido.status === 'pronto' && exibido.atualizando;
+  const dadosParaExportar = exibido.status === 'pronto' ? exibido.dados : null;
+  const exportacaoDesabilitada =
+    dadosParaExportar === null ||
+    atualizando ||
+    dadosParaExportar.itens.length === 0;
 
   const trocarMetrica = (proxima: MetricaRanking) =>
     setSearchParams((atuais) => escreverMetrica(atuais, proxima), {
       replace: true,
     });
+
+  const exportarRanking = () => {
+    if (exportacaoDesabilitada || dadosParaExportar === null) {
+      return;
+    }
+
+    exportDataToCsv(
+      dadosParaExportar.itens,
+      'greener-ranking',
+      dadosParaExportar.periodo.inicio.slice(0, 10),
+      dadosParaExportar.periodo.fim.slice(0, 10),
+    );
+  };
 
   return (
     <div className="ranking-page">
@@ -135,17 +154,27 @@ export default function Ranking() {
             emitem CO₂e no período. <MethodologyLink />
           </p>
         </div>
-        <Link
-          to={
-            isDemo
-              ? '/relatorio?demo=1'
-              : { pathname: '/relatorio', search: linkSearch }
-          }
-          className="button button--secondary"
-        >
-          <Icon name="printer" />
-          Relatório do período
-        </Link>
+        <div className="page-heading-actions">
+          <button
+            className="button button--secondary"
+            type="button"
+            disabled={exportacaoDesabilitada}
+            onClick={exportarRanking}
+          >
+            Exportar CSV
+          </button>
+          <Link
+            to={
+              isDemo
+                ? '/relatorio?demo=1'
+                : { pathname: '/relatorio', search: linkSearch }
+            }
+            className="button button--secondary"
+          >
+            <Icon name="printer" />
+            Relatório do período
+          </Link>
+        </div>
       </div>
       <ComparisonSelectionBar />
       {!isDemo && <PeriodSelector />}

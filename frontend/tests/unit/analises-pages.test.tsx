@@ -8,11 +8,15 @@ import ComparisonSelectionProvider from '../../src/providers/ComparisonSelection
 import PeriodProvider from '../../src/providers/PeriodProvider';
 import { buscarMapa } from '../../src/services/mapa';
 import { buscarRanking } from '../../src/services/ranking';
+import { exportDataToCsv } from '../../src/utils/csv-export.utils';
 import { mapaDemo } from '../../src/mocks/mapa';
 import type { RespostaRanking } from '../../src/types/ranking';
 
 vi.mock('../../src/services/mapa', () => ({ buscarMapa: vi.fn() }));
 vi.mock('../../src/services/ranking', () => ({ buscarRanking: vi.fn() }));
+vi.mock('../../src/utils/csv-export.utils', () => ({
+  exportDataToCsv: vi.fn(),
+}));
 
 vi.mock('../../src/hooks/useComparisonData', () => ({
   default: () => ({
@@ -53,6 +57,7 @@ const resposta: RespostaRanking = {
 
 const buscarRankingMock = vi.mocked(buscarRanking);
 const buscarMapaMock = vi.mocked(buscarMapa);
+const exportDataToCsvMock = vi.mocked(exportDataToCsv);
 
 function ConsultaAtual() {
   const { search } = useLocation();
@@ -89,6 +94,7 @@ describe('Ranking', () => {
   beforeEach(() => {
     buscarRankingMock.mockReset();
     buscarMapaMock.mockReset().mockResolvedValue(mapaDemo);
+    exportDataToCsvMock.mockReset();
   });
 
   it('mostra o carregamento enquanto a consulta não responde', () => {
@@ -99,9 +105,41 @@ describe('Ranking', () => {
     expect(
       screen.getByRole('heading', { name: 'Carregando o ranking' }),
     ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(
       screen.queryByRole('region', { name: 'Tabela do ranking' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('exporta os itens exibidos com o período consultado', async () => {
+    const user = userEvent.setup();
+    const itensOrdenados = [
+      { ...resposta.itens[0], servicoId: 3, posicao: 1, nome: 'Maior' },
+      { ...resposta.itens[0], servicoId: 8, posicao: 2, nome: 'Menor' },
+    ];
+    buscarRankingMock.mockResolvedValue({
+      ...resposta,
+      metrica: 'emissao',
+      itens: itensOrdenados,
+    });
+    renderRanking('/ranking?periodo=7d&metrica=emissao');
+
+    const tabela = within(
+      await screen.findByRole('region', { name: 'Tabela do ranking' }),
+    );
+    expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Maior');
+    expect(tabela.getAllByRole('row')[2]).toHaveTextContent('Menor');
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Exportar CSV' }),
+    );
+
+    expect(exportDataToCsvMock).toHaveBeenCalledWith(
+      itensOrdenados,
+      'greener-ranking',
+      '2026-11-10',
+      '2026-11-17',
+    );
   });
 
   it('mostra as métricas na tabela e separa os serviços sem dados', async () => {
@@ -134,6 +172,7 @@ describe('Ranking', () => {
     renderRanking();
 
     expect(await screen.findByRole('heading', { name: titulo })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(
       screen.queryByRole('region', { name: 'Tabela do ranking' }),
     ).not.toBeInTheDocument();
@@ -181,6 +220,7 @@ describe('Ranking', () => {
     expect(params.get('metrica')).toBe('emissao');
     expect(params.get('periodo')).toBe('7d');
     expect(screen.getByText('Atualizando o ranking...')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeDisabled();
     expect(
       screen.getByRole('region', { name: 'Tabela do ranking' }),
     ).toBeVisible();
