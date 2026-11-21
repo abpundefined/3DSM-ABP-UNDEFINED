@@ -5,9 +5,11 @@ import {
   formatarKgCo2e,
   formatarPercentualMeta,
 } from '../../utils/metaCarbono';
+import { resolverEstadoPlanetaMeta } from '../../utils/planetaMeta';
 import Icon from '../common/Icon';
 import LoadingSkeleton from '../common/LoadingSkeleton';
 import MethodologyLink from '../common/MethodologyLink';
+import PlanetaMetaCarbono from './PlanetaMetaCarbono';
 import './meta-carbono.css';
 
 type PainelMetaCarbonoProps = {
@@ -81,68 +83,78 @@ export default function PainelMetaCarbono({
       {resumo.temMeta &&
       dados.metaMensal !== null &&
       resumo.percentualConsumido !== null ? (
-        <>
-          <div className="meta-medidor-bloco">
-            <div className="meta-medidor-legenda">
-              <span>
-                Consumido no mês:{' '}
-                <strong>{formatarKgCo2e(dados.acumuladoMes)}</strong> de{' '}
-                <strong>{formatarKgCo2e(dados.metaMensal)}</strong>
-              </span>
-              <strong className="meta-medidor-percentual">
-                {formatarPercentualMeta(resumo.percentualConsumido)} da meta
-              </strong>
-            </div>
-            <div
-              className={`meta-medidor${
-                resumo.ultrapassouMeta
-                  ? ' meta-medidor--excedida'
-                  : resumo.projecaoUltrapassaMeta
-                    ? ' meta-medidor--atencao'
-                    : ''
-              }`}
-              role="meter"
-              aria-label="Consumo mensal em relação à meta de carbono"
-              aria-valuemin={0}
-              aria-valuemax={dados.metaMensal}
-              aria-valuenow={dados.acumuladoMes}
-              aria-valuetext={`${formatarKgCo2e(dados.acumuladoMes)} de ${formatarKgCo2e(dados.metaMensal)} (${formatarPercentualMeta(resumo.percentualConsumido)})`}
-            >
+        <div className="meta-carbono-corpo">
+          <PlanetaMetaCarbono
+            estado={resolverEstadoPlanetaMeta({
+              percentualConsumido: resumo.percentualConsumido,
+              ultrapassouMeta: resumo.ultrapassouMeta,
+              projecaoUltrapassaMeta: resumo.projecaoUltrapassaMeta,
+            })}
+            percentualConsumido={resumo.percentualConsumido}
+          />
+          <div className="meta-carbono-detalhes">
+            <div className="meta-medidor-bloco">
+              <div className="meta-medidor-legenda">
+                <span>
+                  Consumido no mês:{' '}
+                  <strong>{formatarKgCo2e(dados.acumuladoMes)}</strong> de{' '}
+                  <strong>{formatarKgCo2e(dados.metaMensal)}</strong>
+                </span>
+                <strong className="meta-medidor-percentual">
+                  {formatarPercentualMeta(resumo.percentualConsumido)} da meta
+                </strong>
+              </div>
               <div
-                className="meta-medidor-preenchimento"
-                style={{ width: `${resumo.percentualBarra}%` }}
-              />
+                className={`meta-medidor${
+                  resumo.ultrapassouMeta
+                    ? ' meta-medidor--excedida'
+                    : resumo.projecaoUltrapassaMeta
+                      ? ' meta-medidor--atencao'
+                      : ''
+                }`}
+                role="meter"
+                aria-label="Consumo mensal em relação à meta de carbono"
+                aria-valuemin={0}
+                aria-valuemax={dados.metaMensal}
+                aria-valuenow={dados.acumuladoMes}
+                aria-valuetext={`${formatarKgCo2e(dados.acumuladoMes)} de ${formatarKgCo2e(dados.metaMensal)} (${formatarPercentualMeta(resumo.percentualConsumido)})`}
+              >
+                <div
+                  className="meta-medidor-preenchimento"
+                  style={{ width: `${resumo.percentualBarra}%` }}
+                />
+              </div>
             </div>
+
+            <p className="meta-projecao-principal">{resumo.textoProjecao}</p>
+
+            {resumo.ultrapassouMeta ? (
+              <p className="meta-alerta meta-alerta--excedida" role="status">
+                <Icon name="alert" />
+                <span>
+                  Meta mensal ultrapassada: o acumulado já superou a meta de{' '}
+                  {formatarKgCo2e(dados.metaMensal)}. Projeção de{' '}
+                  {formatarKgCo2e(resumo.excessoProjetadoKg)} acima do limite.
+                </span>
+              </p>
+            ) : resumo.projecaoUltrapassaMeta ? (
+              <p className="meta-alerta meta-alerta--atencao" role="status">
+                <Icon name="alert" />
+                <span>
+                  Atenção: a projeção do mês ultrapassa a meta em{' '}
+                  {formatarKgCo2e(resumo.excessoProjetadoKg)}.
+                </span>
+              </p>
+            ) : (
+              <p className="meta-alerta meta-alerta--ok" role="status">
+                <Icon name="check" />
+                <span>
+                  No ritmo atual, a projeção permanece dentro da meta mensal.
+                </span>
+              </p>
+            )}
           </div>
-
-          <p className="meta-projecao-principal">{resumo.textoProjecao}</p>
-
-          {resumo.ultrapassouMeta ? (
-            <p className="meta-alerta meta-alerta--excedida" role="status">
-              <Icon name="alert" />
-              <span>
-                Meta mensal ultrapassada: o acumulado já superou a meta de{' '}
-                {formatarKgCo2e(dados.metaMensal)}. Projeção de{' '}
-                {formatarKgCo2e(resumo.excessoProjetadoKg)} acima do limite.
-              </span>
-            </p>
-          ) : resumo.projecaoUltrapassaMeta ? (
-            <p className="meta-alerta meta-alerta--atencao" role="status">
-              <Icon name="alert" />
-              <span>
-                Atenção: a projeção do mês ultrapassa a meta em{' '}
-                {formatarKgCo2e(resumo.excessoProjetadoKg)}.
-              </span>
-            </p>
-          ) : (
-            <p className="meta-alerta meta-alerta--ok" role="status">
-              <Icon name="check" />
-              <span>
-                No ritmo atual, a projeção permanece dentro da meta mensal.
-              </span>
-            </p>
-          )}
-        </>
+        </div>
       ) : (
         <div className="meta-sem-meta">
           <p className="meta-projecao-principal">{resumo.textoProjecao}</p>
