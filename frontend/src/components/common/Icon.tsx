@@ -117,6 +117,12 @@ const paths = {
       <polygon points="16.2 7.8 14.1 14.1 7.8 16.2 9.9 9.9 16.2 7.8" />
     </>
   ),
+  tv: (
+    <>
+      <rect x="2" y="4" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 18v3" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof paths;

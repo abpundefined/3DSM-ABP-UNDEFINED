@@ -824,6 +824,9 @@ test('no zoom mínimo do mapa, o − e a roda do mouse voltam ao globo', async (
   const mapa = page.getByRole('region', {
     name: 'Mapa dos serviços monitorados',
   });
+  await mapa.evaluate((elemento) =>
+    elemento.scrollIntoView({ block: 'center' }),
+  );
   const caixa = await mapa.boundingBox();
   if (!caixa) {
     throw new Error('Mapa sem área visível.');

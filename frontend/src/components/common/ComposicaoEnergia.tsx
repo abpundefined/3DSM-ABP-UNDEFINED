@@ -143,7 +143,12 @@ export default function ComposicaoEnergia({
         </ul>
       </div>
 
-      <div className="composicao-tabela-scroll">
+      <div
+        className="composicao-tabela-scroll"
+        role="region"
+        aria-label="Tabela de composição da energia"
+        tabIndex={0}
+      >
         <table className="composicao-tabela">
           <caption className="sr-only">
             Potência estimada em watts e participação percentual por componente

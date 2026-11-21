@@ -1,0 +1,217 @@
+.app-shell--tv {
+  font-size: 1.15rem;
+}
+
+.app-shell--tv .main-content {
+  width: min(100% - 48px, 1600px);
+  padding-block: 16px 96px;
+}
+
+.app-shell--tv .mapa-page {
+  gap: 16px;
+}
+
+.app-shell--tv .page-heading {
+  margin-bottom: 0;
+}
+
+.app-shell--tv .page-subtitle {
+  margin-top: 4px;
+}
+
+.app-shell--tv .globo,
+.app-shell--tv .mapa-leaflet {
+  height: min(62vh, 560px);
+}
+
+.app-shell--tv h1 {
+  font-size: clamp(2rem, 3.2vw, 2.85rem);
+}
+
+.app-shell--tv h2 {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+}
+
+.app-shell--tv .metric-value {
+  font-size: clamp(2.1rem, 3.6vw, 3.1rem);
+}
+
+.app-shell--tv .metric-heading,
+.app-shell--tv .metric-description,
+.app-shell--tv .page-subtitle {
+  font-size: 1rem;
+}
+
+/* Esconde controles interativos para manter o painel limpo em TV */
+.app-shell--tv .period-selector,
+.app-shell--tv .live-dashboard-toolbar button,
+.app-shell--tv .live-service-controls,
+.app-shell--tv .live-service-active-filters,
+.app-shell--tv .ranking-metricas,
+.app-shell--tv .ranking-compare-button,
+.app-shell--tv .comparison-selection-bar,
+.app-shell--tv .tendencia-visoes,
+.app-shell--tv .service-filters,
+.app-shell--tv .page-heading a.button,
+.app-shell--tv .mapa-barra,
+.app-shell--tv .linha-do-tempo,
+.app-shell--tv .mapa-tabela {
+  display: none;
+}
+
+.modo-tv-barra {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 25;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 8%);
+}
+
+.modo-tv-identidade {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.modo-tv-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--green-forest);
+  font-size: 1.05rem;
+}
+
+.modo-tv-tag {
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft-green);
+  color: var(--green-forest);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modo-tv-telas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modo-tv-tela {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.modo-tv-tela--ativa {
+  background: var(--soft-green);
+  color: var(--green-forest);
+  font-weight: 700;
+}
+
+.modo-tv-proxima {
+  display: grid;
+  gap: 5px;
+  min-width: min(320px, 100%);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.modo-tv-progresso {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.modo-tv-progresso-preenchimento {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green-forest);
+  transition: width 350ms linear;
+}
+
+.modo-tv-sair {
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.modo-tv-sair:hover {
+  border-color: var(--green-forest);
+  color: var(--green-forest);
+}
+
+.footer-tv-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.footer-tv-button:hover {
+  border-color: var(--green-forest);
+  color: var(--green-forest);
+}
+
+.footer-tv-button .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.footer-meta-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+@media (max-width: 760px) {
+  .footer-tv-button {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modo-tv-progresso-preenchimento {
+    transition: none;
+  }
+}
+
+@media print {
+  .modo-tv-barra,
+  .footer-tv-button {
+    display: none;
+  }
+}
