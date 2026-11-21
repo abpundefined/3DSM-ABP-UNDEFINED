@@ -33,6 +33,7 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
 | GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
 | GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
+| GET | `/oportunidades` | 200, objeto | Lista oportunidades estimadas de redução de emissão (migração de região, superdimensionamento e mudança de horário), ordenadas pela maior economia no período. |
 | GET | `/saude` | 200, objeto | Mostra a última consulta ao agregador e à API de carbono, a taxa de falha das coletas na última hora e os serviços por estado. Requer JWT Bearer. |
 
 O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. A listagem de coletas é paginada; a de serviços continua retornando um array.
@@ -497,6 +498,57 @@ Exemplo de resposta:
     "REMOVIDO": 0,
     "DESCONHECIDO": 0
   }
+}
+```
+
+## Oportunidades de redução de emissão
+
+`GET /oportunidades` aceita os mesmos parâmetros de período do `PeriodoDto` (`periodo`, `inicio`, `fim`; padrão: últimas 24 horas) e aplica três regras puras com limiares em constantes (`backend/src/common/regras/oportunidades.ts`):
+
+- **`MIGRAR_REGIAO`**: dispara quando `emissaoPeriodo × (1 − intensidadeMelhorRegiao ÷ intensidadeAtual)` gera redução **acima de 20%**.
+- **`SUPERDIMENSIONAMENTO`**: dispara quando a CPU média do serviço fica **abaixo de 15%** e a energia consumida no período supera a mediana dos serviços monitorados (estimativa conservadora de `30%`).
+- **`MUDAR_HORARIO`**: dispara quando a matriz horária (`7 × 24`) da região do serviço apresenta uma janela contínua de **3 horas** com intensidade pelo menos **20% menor** que a média da região.
+
+A resposta ordena as oportunidades pela maior economia estimada (`economiaEstimadaGCo2e`), soma o potencial total em `resumo.reducaoPotencialGCo2e` e inclui `aviso` explícito de que se trata de sugestão estimada, não garantia:
+
+```json
+{
+  "periodo": {
+    "inicio": "2026-11-20T12:00:00.000Z",
+    "fim": "2026-11-21T12:00:00.000Z"
+  },
+  "resumo": {
+    "totalOportunidades": 2,
+    "reducaoPotencialGCo2e": 19.55,
+    "porTipo": {
+      "MIGRAR_REGIAO": 1,
+      "SUPERDIMENSIONAMENTO": 1,
+      "MUDAR_HORARIO": 0
+    }
+  },
+  "limiares": {
+    "reducaoMinimaMigrarRegiaoPercentual": 20,
+    "cpuMaximaSuperdimensionamentoPercentual": 15,
+    "reducaoEstimadaSuperdimensionamentoPercentual": 30,
+    "reducaoMinimaMudarHorarioPercentual": 20,
+    "duracaoJanelaHorarioHoras": 3
+  },
+  "aviso": "As oportunidades listadas são sugestões estimadas a partir do histórico do período selecionado e não representam garantia de economia.",
+  "oportunidades": [
+    {
+      "id": "5:MIGRAR_REGIAO",
+      "servicoId": 5,
+      "servicoNome": "Video Processor",
+      "regiaoCodigo": "us-east",
+      "tipo": "MIGRAR_REGIAO",
+      "titulo": "Migrar Video Processor para Canadá · Toronto",
+      "explicacao": "Sugestão estimada: mover de Estados Unidos · Ashburn para Canadá · Toronto reduziria cerca de 89,3% das emissões do período.",
+      "economiaEstimadaGCo2e": 11.88,
+      "economiaPercentual": 89.3,
+      "emissaoAtualGCo2e": 13.3,
+      "linkDetalhe": "/servicos/5"
+    }
+  ]
 }
 ```
 
