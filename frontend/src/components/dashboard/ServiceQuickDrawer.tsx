@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
 import { buildServiceDrawerSummary } from '../../utils/serviceDetail';
 import Icon from '../common/Icon';
@@ -83,7 +84,7 @@ export default function ServiceQuickDrawer({
     return null;
   }
 
-  return (
+  return createPortal(
     <div
       className="service-drawer-backdrop"
       onClick={(event) => {
@@ -222,6 +223,7 @@ export default function ServiceQuickDrawer({
           </button>
         </footer>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -56,21 +56,20 @@ export default function PainelOportunidadesDashboard({
       )}
 
       {estado.status === 'erro' && (
-        <FeedbackPanel
-          kind="error"
-          title="Não foi possível carregar as oportunidades"
-          description={estado.mensagem}
-        >
+        <div className="oportunidades-dashboard-erro">
+          <p className="oportunidades-dashboard-aviso">
+            Não foi possível carregar as oportunidades. {estado.mensagem}
+          </p>
           {onRecarregar && (
             <button
               type="button"
               className="button button--primary"
               onClick={onRecarregar}
             >
-              Tentar novamente
+              Recarregar as oportunidades
             </button>
           )}
-        </FeedbackPanel>
+        </div>
       )}
 
       {estado.status === 'pronto' && (

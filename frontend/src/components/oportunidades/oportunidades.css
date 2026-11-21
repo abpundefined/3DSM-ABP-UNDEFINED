@@ -19,6 +19,18 @@
   gap: 12px 18px;
 }
 
+.oportunidades-dashboard-erro {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.oportunidades-dashboard-aviso {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .oportunidades-subtitulo {
   margin: 4px 0 0;
   color: var(--text-muted);
