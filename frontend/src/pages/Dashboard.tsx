@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router';
+import ContadorCo2AoVivo from '../components/common/ContadorCo2AoVivo';
 import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
@@ -12,9 +13,14 @@ import ServiceCounter from '../components/dashboard/ServiceCounter';
 import { demoTotals } from '../mocks/dashboard';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
+import { calcularTaxaPorTotalEPeriodo } from '../utils/contadorCo2';
 import '../components/dashboard/demo.css';
 import '../components/dashboard/live.css';
 import '../components/comparacao/comparacao.css';
+
+const DEMO_EMISSION_RATE_G_PER_SECOND = calcularTaxaPorTotalEPeriodo(
+  demoTotals.carbonKg * 1000,
+);
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
@@ -90,6 +96,10 @@ export default function Dashboard() {
           <ServiceCounter
             active={demoTotals.active}
             monitored={demoTotals.services}
+          />
+          <ContadorCo2AoVivo
+            taxaGPorSegundo={DEMO_EMISSION_RATE_G_PER_SECOND}
+            isDemo
           />
           <section aria-label="Indicadores gerais" className="metrics-grid">
             <MetricCard

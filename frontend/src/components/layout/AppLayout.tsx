@@ -15,12 +15,14 @@ import {
 } from 'react-router';
 import Brand from '../common/Brand';
 import BackToTopButton from '../common/BackToTopButton';
+import ContadorCo2AoVivo from '../common/ContadorCo2AoVivo';
 import Icon from '../common/Icon';
 import AppErrorBoundary from '../common/AppErrorBoundary';
 import GuidedTour from '../tour/GuidedTour';
 import ModoTvBarra from './ModoTvBarra';
 import useAuth from '../../hooks/useAuth';
 import usePeriod from '../../hooks/usePeriod';
+import useTaxaEmissaoTv from '../../hooks/useTaxaEmissaoTv';
 import { getNavItems } from '../../navigation';
 import {
   estaEmModoTv,
@@ -45,11 +47,13 @@ export default function AppLayout() {
   const isLoginPage = pathname === '/login';
   const { isAuthenticated, logout } = useAuth();
   const navItems = getNavItems(isAuthenticated);
-  const { linkSearch } = usePeriod();
+  const { apiQuery, linkSearch } = usePeriod();
+  const searchParams = new URLSearchParams(search);
+  const isDemo = searchParams.get('demo') === '1';
   const navigationParams = new URLSearchParams(
     linkSearch.startsWith('?') ? linkSearch.slice(1) : linkSearch,
   );
-  const selectedServices = new URLSearchParams(search).get('servicos');
+  const selectedServices = searchParams.get('servicos');
   if (selectedServices) {
     navigationParams.set('servicos', selectedServices);
   }
@@ -165,6 +169,7 @@ export default function AppLayout() {
   }, []);
 
   const isTvMode = isDesktopForTv && estaEmModoTv(search);
+  const taxaEmissaoTv = useTaxaEmissaoTv(isTvMode, isDemo, apiQuery);
 
   function ativarModoTv(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -329,7 +334,18 @@ export default function AppLayout() {
         </AppErrorBoundary>
       </main>
       {isTvMode ? (
-        <ModoTvBarra key={pathname} pathname={pathname} onSair={sairDoModoTv} />
+        <div className="modo-tv-rodape">
+          <ContadorCo2AoVivo
+            taxaGPorSegundo={taxaEmissaoTv}
+            variante="tv"
+            isDemo={isDemo}
+          />
+          <ModoTvBarra
+            key={pathname}
+            pathname={pathname}
+            onSair={sairDoModoTv}
+          />
+        </div>
       ) : (
         <>
           <footer className="site-footer">
