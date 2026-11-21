@@ -4,13 +4,14 @@ import EmissionEquivalences from '../components/common/EmissionEquivalences';
 import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
 import MetricCard from '../components/common/MetricCard';
-import PeriodSelector from '../components/common/PeriodSelector';
 import VariacaoPeriodo from '../components/common/VariacaoPeriodo';
 import ComparisonSelectionBar from '../components/comparacao/ComparisonSelectionBar';
 import DashboardDemo from '../components/dashboard/DashboardDemo';
 import LiveDashboard from '../components/dashboard/LiveDashboard';
 import ServiceCounter from '../components/dashboard/ServiceCounter';
+import PainelOportunidadesDashboard from '../components/oportunidades/PainelOportunidadesDashboard';
 import { demoTotals } from '../mocks/dashboard';
+import { oportunidadesDemo } from '../mocks/oportunidades';
 import usePageTitle from '../hooks/usePageTitle';
 import usePeriod from '../hooks/usePeriod';
 import { calcularTaxaPorTotalEPeriodo } from '../utils/contadorCo2';
@@ -144,12 +145,18 @@ export default function Dashboard() {
             />
           </section>
           <DashboardDemo />
+          <PainelOportunidadesDashboard
+            estado={{ status: 'pronto', dados: oportunidadesDemo }}
+            linkSearch={MODO_DEMO_ESTATICO ? '' : '?demo=1'}
+            isDemo
+          />
         </>
       ) : (
-        <>
-          <PeriodSelector />
-          <LiveDashboard key={apiQuery} periodQuery={apiQuery} />
-        </>
+        <LiveDashboard
+          key={apiQuery}
+          periodQuery={apiQuery}
+          linkSearch={linkSearch}
+        />
       )}
     </div>
   );
