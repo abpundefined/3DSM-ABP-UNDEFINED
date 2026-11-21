@@ -15,6 +15,7 @@ import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
 import { SimulacaoModule } from "./modules/simulacao/simulacao.module";
 import { SaudeModule } from "./modules/saude/saude.module";
 import { OportunidadesModule } from "./modules/oportunidades/oportunidades.module";
+import { EventosModule } from "./modules/eventos/eventos.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { OportunidadesModule } from "./modules/oportunidades/oportunidades.modul
       validate: validarAmbiente,
     }),
     DatabaseModule,
+    EventosModule,
     ColetasModule,
     ServicosModule,
     MonitoramentoModule,

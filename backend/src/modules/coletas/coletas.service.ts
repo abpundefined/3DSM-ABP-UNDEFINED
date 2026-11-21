@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from "@nestjs/common";
 import { ColetasRepository } from "./coletas.repository";
 import {
   CreateColetaDto,
@@ -8,6 +13,7 @@ import {
 import { FilterColetasDto } from "./dto/filter-coleta.dto";
 import { CalculosService } from "../calculos/calculos.service";
 import { ServicosService } from "../servicos/servicos.service";
+import { EventosService } from "../eventos/eventos.service";
 import { possuiMedicoes } from "../../common/regras/classificacao-estado";
 
 @Injectable()
@@ -18,6 +24,7 @@ export class ColetasService {
     private readonly coletasRepository: ColetasRepository,
     private readonly calculosService: CalculosService,
     private readonly servicosService: ServicosService,
+    @Optional() private readonly eventosService?: EventosService,
   ) {}
 
   async registrarColeta(dto: CreateColetaDto) {
@@ -72,7 +79,9 @@ export class ColetasService {
       }
     }
 
-    return this.coletasRepository.create(dto);
+    const coletaCriada = await this.coletasRepository.create(dto);
+    this.eventosService?.emitirColetaRegistrada(coletaCriada);
+    return coletaCriada;
   }
 
   async listarHistorico(filtros: FilterColetasDto) {
