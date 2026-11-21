@@ -14,6 +14,7 @@ import { MapaModule } from "./modules/mapa/mapa.module";
 import { ComparacaoModule } from "./modules/comparacao/comparacao.module";
 import { SimulacaoModule } from "./modules/simulacao/simulacao.module";
 import { SaudeModule } from "./modules/saude/saude.module";
+import { OportunidadesModule } from "./modules/oportunidades/oportunidades.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SaudeModule } from "./modules/saude/saude.module";
     ComparacaoModule,
     SimulacaoModule,
     SaudeModule,
+    OportunidadesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
