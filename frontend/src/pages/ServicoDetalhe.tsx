@@ -19,6 +19,7 @@ import {
   type ServiceDetailData,
 } from '../services/serviceDetail';
 import { resolverComposicaoServico } from '../utils/composicaoEnergia';
+import { ehModoDemo } from '../utils/modoDemo';
 import {
   formatServiceCollectionTimestamp,
   formatServiceStatus,
@@ -59,7 +60,7 @@ function dateForCsv(isoDate: string): string {
 export default function ServicoDetalhe() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { apiQuery, linkSearch, period } = usePeriod();
   const serviceId = Number(id);
   const validServiceId =

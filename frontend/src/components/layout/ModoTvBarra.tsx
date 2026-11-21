@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import Icon from '../common/Icon';
+import QrCodeSvg from '../common/QrCodeSvg';
+import {
+  formatarUrlLegivel,
+  resolverUrlDemoPublica,
+} from '../../utils/modoDemo';
 import {
   INTERVALO_MODO_TV_MS,
   resolverTelaModoTv,
@@ -36,6 +41,9 @@ export default function ModoTvBarra({
     100,
     Math.max(0, ((totalSegundos - segundosRestantes) / totalSegundos) * 100),
   );
+
+  const urlDemo = resolverUrlDemoPublica();
+  const urlLegivel = formatarUrlLegivel(urlDemo);
 
   return (
     <aside className="modo-tv-barra" aria-label="Status do modo TV">
@@ -76,16 +84,33 @@ export default function ModoTvBarra({
         </div>
       </div>
 
-      <button
-        type="button"
-        className="modo-tv-sair"
-        onClick={(event) => {
-          event.stopPropagation();
-          onSair();
-        }}
-      >
-        Sair do modo TV (Esc ou clique)
-      </button>
+      <div className="modo-tv-acoes">
+        <div className="modo-tv-qr" aria-label="QR code da demonstração online">
+          <div className="modo-tv-qr-codigo">
+            <QrCodeSvg
+              valor={urlDemo}
+              tamanhoPx={64}
+              margemModulos={2}
+              rotuloAcessivel={`QR code para acessar a demonstração online em ${urlDemo}`}
+            />
+          </div>
+          <div className="modo-tv-qr-legenda">
+            <span className="modo-tv-qr-titulo">Acesse no celular</span>
+            <span className="modo-tv-qr-url">{urlLegivel}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="modo-tv-sair"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSair();
+          }}
+        >
+          Sair do modo TV (Esc ou clique)
+        </button>
+      </div>
     </aside>
   );
 }

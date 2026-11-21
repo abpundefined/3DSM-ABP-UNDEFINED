@@ -1,13 +1,23 @@
-.ranking-metricas {
+.ranking-controles-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 18px;
+}
+
+.ranking-metricas,
+.ranking-modos {
   display: inline-flex;
   gap: 4px;
-  margin-bottom: 18px;
   padding: 4px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
 }
-.ranking-metricas button {
+
+.ranking-metricas button,
+.ranking-modos button {
   min-height: 40px;
   padding: 6px 14px;
   border: 0;
@@ -19,18 +29,24 @@
   font-weight: 650;
   cursor: pointer;
 }
-.ranking-metricas button[aria-pressed='true'] {
+
+.ranking-metricas button[aria-pressed='true'],
+.ranking-modos button[aria-pressed='true'] {
   color: var(--green-forest);
   background: var(--soft-green);
 }
-.ranking-metricas button:focus-visible {
+
+.ranking-metricas button:focus-visible,
+.ranking-modos button:focus-visible {
   outline: 3px solid var(--green-forest);
   outline-offset: 2px;
 }
+
 .ranking-conteudo {
   display: grid;
   gap: 18px;
 }
+
 .ranking-bloco {
   min-width: 0;
   padding: 20px;
@@ -38,67 +54,81 @@
   border-radius: 12px;
   background: var(--surface);
 }
+
 .ranking-bloco h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 650;
 }
+
 .ranking-bloco h3 {
   margin: 0 0 6px;
   font-size: 15px;
   font-weight: 650;
 }
+
 .ranking-resumo {
   margin: 4px 0 14px;
   color: var(--text-muted);
   font-size: 14px;
 }
+
 .ranking-bloco .recharts-bar-rectangle {
   cursor: pointer;
 }
+
 .ranking-par {
   display: grid;
   gap: 18px;
 }
+
 .ranking-par > div {
   min-width: 0;
 }
+
 @media (min-width: 900px) {
   .ranking-par {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
 .ranking-tabela {
   overflow-x: auto;
 }
+
 .ranking-tabela:focus-visible {
   outline: 3px solid var(--green-forest);
   outline-offset: 2px;
 }
+
 .ranking-tabela table {
   width: 100%;
   min-width: 520px;
   border-collapse: collapse;
   font-size: 14px;
 }
+
 .ranking-tabela caption {
   margin-bottom: 10px;
   color: var(--text-muted);
   font-size: 13px;
   text-align: left;
 }
+
 .ranking-tabela th,
 .ranking-tabela td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   text-align: left;
 }
+
 .ranking-tabela thead th {
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 650;
   text-transform: uppercase;
 }
+
 .ranking-tabela thead button {
   min-height: 44px;
   border: 0;
@@ -108,22 +138,27 @@
   text-align: left;
   cursor: pointer;
 }
+
 .ranking-tabela thead button:focus-visible {
   outline: 3px solid var(--green-forest);
   outline-offset: 2px;
 }
+
 .ranking-tabela tbody th {
   font-weight: 600;
 }
+
 .ranking-tabela td:nth-child(n + 3) {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
 .ranking-tabela a,
 .ranking-sem-dados a {
   color: var(--green-forest);
   font-weight: 600;
 }
+
 .ranking-sem-dados {
   display: flex;
   flex-wrap: wrap;
@@ -132,30 +167,36 @@
   padding: 0;
   list-style: none;
 }
+
 .ranking-periodo {
   margin: 0;
   color: var(--text-muted);
   font-size: 14px;
 }
+
 .ranking-status {
   margin: 0;
   color: var(--text-muted);
   font-size: 13px;
 }
+
 .ranking-status:empty {
   display: none;
 }
+
 .treemap-bloco {
   stroke: var(--surface);
   stroke-width: 2;
   cursor: pointer;
 }
+
 .treemap-rotulo {
   fill: var(--text);
   font-size: 12px;
   font-weight: 600;
   pointer-events: none;
 }
+
 .treemap-legenda {
   display: flex;
   flex-wrap: wrap;
@@ -165,36 +206,44 @@
   font-size: 13px;
   list-style: none;
 }
+
 .treemap-legenda li {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 .treemap-legenda span:last-child {
   color: var(--text-muted);
 }
+
 .treemap-cor {
   width: 14px;
   height: 14px;
   border: 1px solid var(--border);
   border-radius: 3px;
 }
+
 .treemap-dados {
   margin-top: 14px;
 }
+
 .treemap-dados summary {
   color: var(--green-forest);
   font-weight: 600;
   cursor: pointer;
 }
+
 .treemap-dados[open] summary {
   margin-bottom: 10px;
 }
+
 .treemap-erro {
   display: grid;
   justify-items: start;
   gap: 10px;
 }
+
 .treemap-erro p {
   margin: 4px 0 0;
   color: var(--text-muted);

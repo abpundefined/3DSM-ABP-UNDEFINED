@@ -1,9 +1,12 @@
 import { Link, useInRouterContext, useSearchParams } from 'react-router';
+import { ehModoDemo, MODO_DEMO_ESTATICO } from '../../utils/modoDemo';
 
 function MethodologyRouterLink({ className }: { className: string }) {
   const [searchParams] = useSearchParams();
   const to =
-    searchParams.get('demo') === '1' ? '/metodologia?demo=1' : '/metodologia';
+    !MODO_DEMO_ESTATICO && ehModoDemo(searchParams)
+      ? '/metodologia?demo=1'
+      : '/metodologia';
 
   return (
     <Link

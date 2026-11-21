@@ -4,6 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import useSaude from '../../hooks/useSaude';
 import { saudeDemo } from '../../mocks/saude';
 import type { EstadoIntegracao, IntegracaoSaude } from '../../types/saude';
+import { ehModoDemo } from '../../utils/modoDemo';
 import {
   DESCRICAO_DO_ESTADO,
   ESTADOS_DE_SERVICO,
@@ -93,7 +94,7 @@ function CartaoDaIntegracao({
 
 export default function SaudeIntegracoes() {
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === '1';
+  const isDemo = ehModoDemo(searchParams);
   const { token, expireSession } = useAuth();
   const { estado, recarregar } = useSaude(token, !isDemo);
   const naoAutorizado = estado.status === 'erro' && estado.naoAutorizado;

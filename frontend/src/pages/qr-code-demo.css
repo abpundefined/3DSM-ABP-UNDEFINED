@@ -1,0 +1,127 @@
+.qr-page {
+  display: grid;
+  gap: 24px;
+}
+
+.qr-page-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.qr-cartaz {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px 28px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+}
+
+.qr-cartaz-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--soft-green);
+  color: var(--green-forest);
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.qr-cartaz-titulo {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+}
+
+.qr-cartaz-subtitulo {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.qr-cartaz-codigo {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.qr-cartaz-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.qr-cartaz-link-rotulo {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.qr-cartaz-link {
+  color: var(--green-forest);
+  font-size: 1rem;
+  font-weight: 700;
+  word-break: break-all;
+  text-decoration: underline;
+}
+
+.qr-cartaz-nota {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+@media print {
+  :root,
+  :root[data-theme='dark'],
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    --surface: #ffffff;
+    --text: #111111;
+    --text-muted: #333333;
+    --border: #222222;
+    --soft-green: #eef4e8;
+    --green-forest: #005517;
+  }
+
+  .site-header,
+  .site-footer,
+  .bottom-nav,
+  .skip-link,
+  .back-to-top,
+  .qr-page-acoes {
+    display: none !important;
+  }
+
+  .main-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .qr-cartaz {
+    max-width: 100%;
+    padding: 32px 24px;
+    border: 2px solid #111111;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .qr-cartaz-link {
+    text-decoration: none;
+    color: #111111;
+  }
+}

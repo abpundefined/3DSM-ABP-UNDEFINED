@@ -22,6 +22,7 @@ import ModoTvBarra from './ModoTvBarra';
 import useAuth from '../../hooks/useAuth';
 import usePeriod from '../../hooks/usePeriod';
 import { getNavItems } from '../../navigation';
+import { MODO_DEMO_ESTATICO } from '../../utils/modoDemo';
 import {
   estaEmModoTv,
   INTERVALO_MODO_TV_MS,
@@ -178,13 +179,11 @@ export default function AppLayout() {
   }
 
   const sairDoModoTv = useCallback(() => {
-    const currentPathname =
-      typeof window !== 'undefined' ? window.location.pathname : pathname;
     const currentSearch =
       typeof window !== 'undefined' ? window.location.search : search;
     void navigate(
       {
-        pathname: currentPathname,
+        pathname,
         search: removerModoTvDoSearch(currentSearch),
       },
       { replace: true },
@@ -265,31 +264,24 @@ export default function AppLayout() {
                   );
                 })}
               </div>
-              <button
-                type="button"
-                className="nav-tour"
-                aria-label="Fazer tour"
-                title="Fazer tour guiado"
-                onClick={iniciarTour}
-              >
-                <Icon name="compass" />
-                <span>Fazer tour</span>
-              </button>
-              {isAuthenticated ? (
-                <button type="button" className="nav-login" onClick={logout}>
-                  <Icon name="lock" />
-                  <span>Sair</span>
-                </button>
-              ) : (
-                <NavLink
-                  to="/login"
-                  className="nav-login"
-                  onClick={(event) => handleNavClick(event, '/login', '/login')}
-                >
-                  <Icon name="lock" />
-                  <span>Entrar</span>
-                </NavLink>
-              )}
+              {!MODO_DEMO_ESTATICO &&
+                (isAuthenticated ? (
+                  <button type="button" className="nav-login" onClick={logout}>
+                    <Icon name="lock" />
+                    <span>Sair</span>
+                  </button>
+                ) : (
+                  <NavLink
+                    to="/login"
+                    className="nav-login"
+                    onClick={(event) =>
+                      handleNavClick(event, '/login', '/login')
+                    }
+                  >
+                    <Icon name="lock" />
+                    <span>Entrar</span>
+                  </NavLink>
+                ))}
               <div
                 className="theme-toggle"
                 role="group"
@@ -329,7 +321,13 @@ export default function AppLayout() {
         </AppErrorBoundary>
       </main>
       {isTvMode ? (
-        <ModoTvBarra key={pathname} pathname={pathname} onSair={sairDoModoTv} />
+        <div className="modo-tv-rodape">
+          <ModoTvBarra
+            key={pathname}
+            pathname={pathname}
+            onSair={sairDoModoTv}
+          />
+        </div>
       ) : (
         <>
           <footer className="site-footer">
@@ -339,6 +337,26 @@ export default function AppLayout() {
                 Tecnologia com uma perspectiva mais verde.
               </span>
               <div className="footer-meta-group">
+                <button
+                  type="button"
+                  className="footer-tour-button"
+                  title="Fazer tour guiado"
+                  onClick={iniciarTour}
+                >
+                  <Icon name="compass" />
+                  <span>Fazer tour</span>
+                </button>
+                <NavLink
+                  to="/qr-code"
+                  className="footer-tv-button"
+                  title="Abrir QR code da demonstração para impressão"
+                  onClick={(event) =>
+                    handleNavClick(event, '/qr-code', '/qr-code')
+                  }
+                >
+                  <Icon name="printer" />
+                  <span>QR Code</span>
+                </NavLink>
                 {isDesktopForTv && (
                   <button
                     type="button"
