@@ -56,8 +56,11 @@ test('desliga shimmer e View Transitions quando prefers-reduced-motion está ati
     }) as typeof document.startViewTransition;
   });
 
+  await page.addInitScript(() => {
+    localStorage.setItem('greener-tour-visto', '1');
+  });
   await page.route('**/api/ranking**', () => new Promise(() => {}));
-  await page.goto('/?demo=1');
+  await page.goto('/');
 
   await page
     .getByRole('navigation', {

@@ -114,6 +114,7 @@ test('admin configura, valida e limpa a meta mensal em kgCO2e sem violações Ax
 
   await campoMeta.fill('');
   await page.getByRole('button', { name: 'Salvar intervalos' }).click();
+  await expect.poll(() => puts.length).toBe(2);
   expect(puts[1]).toEqual({
     intervaloColetaSegundos: 30,
     intervaloDescobertaSegundos: 60,
