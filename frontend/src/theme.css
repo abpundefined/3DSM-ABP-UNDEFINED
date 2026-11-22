@@ -56,13 +56,26 @@
   --login-input-border: #46564a;
   --login-lock-background: rgb(20 83 45 / 30%);
   --login-accent: #8bd49a;
-  --login-button-background: #3a8b4e;
-  --login-button-hover: #317641;
+  --login-button-background: #317641;
+  --login-button-hover: #29663a;
   --login-button-text: #fff;
   --login-divider: rgb(255 255 255 / 10%);
   --login-alert-background: #302b1d;
   --login-alert-border: #81703d;
   --login-alert-text: #f0d98f;
+  --serie-0: #8bd49a;
+  --serie-1: #f0b65a;
+  --serie-2: #7fb6e6;
+  --serie-3: #d7a3e6;
+  --serie-4: #f08a9a;
+  --serie-5: #a5b3a8;
+  --chart-emissao: #f0b65a;
+  --treemap-0: #24452d;
+  --treemap-1: #4a3415;
+  --treemap-2: #213a52;
+  --treemap-3: #3e2a48;
+  --treemap-4: #3f3a22;
+  --treemap-5: #1f403c;
 }
 
 :root[data-theme='dark'] body {
@@ -96,12 +109,19 @@
 :root[data-theme='dark'] .guide-icon {
   background: #293a2e;
 }
+:root[data-theme='dark'] .button--primary {
+  color: #132017;
+}
 :root[data-theme='dark'] .button--primary:hover {
   background: #72bd82;
   color: #132017;
 }
 :root[data-theme='dark'] .button--accent {
-  color: #281637;
+  background: #8bd49a;
+  color: #0f1e17;
+}
+:root[data-theme='dark'] .button--accent:hover {
+  background: #a6e0b2;
 }
 :root[data-theme='dark'] .login-story {
   background: #173d24;
@@ -129,23 +149,23 @@
   background: var(--surface);
 }
 :root[data-theme='dark'] .demo-toolbar--active {
-  border-color: #594365;
-  background: #2b2131;
+  border-color: #3d5a45;
+  background: #18291e;
 }
 :root[data-theme='dark'] .demo-toolbar--active .demo-toolbar-icon {
-  background: #43304e;
-  color: #e0b9f3;
+  background: #23402c;
+  color: #a6e0b2;
 }
 :root[data-theme='dark'] .demo-toolbar--active strong {
-  color: #edddf5;
+  color: #e7f6ea;
 }
-:root[data-theme='dark'] .button--demo-exit {
-  border-color: #594365;
-  color: #edddf5;
-  background: #302537;
+:root[data-theme='dark'] .button--secondary {
+  border-color: #3d5a45;
+  color: #e7f6ea;
+  background: #1d3324;
 }
-:root[data-theme='dark'] .button--demo-exit:hover {
-  background: #43304e;
+:root[data-theme='dark'] .button--secondary:hover {
+  background: #26422f;
 }
 :root[data-theme='dark'] .chart-switch,
 :root[data-theme='dark'] .service-table thead {
@@ -180,6 +200,8 @@
 }
 :root[data-theme='dark'] .service-filters input,
 :root[data-theme='dark'] .service-filters select,
+:root[data-theme='dark'] .live-service-controls input,
+:root[data-theme='dark'] .live-service-controls select,
 :root[data-theme='dark'] .ranking-select select {
   border-color: #526157;
   color: var(--text);
@@ -200,10 +222,27 @@
 :root[data-theme='dark'] .ranking-track {
   background: #29382e;
 }
+:root[data-theme='dark'] .live-refresh-error {
+  color: #e3d5a9;
+}
 :root[data-theme='dark'] .ranking-insight {
   border-color: #625638;
   color: #e3d5a9;
   background: #302b1d;
+}
+:root[data-theme='dark'] .service-drawer-backdrop {
+  background: rgb(6 12 8 / 72%);
+}
+:root[data-theme='dark'] .service-drawer-cancel {
+  border-color: var(--border);
+  background: #222f26;
+  color: var(--text);
+}
+:root[data-theme='dark'] .service-drawer-cancel:hover {
+  background: #2b3b30;
+}
+:root[data-theme='dark'] .service-drawer-close:hover {
+  background: #253429;
 }
 
 @media (max-width: 600px) {

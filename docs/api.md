@@ -8,7 +8,7 @@ Esta página descreve as rotas implementadas e suas limitações. Os exemplos s�
 - Pelo frontend: `http://localhost:5173/api`; o Vite remove `/api` antes de encaminhar.
 - Exemplo equivalente: `/api/servicos` no Vite → `/servicos` no NestJS.
 
-O Swagger está disponível no backend em [http://localhost:3000/docs](http://localhost:3000/docs), com o documento OpenAPI em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). Acesse `POST /auth/login` para obter um JWT e informe-o em **Authorize** para testar `PUT /configuracao`. As operações de escrita alteram dados reais. O Compose publica o backend em `127.0.0.1`.
+O Swagger está disponível no backend em [http://localhost:3000/docs](http://localhost:3000/docs), com o documento OpenAPI em [http://localhost:3000/docs-json](http://localhost:3000/docs-json). Acesse `POST /auth/login` para obter um JWT e informe-o em **Authorize** para testar as rotas protegidas (`PUT /configuracao`, `POST /servicos/sync`, `POST /coletas` e `GET /saude`). As operações de escrita alteram dados reais. O Compose publica o backend em `127.0.0.1`.
 
 ## Endpoints
 
@@ -16,17 +16,58 @@ O Swagger está disponível no backend em [http://localhost:3000/docs](http://lo
 | --- | --- | --- | --- |
 | GET | `/` | 200, texto | Resposta inicial do template; não verifica banco/API externa. |
 | POST | `/auth/login` | 200, objeto | Autentica com e-mail e senha e retorna `accessToken`. |
-| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais ou os valores padrão; público. |
-| PUT | `/configuracao` | 200, objeto | Atualiza os intervalos; aplicado pelo monitoramento a partir do próximo ciclo. Requer JWT Bearer. |
-| GET | `/servicos` | 200, array | Lista registros persistidos, ordenados por atualização decrescente. |
+| GET | `/configuracao` | 200, objeto | Consulta os intervalos atuais, `metaMensalKgCo2e` e os valores padrão; público. |
+| PUT | `/configuracao` | 200, objeto | Atualiza intervalos e `metaMensalKgCo2e` opcional; aplicado pelo monitoramento a partir do próximo ciclo. Requer JWT Bearer. |
+| GET | `/servicos` | 200, array | Lista registros persistidos com `localizacao` e `componentes` de potência, ordenados por atualização decrescente. |
+| GET | `/servicos/:id/historico` | 200, array | Retorna a série temporal de um serviço por hora ou dia (incluindo `componentes`). |
 | POST | `/servicos/sync` | 201, array | Consulta descoberta externa e sincroniza o banco. Não recebe corpo; requer JWT Bearer. |
 | POST | `/coletas` | 201, objeto | Registra uma coleta pelo DTO; requer JWT Bearer. |
-| GET | `/coletas` | 200, array | Consulta histórico. |
+| GET | `/coletas` | 200, objeto | Consulta histórico paginado com itens e metadados. |
 | GET | `/coletas/:id` | 200, objeto | Detalhe pelo ID inteiro interno; inexistente retorna 404. |
 | GET | `/coletas/servico/:servicoId/ultima-valida` | 200, objeto | Última coleta `SUCESSO`; inexistente retorna 404. |
 | GET | `/indicadores` | 200, objeto | Retorna consumo, emissão e contagem atual por estado; padrão ambiental são as últimas 24 horas. |
+| GET | `/indicadores/meta` | 200, objeto | Retorna a meta mensal de carbono configurada (`metaMensal`), o acumulado no mês atual e a projeção linear em kgCO₂e. |
+| GET | `/indicadores/serie` | 200, objeto | Retorna a série temporal de energia e emissão do período, global e, opcionalmente, por serviço. |
+| GET | `/ranking` | 200, objeto | Ordena os serviços por energia ou emissão no período e lista à parte os serviços sem dados. |
+| GET | `/intensidade/horarios` | 200, objeto | Retorna a intensidade de carbono média por dia da semana e hora (matriz 7 × 24) e a melhor janela de 3 horas. |
+| GET | `/mapa` | 200, objeto | Retorna os serviços com coordenadas, os totais e a série de emissão do período, e a lista à parte dos serviços sem coordenadas. |
+| GET | `/comparacao` | 200, objeto | Compara totais e séries de 2 a 5 serviços no mesmo período. |
+| GET | `/servicos/:id/simulacao-regiao` | 200, objeto | Estima a emissão do serviço em cada região monitorada, com a energia do período; inexistente retorna 404. |
+| GET | `/oportunidades` | 200, objeto | Lista oportunidades estimadas de redução de emissão (migração de região, superdimensionamento e mudança de horário), ordenadas pela maior economia no período. |
+| GET | `/eventos` | 200, `text/event-stream` | Transmite eventos em tempo real via Server-Sent Events (`coleta-registrada` e `estado-alterado`). |
+| GET | `/saude` | 200, objeto | Mostra a última consulta ao agregador e à API de carbono, a taxa de falha das coletas na última hora e os serviços por estado. Requer JWT Bearer. |
 
-O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. Não há paginação implementada nessas listagens.
+O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobrescrita; o contrato pode ser revisado em tarefa própria. A listagem de coletas é paginada; a de serviços continua retornando um array.
+
+## Histórico temporal de serviço
+
+`GET /servicos/:id/historico` retorna os intervalos do serviço identificado pelo `id` interno. Os parâmetros de período são:
+
+| Query | Formato |
+| --- | --- |
+| `periodo` | Opcional: `24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`. |
+| `inicio` | Início inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `fim` para um período customizado. |
+| `fim` | Fim inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `inicio` para um período customizado. |
+| `granularidade` | Opcional: `hora` ou `dia`. Se omitida, usa hora para períodos de até 48 horas e dia acima disso. |
+
+Sem `periodo`, `inicio` ou `fim`, considera as últimas 24 horas. Períodos predefinidos usam o mesmo comportamento de `GET /indicadores`; se `periodo` for omitido, `inicio` e `fim` devem ser fornecidos juntos. Datas inválidas, período incompleto ou granularidade diferente de `hora` e `dia` retornam 400. Serviço inexistente retorna 404.
+
+Cada item do array de resposta contém:
+
+| Campo | Tipo / significado |
+| --- | --- |
+| `inicio` | Data e hora do início do intervalo, em ISO 8601 UTC. |
+| `energiaKwh` | Número ou `null`; energia em kWh. |
+| `emissaoGCo2e` | Número ou `null`; emissão em gramas de CO₂e. |
+| `cpuMedia` | Número ou `null`; média de CPU. |
+| `memoriaMediaMb` | Número ou `null`; média de memória em MB. |
+| `componentes` | Objeto com potência média estimada em watts (`cpuW`, `memoriaW`, `discoW`, `redeW`, `totalW`), ou `null` quando não há medições válidas no intervalo. |
+| `coletas` | Contagem numérica de coletas; `null` quando não há dados no intervalo. |
+| `ativo` | Contagem numérica de coletas bem-sucedidas; zero em intervalos vazios. |
+| `indisponivel` | Contagem numérica de coletas com falha; zero em intervalos vazios. |
+| `semMetricas` | Contagem numérica de coletas sem métricas; zero em intervalos vazios. |
+
+Intervalos sem dados são incluídos na série. Neles, as métricas e `coletas` vêm como `null`; as contagens de estado vêm como zero. Os valores de energia e emissão são somados apenas para coletas com `estadoCalculo = CONCLUIDO`. Já `cpuMedia` e `memoriaMediaMb` são médias de todas as coletas do intervalo com essas medições, inclusive aquelas em que o cálculo de carbono falhou, porque CPU e memória são medidas mesmo quando a API de carbono está indisponível. Por isso esses valores podem diferir das médias de `GET /comparacao`, que considera apenas coletas com `estadoCalculo = CONCLUIDO`.
 
 ## Login e configuração administrativa
 
@@ -35,7 +76,7 @@ O 201 de `/servicos/sync` é o comportamento atual do decorator POST sem sobresc
 ```json
 {
   "email": "admin@greener.local",
-  "senha": "troque-esta-senha"
+  "senha": "SenhaLocal#2026"
 }
 ```
 
@@ -47,9 +88,11 @@ Resposta de sucesso:
 }
 ```
 
-O administrador inicial é criado no boot quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão definidos e o e-mail ainda não existe. Configure essas variáveis no `.env` lido pelo backend. Alterar as variáveis depois da criação não troca a senha armazenada. Use os valores de exemplo apenas em desenvolvimento local e defina um `JWT_SECRET` forte.
+O administrador inicial é criado no boot quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão definidos e o e-mail ainda não existe. Configure essas variáveis no `.env` lido pelo backend. Alterar as variáveis depois da criação não troca a senha armazenada. O backend não inicia se `JWT_SECRET` tiver menos de 32 caracteres, se `ADMIN_PASSWORD` tiver menos de 12 ou se algum dos dois mantiver o valor do `.env.example`.
 
-`GET /configuracao` retorna `intervaloDescobertaSegundos`, `intervaloColetaSegundos`, `atualizadaEm` e `padrao`. Para atualizar, envie `PUT /configuracao` com os dois campos inteiros; o intervalo de descoberta aceita de 10 a 86400 segundos e o de coleta de 10 a 3600 segundos:
+`POST /auth/login` aceita até 5 tentativas por minuto. A 6ª tentativa na mesma janela retorna HTTP 429 com a mensagem "Muitas tentativas de login. Aguarde um minuto e tente novamente.". A senha aceita no máximo 128 caracteres; acima disso, a resposta é HTTP 400.
+
+`GET /configuracao` retorna `intervaloDescobertaSegundos`, `intervaloColetaSegundos`, `metaMensalKgCo2e` (número em kgCO₂e ou `null`), `atualizadaEm` e `padrao`. Para atualizar, envie `PUT /configuracao` com os dois campos inteiros obrigatórios (descoberta de 10 a 86400 segundos; coleta de 10 a 3600 segundos) e, opcionalmente, `metaMensalKgCo2e` (número maior ou igual a 0, ou `null` para limpar a meta):
 
 ```http
 Authorization: Bearer <JWT>
@@ -59,7 +102,8 @@ Content-Type: application/json
 ```json
 {
   "intervaloDescobertaSegundos": 120,
-  "intervaloColetaSegundos": 60
+  "intervaloColetaSegundos": 60,
+  "metaMensalKgCo2e": 500.5
 }
 ```
 
@@ -67,17 +111,18 @@ O JWT é emitido em `accessToken`; credenciais inválidas ou token ausente/invá
 
 ## Serviços e estados
 
-`GET /servicos` retorna campos do modelo `Servico`: `id`, `idExterno`, `nome`, `regiaoCodigo`, `caminhoMetricas`, `estadoAtual`, `descobertoEm`, `ultimaVezListadoEm` e `atualizadoEm`. Não inclui automaticamente a relação `regiao` nem as coletas.
+`GET /servicos` retorna os campos do modelo `Servico` (`id`, `idExterno`, `nome`, `regiaoCodigo`, `caminhoMetricas`, `estadoAtual`, `descobertoEm`, `ultimaVezListadoEm` e `atualizadoEm`), acrescidos de:
 
-| Estado | Significado esperado |
+- `localizacao`: objeto com `codigo`, `pais`, `regiao`, `cidade`, `latitude` e `longitude` da região vinculada.
+- `componentes`: composição de potência estimada em watts (`cpuW`, `memoriaW`, `discoW`, `redeW`, `totalW`) a partir da coleta mais recente válida, ou `null` quando o serviço ainda não possui coleta válida ou a última coleta falhou / ficou sem métricas.
+
+| Estado | Significado |
 | --- | --- |
 | `DESCONHECIDO` | Serviço novo ou retornado, aguardando confirmação por coleta. |
 | `DISPONIVEL` | Coleta encontrou métricas consideradas válidas. |
-| `INDISPONIVEL` | Falha de acesso/coleta. |
-| `SEM_METRICAS` | Serviço acessível sem medições válidas. |
+| `INDISPONIVEL` | Falha de acesso/coleta (HTTP 5xx, erro de rede ou timeout de 8 s). |
+| `SEM_METRICAS` | Serviço acessível sem medições válidas (HTTP 404 ou payload sem medições). |
 | `REMOVIDO` | Não consta na última descoberta válida; histórico permanece armazenado. |
-
-O coletor ainda confunde alguns erros de ausência de métricas com indisponibilidade. Além disso, o normalizador não lê corretamente `location` do contrato oficial; a localização pode ser desconhecida mesmo quando existe na origem. Ver #1 e #5.
 
 ## Registrar coleta
 
@@ -100,14 +145,12 @@ Exemplo de `POST /coletas`, usando um `servicoId` existente:
 
 - `regiaoCodigoNaColeta`: código da região, opcional.
 - `iniciadaEm`, `finalizadaEm`: datas ISO convertidas pelo DTO; a primeira recebe a data atual se omitida.
-- `intervaloColetaSegundos`: intervalo da medição, em segundos.
+- `intervaloColetaSegundos`: intervalo da medição em segundos (inteiro `>= 1`).
 - `codigoErro`, `mensagemErro`: detalhes de falha.
-- `cpuPercent`: percentual; memória, disco e rede em GB, conforme a fonte.
-- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh` e `emissaoGCo2e` são calculados e persistidos quando a coleta contém medições. Nessa situação, `estadoCalculo` é salvo como `CONCLUIDO`; sem medições, permanece `PENDENTE`.
+- `cpuPercent`: percentual (`0` a `100`); `memoryGb`, `diskGb` e `networkGb` em GB (`>= 0`), conforme a fonte.
+- `intensidadeCarbonoGCo2ePorKwh`, `energiaKwh` e `emissaoGCo2e` são calculados e persistidos quando a coleta contém medições e `intervaloColetaSegundos`. Em sucesso, `estadoCalculo` é salvo como `CONCLUIDO`; sem medições ou sem intervalo, permanece `PENDENTE`; se a API de carbono falhar ou exceder o timeout de 8 s, as medições brutas e `energiaKwh` são preservadas com `estadoColeta = SUCESSO` e `estadoCalculo = FALHA`.
 
-Há validação de tipos/enum/datas e rejeição de propriedades desconhecidas nas rotas de coletas. Ainda faltam limites de faixa, IDs inteiros positivos e validação de coerência temporal. Não considerar validado um valor apenas porque o endpoint o aceitou.
-
-O service manual pode reclassificar um payload com zeros ou sem CPU como `SEM_METRICAS`, mesmo havendo outros valores. Essa é uma pendência da #5. A coleta automática usa outro caminho de persistência e não herda essa regra.
+O DTO valida tipos, enum, datas, faixas numéricas (`cpuPercent` entre 0 e 100, demais medições `>= 0` e `intervaloColetaSegundos >= 1`) e rejeita propriedades desconhecidas. A regra de presença de medições (`possuiMedicoes`) é compartilhada entre a coleta automática e o registro manual.
 
 ## Histórico e última coleta válida
 
@@ -118,8 +161,28 @@ Filtros opcionais de `GET /coletas`:
 | `servicoId` | Número do ID interno. |
 | `dataInicio` | Data ISO; limite inferior inclusivo de `iniciadaEm`. |
 | `dataFim` | Data ISO; limite superior inclusivo de `iniciadaEm`. |
+| `pagina` | Inteiro maior ou igual a 1; padrão 1. |
+| `tamanho` | Inteiro de 1 a 100; padrão 20. |
 
-O retorno é ordenado por `iniciadaEm` decrescente e inclui nome/identificador externo do serviço. O detalhe por ID também inclui relações disponíveis de serviço e região.
+O retorno é um objeto com `itens`, `pagina`, `tamanho`, `total` e
+`totalPaginas`. Os itens preservam os campos da coleta e o nome/identificador
+externo do serviço. A ordenação é por `iniciadaEm` decrescente e depois por
+`id` decrescente para desempatar datas iguais. `total` conta apenas as coletas
+que atendem aos filtros; `totalPaginas` é arredondado para cima.
+Uma consulta sem resultados retorna `itens: []`, `total: 0` e
+`totalPaginas: 0`. Uma página além da última retorna `itens: []`, preservando
+os metadados. Parâmetros de paginação inválidos retornam 400.
+
+Exemplo sem resultados:
+
+```json
+{ "itens": [], "pagina": 1, "tamanho": 20, "total": 0, "totalPaginas": 0 }
+```
+
+Essa mudança substitui o antigo array de `GET /coletas`. O frontend usa
+`GET /servicos/:id/historico` para os gráficos e
+`GET /coletas/servico/:id/ultima-valida` para a última coleta; essas rotas não
+mudam. O detalhe por ID continua incluindo as relações de serviço e região.
 
 `GET /coletas/servico/1/ultima-valida` retorna:
 
@@ -144,7 +207,35 @@ O objeto `dados` contém os demais campos do modelo `Coleta`, omitidos no exempl
 
 ## Indicadores consolidados
 
-`GET /indicadores` retorna o consumo energético e a emissão total das coletas com `estadoCalculo = CONCLUIDO` no intervalo informado. Sem datas, considera as últimas 24 horas. `dataInicio` e `dataFim` são opcionais, aceitam datas ISO 8601 e delimitam `iniciadaEm` de forma inclusiva; início posterior ao fim retorna 400.
+`GET /indicadores` retorna o consumo energético e a emissão total das coletas com `estadoCalculo = CONCLUIDO` no intervalo informado. Os limites de `inicio` e `fim` são inclusivos para `iniciadaEm`.
+
+| Query | Formato |
+| --- | --- |
+| `periodo` | Opcional: `24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`. Não pode ser combinado com `inicio`/`fim`. |
+| `inicio` | Início inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `fim`. |
+| `fim` | Fim inclusivo em ISO 8601, com `Z` ou offset explícito. Deve ser informado junto com `inicio`. |
+
+Sem parâmetros, considera as últimas 24 horas. `24h`, `7d` e `30d` representam durações exatas retroativas a partir do instante atual. `mes-atual` usa o mês calendário no fuso `America/Sao_Paulo`, do primeiro dia até agora; `mes-anterior` usa o mês calendário completo imediatamente anterior nesse mesmo fuso. O intervalo customizado aceita no máximo 90 dias; `inicio` deve ser anterior a `fim`. Parâmetros inválidos retornam 400.
+
+Todos os períodos incluem `periodoAnterior` e `variacaoPercentual`, com
+`energiaKwh` e `emissaoGCo2e`. O cálculo é `(atual - anterior) / anterior * 100`.
+Sem dados atuais ou anteriores para a métrica, ou com total anterior zero
+(inclusive quando ambos são zero), o percentual é `null`, nunca infinito.
+Os totais públicos permanecem zero quando não há coletas atuais, por
+compatibilidade, mas a comparação usa os agregados originais e não inventa
+uma redução. Um zero realmente medido pode resultar em -100%.
+
+A janela anterior é imediatamente adjacente, sem sobreposição, e tem a mesma
+duração em milissegundos. Como os limites são inclusivos, seu fim é
+`inicioAtual - 1ms` e seu início é `fimAnterior - (fimAtual - inicioAtual)`.
+Isso também vale para `mes-atual` e `mes-anterior`: não se compara com um mês
+calendário de duração diferente. As agregações das duas janelas consideram
+exclusivamente coletas com cálculo concluído.
+
+O campo legado `variacao` permanece para `periodo=mes-anterior`, com
+`energiaTotalKwh`, `emissaoTotalGCo2e` e `coletasCalculadas` contendo `absoluta`
+e `percentual`, seguindo a mesma janela e regra de base zero. Para energia e
+emissão, `absoluta` também é `null` quando falta valor em alguma janela.
 
 Exemplo de resposta:
 
@@ -154,6 +245,11 @@ Exemplo de resposta:
     "inicio": "2026-11-07T12:00:00.000Z",
     "fim": "2026-11-08T12:00:00.000Z"
   },
+  "periodoAnterior": {
+    "inicio": "2026-11-06T11:59:59.999Z",
+    "fim": "2026-11-07T11:59:59.999Z"
+  },
+  "variacaoPercentual": { "energiaKwh": 12, "emissaoGCo2e": -5 },
   "energiaTotalKwh": 2.5,
   "emissaoTotalGCo2e": 100,
   "coletasCalculadas": 2,
@@ -172,9 +268,334 @@ Exemplo de resposta:
 
 `energiaTotalKwh` é expresso em kWh e `emissaoTotalGCo2e` em gramas de CO₂e. O dashboard apresenta a emissão em kgCO₂e. `disponiveis` corresponde aos serviços ativos e `indisponiveis` aos que estão nesse estado; `SEM_METRICAS`, `DESCONHECIDO` e `REMOVIDO` não são somados a esses dois indicadores. Os estados são contados independentemente da presença de valores de energia ou emissão.
 
+## Meta mensal de carbono e projeção
+
+`GET /indicadores/meta` consulta a meta mensal configurada em `ConfiguracaoMonitoramento.metaMensalKgCo2e` e calcula o acumulado de emissões no mês calendário atual (fuso `America/Sao_Paulo`, apenas coletas com `estadoCalculo = CONCLUIDO`) junto com a projeção linear para o fechamento do mês:
+
+- `acumuladoMes` = soma de `emissaoGCo2e` no mês atual ÷ 1000 (em kgCO₂e).
+- `projecaoMes` = `(acumuladoMes / diasDecorridos) * diasNoMes` (ou `0` quando `acumuladoMes` é `0`).
+- `metaMensal` vem como `null` quando nenhuma meta foi definida em `PUT /configuracao`.
+
+Exemplo de resposta:
+
+```json
+{
+  "metaMensal": 500.5,
+  "acumuladoMes": 120.25,
+  "diasDecorridos": 12,
+  "diasNoMes": 30,
+  "projecaoMes": 300.625
+}
+```
+
+## Série temporal de indicadores
+
+`GET /indicadores/serie` aceita os mesmos parâmetros de período de `GET /indicadores` e mais dois:
+
+| Query | Formato |
+| --- | --- |
+| `granularidade` | Opcional: `hora` ou `dia`. Se omitida, usa hora para períodos de até 48 horas e dia acima disso. |
+| `porServico` | Opcional: `true` ou `false`. Com `true`, a resposta inclui a série de cada serviço. |
+
+A resposta contém `periodo`, `granularidade`, `intervalos` (início de cada intervalo em ISO 8601 UTC), `global` e `servicos`. Cada ponto de `global` e de `servicos[].serie` traz `inicio`, `energiaKwh` e `emissaoGCo2e`; intervalos sem dados vêm com `null`. Energia e emissão somam apenas coletas com `estadoCalculo = CONCLUIDO`. Sem `porServico=true`, `servicos` vem vazio. Com ele, entram todos os serviços monitorados, inclusive os sem dados (série toda em `null`); um serviço `REMOVIDO` só entra se tiver dados no período, como em `GET /ranking` e `GET /mapa`. Granularidade ou `porServico` inválidos retornam 400.
+
+## Ranking de serviços
+
+`GET /ranking` aceita os mesmos parâmetros de período de `GET /indicadores` e mais dois:
+
+| Query | Formato |
+| --- | --- |
+| `metrica` | Opcional: `energia` (padrão) ou `emissao`. |
+| `limite` | Opcional: inteiro de 1 a 100; padrão 10. |
+
+A resposta contém `periodo`, `metrica`, `itens` e `semDados`. Cada item traz `posicao`, `servicoId`, `nome`, `energiaKwh`, `emissaoGCo2e`, `coletasValidas` e os metadados de localização (`regiaoCodigo`, `regiao` e `pais`, usados pelo agrupamento por serviço, região ou país no frontend). Os totais somam apenas coletas com `estadoCalculo = CONCLUIDO`. A ordem é decrescente pela métrica escolhida; no empate, por nome e depois por `servicoId`. Serviços sem valor na métrica vão para `semDados`, ordenados por nome; um serviço `REMOVIDO` sem dados não aparece em nenhuma das listas. Parâmetros inválidos retornam 400.
+
+Também retorna `periodoAnterior` e `variacaoPercentual: { energiaKwh,
+emissaoGCo2e }`, com as mesmas regras de comparação de `GET /indicadores`.
+Esses percentuais somam **todos** os serviços antes de aplicar `limite`, e
+não mudam ao trocar a métrica de ordenação.
+
+`variacaoPorServico` alimenta a tabela de emissão: inclui todo serviço com
+coletas em ao menos uma das duas janelas, inclusive removidos, independentemente
+do top 10. É ordenada inicialmente por nome e ID; o frontend permite ordenar
+qualquer coluna. Sem emissão atual, haja impacto registrado ou não,
+`emissaoAtualGCo2e`, diferença e percentual são `null`, evitando uma redução
+falsa de -100%. Um zero medido continua sendo zero. Sem emissão anterior,
+valor anterior, diferença e percentual são `null`; com anterior zero,
+a diferença é calculada, mas o percentual é `null`.
+
+Exemplo de item:
+
+```json
+{
+  "servicoId": 1,
+  "nome": "api-pagamentos",
+  "emissaoAtualGCo2e": 95,
+  "emissaoAnteriorGCo2e": 100,
+  "diferencaGCo2e": -5,
+  "variacaoPercentual": -5
+}
+```
+
+## Melhor horário por intensidade de carbono
+
+`GET /intensidade/horarios` aceita os mesmos parâmetros de período de `GET /indicadores`; sem nenhum deles, considera os últimos 30 dias. O parâmetro opcional `regiao` filtra pelo código da região (`regiaoCodigoNaColeta`); sem ele, a matriz considera as coletas de todas as regiões. `regiao` vazio ou período inválido retornam 400; uma região sem coletas retorna 200 com a matriz vazia.
+
+A resposta contém:
+
+| Campo | Tipo / significado |
+| --- | --- |
+| `fusoHorario` | Sempre `America/Sao_Paulo`; dias e horas da matriz seguem esse fuso. |
+| `matriz` | 7 linhas (0 = domingo a 6 = sábado) por 24 colunas (horas 0 a 23). Cada célula traz `media` (intensidade média em gCO₂e/kWh) e `quantidadeAmostras`; sem amostras, ambos vêm `null`. |
+| `melhorJanela` | Objeto com `diaSemana`, `horaInicio` e `mediaJanela`, ou `null` quando não há 3 horas seguidas com amostras. |
+
+A média usa apenas coletas com `estadoCalculo = CONCLUIDO`. A melhor janela é o trecho de 3 horas seguidas com a menor média ponderada pela quantidade de amostras. A busca percorre as 168 horas da semana com volta, então a janela pode atravessar a meia-noite (por exemplo, 23h–02h) e a virada de sábado para domingo. No empate, vale a janela que começa primeiro a partir de domingo 0h.
+
+## Comparação de serviços
+
+`GET /comparacao?servicos=1,2,3` aceita os mesmos parâmetros de período de
+`GET /indicadores`. A lista deve ter de 2 a 5 IDs internos inteiros positivos e
+distintos. Uma lista inválida retorna 400; IDs inexistentes retornam 404.
+
+Os totais e a série consideram apenas coletas com `estadoCalculo = CONCLUIDO`,
+com limites de período inclusivos. A média de memória converte `memoryGb` em MB
+multiplicando por 1024. Quando uma métrica não possui valores, seu total é
+`null`; um serviço sem coletas tem `coletasValidas = 0`.
+
+Todos os serviços recebem os mesmos intervalos, inclusive os sem dados, que
+aparecem com energia e emissão `null`. Até 48 horas, os intervalos começam na
+hora UTC; acima disso, começam no dia de calendário de `America/Sao_Paulo`.
+O instante do início de cada intervalo é apresentado em ISO 8601 UTC. Um
+intervalo nas extremidades pode começar antes do período solicitado, mas
+somente coletas dentro do período são somadas.
+
+## Mapa
+
+`GET /mapa` alimenta o mapa animado. Aceita os mesmos parâmetros e regras de `GET /indicadores` (`periodo` ou `inicio` e `fim`; sem parâmetros, as últimas 24 horas) e considera apenas coletas com `estadoCalculo = CONCLUIDO`, com `inicio` e `fim` inclusivos para `iniciadaEm`.
+
+A granularidade é `hora` para períodos de até 48 horas e `dia` acima disso. Os dias seguem o calendário do fuso `America/Sao_Paulo`. `intervalos` traz o início de cada intervalo; o primeiro pode começar antes de `inicio`, porque é o início da hora ou do dia que contém esse instante.
+
+Cada item de `servicos` traz a posição da região do serviço, os totais do período e `serie`, a emissão em gCO₂e de cada intervalo, na mesma ordem de `intervalos`. Intervalo sem coleta calculada vem como `null`, que não significa zero. Serviço sem coleta calculada no período aparece com totais nulos. Serviços cuja região não tem latitude e longitude válidas vêm em `semCoordenadas`. Serviços com estado `REMOVIDO` só aparecem se tiverem coleta calculada no período.
+
+Exemplo de resposta (`periodo=24h`, encurtado):
+
+```json
+{
+  "periodo": {
+    "inicio": "2026-11-10T12:00:00.000Z",
+    "fim": "2026-11-11T12:00:00.000Z"
+  },
+  "granularidade": "hora",
+  "intervalos": ["2026-11-10T12:00:00.000Z", "2026-11-10T13:00:00.000Z"],
+  "servicos": [
+    {
+      "servicoId": 1,
+      "nome": "Auth Service",
+      "estado": "DISPONIVEL",
+      "regiaoCodigo": "br-sudeste",
+      "latitude": -23.5505,
+      "longitude": -46.6333,
+      "local": "Brasil · São Paulo",
+      "totais": { "energiaKwh": 0.004, "emissaoGCo2e": 0.4 },
+      "serie": [0.1, null]
+    }
+  ],
+  "semCoordenadas": [
+    {
+      "servicoId": 2,
+      "nome": "Email Worker",
+      "estado": "DISPONIVEL",
+      "regiaoCodigo": "eu-west",
+      "totais": { "energiaKwh": 0.002, "emissaoGCo2e": 0.25 }
+    }
+  ]
+}
+```
+
+`energiaKwh` é expresso em kWh e `emissaoGCo2e` em gramas de CO₂e. `local` junta país e cidade (ou região, sem cidade); sem nenhum dos dois, vem `Localização não informada`.
+
+## Simulação de região
+
+`GET /servicos/:id/simulacao-regiao` alimenta a seção "E se rodasse em outra região?" do detalhe do serviço. Aceita os mesmos parâmetros de período de `GET /indicadores` (sem parâmetros, as últimas 24 horas). `id` que não seja um inteiro positivo dentro do limite do banco (1 a 2147483647) retorna 400, sem consultar o banco; serviço inexistente retorna 404.
+
+Regra (função pura `simularRegioes`, em `backend/src/common/regras/simulacao-regiao.ts`):
+
+- energia do período: soma de `energiaKwh` das coletas do serviço com `estadoCalculo = CONCLUIDO` e `iniciadaEm` entre `inicio` e `fim` (inclusivos);
+- intensidade de cada região: média de `intensidadeCarbonoGCo2ePorKwh` das coletas do período com intensidade informada, agrupadas por `regiaoCodigoNaColeta`; `amostrasIntensidade` é a quantidade de coletas usadas;
+- regiões listadas: as que têm pelo menos um serviço cadastrado;
+- emissão estimada = energia do período × intensidade da região; a da região atual usa a mesma regra, para a comparação ser justa;
+- `diferencaGCo2e` = estimada − atual (negativo é redução) e `diferencaPercentual` = diferença ÷ atual × 100;
+- região sem intensidade no período fica com estimativa e diferenças nulas e vai para o fim da lista; sem energia no período, nenhuma estimativa é feita e `melhorRegiaoCodigo` é nulo; com emissão atual zero, o percentual é nulo;
+- `melhorRegiaoCodigo` é a região de menor intensidade; no empate, prefere a atual e depois o código em ordem alfabética.
+
+```json
+{
+  "periodo": { "inicio": "2026-11-15T16:47:55.142Z", "fim": "2026-11-16T16:47:55.142Z" },
+  "servico": { "servicoId": 1, "nome": "api", "regiaoCodigo": "us-east" },
+  "energiaKwh": 1,
+  "coletasConsideradas": 2,
+  "emissaoAtualGCo2e": 396.67,
+  "melhorRegiaoCodigo": "br-sudeste",
+  "regioes": [
+    {
+      "codigo": "br-sudeste",
+      "pais": "Brasil",
+      "regiao": "Sudeste",
+      "cidade": "São Paulo",
+      "intensidadeGCo2ePorKwh": 100,
+      "amostrasIntensidade": 1,
+      "emissaoEstimadaGCo2e": 100,
+      "diferencaGCo2e": -296.67,
+      "diferencaPercentual": -74.79,
+      "atual": false,
+      "menorEmissao": true
+    }
+  ]
+}
+```
+
+É uma estimativa: considera a mesma carga em todas as regiões e não leva em conta latência, custo ou disponibilidade.
+
+## Saúde das integrações
+
+`GET /saude` alimenta o painel "Saúde das integrações" da página de administração. Requer JWT Bearer; sem token ou com token inválido, responde 401.
+
+`agregador` descreve a consulta da lista de serviços (`/services`) ao agregador de métricas, e `apiCarbono`, a consulta da intensidade de carbono de uma região. Cada uma traz:
+
+- `estado`: `OPERACIONAL` quando a última consulta funcionou, `FALHA` quando falhou e `SEM_CONSULTA` enquanto não houve consulta desde que o backend iniciou.
+- `ultimaConsultaEm` e `tempoRespostaMs`: quando a última consulta terminou e quanto ela durou, em milissegundos.
+- `ultimoSucessoEm`: a última consulta que funcionou, mantida mesmo depois de uma falha.
+- `mensagemErro`: o motivo da última falha, ou `null`.
+
+Esse registro fica em memória e recomeça vazio quando o backend reinicia. A API de carbono é consultada por região, então `apiCarbono` mostra a consulta mais recente, de qualquer região. As consultas de métricas de cada serviço não entram em `agregador`: um serviço sem métricas é um estado normal, e seu efeito aparece em `coletasUltimaHora` e `servicosPorEstado`.
+
+`ultimaDescobertaEm` é a última descoberta de serviços concluída com sucesso. `coletasUltimaHora` conta as coletas iniciadas na última hora; `taxaFalha` é `falhas` dividido por `total`, de 0 a 1, e vem `null` sem coletas. Coleta sem métricas não conta como falha. `servicosPorEstado` traz todos os estados, com 0 nos ausentes.
+
+Exemplo de resposta:
+
+```json
+{
+  "geradoEm": "2026-11-17T12:00:30.000Z",
+  "agregador": {
+    "estado": "OPERACIONAL",
+    "ultimaConsultaEm": "2026-11-17T12:00:00.120Z",
+    "tempoRespostaMs": 120,
+    "ultimoSucessoEm": "2026-11-17T12:00:00.120Z",
+    "mensagemErro": null
+  },
+  "apiCarbono": {
+    "estado": "FALHA",
+    "ultimaConsultaEm": "2026-11-17T12:00:20.000Z",
+    "tempoRespostaMs": 8000,
+    "ultimoSucessoEm": "2026-11-17T11:59:50.000Z",
+    "mensagemErro": "Falha ao buscar intensidade de carbono para br-sudeste: Tempo limite de 8000ms excedido ao consultar a API de intensidade de carbono."
+  },
+  "ultimaDescobertaEm": "2026-11-17T12:00:00.120Z",
+  "coletasUltimaHora": { "total": 10, "falhas": 1, "taxaFalha": 0.1 },
+  "servicosPorEstado": {
+    "DISPONIVEL": 4,
+    "INDISPONIVEL": 0,
+    "SEM_METRICAS": 0,
+    "REMOVIDO": 0,
+    "DESCONHECIDO": 0
+  }
+}
+```
+
+## Oportunidades de redução de emissão
+
+`GET /oportunidades` aceita os mesmos parâmetros de período do `PeriodoDto` (`periodo`, `inicio`, `fim`; padrão: últimas 24 horas) e aplica três regras puras com limiares em constantes (`backend/src/common/regras/oportunidades.ts`):
+
+- **`MIGRAR_REGIAO`**: dispara quando `emissaoPeriodo × (1 − intensidadeMelhorRegiao ÷ intensidadeAtual)` gera redução **acima de 20%**.
+- **`SUPERDIMENSIONAMENTO`**: dispara quando a CPU média do serviço fica **abaixo de 15%** e a energia consumida no período supera a mediana dos serviços monitorados (estimativa conservadora de `30%`).
+- **`MUDAR_HORARIO`**: dispara quando a matriz horária (`7 × 24`) da região do serviço apresenta uma janela contínua de **3 horas** com intensidade pelo menos **20% menor** que a média da região.
+
+A resposta ordena as oportunidades pela maior economia estimada (`economiaEstimadaGCo2e`), soma o potencial total em `resumo.reducaoPotencialGCo2e` e inclui `aviso` explícito de que se trata de sugestão estimada, não garantia:
+
+```json
+{
+  "periodo": {
+    "inicio": "2026-11-20T12:00:00.000Z",
+    "fim": "2026-11-21T12:00:00.000Z"
+  },
+  "resumo": {
+    "totalOportunidades": 2,
+    "reducaoPotencialGCo2e": 19.55,
+    "porTipo": {
+      "MIGRAR_REGIAO": 1,
+      "SUPERDIMENSIONAMENTO": 1,
+      "MUDAR_HORARIO": 0
+    }
+  },
+  "limiares": {
+    "reducaoMinimaMigrarRegiaoPercentual": 20,
+    "cpuMaximaSuperdimensionamentoPercentual": 15,
+    "reducaoEstimadaSuperdimensionamentoPercentual": 30,
+    "reducaoMinimaMudarHorarioPercentual": 20,
+    "duracaoJanelaHorarioHoras": 3
+  },
+  "aviso": "As oportunidades listadas são sugestões estimadas a partir do histórico do período selecionado e não representam garantia de economia.",
+  "oportunidades": [
+    {
+      "id": "5:MIGRAR_REGIAO",
+      "servicoId": 5,
+      "servicoNome": "Video Processor",
+      "regiaoCodigo": "us-east",
+      "tipo": "MIGRAR_REGIAO",
+      "titulo": "Migrar Video Processor para Canadá · Toronto",
+      "explicacao": "Sugestão estimada: mover de Estados Unidos · Ashburn para Canadá · Toronto reduziria cerca de 89,3% das emissões do período.",
+      "economiaEstimadaGCo2e": 11.88,
+      "economiaPercentual": 89.3,
+      "emissaoAtualGCo2e": 13.3,
+      "linkDetalhe": "/servicos/5"
+    }
+  ]
+}
+```
+
+## Eventos em tempo real (Server-Sent Events)
+
+`GET /eventos` estabelece um fluxo contínuo `text/event-stream` (`@Sse()` do NestJS com `Cache-Control: no-cache, no-transform` e `X-Accel-Buffering: no`) compatível com o proxy do Vite (`/api/eventos` → `/eventos`) e com o Docker Compose.
+
+O servidor emite dois tipos de eventos nomeados (`event:`):
+
+1. **`coleta-registrada`**: emitido imediatamente após `ColetasService.registrarColeta` persistir uma coleta.
+   ```json
+   {
+     "tipo": "coleta-registrada",
+     "servicoId": 1,
+     "coleta": {
+       "id": 42,
+       "servicoId": 1,
+       "iniciadaEm": "2026-11-21T12:00:30.000Z",
+       "intervaloColetaSegundos": 30,
+       "estadoColeta": "SUCESSO",
+       "estadoCalculo": "CONCLUIDO",
+       "cpuPercent": 48.5,
+       "memoryGb": 2.4,
+       "diskGb": 10,
+       "networkGb": 0.5,
+       "intensidadeCarbonoGCo2ePorKwh": 85.2,
+       "energiaKwh": 0.0042,
+       "emissaoGCo2e": 0.3578
+     }
+   }
+   ```
+2. **`estado-alterado`**: emitido quando `ServicosService.atualizarEstadoMonitoramento` altera o estado operacional de um serviço.
+   ```json
+   {
+     "tipo": "estado-alterado",
+     "servicoId": 1,
+     "estadoAtual": "INDISPONIVEL",
+     "atualizadoEm": "2026-11-21T12:01:00.000Z"
+   }
+   ```
+
+No frontend (`useEventosSse` + `LiveDashboard`), o `EventSource('/api/eventos')` atualiza o card do serviço em tempo real e aplica um pulso visual de `1,2 s` (`service-card--pulsando`, desativado quando `prefers-reduced-motion: reduce` está ativo). Se a conexão SSE cair ou falhar, o cliente agenda reconexão automática a cada `5 s` e mantém a atualização periódica de `30 s` como fallback transparente.
+
 ## Erros
 
-Nas rotas de coletas, o filtro retorna:
+O filtro global `HttpExceptionFilter` (registrado em `backend/src/main.ts`) padroniza as respostas de erro em todas as rotas:
 
 ```json
 {
@@ -186,10 +607,8 @@ Nas rotas de coletas, o filtro retorna:
 }
 ```
 
-`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados retornam 500 com mensagem genérica. O filtro é registrado globalmente na aplicação. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
+`mensagem` pode ser texto ou lista de mensagens de validação. Erros de validação/parâmetros retornam 400, ausência retorna 404 e erros inesperados retornam 500 com mensagem genérica. A ausência de uma coleta válida não equivale, por si só, a serviço indisponível.
 
-## Integrações e endpoints futuros
+## Integrações externas
 
-A API externa de métricas usa `/services` e `/metrics/{id}`; esses caminhos pertencem ao agregador e não devem ser confundidos com as rotas locais em português. A documentação oficial está em https://metrics.unilaunch.org/docs.
-
-Ranking e comparação permanecem no plano de entregas. Sua existência neste planejamento não representa implementação atual.
+A API externa de métricas usa `/services` e `/metrics/{id}`, e a API de intensidade de carbono usa `/regions/{code}/carbon-intensity`; esses caminhos pertencem aos serviços externos e não devem ser confundidos com as rotas locais em português. As documentações oficiais estão em [https://metrics.unilaunch.org/docs](https://metrics.unilaunch.org/docs) e [https://carbon.unilaunch.org/docs](https://carbon.unilaunch.org/docs).

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import AnimatedMetricValue from './AnimatedMetricValue';
 import Icon, { type IconName } from './Icon';
 
 type MetricCardProps = {
@@ -7,6 +9,7 @@ type MetricCardProps = {
   description: string;
   icon: IconName;
   tone: 'forest' | 'leaf' | 'olive';
+  children?: ReactNode;
 };
 
 export default function MetricCard({
@@ -16,6 +19,7 @@ export default function MetricCard({
   description,
   icon,
   tone,
+  children,
 }: MetricCardProps) {
   const formattedValue =
     value === undefined
@@ -33,14 +37,14 @@ export default function MetricCard({
         </span>
       </div>
       <p className="metric-value">
-        <span
-          aria-label={value === undefined ? 'Dado indisponível' : undefined}
-        >
-          {formattedValue}
-        </span>
-        {unit && <span className="metric-unit">{unit}</span>}
+        <AnimatedMetricValue
+          value={formattedValue}
+          unit={unit}
+          ariaLabel={value === undefined ? 'Dado indisponível' : undefined}
+        />
       </p>
       <p className="metric-description">{description}</p>
+      {children}
     </div>
   );
 }

@@ -1,10 +1,17 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Servico } from "../../generated/prisma/client";
 import type { EstadoMonitoramento } from "../../generated/prisma/enums";
-import { PrismaService } from "../../database/prisma.service";
 import { comTimeout } from "../../common/utils/com-timeout";
 import { normalizeServicePayload } from "../../common/utils/external-api.util";
+import {
+  CalculosService,
+  ComponentesPotencia,
+} from "../calculos/calculos.service";
+import { calcularSeloEficiencia } from "../indicadores/ranking.service";
+import { EventosService } from "../eventos/eventos.service";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
+import { ServicosRepository } from "./servicos.repository";
 
 const DISCOVERY_FETCH_TIMEOUT_MS = 8000;
 
@@ -19,6 +26,8 @@ export interface LocalizacaoServico {
 
 export type ServicoComLocalizacao = Servico & {
   localizacao: LocalizacaoServico;
+  componentes: ComponentesPotencia | null;
+  selo: string;
 };
 
 @Injectable()
@@ -26,11 +35,18 @@ export class ServicosService {
   private readonly logger = new Logger(ServicosService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly servicosRepository: ServicosRepository,
     private readonly configService: ConfigService,
+    private readonly registro: RegistroIntegracoesService,
+    private readonly calculosService: CalculosService,
+    @Optional() private readonly eventosService?: EventosService,
   ) {}
 
-  async discoverServices() {
+  discoverServices() {
+    return this.registro.medir("agregador", () => this.consultarAgregador());
+  }
+
+  private async consultarAgregador() {
     const baseUrl = this.configService.get<string>("METRICS_API_URL");
     if (!baseUrl) {
       throw new Error("METRICS_API_URL não configurada.");
@@ -105,138 +121,104 @@ export class ServicosService {
       const latitude = service.latitude;
       const longitude = service.longitude;
 
-      await this.prisma.regiao.upsert({
-        where: { codigo: regiaoCodigo },
-        update: {
-          pais: country,
-          regiao: region,
-          cidade: city,
-          latitude,
-          longitude,
-          atualizadaEm: new Date(),
-        },
-        create: {
-          codigo: regiaoCodigo,
-          pais: country,
-          regiao: region,
-          cidade: city,
-          latitude,
-          longitude,
-          atualizadaEm: new Date(),
-        },
+      await this.servicosRepository.upsertRegiao({
+        codigo: regiaoCodigo,
+        pais: country,
+        regiao: region,
+        cidade: city,
+        latitude,
+        longitude,
       });
 
-      await this.prisma.servico.upsert({
-        where: { idExterno: service.idExterno },
-        update: {
-          nome: service.nome,
-          regiaoCodigo: regiaoCodigo,
-          caminhoMetricas: service.caminhoMetricas,
-          // A descoberta só confirma que o serviço existe; quem confirma disponibilidade é a coleta de métricas.
-          // Preservamos o estado atual para a sincronização não apagar uma falha antes da próxima coleta.
-          ultimaVezListadoEm: new Date(),
-          atualizadoEm: new Date(),
-        },
-        create: {
-          idExterno: service.idExterno,
-          nome: service.nome,
-          regiaoCodigo: regiaoCodigo,
-          caminhoMetricas: service.caminhoMetricas,
-          estadoAtual: "DESCONHECIDO",
-          descobertoEm: new Date(),
-          ultimaVezListadoEm: new Date(),
-          atualizadoEm: new Date(),
-        },
+      await this.servicosRepository.upsertServicoDescoberto({
+        idExterno: service.idExterno,
+        nome: service.nome,
+        regiaoCodigo: regiaoCodigo,
+        caminhoMetricas: service.caminhoMetricas,
       });
     }
 
     // Apenas serviços removidos que reapareceram aguardam uma nova coleta.
     // Os demais preservam o estado determinado pela última coleta.
-    if (discoveredIds.size > 0) {
-      await this.prisma.servico.updateMany({
-        where: {
-          idExterno: { in: [...discoveredIds] },
-          estadoAtual: "REMOVIDO",
-        },
-        data: {
-          estadoAtual: "DESCONHECIDO",
-          atualizadoEm: new Date(),
-        },
-      });
-    }
+    await this.servicosRepository.restaurarServicosRemovidos([
+      ...discoveredIds,
+    ]);
 
-    const existingServices = await this.prisma.servico.findMany({
-      select: { idExterno: true },
-    });
+    const removedServices = (
+      await this.servicosRepository.listarIdsExternos()
+    ).filter((idExterno) => !discoveredIds.has(idExterno));
 
-    const removedServices = existingServices
-      .map((service) => service.idExterno)
-      .filter((idExterno) => !discoveredIds.has(idExterno));
-
-    if (removedServices.length > 0) {
-      await this.prisma.servico.updateMany({
-        where: { idExterno: { in: removedServices } },
-        data: {
-          estadoAtual: "REMOVIDO",
-          atualizadoEm: new Date(),
-        },
-      });
-    }
+    await this.servicosRepository.marcarServicosComoRemovidos(removedServices);
 
     return services;
   }
 
   async verificarSchema() {
-    return this.prisma.verifySchema();
+    return this.servicosRepository.verificarSchema();
   }
 
   async listarServicosParaMonitoramento() {
-    return this.prisma.servico.findMany({
-      where: {
-        estadoAtual: {
-          not: "REMOVIDO",
-        },
-      },
-      orderBy: { atualizadoEm: "desc" },
-    });
+    return this.servicosRepository.listarParaMonitoramento();
   }
 
   async atualizarEstadoMonitoramento(
     id: number,
     estadoAtual: EstadoMonitoramento,
   ) {
-    return this.prisma.servico.update({
-      where: { id },
-      data: {
+    const atualizado =
+      await this.servicosRepository.atualizarEstadoMonitoramento(
+        id,
         estadoAtual,
-        atualizadoEm: new Date(),
-      },
-    });
+      );
+    this.eventosService?.emitirEstadoAlterado(id, estadoAtual);
+    return atualizado;
   }
 
   async listarServicos(): Promise<ServicoComLocalizacao[]> {
-    const servicos = await this.prisma.servico.findMany({
-      orderBy: { atualizadoEm: "desc" },
-      include: { regiao: true },
-    });
+    const servicos = await this.servicosRepository.listarComLocalizacao();
 
-    return servicos.map(({ regiao, ...servico }) => ({
-      ...servico,
-      localizacao: {
-        codigo: regiao.codigo,
-        pais: regiao.pais,
-        regiao: regiao.regiao,
-        cidade: regiao.cidade,
-        latitude: regiao.latitude,
-        longitude: regiao.longitude,
-      },
-    }));
+    return servicos.map(({ regiao, coletas, ...servico }) => {
+      const coleta = coletas[0];
+      const coletaSemDadosValidos =
+        !coleta ||
+        coleta.estadoColeta === "SEM_METRICAS" ||
+        coleta.estadoColeta === "FALHA" ||
+        coleta.estadoCalculo === "FALHA";
+      const componentes = coletaSemDadosValidos
+        ? null
+        : this.calculosService.calcularPotencia(
+            coleta.cpuPercent ?? 0,
+            coleta.memoryGb ?? 0,
+            coleta.diskGb ?? 0,
+            coleta.networkGb ?? 0,
+          );
+      const emissaoMediaPorHora =
+        !coletaSemDadosValidos &&
+        coleta.estadoCalculo === "CONCLUIDO" &&
+        coleta.emissaoGCo2e != null &&
+        coleta.intervaloColetaSegundos != null &&
+        coleta.intervaloColetaSegundos > 0
+          ? (coleta.emissaoGCo2e / coleta.intervaloColetaSegundos) * 3600
+          : null;
+
+      return {
+        ...servico,
+        localizacao: {
+          codigo: regiao.codigo,
+          pais: regiao.pais,
+          regiao: regiao.regiao,
+          cidade: regiao.cidade,
+          latitude: regiao.latitude,
+          longitude: regiao.longitude,
+        },
+        componentes,
+        selo: calcularSeloEficiencia(emissaoMediaPorHora),
+      };
+    });
   }
 
   async findById(id: number) {
-    return this.prisma.servico.findUnique({
-      where: { id },
-    });
+    return this.servicosRepository.findById(id);
   }
 
   private buildRegiaoCodigo(service: {

@@ -1,10 +1,12 @@
 import type { ServiceLocation } from '../../utils/formatters';
+import type { ComponentesEnergia } from '../../utils/composicaoEnergia';
 
 export type BackendService = {
   id: number;
   idExterno: string;
   nome: string;
   regiaoCodigo: string;
+  selo: string;
   localizacao?: ServiceLocation | null;
   estadoAtual:
     | 'DISPONIVEL'
@@ -14,14 +16,17 @@ export type BackendService = {
     | 'DESCONHECIDO';
   energiaKwh?: number | string | null;
   emissaoGCo2e?: number | string | null;
+  componentes?: ComponentesEnergia | null;
 };
 
 export type BackendCollection = {
   iniciadaEm: string;
+  intervaloColetaSegundos?: number | null;
   cpuPercent: number | null;
   memoryGb: number | null;
   diskGb: number | null;
   networkGb: number | null;
+  intensidadeCarbonoGCo2ePorKwh?: number | string | null;
   energiaKwh: number | string | null;
   emissaoGCo2e: number | string | null;
 };

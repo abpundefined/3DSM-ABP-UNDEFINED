@@ -1,3 +1,5 @@
+import { MODO_DEMO_ESTATICO } from '../utils/modoDemo.ts';
+
 const API_BASE_PATH = '/api';
 
 export class ApiError extends Error {
@@ -48,6 +50,13 @@ export async function apiRequest<T = unknown>(
     throw new TypeError('Informe um caminho da API, como /services.');
   }
 
+  if (MODO_DEMO_ESTATICO) {
+    throw new ApiError(
+      503,
+      'Modo demonstração estático ativo: nenhuma requisição ao backend é enviada.',
+    );
+  }
+
   const headers = new Headers(options.headers);
 
   if (!headers.has('Accept')) {
@@ -65,7 +74,7 @@ export async function apiRequest<T = unknown>(
       try {
         message = getErrorMessage(await response.json());
       } catch {
-        // Keep the generic HTTP message for empty or non-JSON error responses.
+        // Mantém a mensagem HTTP genérica quando o corpo do erro está vazio ou não é JSON.
       }
     }
     throw new ApiError(response.status, message);

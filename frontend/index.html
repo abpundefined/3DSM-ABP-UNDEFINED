@@ -7,9 +7,25 @@
       name="description"
       content="GreenER: monitoramento de serviços e impacto ambiental."
     />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <title>GreenER</title>
   </head>
   <body>
+    <script>
+      (function () {
+        try {
+          var destino = window.sessionStorage.getItem('greener-spa-redirect');
+          if (destino) {
+            window.sessionStorage.removeItem('greener-spa-redirect');
+            if (destino.startsWith('/') && !destino.startsWith('//')) {
+              window.history.replaceState(null, '', destino);
+            }
+          }
+        } catch (erro) {
+          // Ignora indisponibilidade de sessionStorage
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

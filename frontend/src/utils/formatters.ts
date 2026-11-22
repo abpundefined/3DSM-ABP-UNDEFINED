@@ -89,3 +89,44 @@ export function formatServiceLocation(
     city: knownLocationPart(location.cidade),
   };
 }
+
+const numero = (valor: number, casas: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  }).format(valor);
+
+export type Escala = { unidade: string; fator: number };
+
+const arredondar = (valor: number) => Math.round(valor * 100) / 100;
+
+export function escalaDeEnergia(kwh: number): Escala {
+  return arredondar(kwh) >= 1
+    ? { unidade: 'kWh', fator: 1 }
+    : { unidade: 'Wh', fator: 1000 };
+}
+
+export function escalaDeEmissao(gCo2e: number): Escala {
+  return arredondar(gCo2e) >= 1000
+    ? { unidade: 'kgCO₂e', fator: 0.001 }
+    : { unidade: 'gCO₂e', fator: 1 };
+}
+
+function formatarComEscala(valor: number, { unidade, fator }: Escala) {
+  const convertido = valor * fator;
+  return convertido < 0.01
+    ? `< 0,01 ${unidade}`
+    : `${numero(convertido, 2)} ${unidade}`;
+}
+
+export function formatEnergy(kwh: number | null): string {
+  if (kwh === null) return '—';
+  if (kwh === 0) return '0 Wh';
+  return formatarComEscala(kwh, escalaDeEnergia(kwh));
+}
+
+export function formatEmission(gCo2e: number | null): string {
+  if (gCo2e === null) return '—';
+  if (gCo2e === 0) return '0 gCO₂e';
+  return formatarComEscala(gCo2e, escalaDeEmissao(gCo2e));
+}

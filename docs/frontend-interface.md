@@ -9,7 +9,7 @@ Responsável: Rainan Reis. Implementação em 08/10/2026, na branch `feat/25-fro
 - **Usuários e tarefa:** a pessoa de operações deve entender a disponibilidade dos serviços; a pessoa de sustentabilidade deve localizar energia e emissões. A consulta do dashboard é pública. Login é a entrada futura para configuração administrativa.
 - **Hierarquia:** navegação → título e disponibilidade dos dados → três indicadores com unidades → serviços → explicação dos indicadores. O estado vazio é a informação principal enquanto a integração não existe.
 - **Referências:** imagens GreenER v1 fornecidas pelo PO, especialmente o dashboard operacional e o login. Aplicada a skill oficial instalada `uizze-ui-research`, do Uizze. Pesquisa manual em https://uizze.com/ e sua amostra pública `/landing/after-uizze-simple-no-island-v2.webp`: títulos claros, agrupamento de informações e hierarquia tipográfica. A amostra é um aplicativo de hábitos; não foi copiada sua estética. O catálogo interativo não ficou acessível neste ambiente. Não houve auditoria pelo MCP Uizze ou envio de código ao serviço.
-- **Paleta:** `#00661C` para marca e ações principais; `#346700`, `#086600`, `#5E6600` e `#665C00` para indicadores e elementos informativos. `#C55DFF` e `#B57D00` são acentos pontuais. Texto escuro sobre os acentos claros; os fundos suaves são variações das cores do PO. Superfícies neutras preservam leitura.
+- **Paleta:** `#00661C` para marca e ações principais; `#346700`, `#086600`, `#5E6600` e `#665C00` para indicadores e elementos informativos. `#123A1F` (tema claro) e `#8BD49A` (tema escuro) nos botões de ação secundária e na faixa do modo demonstração, no tom de verde da identidade visual da apresentação. `#C55DFF` e `#B57D00` continuam como acentos pontuais dos estados "sem métricas" e "indisponível". Texto escuro sobre os acentos claros; os fundos suaves são variações das cores do PO. Superfícies neutras preservam leitura.
 - **Componentes:** layout compartilhado, marca, ícones vetoriais, indicador, feedback e limite de erro. Fonte Figtree variável empacotada localmente; nenhuma requisição a Google Fonts no navegador.
 - **Estados:** vazio sem números inventados; carregamento durante abertura das páginas; falha inesperada com recuperação; login administrativo explicitamente indisponível. Campos com rótulos, validação nativa e controle para mostrar senha.
 - **Responsividade:** conteúdo limitado a 1240 px; três indicadores e duas colunas em desktop; empilhamento no celular a partir de 360 px. Navegação visível, sem menu escondendo dois destinos.
@@ -26,17 +26,26 @@ As páginas são carregadas com `lazy`. Enquanto seu arquivo JavaScript chega, `
 
 ### Rotas
 
-| URL                    | Página    | Comportamento nesta entrega                                                                                     |
-| ---------------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
-| `/`                    | Dashboard | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                                 |
-| `/login`               | Login     | Formulário visual com validação e mostrar/ocultar senha. Enviar informa que o acesso ainda não está disponível. |
-| Qualquer outro caminho | NotFound  | Mensagem de página não encontrada e retorno ao dashboard.                                                       |
+| URL                    | Página        | Comportamento nesta entrega                                                                                                                                                               |
+| ---------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                    | Dashboard     | Indicadores sem valores e estado vazio; explicação expansível do monitoramento.                                                                                                           |
+| `/login`               | Login         | Formulário com validação e mostrar/ocultar senha. Envia `POST /auth/login` e volta à página de origem.                                                                                    |
+| `/admin`               | Administração | Exige login. Lê e salva os intervalos de coleta e de descoberta.                                                                                                                          |
+| `/ranking`             | Ranking       | Os 10 serviços de maior energia ou emissão no período (`GET /ranking`), com abas de agrupamento por Serviço, Região ou País (`?grupo=regiao`, `?grupo=pais`), gráficos, tabela, lista sem dados e participação por região. Funciona com `?demo=1`. |
+| `/servicos/:id`        | Detalhe       | Cabeçalho com estado, localização e última coleta; totais e séries de energia/emissão (`GET /servicos/:id/historico`), com seletor de período, estados de feedback e acesso à comparação. |
+| Qualquer outro caminho | NotFound      | Mensagem de página não encontrada e retorno ao dashboard.                                                                                                                                 |
 
-O formulário não faz requisição, autentica, guarda credenciais ou cria token. Sua mensagem prévia deixa a indisponibilidade clara. A #15 deverá conectar o envio ao contrato `username`/`password`, tratar HTTP 401, sessão e proteção de configuração. Não há cadastro ou recuperação de senha previstos no contrato atual.
+O login envia `POST /auth/login` e guarda o JWT no `AuthProvider`. A rota `/admin` passa por `RequireAuth`: sem sessão, leva ao login e, depois de entrar, volta para a página pedida. A página lê `GET /configuracao` e salva com `PUT /configuracao` (Bearer token), valida os limites do backend (coleta de 10 a 3600 s, descoberta de 10 a 86400 s, inteiros) com mensagens no padrão do app e mostra salvando, sucesso e erro. Resposta 401 encerra a sessão e leva ao login com o aviso de sessão expirada. Os novos intervalos valem a partir do próximo ciclo do monitoramento. Não há cadastro ou recuperação de senha previstos no contrato atual.
+
+A página `/ranking` consulta `GET /ranking` com o período do seletor, a métrica (`metrica=energia` ou `metrica=emissao`, guardada na URL; energia é o padrão) e `limite=10`. Mostra o gráfico de barras horizontal na métrica escolhida, o par de gráficos de energia (Wh) e CO₂e (g) na mesma ordem, para evidenciar quando consumo parecido gera emissão diferente por causa da intensidade de carbono da região, a tabela com posição, energia, emissão e coletas válidas e a lista "Sem dados no período" (`semDados`). Cada gráfico tem unidade no eixo e uma frase de resumo. Clicar no serviço (barra ou link) leva a `/servicos/:id`, mantendo o período. Ao trocar a métrica ou o período, o ranking anterior continua na tela com o aviso "Atualizando o ranking..." até a nova resposta chegar. Com `?demo=1`, a página usa os mesmos serviços e totais do mapa de demonstração, sem chamar o backend.
+
+A seção "Participação nas emissões" da mesma página consulta `GET /mapa` com o período do seletor, porque o ranking não traz a região. O treemap tem área proporcional à emissão de cada serviço no período, agrupada por região (uma cor por região, com legenda em texto), com nome e percentual no bloco e valor com unidade no tooltip. A frase de Pareto conta os maiores emissores até somar pelo menos 80% do total ("3 de 8 serviços respondem por 89,1% das emissões do período") e a segunda frase indica a região que mais emite. Serviços sem emissão no período ficam de fora. A tabela alternativa (em "Ver a participação em tabela") traz região, serviço, emissão e participação, com link para o detalhe; clicar no bloco do treemap também leva ao detalhe. Se o `GET /mapa` falhar, só esta seção mostra o erro, com "Tentar novamente", e o ranking continua na tela.
+
+`/servicos/:id` combina os dados do serviço e da última coleta válida com o histórico do período. Os gráficos mantêm energia em kWh/Wh e emissão em gCO₂e/kgCO₂e em eixos independentes, preservam intervalos sem cálculo e oferecem os valores em tabela. Totais ausentes aparecem como “—”; carregamento, erro com nova tentativa, histórico vazio e serviço inexistente têm mensagens próprias. O botão de comparação mantém o período na URL. Com `?demo=1`, usa os dados fictícios locais e mantém o simulador de região sem consultar a API.
 
 O dashboard oferece agora uma [demonstração opcional com gráficos e dados fictícios](frontend-demo.md), acessível por `/?demo=1`. O aviso de demonstração e a data simulada distinguem essa prévia do monitoramento real.
 
-No modo padrão, o dashboard não consulta os endpoints que ainda estão em implementação. “—” significa **dado indisponível**, não zero. Não se inventou período nem horário da última coleta. As imagens com dados mockados orientaram a hierarquia e a paleta; a prévia implementada permite avaliar os gráficos, sem representar uma integração entregue. #7/#8 implementarão os totais e a lista reais; histórico, ranking e comparação continuam em suas próprias issues.
+No modo padrão, o dashboard não consulta os endpoints que ainda estão em implementação. “—” significa **dado indisponível**, não zero. Não se inventou período nem horário da última coleta. As imagens com dados mockados orientaram a hierarquia e a paleta; a prévia implementada permite avaliar os gráficos, sem representar uma integração entregue. #7/#8 implementarão os totais e a lista reais; a comparação continua em sua própria issue.
 
 ## Estrutura e responsabilidades
 
@@ -45,7 +54,10 @@ src/
   components/
     common/       Icon, Brand, MetricCard, FeedbackPanel, AppErrorBoundary
     layout/       AppLayout
-  hooks/          usePageTitle
+  contexts/       auth-context, period-context
+  providers/      AuthProvider, PeriodProvider (período na URL)
+  hooks/          usePageTitle, useAuth, usePrefersReducedMotion, usePeriod
+  utils/          formatters, period (regras e conversão do período)
   pages/          Dashboard, Login, NotFound
   services/       api.ts (base HTTP da parte 1)
   App.tsx         rotas e carregamento das páginas
@@ -53,7 +65,25 @@ src/
   index.css       tokens, componentes e regras responsivas
 ```
 
-Cada página organiza seu conteúdo. Componentes comuns recebem propriedades tipadas e podem ser reutilizados. O CSS usa variáveis de cor, espaçamento e foco, evitando valores de marca espalhados. `FeedbackPanel` oferece vazio, carregamento e erro, com texto além da cor. Não há contexto artificial: ainda não existe sessão ou dado compartilhado que o justifique. O `BrowserRouter` já fornece o contexto de navegação.
+Cada página organiza seu conteúdo. Componentes comuns recebem propriedades tipadas e podem ser reutilizados. O CSS usa variáveis de cor, espaçamento e foco, evitando valores de marca espalhados. `FeedbackPanel` oferece vazio, carregamento e erro, com texto além da cor. Os contextos existem onde há estado compartilhado de verdade: a sessão (`AuthProvider`) e o período analisado (`PeriodProvider`).
+
+### Seletor de período
+
+`PeriodSelector` oferece Últimas 24 horas, Últimos 7 dias, Últimos 30 dias, Este mês, Mês passado e Personalizado (início e fim, no máximo 90 dias, fim igual ou posterior ao início). A URL é a fonte do período (`?periodo=7d` ou `?inicio=2026-11-01&fim=2026-11-07`); sem parâmetro, vale 24 horas. Por isso o período sobrevive a recarregar a página, a voltar no navegador e a compartilhar o link, e os links do menu o mantêm ao trocar de tela. Telas novas leem o período com `usePeriod()`: `apiQuery` traz os parâmetros prontos para a API (o personalizado vai em ISO 8601 com o fuso de São Paulo, `-03:00`) e `linkSearch` serve para links internos. O período por extenso fica sempre visível junto ao seletor e é anunciado ao leitor de tela quando muda. No modo `?demo=1` o seletor não aparece, porque os dados de demonstração são um retrato fixo de 07/10/2026.
+
+feat/111-tendencia-dashboard
+### Tendência no dashboard
+
+O painel ao vivo consulta `GET /indicadores/serie` com o período do seletor e `porServico=true`, uma única chamada para o gráfico do painel e para os cards. A seção "Tendência no período" fica entre os indicadores e os cards e tem duas visões. Em "Total", energia e emissão aparecem em dois gráficos de linha separados (nunca dois eixos no mesmo gráfico), com a unidade escolhida pela maior leitura (Wh ou kWh, gCO₂e ou kgCO₂e, o mesmo limite do `formatEnergy`) e uma frase com o total, o pico e a tendência. Em "Por serviço", a emissão aparece em área empilhada com os 5 serviços que mais emitem no período e "Outros", com legenda na ordem das camadas e tooltip por camada. Intervalos sem coleta ficam como lacuna, não como zero. Cada card de serviço ganha um mini gráfico da emissão no período com um texto visível ("Emissão subindo nas últimas 24 horas"); a direção compara a média da primeira metade com a da segunda e só muda com variação acima de 10%. A série carrega uma vez por período e de novo em "Atualizar agora"; se falhar, só a seção mostra o erro, com "Recarregar a tendência", sem alerta extra na página. Os gráficos não animam com `prefers-reduced-motion`. `mocks/serie.ts` traz uma série no formato do endpoint, gerada a partir do mapa de demonstração (usada nos testes); a prévia `?demo=1` do dashboard continua com o gráfico de evolução da Sprint 1.
+
+### Mapa de calor do melhor horário
+
+A seção "Melhor horário para executar processamentos pesados" aparece abaixo do mapa em `/mapa` e no detalhe do serviço (`/servicos/:id`). Ela consulta `GET /intensidade/horarios` com o período do seletor e, quando há região escolhida, `regiao=<código>`. A resposta traz a matriz 7 × 24 (dia da semana, com 0 = domingo, por hora, no fuso informado em `fusoHorario`) com a média da intensidade de carbono e o número de amostras de cada célula, e a `melhorJanela` de 3 horas seguidas calculada no backend, inclusive quando atravessa a meia-noite ou a virada da semana.
+
+O mapa de calor usa cinco faixas de cor entre a menor e a maior intensidade do período, com legenda em gCO₂e/kWh, e mostra o valor e o número de amostras de cada célula ao passar o mouse ou tocar. A melhor janela é contornada e descrita na frase de resumo, que compara a média da janela com a média do período. Horários sem amostras têm padrão hachurado e aviso com a contagem; sem 3 horas seguidas com coletas, a página avisa que os dados são insuficientes e não indica janela; sem nenhuma coleta, mostra o estado vazio. A tabela alternativa ("Ver os dados do mapa de calor em tabela") traz as 24 horas por 7 dias com a média e, entre parênteses, as amostras.
+
+Em `/mapa`, a região dos horários acompanha o filtro `?regiao=` do mapa até o usuário escolher outra em "Horários de" (guardada em `?horarios=<código>` ou `?horarios=todas`). No detalhe do serviço, abre na região do serviço (lida da simulação de regiões) e permite trocar. Sem região, a matriz mistura todas as regiões. Com `?demo=1`, a seção usa dados gerados a partir das intensidades do mapa de demonstração, sem chamar o backend.
+develop
 
 ## Executar e verificar
 

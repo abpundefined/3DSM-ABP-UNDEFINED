@@ -4,9 +4,21 @@ import { PrismaService } from "../../database/prisma.service";
 import { CreateColetaDto } from "./dto/create-coleta.dto";
 import { FilterColetasDto } from "./dto/filter-coleta.dto";
 
+type ColetaComServico = Prisma.ColetaGetPayload<{
+  include: { servico: { select: { idExterno: true; nome: true } } };
+}>;
+
+export interface HistoricoColetasPaginado {
+  itens: ColetaComServico[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+  totalPaginas: number;
+}
+
 export interface IColetasRepository {
   create(data: CreateColetaDto): Promise<Coleta>;
-  findMany(filters: FilterColetasDto): Promise<Coleta[]>;
+  findMany(filters: FilterColetasDto): Promise<HistoricoColetasPaginado>;
   findById(id: number): Promise<Coleta | null>;
   findLatestSuccessful(servicoId: number): Promise<Coleta | null>;
 }
@@ -38,7 +50,9 @@ export class ColetasRepository implements IColetasRepository {
     });
   }
 
-  async findMany(filters: FilterColetasDto): Promise<Coleta[]> {
+  async findMany(filters: FilterColetasDto): Promise<HistoricoColetasPaginado> {
+    const pagina = filters.pagina ?? 1;
+    const tamanho = filters.tamanho ?? 20;
     const where: Prisma.ColetaWhereInput = {
       ...(filters.servicoId !== undefined
         ? { servicoId: filters.servicoId }
@@ -57,15 +71,31 @@ export class ColetasRepository implements IColetasRepository {
         : {}),
     };
 
-    return this.prisma.coleta.findMany({
-      where,
-      orderBy: { iniciadaEm: "desc" },
-      include: {
-        servico: {
-          select: { idExterno: true, nome: true },
-        },
-      },
-    });
+    const [itens, total] = await this.prisma.$transaction(
+      [
+        this.prisma.coleta.findMany({
+          where,
+          orderBy: [{ iniciadaEm: "desc" }, { id: "desc" }],
+          skip: (pagina - 1) * tamanho,
+          take: tamanho,
+          include: {
+            servico: {
+              select: { idExterno: true, nome: true },
+            },
+          },
+        }),
+        this.prisma.coleta.count({ where }),
+      ],
+      { isolationLevel: "RepeatableRead" },
+    );
+
+    return {
+      itens,
+      pagina,
+      tamanho,
+      total,
+      totalPaginas: Math.ceil(total / tamanho),
+    };
   }
 
   async findById(id: number): Promise<Coleta | null> {

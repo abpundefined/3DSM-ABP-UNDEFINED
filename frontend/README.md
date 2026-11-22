@@ -18,41 +18,50 @@ bloqueado pela política local. Em outros terminais, `npm` também funciona.
 
 ## Comandos
 
-| Comando                    | Finalidade                                       |
-| -------------------------- | ------------------------------------------------ |
-| `npm.cmd run dev`          | Desenvolvimento com atualização automática       |
-| `npm.cmd run build`        | Verificar TypeScript e gerar `dist/`             |
-| `npm.cmd run preview`      | Conferir o build em http://localhost:4173        |
-| `npm.cmd run lint`         | Verificar problemas de código                    |
-| `npm.cmd run format`       | Aplicar Prettier aos arquivos do frontend        |
-| `npm.cmd run format:check` | Conferir formatação                              |
-| `npm.cmd test`             | Executar os testes do serviço HTTP               |
-| `npm.cmd run test:e2e`     | Testar as páginas no build, em desktop e celular |
-| `npm.cmd run test:e2e:dev` | Testar as páginas em desenvolvimento             |
+| Comando                     | Finalidade                                             |
+| --------------------------- | ------------------------------------------------------ |
+| `npm.cmd run dev`           | Desenvolvimento com atualização automática             |
+| `npm.cmd run build`         | Verificar TypeScript e gerar `dist/`                   |
+| `npm.cmd run preview`       | Conferir o build em http://localhost:4173              |
+| `npm.cmd run lint`          | Verificar problemas de código                          |
+| `npm.cmd run format`        | Aplicar Prettier aos arquivos do frontend              |
+| `npm.cmd run format:check`  | Conferir formatação                                    |
+| `npm.cmd test`              | Executar testes utilitários e de componentes/hooks     |
+| `npm.cmd run test:coverage` | Gerar cobertura dos testes Vitest em `coverage/`       |
+| `npm.cmd run test:e2e`      | Gerar o build e testar as páginas em desktop e celular |
+| `npm.cmd run test:e2e:dev`  | Testar as páginas em desenvolvimento                   |
 
-Execute `build` antes de `preview` ou `test:e2e`. Preview é uma conferência local,
-não a configuração de publicação da aplicação.
+Execute `build` antes de `preview`. O comando `test:e2e` gera um build atualizado
+automaticamente. Preview é uma conferência local, não a configuração de publicação
+da aplicação.
 
 ## Páginas e navegação
 
-- `/`: dashboard público conectado ao backend para exibir serviços e coletas recentes.
-- `/?demo=1`: demonstração opcional com gráficos e serviços fictícios para avaliação visual. Também pode ser aberta pelo botão **Ver demonstração**.
-- `/login`: formulário administrativo; o acesso ainda está indisponível. Não envia nem armazena credenciais.
+- `/`: dashboard público conectado ao backend com atualização em tempo real via Server-Sent Events (`EventSource` em `/api/eventos` para eventos `coleta-registrada` e `estado-alterado`, pulso visual no card atualizado respeitando `prefers-reduced-motion: reduce`, reconexão automática e fallback para atualização periódica a cada 30 s), contador de serviços, contador ao vivo de CO₂e (desktop), KPIs consolidados, seletor de período, painel de meta mensal de carbono (com planeta reativo à meta), gráfico de tendência, composição de energia por recurso, cards dos serviços (com anel de CPU `role="meter"`) e resumo das 4 maiores oportunidades de redução.
+- `/?demo=1`: modo demonstração com dados fictícios identificados em todas as telas (também ativado permanentemente no build estático do GitHub Pages quando `VITE_DEMO_MODE=true`).
+- `/ranking`: ranking de impacto por energia ou emissão, agrupamento por **Serviço**, **Região** ou **País** (`?grupo=regiao` e `?grupo=pais`, somando energia, emissão e coletas por localidade) e modo **Evolução** (`?modo=evolucao`, corrida de barras ao longo do período), além de variação global e participação por região.
+- `/comparar`: comparação lado a lado de 2 a 5 serviços no mesmo período.
+- `/mapa`: globo interativo (`d3-geo` + `world-atlas`), mapa 2D (`Leaflet` + `MapLibre`), linha do tempo, modo **Simular** (arrasto de marcador entre regiões monitoradas ou alternativa por lista com cálculo imutável e desfazer), intensidade regional e melhor horário (`7×24`). No **Modo TV**, renderiza globo 3D em WebGL com fallback automático para mapa 2D.
+- `/oportunidades`: lista de oportunidades estimadas de redução de emissão (`GET /oportunidades`), ordenada pelo ganho em `gCO₂e` e `%`, com filtro por tipo e links para `/servicos/:id`.
+- `/servicos/:id`: detalhe do serviço com histórico temporal, linha do tempo de estado, composição de energia, simulador de região e melhor janela horária.
+- `/metodologia`: página **Como calculamos** documentando fórmulas, constantes, fontes externas, detecção de picos e limiares de oportunidades.
+- `/relatorio`: relatório consolidado do período pronto para impressão (`@media print`).
+- `/qr-code`: cartaz imprimível (A4) com QR code vetorial ISO/IEC 18004 apontando para a demonstração online.
+- `/login` e `/admin`: autenticação administrativa via JWT e painel de configuração de intervalos, meta mensal de carbono e saúde das integrações.
+- **Modo TV (`?tv=1`, desktop ≥ 761 px):** ativado pelo botão **Modo TV** no rodapé; alterna automaticamente entre Dashboard, Mapa (com globo 3D) e Ranking a cada 10 s, exibindo barra fixa inferior com contagem regressiva e QR code da demonstração online.
 - Outros endereços: página 404 com retorno ao dashboard.
 
-React Router usa `BrowserRouter`, `Routes`, `Outlet` e links de navegação.
-As páginas são carregadas sob demanda com feedback e recuperação de falhas.
-O hook `usePageTitle` atualiza o título da aba. Há link para pular ao conteúdo,
-foco visível e ajuste do foco ao navegar. O tema claro é o padrão; os botões
-de lua e sol no cabeçalho alternam entre tema escuro e claro, e a preferência
-fica salva no navegador.
+React Router usa `BrowserRouter` (com `basename={import.meta.env.BASE_URL}`), `Routes`, `Outlet` e carregamento sob demanda (`React.lazy`) com feedback e recuperação de falhas. O rodapé concentra os atalhos **Fazer tour**, **QR Code** e **Modo TV**. O tema claro é o padrão; os botões de lua e sol no cabeçalho alternam entre tema escuro e claro, com preferência persistida no `localStorage`.
 
-A fonte Figtree é local; as cores seguem a paleta do PO. Os indicadores reais
-consultam o agregado do backend: energia e CO₂e consideram coletas calculadas
-nas últimas 24 horas; ativos e indisponíveis refletem o estado atual dos serviços.
-Autenticação (#15) e demais telas continuam em suas issues.
-Leia [o guia da segunda parte](../docs/frontend-interface.md), com decisões,
-arquitetura, rubrica e capturas das telas.
+### Variáveis de ambiente (proxy e build estático de demonstração)
+
+| Variável               | Padrão                                               | Uso                                                                                               |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `API_PROXY_TARGET`     | `http://localhost:3000`                              | Endereço do backend visto pelo processo Vite (dev/preview)                                        |
+| `API_PROXY_REWRITE`    | `true`                                               | Remove prefixo `/api` ao encaminhar para o backend                                                |
+| `VITE_DEMO_MODE`       | `false`                                              | Quando `true`, ativa modo demo estático, bloqueia chamadas `/api` e gera `404.html` + `.nojekyll` |
+| `VITE_BASE_PATH`       | `/`                                                  | Base path para publicação em subcaminho (ex.: `/3DSM-ABP-UNDEFINED/` no GitHub Pages)             |
+| `VITE_PUBLIC_DEMO_URL` | `https://abpundefined.github.io/3DSM-ABP-UNDEFINED/` | URL pública codificada no QR code do Modo TV e da página `/qr-code`                               |
 
 ## Backend e proxy
 
@@ -87,6 +96,31 @@ serviço na rede dos containers. O Dockerfile inicia o Vite com
 Assim, `/api/servicos` é encaminhado para `http://backend:3000/servicos`.
 Fora do Docker, o destino padrão continua sendo `http://localhost:3000`.
 
+## Mapa de emissões
+
+A página `/mapa` abre num globo (d3-geo e `world-atlas`, com fronteiras dos
+países). Ele gira devagar sozinho e pode ser pausado; arrastar, as setas, a roda
+do mouse e os botões + e − giram e aproximam. Aproximar até o fim ou clicar num
+ponto entra no mapa (Leaflet com agrupamento de marcadores); afastar no zoom
+mínimo volta ao globo. O tamanho e a cor dos pontos seguem a emissão (área
+proporcional, 5 faixas com contraste validado), explicados na legenda.
+
+- **URL:** `?visao=mapa` e `?regiao=<código>` ficam na URL junto com o período,
+  para recarregar ou compartilhar a mesma tela. `?demo=1` usa dados fictícios.
+- **Linha do tempo:** reproduz a `serie` intervalo a intervalo, com escala fixa
+  durante a reprodução. Só começa quando a pessoa aperta Reproduzir.
+- **Acessibilidade:** com "reduzir movimento" no sistema, não há rotação, inércia
+  nem animações. O globo funciona pelo teclado, e a tabela "Ver os dados do mapa
+  em tabela" traz os mesmos dados.
+- **Fundo do mapa:** tiles vetoriais do [OpenFreeMap](https://openfreemap.org)
+  (estilo claro, gratuito e sem chave), desenhados com MapLibre e com os nomes
+  em português (`name:pt`). O MapLibre só é baixado ao abrir a visão de mapa
+  (cerca de 290 KB comprimidos, mais 150 KB do worker). Sem WebGL ou com o
+  OpenFreeMap fora do ar, o mapa usa as imagens do OpenStreetMap, com os nomes
+  no idioma local. A atribuição aparece no canto do mapa.
+- **Testes:** `tests/e2e/mapa.spec.ts` simula o `GET /mapa` e o estilo do mapa,
+  sem depender da rede.
+
 ## Serviço HTTP
 
 `apiRequest<T>(path, options)` usa fetch, preserva headers/opções e retorna
@@ -98,10 +132,42 @@ Falhas de rede, cancelamento e JSON inválido são propagados para a tela
 tratar. O tipo `T` ajuda no TypeScript, mas não valida o JSON em execução.
 Para enviar JSON, informe `Content-Type` e serialize o corpo explicitamente.
 
+## Testes de componentes e hooks
+
+`npm.cmd test` executa os testes existentes com Node e os testes React com
+Vitest e Testing Library. Para gerar o relatório de cobertura localmente, rode
+`npm.cmd run test:coverage`; o CI publica `frontend-coverage` como artefato.
+Os testes do ranking cobrem carregamento, dados, estados vazios, erro com nova
+tentativa, troca de métrica e demonstração sem acessar a API. A comparação
+ainda é uma página em construção; o teste verifica o aviso atual.
+
+## Comparação com o período anterior
+
+Dashboard e ranking mostram a variação percentual de energia e emissão
+recebida do backend, por exemplo, **▲ 12% em relação aos 7 dias anteriores**.
+Aumento usa estilo de alerta; redução usa estilo de melhoria, sempre com
+seta e texto, não apenas cor. `null` aparece como **sem base de comparação**,
+inclusive quando o total anterior é zero. A duração exibida vem do período
+efetivamente retornado pela API, inclusive em intervalos personalizados.
+
+No ranking, **Variação por serviço** mostra emissão atual, anterior, diferença
+e percentual para todos os serviços com dados em qualquer janela, não apenas
+o top 10. Clique no cabeçalho de qualquer coluna para alternar a ordenação;
+valores ausentes ficam ao final. Sem emissão no período atual, com ou sem
+impacto registrado, o valor permanece `null`: a tabela mostra `—` na emissão e
+na diferença e **sem dados no período atual** no percentual. Um zero medido
+pode produzir uma redução de -100%. Os totais exibidos no dashboard mantêm
+zero por compatibilidade quando não há dados, mas a variação vem `null`.
+A tabela permanece disponível quando só há dados na janela anterior.
+As comparações não são inventadas para respostas antigas da API: os blocos
+só aparecem quando os novos campos estão presentes. Na demonstração, não há
+dados anteriores e a base é indicada como ausente.
+
+Testes focados: `npx.cmd vitest run tests/unit/variacao-periodo.test.tsx tests/unit/dashboard-variacao.test.tsx tests/unit/analises-pages.test.tsx`.
+
 ## Testes de navegador
 
 ```powershell
-npm.cmd run build
 npx.cmd playwright install chromium
 npm.cmd run test:e2e
 npm.cmd run test:e2e:dev
@@ -110,8 +176,9 @@ npm.cmd run test:e2e:dev
 Playwright testa Chromium em desktop e celular: navegação, foco, acesso direto,
 refresh, formulário, carregamento e falha. Axe verifica problemas automatizáveis
 de acessibilidade. Esses testes não substituem testes com usuários.
-`test:e2e` inicia o preview na porta 4173; `test:e2e:dev` inicia o Vite na 5173.
-As portas devem estar livres. Capturas e traces ficam em `test-results/` (ignorado).
+`test:e2e` gera o build e inicia o preview na porta 4173; `test:e2e:dev` inicia o
+Vite na 5173. As portas devem estar livres. Capturas e traces (`trace: 'retain-on-failure'`) ficam em
+`test-results/` (ignorado pelo Git e publicado como artefato pelo job `frontend-e2e` do CI em caso de falha).
 
 Em produção, o servidor deve oferecer fallback de URLs da SPA para `index.html`,
 sem interceptar `/api`. Isso será coordenado com a configuração de publicação/Compose.

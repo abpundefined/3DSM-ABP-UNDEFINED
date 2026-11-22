@@ -19,7 +19,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "node test/e2e/verificar-banco.cjs && prisma migrate deploy --config ./prisma7.config.ts && node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -28,12 +28,16 @@
     "@nestjs/jwt": "^12.0.4",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.4.8",
+    "@nestjs/throttler": "^6.8.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^18.0.5",
+    "helmet": "^8.3.0",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
@@ -78,18 +82,31 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.service.ts",
+      "**/*.repository.ts",
+      "!generated/prisma/**",
+      "!main.ts",
+      "!app.module.ts",
+      "!app.service.ts",
+      "!**/*.module.ts",
+      "!**/*.config.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "coverageThreshold": {
-      "./src/modules/calculos/**/*.service.ts": {
+      "global": {
         "branches": 80,
         "functions": 80,
         "lines": 80,
         "statements": 80
       },
-      "./src/common/regras/**/*.ts": {
+      "./src/**/*.service.ts": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      },
+      "./src/**/*.repository.ts": {
         "branches": 80,
         "functions": 80,
         "lines": 80,

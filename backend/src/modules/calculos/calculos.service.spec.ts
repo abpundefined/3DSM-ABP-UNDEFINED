@@ -4,9 +4,24 @@ import { CarbonApiService } from "./carbon-api.service";
 
 describe("CalculosService", () => {
   let service: CalculosService;
+  interface ComponentesEnergia {
+    cpuW: number;
+    memoriaW: number;
+    discoW: number;
+    redeW: number;
+    totalW: number;
+  }
+
   const carbonApi = {
     obterIntensidadeCarbono: jest.fn(),
   };
+
+  const calcularPotencia = (
+    cpu: number,
+    memoria: number,
+    disco: number,
+    rede: number,
+  ): ComponentesEnergia => service.calcularPotencia(cpu, memoria, disco, rede);
 
   beforeEach(async () => {
     carbonApi.obterIntensidadeCarbono.mockReset();
@@ -24,23 +39,37 @@ describe("CalculosService", () => {
     expect(service).toBeDefined();
   });
 
-  it("calculates energy using the documented resource factors and kWh conversion", () => {
-    expect(service.calcularEnergia(50, 2, 10, 5, 3600)).toBeCloseTo(0.0012, 10);
+  it("calculates power using the documented resource factors", () => {
+    const componentes = calcularPotencia(50, 2, 10, 5);
+
+    expect(componentes.totalW).toBeCloseTo(1.2, 10);
+    expect((componentes.totalW * 3600) / 3_600_000).toBeCloseTo(0.0012, 10);
   });
 
   it.each([
-    ["CPU", 100, 0, 0, 0, 0.0005],
-    ["RAM", 0, 1, 0, 0, 0.000375],
-    ["disco", 0, 0, 1, 0, 0.00001],
-    ["rede", 0, 0, 0, 1, 0.00002],
+    ["CPU", 100, 0, 0, 0, 0.5],
+    ["RAM", 0, 1, 0, 0, 0.375],
+    ["disco", 0, 0, 1, 0, 0.01],
+    ["rede", 0, 0, 0, 1, 0.02],
   ])(
     "calcula corretamente o consumo isolado de %s",
-    (_resource, cpu, memory, disk, network, expectedKwh) => {
-      expect(
-        service.calcularEnergia(cpu, memory, disk, network, 3600),
-      ).toBeCloseTo(expectedKwh, 10);
+    (_resource, cpu, memory, disk, network, expectedW) => {
+      expect(calcularPotencia(cpu, memory, disk, network).totalW).toBeCloseTo(
+        expectedW,
+        10,
+      );
     },
   );
+
+  it("retorna os componentes de potência de CPU, memória, disco e rede", () => {
+    const componentes = calcularPotencia(50, 2, 10, 5);
+
+    expect(componentes.cpuW).toBeCloseTo(0.25, 10);
+    expect(componentes.memoriaW).toBeCloseTo(0.75, 10);
+    expect(componentes.discoW).toBeCloseTo(0.1, 10);
+    expect(componentes.redeW).toBeCloseTo(0.1, 10);
+    expect(componentes.totalW).toBeCloseTo(1.2, 10);
+  });
 
   it("usa a duração real recebida para converter a potência em kWh", () => {
     const energyFor30Seconds = service.calcularEnergia(50, 2, 10, 5, 30);
@@ -53,11 +82,17 @@ describe("CalculosService", () => {
   it("valida o exemplo de referência de 50.87 W, energia e emissão", async () => {
     carbonApi.obterIntensidadeCarbono.mockResolvedValue(85);
 
+    const componentes = calcularPotencia(100, 100, 1000, 143.5);
+    expect(componentes.totalW).toBeCloseTo(50.87, 10);
+
     const energiaKwh = service.calcularEnergia(100, 100, 1000, 143.5, 60);
-    const potenciaWatts = (energiaKwh * 1000 * 3600) / 60;
     const emissao = await service.calcularEmissao(energiaKwh, "br-sudeste");
 
-    expect(potenciaWatts).toBeCloseTo(50.87, 10);
+    expect(componentes.cpuW).toBeCloseTo(0.5, 10);
+    expect(componentes.memoriaW).toBeCloseTo(37.5, 10);
+    expect(componentes.discoW).toBeCloseTo(10, 10);
+    expect(componentes.redeW).toBeCloseTo(2.87, 10);
+    expect(componentes.totalW).toBeCloseTo(50.87, 10);
     expect(energiaKwh).toBeCloseTo(0.0008478333, 10);
     expect(emissao.emissaoGCo2e).toBeCloseTo(0.0720658333, 10);
     expect(Number(emissao.emissaoGCo2e.toFixed(7))).toBe(0.0720658);

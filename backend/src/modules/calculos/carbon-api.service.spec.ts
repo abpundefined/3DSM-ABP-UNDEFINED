@@ -1,11 +1,14 @@
 import { Logger } from "@nestjs/common";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { CarbonApiService } from "./carbon-api.service";
 
 describe("CarbonApiService", () => {
   const originalApiUrl = process.env.CARBON_API_URL;
   let fetchMock: jest.SpiedFunction<typeof fetch>;
+  let registro: RegistroIntegracoesService;
 
   beforeEach(() => {
+    registro = new RegistroIntegracoesService();
     process.env.CARBON_API_URL = "https://carbon.unilaunch.org/";
     fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
@@ -24,7 +27,7 @@ describe("CarbonApiService", () => {
   });
 
   it("requests the documented region intensity endpoint", async () => {
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).resolves.toBe(
       85,
@@ -38,7 +41,7 @@ describe("CarbonApiService", () => {
   });
 
   it("codifica o código da região na URL", async () => {
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await service.obterIntensidadeCarbono("região/sul");
 
@@ -51,7 +54,7 @@ describe("CarbonApiService", () => {
 
   it("falha sem consultar a API quando CARBON_API_URL não está configurada", async () => {
     delete process.env.CARBON_API_URL;
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
       "Falha ao buscar intensidade de carbono para br-sudeste: CARBON_API_URL não configurada.",
@@ -61,7 +64,7 @@ describe("CarbonApiService", () => {
 
   it("falha quando a API responde com erro HTTP", async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 503 } as Response);
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
       "Falha ao buscar intensidade de carbono para br-sudeste: HTTP Status 503",
@@ -77,7 +80,7 @@ describe("CarbonApiService", () => {
       ok: true,
       json: () => Promise.resolve(corpo),
     } as Response);
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
       "Resposta inválida da API de intensidade de carbono.",
@@ -86,16 +89,16 @@ describe("CarbonApiService", () => {
 
   it("falha quando a API está fora do ar", async () => {
     fetchMock.mockRejectedValue(new TypeError("fetch failed"));
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
-      "Falha ao buscar intensidade de carbono para br-sudeste: fetch failed",
+      "Falha ao buscar intensidade de carbono para br-sudeste: Não foi possível conectar para consultar a API de intensidade de carbono.",
     );
   });
 
   it("usa uma mensagem genérica quando o erro não é uma instância de Error", async () => {
     fetchMock.mockRejectedValue("conexão recusada");
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
       "Falha ao buscar intensidade de carbono para br-sudeste: Erro desconhecido",
@@ -115,7 +118,7 @@ describe("CarbonApiService", () => {
           );
         }),
     );
-    const service = new CarbonApiService();
+    const service = new CarbonApiService(registro);
 
     const resultado = service.obterIntensidadeCarbono("br-sudeste");
     const verificacao = expect(resultado).rejects.toThrow(
@@ -124,5 +127,31 @@ describe("CarbonApiService", () => {
 
     await jest.advanceTimersByTimeAsync(8000);
     await verificacao;
+  });
+
+  it("registra a consulta bem-sucedida no registro de integrações", async () => {
+    const service = new CarbonApiService(registro);
+
+    await service.obterIntensidadeCarbono("br-sudeste");
+
+    expect(registro.obter("apiCarbono")).toMatchObject({
+      sucesso: true,
+      mensagemErro: null,
+    });
+  });
+
+  it("registra a falha da consulta e mantém o erro para quem chamou", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 503 } as Response);
+    const service = new CarbonApiService(registro);
+
+    await expect(service.obterIntensidadeCarbono("br-sudeste")).rejects.toThrow(
+      "HTTP Status 503",
+    );
+
+    expect(registro.obter("apiCarbono")).toMatchObject({
+      sucesso: false,
+      mensagemErro:
+        "Falha ao buscar intensidade de carbono para br-sudeste: HTTP Status 503",
+    });
   });
 });

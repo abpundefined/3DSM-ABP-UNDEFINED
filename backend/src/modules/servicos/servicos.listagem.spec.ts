@@ -1,17 +1,29 @@
 jest.mock("@nestjs/config", () => ({ ConfigService: class ConfigService {} }));
-jest.mock("../../database/prisma.service", () => ({
-  PrismaService: class PrismaService {},
+jest.mock("./servicos.repository", () => ({
+  ServicosRepository: class ServicosRepository {},
 }));
 
 import { ConfigService } from "@nestjs/config";
-import { PrismaService } from "../../database/prisma.service";
+import type { CalculosService } from "../calculos/calculos.service";
+import { ServicosRepository } from "./servicos.repository";
+import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosService } from "./servicos.service";
 
 describe("ServicosService.listarServicos", () => {
-  const findMany = jest.fn();
+  const listarComLocalizacao = jest.fn();
+  const componentes = {
+    cpuW: 0.25,
+    memoriaW: 0.75,
+    discoW: 0.1,
+    redeW: 0.1,
+    totalW: 1.2,
+  };
+  const calcularPotencia = jest.fn().mockReturnValue(componentes);
   const service = new ServicosService(
-    { servico: { findMany } } as unknown as PrismaService,
+    { listarComLocalizacao } as unknown as ServicosRepository,
     {} as ConfigService,
+    new RegistroIntegracoesService(),
+    { calcularPotencia } as unknown as CalculosService,
   );
 
   const servicoBase = {
@@ -25,6 +37,16 @@ describe("ServicosService.listarServicos", () => {
     ultimaVezListadoEm: new Date("2026-11-08T00:00:00.000Z"),
     atualizadoEm: new Date("2026-11-08T00:00:00.000Z"),
   };
+  const coletaRecente = {
+    emissaoGCo2e: 20,
+    intervaloColetaSegundos: 3600,
+    cpuPercent: 50,
+    memoryGb: 2,
+    diskGb: 10,
+    networkGb: 5,
+    estadoColeta: "SUCESSO",
+    estadoCalculo: "CONCLUIDO",
+  };
 
   const regiaoSudeste = {
     codigo: "br-sudeste",
@@ -37,22 +59,26 @@ describe("ServicosService.listarServicos", () => {
   };
 
   beforeEach(() => {
-    findMany.mockReset();
+    listarComLocalizacao.mockReset();
+    calcularPotencia.mockReset().mockReturnValue(componentes);
   });
 
   it("busca os serviços com a região, do mais recente ao mais antigo", async () => {
-    findMany.mockResolvedValue([]);
+    listarComLocalizacao.mockResolvedValue([]);
 
     await service.listarServicos();
 
-    expect(findMany).toHaveBeenCalledWith({
-      orderBy: { atualizadoEm: "desc" },
-      include: { regiao: true },
-    });
+    expect(listarComLocalizacao).toHaveBeenCalledWith();
   });
 
   it("devolve país, região e cidade de cada serviço", async () => {
-    findMany.mockResolvedValue([{ ...servicoBase, regiao: regiaoSudeste }]);
+    listarComLocalizacao.mockResolvedValue([
+      {
+        ...servicoBase,
+        coletas: [coletaRecente],
+        regiao: regiaoSudeste,
+      },
+    ]);
 
     const [servico] = await service.listarServicos();
 
@@ -66,14 +92,74 @@ describe("ServicosService.listarServicos", () => {
         latitude: -23.55,
         longitude: -46.63,
       },
+      componentes,
+      selo: "B",
     });
     expect(servico).not.toHaveProperty("regiao");
+    expect(calcularPotencia).toHaveBeenCalledWith(50, 2, 10, 5);
+  });
+
+  it("retorna componentes null quando o serviço não possui coletas", async () => {
+    listarComLocalizacao.mockResolvedValue([
+      { ...servicoBase, coletas: [], regiao: regiaoSudeste },
+    ]);
+
+    const [servico] = await service.listarServicos();
+
+    expect(servico.componentes).toBeNull();
+    expect(servico.selo).toBe("—");
+  });
+
+  it.each(["SEM_METRICAS", "FALHA"])(
+    "retorna componentes null quando a última coleta tem estado %s",
+    async (estadoColeta) => {
+      listarComLocalizacao.mockResolvedValue([
+        {
+          ...servicoBase,
+          coletas: [
+            {
+              ...coletaRecente,
+              estadoColeta,
+              estadoCalculo: estadoColeta === "FALHA" ? "FALHA" : "PENDENTE",
+            },
+          ],
+          regiao: regiaoSudeste,
+        },
+      ]);
+
+      const [servico] = await service.listarServicos();
+
+      expect(servico.componentes).toBeNull();
+      expect(servico.selo).toBe("—");
+    },
+  );
+
+  it("retorna componentes null quando o cálculo da última coleta falhou", async () => {
+    listarComLocalizacao.mockResolvedValue([
+      {
+        ...servicoBase,
+        coletas: [
+          {
+            ...coletaRecente,
+            estadoColeta: "SUCESSO",
+            estadoCalculo: "FALHA",
+          },
+        ],
+        regiao: regiaoSudeste,
+      },
+    ]);
+
+    const [servico] = await service.listarServicos();
+
+    expect(servico.componentes).toBeNull();
+    expect(servico.selo).toBe("—");
   });
 
   it("mantém a cidade e as coordenadas como null quando a API não informa", async () => {
-    findMany.mockResolvedValue([
+    listarComLocalizacao.mockResolvedValue([
       {
         ...servicoBase,
+        coletas: [coletaRecente],
         regiaoCodigo: "us-east",
         regiao: {
           ...regiaoSudeste,
@@ -97,5 +183,6 @@ describe("ServicosService.listarServicos", () => {
       latitude: null,
       longitude: null,
     });
+    expect(servico).toHaveProperty("componentes", componentes);
   });
 });

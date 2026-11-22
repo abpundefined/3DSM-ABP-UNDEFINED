@@ -6,6 +6,7 @@ import { AtualizarConfiguracaoDto } from "./dto/atualizar-configuracao.dto";
 export interface ConfiguracaoAtual {
   intervaloDescobertaSegundos: number;
   intervaloColetaSegundos: number;
+  metaMensalKgCo2e: number | null;
   atualizadaEm: Date | null;
   padrao: boolean;
 }
@@ -24,6 +25,7 @@ export class ConfiguracaoService {
       return {
         intervaloDescobertaSegundos: atual.intervaloDescobertaSegundos,
         intervaloColetaSegundos: atual.intervaloColetaSegundos,
+        metaMensalKgCo2e: atual.metaMensalKgCo2e,
         atualizadaEm: atual.atualizadaEm,
         padrao: false,
       };
@@ -37,6 +39,7 @@ export class ConfiguracaoService {
     return {
       intervaloDescobertaSegundos: intervaloPadraoSegundos,
       intervaloColetaSegundos: intervaloPadraoSegundos,
+      metaMensalKgCo2e: null,
       atualizadaEm: null,
       padrao: true,
     };
@@ -48,6 +51,7 @@ export class ConfiguracaoService {
     return {
       intervaloDescobertaSegundos: salva.intervaloDescobertaSegundos,
       intervaloColetaSegundos: salva.intervaloColetaSegundos,
+      metaMensalKgCo2e: salva.metaMensalKgCo2e,
       atualizadaEm: salva.atualizadaEm,
       padrao: false,
     };

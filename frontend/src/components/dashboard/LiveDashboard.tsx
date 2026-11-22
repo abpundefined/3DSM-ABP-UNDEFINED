@@ -1,9 +1,56 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import useMetaCarbono from '../../hooks/useMetaCarbono';
+import useOportunidades from '../../hooks/useOportunidades';
+import useSerie from '../../hooks/useSerie';
 import { ApiError, apiRequest } from '../../services/api';
-import { toFiniteNumber } from '../../utils/formatters';
+import {
+  formatEmission,
+  formatEnergy,
+  toFiniteNumber,
+} from '../../utils/formatters';
+import EmissionEquivalences from '../common/EmissionEquivalences';
+import AnimatedMetricValue from '../common/AnimatedMetricValue';
+import ComposicaoEnergia from '../common/ComposicaoEnergia';
+import ContadorCo2AoVivo from '../common/ContadorCo2AoVivo';
 import FeedbackPanel from '../common/FeedbackPanel';
+import VariacaoPeriodo from '../common/VariacaoPeriodo';
+import type { PeriodoConsultado } from '../../types/mapa';
+import type { VariacaoPercentual } from '../../types/variacao';
+import {
+  ehPeriodoConsultado,
+  ehVariacaoPercentual,
+} from '../../utils/variacao';
 import Icon from '../common/Icon';
+import MethodologyLink from '../common/MethodologyLink';
+import PeriodSelector from '../common/PeriodSelector';
+import useComparisonSelection from '../../hooks/useComparisonSelection';
+import useEventosSse from '../../hooks/useEventosSse';
+import useFlipList from '../../hooks/useFlipList';
+import usePrefersReducedMotion from '../../hooks/usePrefersReducedMotion';
+import { somarComponentes } from '../../utils/composicaoEnergia';
+import {
+  aplicarEventoSseEmServicos,
+  DURACAO_PULSO_CARD_MS,
+  type EventoTempoRealSse,
+} from '../../utils/eventosSse';
+import {
+  calcularTaxaEmissaoGPorSegundo,
+  calcularTaxaPorTotalEPeriodo,
+} from '../../utils/contadorCo2';
+import { countServices } from '../../utils/serviceCounter';
 import ServiceCard from './ServiceCard';
+import ServiceCounter from './ServiceCounter';
+import ServiceQuickDrawer from './ServiceQuickDrawer';
+import PainelMetaCarbono from './PainelMetaCarbono';
+import PainelOportunidadesDashboard from '../oportunidades/PainelOportunidadesDashboard';
+import PainelDaTendencia from '../tendencia/PainelDaTendencia';
 import type {
   BackendCollection,
   BackendService,
@@ -19,6 +66,8 @@ type BackendConfiguration = {
 };
 
 type BackendIndicators = {
+  periodo?: PeriodoConsultado;
+  variacaoPercentual?: VariacaoPercentual;
   energiaTotalKwh: number;
   emissaoTotalGCo2e: number;
   servicos: {
@@ -44,17 +93,6 @@ function formatRelativeTime(date: Date, now: number) {
   const [unit, divisor] = units.find(([, size]) => seconds >= size) ?? units[3];
 
   return formatter.format(-Math.floor(seconds / divisor), unit);
-}
-
-function formatTotal(value: number | undefined) {
-  if (value === undefined) {
-    return '—';
-  }
-
-  return new Intl.NumberFormat('pt-BR', {
-    minimumFractionDigits: 4,
-    maximumFractionDigits: 4,
-  }).format(value);
 }
 
 function formatCount(value: number | undefined) {
@@ -92,7 +130,11 @@ function isBackendIndicators(value: unknown): value is BackendIndicators {
     isFiniteNumber(value.servicos.disponiveis) &&
     isFiniteNumber(value.servicos.indisponiveis) &&
     isFiniteNumber(value.servicos.semMetricas) &&
-    isFiniteNumber(value.servicos.removidos)
+    isFiniteNumber(value.servicos.removidos) &&
+    (!('variacaoPercentual' in value) ||
+      (ehVariacaoPercentual(value.variacaoPercentual) &&
+        'periodo' in value &&
+        ehPeriodoConsultado(value.periodo)))
   );
 }
 
@@ -105,155 +147,366 @@ function normalizeCollection(
 
   return {
     ...collection,
+    intervaloColetaSegundos: toFiniteNumber(collection.intervaloColetaSegundos),
+    intensidadeCarbonoGCo2ePorKwh: toFiniteNumber(
+      collection.intensidadeCarbonoGCo2ePorKwh,
+    ),
     energiaKwh: toFiniteNumber(collection.energiaKwh),
     emissaoGCo2e: toFiniteNumber(collection.emissaoGCo2e),
   };
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    return `Não foi possível consultar o backend (HTTP ${error.status}). Confira se o backend está em execução e tente novamente.`;
-  }
+type QueryStatus = 'pending' | 'ready' | 'failed';
+type ServiceStateFilter = 'all' | 'active' | 'unavailable' | 'noMetrics';
+type ServiceSort = 'default' | 'emissions' | 'energy' | 'name';
 
-  if (error instanceof TypeError) {
-    return 'Não foi possível alcançar o backend. Confira se ele está em execução e tente novamente.';
-  }
-
-  return 'O backend retornou uma resposta inesperada. Tente atualizar os dados.';
+function serviceMetricValue(
+  service: LiveService,
+  metric: 'emissions' | 'energy',
+) {
+  return metric === 'energy'
+    ? (toFiniteNumber(service.latestCollection?.energiaKwh) ??
+        toFiniteNumber(service.energiaKwh))
+    : (toFiniteNumber(service.latestCollection?.emissaoGCo2e) ??
+        toFiniteNumber(service.emissaoGCo2e));
 }
 
-export default function LiveDashboard() {
+function matchesServiceState(service: LiveService, filter: ServiceStateFilter) {
+  switch (filter) {
+    case 'active':
+      return service.estadoAtual === 'DISPONIVEL';
+    case 'unavailable':
+      return service.estadoAtual === 'INDISPONIVEL';
+    case 'noMetrics':
+      return service.estadoAtual === 'SEM_METRICAS';
+    default:
+      return true;
+  }
+}
+
+function parseServiceStateFilter(value: string): ServiceStateFilter {
+  switch (value) {
+    case 'active':
+    case 'unavailable':
+    case 'noMetrics':
+      return value;
+    default:
+      return 'all';
+  }
+}
+
+function parseServiceSort(value: string): ServiceSort {
+  switch (value) {
+    case 'emissions':
+    case 'energy':
+    case 'name':
+      return value;
+    default:
+      return 'default';
+  }
+}
+
+export default function LiveDashboard({
+  periodQuery,
+  linkSearch = '',
+}: {
+  periodQuery: string;
+  linkSearch?: string;
+}) {
   const [services, setServices] = useState<LiveService[]>([]);
   const [indicators, setIndicators] = useState<BackendIndicators>();
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [indicatorError, setIndicatorError] = useState<string | null>(null);
+  const [servicesStatus, setServicesStatus] = useState<QueryStatus>('pending');
+  const [indicatorsStatus, setIndicatorsStatus] =
+    useState<QueryStatus>('pending');
+  const [configurationStatus, setConfigurationStatus] =
+    useState<QueryStatus>('pending');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [collectionIntervalSeconds, setCollectionIntervalSeconds] = useState<
     number | null
   >(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
+    null,
+  );
+  const [drawerReturnFocusEl, setDrawerReturnFocusEl] =
+    useState<HTMLElement | null>(null);
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [serviceStateFilter, setServiceStateFilter] =
+    useState<ServiceStateFilter>('all');
+  const [serviceSort, setServiceSort] = useState<ServiceSort>('default');
   const activeRequest = useRef<object | null>(null);
+  const { estado: serie, recarregar: recarregarSerie } = useSerie(
+    periodQuery,
+    true,
+  );
+  const { estado: meta, recarregar: recarregarMeta } = useMetaCarbono(true);
+  const { estado: oportunidades, recarregar: recarregarOportunidades } =
+    useOportunidades(periodQuery, true);
+  const tendencias = useMemo(
+    () =>
+      serie.status === 'pronto'
+        ? new Map(
+            serie.dados.servicos.map(({ servicoId, serie: pontos }) => [
+              servicoId,
+              pontos.map((ponto) => ponto.emissaoGCo2e),
+            ]),
+          )
+        : null,
+    [serie],
+  );
 
-  const refresh = useCallback(async (signal?: AbortSignal) => {
-    if (activeRequest.current) {
-      return;
-    }
+  const { serviceIds, toggleService } = useComparisonSelection();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [pulsandoIds, setPulsandoIds] = useState<Record<number, boolean>>({});
+  const pulsoTimersRef = useRef<Map<number, number>>(new Map());
 
-    const requestId = {};
-    activeRequest.current = requestId;
-    setIsLoading(true);
-    setIsLoadingServices(true);
-    setErrorMessage(null);
-    setIndicatorError(null);
+  const acionarPulsoCard = useCallback(
+    (servicoId: number) => {
+      if (prefersReducedMotion) {
+        return;
+      }
 
-    const loadServices = async () => {
-      try {
-        const response = await apiRequest<BackendService[]>('/servicos', {
-          signal,
+      const timerAnterior = pulsoTimersRef.current.get(servicoId);
+      if (timerAnterior !== undefined) {
+        window.clearTimeout(timerAnterior);
+      }
+
+      setPulsandoIds((anterior) => ({
+        ...anterior,
+        [servicoId]: true,
+      }));
+
+      const novoTimer = window.setTimeout(() => {
+        pulsoTimersRef.current.delete(servicoId);
+        setPulsandoIds((anterior) => {
+          if (!anterior[servicoId]) {
+            return anterior;
+          }
+          const copia = { ...anterior };
+          delete copia[servicoId];
+          return copia;
         });
-        if (!Array.isArray(response)) {
-          throw new Error('Formato de serviços inválido.');
-        }
+      }, DURACAO_PULSO_CARD_MS);
 
-        const latestCollections = await Promise.all(
-          response.map(async (service) => {
-            try {
-              const result = await apiRequest<LatestCollectionResponse>(
-                `/coletas/servico/${service.id}/ultima-valida`,
-                { signal },
-              );
-              return [service.id, result?.dados ?? null] as const;
-            } catch (error) {
-              if (error instanceof ApiError && error.status === 404) {
-                return [service.id, null] as const;
-              }
-              throw error;
-            }
-          }),
-        );
+      pulsoTimersRef.current.set(servicoId, novoTimer);
+    },
+    [prefersReducedMotion],
+  );
 
-        if (signal?.aborted) {
-          return;
-        }
-
-        const collectionByService = new Map(latestCollections);
-        setServices(
-          response.map((service) => ({
-            ...service,
-            energiaKwh: toFiniteNumber(service.energiaKwh),
-            emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
-            latestCollection: normalizeCollection(
-              collectionByService.get(service.id) ?? null,
-            ),
-          })),
-        );
-        setLastUpdated(new Date());
-      } catch (error) {
-        if (!signal?.aborted) {
-          setErrorMessage(getErrorMessage(error));
-        }
-      } finally {
-        if (!signal?.aborted) {
-          setIsLoadingServices(false);
-        }
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      for (const timer of pulsoTimersRef.current.values()) {
+        window.clearTimeout(timer);
       }
-    };
-
-    const loadConfiguration = async () => {
-      try {
-        const configuration = await apiRequest<BackendConfiguration>(
-          '/configuracao',
-          { signal },
-        );
-        const configuredInterval = configuration?.intervaloColetaSegundos;
-
-        if (
-          !signal?.aborted &&
-          typeof configuredInterval === 'number' &&
-          Number.isSafeInteger(configuredInterval) &&
-          configuredInterval > 0
-        ) {
-          setCollectionIntervalSeconds(configuredInterval);
-        }
-      } catch {
-        // Sem a configuração, o painel deixa de informar o intervalo de coleta.
-      }
-    };
-
-    const loadIndicators = async () => {
-      try {
-        const response = await apiRequest<unknown>('/indicadores', { signal });
-        if (!isBackendIndicators(response)) {
-          throw new Error('Formato de indicadores inválido.');
-        }
-        if (!signal?.aborted) {
-          setIndicators(response);
-        }
-      } catch (error) {
-        if (!signal?.aborted) {
-          setIndicators(undefined);
-          setIndicatorError(getErrorMessage(error));
-        }
-      }
-    };
-
-    try {
-      await Promise.all([
-        loadServices(),
-        loadIndicators(),
-        loadConfiguration(),
-      ]);
-    } finally {
-      if (activeRequest.current === requestId) {
-        activeRequest.current = null;
-        if (!signal?.aborted) {
-          setIsLoading(false);
-        }
-      }
+      pulsoTimersRef.current.clear();
     }
+  }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    const timers = pulsoTimersRef.current;
+    return () => {
+      for (const timer of timers.values()) {
+        window.clearTimeout(timer);
+      }
+      timers.clear();
+    };
   }, []);
+
+  const handleEventoSse = useCallback(
+    (evento: EventoTempoRealSse) => {
+      setServices((atuais) => {
+        const resultado = aplicarEventoSseEmServicos(atuais, evento);
+        if (resultado.servicoAtualizadoId === null) {
+          return atuais;
+        }
+
+        if (evento.tipo === 'estado-alterado') {
+          const disponiveis = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'DISPONIVEL',
+          ).length;
+          const indisponiveis = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'INDISPONIVEL',
+          ).length;
+          const semMetricas = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'SEM_METRICAS',
+          ).length;
+          const removidos = resultado.servicos.filter(
+            (item) => item.estadoAtual === 'REMOVIDO',
+          ).length;
+
+          setIndicators((indAtual) =>
+            indAtual
+              ? {
+                  ...indAtual,
+                  servicos: {
+                    ...indAtual.servicos,
+                    disponiveis,
+                    indisponiveis,
+                    semMetricas,
+                    removidos,
+                  },
+                }
+              : indAtual,
+          );
+        } else if (evento.coleta.estadoColeta === 'SUCESSO') {
+          setIndicators((indAtual) => {
+            if (!indAtual) {
+              return indAtual;
+            }
+            const deltaEnergia = evento.coleta.energiaKwh ?? 0;
+            const deltaEmissao = evento.coleta.emissaoGCo2e ?? 0;
+            return {
+              ...indAtual,
+              energiaTotalKwh: indAtual.energiaTotalKwh + deltaEnergia,
+              emissaoTotalGCo2e: indAtual.emissaoTotalGCo2e + deltaEmissao,
+            };
+          });
+        }
+
+        return resultado.servicos;
+      });
+      setLastUpdated(new Date());
+      acionarPulsoCard(evento.servicoId);
+    },
+    [acionarPulsoCard],
+  );
+
+  const { status: statusSse } = useEventosSse({
+    onEvento: handleEventoSse,
+  });
+
+  const refresh = useCallback(
+    async (signal?: AbortSignal) => {
+      if (activeRequest.current) {
+        return;
+      }
+
+      const requestId = {};
+      activeRequest.current = requestId;
+      setIsLoading(true);
+      setIsLoadingServices(true);
+
+      const loadServices = async () => {
+        try {
+          const response = await apiRequest<BackendService[]>('/servicos', {
+            signal,
+          });
+          if (!Array.isArray(response)) {
+            throw new Error('Formato de serviços inválido.');
+          }
+
+          const latestCollections = await Promise.all(
+            response.map(async (service) => {
+              try {
+                const result = await apiRequest<LatestCollectionResponse>(
+                  `/coletas/servico/${service.id}/ultima-valida`,
+                  { signal },
+                );
+                return [service.id, result?.dados ?? null] as const;
+              } catch (error) {
+                if (error instanceof ApiError && error.status === 404) {
+                  return [service.id, null] as const;
+                }
+                throw error;
+              }
+            }),
+          );
+
+          if (signal?.aborted) {
+            return;
+          }
+
+          const collectionByService = new Map(latestCollections);
+          setServices(
+            response.map((service) => ({
+              ...service,
+              energiaKwh: toFiniteNumber(service.energiaKwh),
+              emissaoGCo2e: toFiniteNumber(service.emissaoGCo2e),
+              latestCollection: normalizeCollection(
+                collectionByService.get(service.id) ?? null,
+              ),
+            })),
+          );
+          setLastUpdated(new Date());
+          setServicesStatus('ready');
+        } catch {
+          if (!signal?.aborted) {
+            setServicesStatus('failed');
+          }
+        } finally {
+          if (!signal?.aborted) {
+            setIsLoadingServices(false);
+          }
+        }
+      };
+
+      const loadConfiguration = async () => {
+        try {
+          const configuration = await apiRequest<BackendConfiguration>(
+            '/configuracao',
+            { signal },
+          );
+          const configuredInterval = configuration?.intervaloColetaSegundos;
+
+          if (signal?.aborted) {
+            return;
+          }
+          if (
+            typeof configuredInterval !== 'number' ||
+            !Number.isSafeInteger(configuredInterval) ||
+            configuredInterval <= 0
+          ) {
+            throw new Error('Intervalo de coleta inválido.');
+          }
+          setCollectionIntervalSeconds(configuredInterval);
+          setConfigurationStatus('ready');
+        } catch {
+          if (!signal?.aborted) {
+            setCollectionIntervalSeconds(null);
+            setConfigurationStatus('failed');
+          }
+        }
+      };
+
+      const loadIndicators = async () => {
+        try {
+          const response = await apiRequest<unknown>(
+            `/indicadores${periodQuery}`,
+            { signal },
+          );
+          if (!isBackendIndicators(response)) {
+            throw new Error('Formato de indicadores inválido.');
+          }
+          if (!signal?.aborted) {
+            setIndicators(response);
+            setIndicatorsStatus('ready');
+          }
+        } catch {
+          if (!signal?.aborted) {
+            setIndicatorsStatus('failed');
+          }
+        }
+      };
+
+      try {
+        await Promise.all([
+          loadServices(),
+          loadIndicators(),
+          loadConfiguration(),
+        ]);
+      } finally {
+        if (activeRequest.current === requestId) {
+          activeRequest.current = null;
+          if (!signal?.aborted) {
+            setIsLoading(false);
+          }
+        }
+      }
+    },
+    [periodQuery],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -285,15 +538,124 @@ export default function LiveDashboard() {
     .filter((date) => Number.isFinite(date.getTime()))
     .sort((left, right) => right.getTime() - left.getTime())[0];
 
+  const selectedService =
+    selectedServiceId === null
+      ? null
+      : (services.find((service) => service.id === selectedServiceId) ?? null);
+  const normalizedSearch = serviceSearch.trim().toLocaleLowerCase('pt-BR');
+  const filteredServices = services.filter(
+    (service) =>
+      service.nome.toLocaleLowerCase('pt-BR').includes(normalizedSearch) &&
+      matchesServiceState(service, serviceStateFilter),
+  );
+  const visibleServices =
+    serviceSort === 'default'
+      ? filteredServices
+      : [...filteredServices].sort((left, right) => {
+          if (serviceSort === 'name') {
+            return left.nome.localeCompare(right.nome, 'pt-BR');
+          }
+
+          const leftValue = serviceMetricValue(left, serviceSort);
+          const rightValue = serviceMetricValue(right, serviceSort);
+          if (leftValue === null || rightValue === null) {
+            if (leftValue === rightValue) {
+              return left.nome.localeCompare(right.nome, 'pt-BR');
+            }
+            return leftValue === null ? 1 : -1;
+          }
+          return rightValue - leftValue;
+        });
+
+  const handleSelectService = useCallback(
+    (service: LiveService, triggerElement: HTMLElement | null) => {
+      setDrawerReturnFocusEl(triggerElement);
+      setSelectedServiceId(service.id);
+    },
+    [],
+  );
+
+  const handleCloseDrawer = useCallback(() => {
+    setSelectedServiceId(null);
+  }, []);
+
+  const failedQueries = [
+    servicesStatus === 'failed' ? 'os serviços' : null,
+    indicatorsStatus === 'failed' ? 'os indicadores' : null,
+    configurationStatus === 'failed' ? 'o intervalo de coleta' : null,
+  ].filter((label): label is string => label !== null);
+  const hasError = failedQueries.length > 0;
+  const isUnavailable = failedQueries.length === 3;
+  const hasPreviousData = lastUpdated !== null || indicators !== undefined;
+  const isConnecting =
+    !hasError &&
+    [servicesStatus, indicatorsStatus, configurationStatus].includes('pending');
+  const connectionTitle = isUnavailable
+    ? hasPreviousData
+      ? 'Backend indisponível — exibindo os últimos dados válidos'
+      : 'Backend indisponível — ainda não há dados válidos'
+    : hasError
+      ? 'Falha parcial nas consultas ao backend'
+      : isConnecting
+        ? 'Conectando ao backend'
+        : 'Dados conectados ao backend';
+  const failedLabels = failedQueries.join(', ').replace(/, ([^,]*)$/, ' e $1');
+  const errorDescription = isUnavailable
+    ? 'Tente atualizar novamente em instantes.'
+    : `Não foi possível atualizar ${failedLabels}; tente novamente em instantes.`;
+  const indicatorsDescription =
+    indicatorsStatus === 'failed' && indicators !== undefined
+      ? 'Últimos dados válidos · coletas calculadas no período analisado'
+      : 'Coletas calculadas no período analisado';
+
+  const serviceCount = countServices(services);
+  const taxaEmissaoAtual = useMemo(() => {
+    const taxaPorServicos = calcularTaxaEmissaoGPorSegundo(
+      services.map((service) => ({
+        emissaoGCo2e:
+          toFiniteNumber(service.latestCollection?.emissaoGCo2e) ??
+          toFiniteNumber(service.emissaoGCo2e),
+        intervaloSegundos: toFiniteNumber(
+          service.latestCollection?.intervaloColetaSegundos,
+        ),
+      })),
+      collectionIntervalSeconds,
+    );
+    if (taxaPorServicos > 0) {
+      return taxaPorServicos;
+    }
+    return calcularTaxaPorTotalEPeriodo(
+      indicators?.emissaoTotalGCo2e,
+      indicators?.periodo,
+    );
+  }, [
+    collectionIntervalSeconds,
+    indicators?.emissaoTotalGCo2e,
+    indicators?.periodo,
+    services,
+  ]);
+  const serviceCardsListRef = useFlipList<HTMLUListElement>(
+    visibleServices.map((service) => service.id).join(','),
+  );
+
   return (
     <>
-      <div className="live-dashboard-toolbar">
-        <div>
+      {services.length > 0 && <ServiceCounter {...serviceCount} />}
+      <ContadorCo2AoVivo taxaGPorSegundo={taxaEmissaoAtual} />
+      <div className="live-dashboard-toolbar" data-sse-status={statusSse}>
+        <div
+          className={
+            hasError ? 'live-connection-error live-refresh-error' : undefined
+          }
+          role={hasError ? 'alert' : 'status'}
+          aria-atomic="true"
+        >
           <span className="demo-toolbar-icon">
-            <Icon name="info" />
+            <Icon name={hasError ? 'alert' : 'info'} />
           </span>
           <div>
-            <strong>Dados conectados ao backend</strong>
+            <strong>{connectionTitle}</strong>
+            {hasError && <p>{errorDescription}</p>}
             <p>
               {collectionIntervalSeconds === null
                 ? 'Painel atualizado a cada 30 segundos.'
@@ -304,7 +666,12 @@ export default function LiveDashboard() {
         <button
           className="button button--accent"
           type="button"
-          onClick={() => void refresh()}
+          onClick={() => {
+            void refresh();
+            recarregarSerie();
+            recarregarMeta();
+            recarregarOportunidades();
+          }}
           disabled={isLoading}
         >
           Atualizar agora
@@ -315,22 +682,39 @@ export default function LiveDashboard() {
       <section aria-label="Indicadores gerais" className="metrics-grid">
         <MetricSummary
           label="Consumo energético total"
-          value={formatTotal(indicators?.energiaTotalKwh)}
-          description="Coletas calculadas nas últimas 24 horas · kWh"
+          value={formatEnergy(toFiniteNumber(indicators?.energiaTotalKwh))}
+          withUnit
+          description={indicatorsDescription}
           icon="bolt"
           tone="leaf"
-        />
+        >
+          {indicators?.variacaoPercentual && indicators.periodo && (
+            <VariacaoPeriodo
+              valor={indicators.variacaoPercentual.energiaKwh}
+              periodo={indicators.periodo}
+            />
+          )}
+          <MethodologyLink />
+        </MetricSummary>
         <MetricSummary
           label="Emissão total de CO₂e"
-          value={formatTotal(
-            indicators === undefined
-              ? undefined
-              : indicators.emissaoTotalGCo2e / 1000,
-          )}
-          description="Coletas calculadas nas últimas 24 horas · kgCO₂e"
+          value={formatEmission(toFiniteNumber(indicators?.emissaoTotalGCo2e))}
+          withUnit
+          description={indicatorsDescription}
           icon="cloud"
           tone="olive"
-        />
+        >
+          {indicators?.variacaoPercentual && indicators.periodo && (
+            <VariacaoPeriodo
+              valor={indicators.variacaoPercentual.emissaoGCo2e}
+              periodo={indicators.periodo}
+            />
+          )}
+          <EmissionEquivalences
+            emissaoGCo2e={toFiniteNumber(indicators?.emissaoTotalGCo2e)}
+          />
+          <MethodologyLink />
+        </MetricSummary>
         <MetricSummary
           label="Serviços ativos"
           value={formatCount(indicators?.servicos.disponiveis)}
@@ -351,10 +735,19 @@ export default function LiveDashboard() {
         />
       </section>
 
-      {indicatorError && (
-        <p className="live-refresh-error" role="alert">
-          Não foi possível carregar os indicadores. {indicatorError}
-        </p>
+      <PeriodSelector />
+
+      <PainelMetaCarbono estado={meta} onRecarregar={recarregarMeta} />
+
+      <PainelDaTendencia estado={serie} onRecarregar={recarregarSerie} />
+
+      {services.length > 0 && (
+        <ComposicaoEnergia
+          componentes={somarComponentes(
+            services.map((service) => service.componentes),
+          )}
+          subtitulo="Soma da potência estimada por recurso entre todos os serviços monitorados com coleta válida."
+        />
       )}
 
       <section
@@ -376,14 +769,15 @@ export default function LiveDashboard() {
         {isLoadingServices && services.length === 0 ? (
           <FeedbackPanel
             kind="loading"
+            skeleton="cards"
             title="Conectando ao backend"
             description="Carregando serviços e suas métricas mais recentes."
           />
-        ) : errorMessage && services.length === 0 ? (
+        ) : servicesStatus === 'failed' && services.length === 0 ? (
           <FeedbackPanel
-            kind="error"
+            kind="empty"
             title="Não foi possível carregar os dados"
-            description={errorMessage}
+            description="Os serviços aparecerão aqui após uma consulta bem-sucedida."
           >
             <button
               className="button button--primary"
@@ -401,22 +795,132 @@ export default function LiveDashboard() {
           />
         ) : (
           <>
-            {errorMessage && (
-              <p className="live-refresh-error" role="alert">
-                {errorMessage} Os dados exibidos são da última atualização
-                bem-sucedida.
+            {servicesStatus === 'failed' && (
+              <p className="chart-footnote">
+                Serviços da última atualização bem-sucedida.
               </p>
             )}
-            <ul
-              className="service-card-grid"
-              aria-label="Cards dos serviços monitorados"
-            >
-              {services.map((service) => (
-                <li key={service.id}>
-                  <ServiceCard service={service} />
-                </li>
-              ))}
-            </ul>
+            <div className="live-service-controls">
+              <label>
+                Buscar por nome
+                <input
+                  aria-label="Buscar por nome"
+                  type="search"
+                  value={serviceSearch}
+                  onChange={(event) => setServiceSearch(event.target.value)}
+                  placeholder="Ex.: API de pagamentos"
+                />
+              </label>
+              <label>
+                Estado
+                <select
+                  aria-label="Estado"
+                  value={serviceStateFilter}
+                  onChange={(event) =>
+                    setServiceStateFilter(
+                      parseServiceStateFilter(event.target.value),
+                    )
+                  }
+                >
+                  <option value="all">Todos</option>
+                  <option value="active">Ativos</option>
+                  <option value="unavailable">Indisponíveis</option>
+                  <option value="noMetrics">Sem métricas</option>
+                </select>
+              </label>
+              <label>
+                Ordenar por
+                <select
+                  aria-label="Ordenar por"
+                  value={serviceSort}
+                  onChange={(event) =>
+                    setServiceSort(parseServiceSort(event.target.value))
+                  }
+                >
+                  <option value="default">Ordem original</option>
+                  <option value="emissions">Emissão (maior primeiro)</option>
+                  <option value="energy">Consumo (maior primeiro)</option>
+                  <option value="name">Nome (A-Z)</option>
+                </select>
+              </label>
+            </div>
+            {(normalizedSearch || serviceStateFilter !== 'all') && (
+              <div
+                className="live-service-active-filters"
+                aria-label="Filtros ativos"
+              >
+                {normalizedSearch && (
+                  <button
+                    type="button"
+                    className="live-service-filter-chip"
+                    aria-label={`Remover filtro de nome ${serviceSearch.trim()}`}
+                    onClick={() => setServiceSearch('')}
+                  >
+                    Nome: {serviceSearch.trim()}{' '}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                )}
+                {serviceStateFilter !== 'all' && (
+                  <button
+                    type="button"
+                    className="live-service-filter-chip"
+                    aria-label="Remover filtro de estado"
+                    onClick={() => setServiceStateFilter('all')}
+                  >
+                    Estado:{' '}
+                    {serviceStateFilter === 'active'
+                      ? 'Ativos'
+                      : serviceStateFilter === 'unavailable'
+                        ? 'Indisponíveis'
+                        : 'Sem métricas'}{' '}
+                    <span aria-hidden="true">×</span>
+                  </button>
+                )}
+              </div>
+            )}
+            <p className="live-service-count" role="status" aria-live="polite">
+              {visibleServices.length} de {services.length} serviços
+            </p>
+            {visibleServices.length === 0 ? (
+              <FeedbackPanel
+                kind="empty"
+                title="Nenhum serviço encontrado"
+                description="Tente outro nome ou altere o filtro de estado."
+              >
+                <button
+                  className="button button--primary"
+                  type="button"
+                  onClick={() => {
+                    setServiceSearch('');
+                    setServiceStateFilter('all');
+                  }}
+                >
+                  Limpar filtros
+                </button>
+              </FeedbackPanel>
+            ) : (
+              <ul
+                ref={serviceCardsListRef}
+                className="service-card-grid"
+                aria-label="Cards dos serviços monitorados"
+              >
+                {visibleServices.map((service) => (
+                  <li key={service.id} data-flip-id={service.id}>
+                    <ServiceCard
+                      service={service}
+                      onSelect={handleSelectService}
+                      tendencia={tendencias?.get(service.id)}
+                      comparisonSelected={serviceIds.includes(service.id)}
+                      onToggleComparison={toggleService}
+                      pulsando={
+                        !prefersReducedMotion &&
+                        Boolean(pulsandoIds[service.id])
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="chart-footnote">
               {latestCollectionDate
                 ? `Coleta válida mais recente: ${formatRelativeTime(latestCollectionDate, now)} (${latestCollectionDate.toLocaleString('pt-BR')}).`
@@ -425,6 +929,19 @@ export default function LiveDashboard() {
           </>
         )}
       </section>
+
+      <PainelOportunidadesDashboard
+        estado={oportunidades}
+        linkSearch={linkSearch}
+        onRecarregar={recarregarOportunidades}
+      />
+
+      <ServiceQuickDrawer
+        service={selectedService}
+        collectionIntervalSeconds={collectionIntervalSeconds}
+        returnFocusTo={drawerReturnFocusEl}
+        onClose={handleCloseDrawer}
+      />
     </>
   );
 }
@@ -432,15 +949,19 @@ export default function LiveDashboard() {
 function MetricSummary({
   label,
   value,
+  withUnit = false,
   description,
   icon,
   tone,
+  children,
 }: {
   label: string;
-  value: number | string;
+  value: string;
+  withUnit?: boolean;
   description: string;
   icon: 'server' | 'bolt' | 'cloud' | 'alert';
   tone: 'forest' | 'leaf' | 'olive';
+  children?: ReactNode;
 }) {
   return (
     <div className={`metric-card metric-card--${tone}`}>
@@ -450,8 +971,11 @@ function MetricSummary({
           <Icon name={icon} />
         </span>
       </div>
-      <p className="metric-value">{value}</p>
+      <p className="metric-value">
+        <AnimatedMetricValue value={value} withUnit={withUnit} />
+      </p>
       <p className="metric-description">{description}</p>
+      {children}
     </div>
   );
 }

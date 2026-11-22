@@ -29,12 +29,14 @@ describe("ConfiguracaoService", () => {
       id: 1,
       intervaloDescobertaSegundos: 120,
       intervaloColetaSegundos: 60,
+      metaMensalKgCo2e: null,
       atualizadaEm,
     });
 
     await expect(criarService().obter()).resolves.toEqual({
       intervaloDescobertaSegundos: 120,
       intervaloColetaSegundos: 60,
+      metaMensalKgCo2e: null,
       atualizadaEm,
       padrao: false,
     });
@@ -46,6 +48,7 @@ describe("ConfiguracaoService", () => {
     await expect(criarService().obter()).resolves.toEqual({
       intervaloDescobertaSegundos: 30,
       intervaloColetaSegundos: 30,
+      metaMensalKgCo2e: null,
       atualizadaEm: null,
       padrao: true,
     });
@@ -58,26 +61,31 @@ describe("ConfiguracaoService", () => {
     const resultado = await criarService().obter();
 
     expect(resultado.intervaloColetaSegundos).toBe(30);
+    expect(resultado.metaMensalKgCo2e).toBeNull();
     expect(resultado.padrao).toBe(true);
   });
 
-  it("salva os novos intervalos e retorna a configuração atualizada", async () => {
-    const dto = {
-      intervaloDescobertaSegundos: 300,
-      intervaloColetaSegundos: 45,
-    };
-    const atualizadaEm = new Date("2026-11-08T03:10:00Z");
-    configuracaoRepository.salvar.mockResolvedValue({
-      id: 1,
-      ...dto,
-      atualizadaEm,
-    });
+  it.each([500.5, null])(
+    "salva a configuração com meta mensal %s",
+    async (metaMensalKgCo2e) => {
+      const dto = {
+        intervaloDescobertaSegundos: 300,
+        intervaloColetaSegundos: 45,
+        metaMensalKgCo2e,
+      };
+      const atualizadaEm = new Date("2026-11-08T03:10:00Z");
+      configuracaoRepository.salvar.mockResolvedValue({
+        id: 1,
+        ...dto,
+        atualizadaEm,
+      });
 
-    await expect(criarService().atualizar(dto)).resolves.toEqual({
-      ...dto,
-      atualizadaEm,
-      padrao: false,
-    });
-    expect(configuracaoRepository.salvar).toHaveBeenCalledWith(dto);
-  });
+      await expect(criarService().atualizar(dto)).resolves.toEqual({
+        ...dto,
+        atualizadaEm,
+        padrao: false,
+      });
+      expect(configuracaoRepository.salvar).toHaveBeenCalledWith(dto);
+    },
+  );
 });

@@ -1,0 +1,45 @@
+.globo-3d-tv {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.globo-3d-tv-palco {
+  position: relative;
+  width: min(100%, 520px);
+  aspect-ratio: 1;
+}
+
+.globo-3d-tv-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.globo-3d-tv-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.globo-3d-tv-selo {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px;
+  border: 1px solid rgb(139 212 154 / 35%);
+  border-radius: 999px;
+  background: rgb(12 23 17 / 82%);
+  color: #e7f6ea;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.mapa-tv-fallback-nota {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

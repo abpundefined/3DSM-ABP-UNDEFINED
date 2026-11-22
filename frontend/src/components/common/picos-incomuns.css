@@ -1,0 +1,76 @@
+.picos-incomuns {
+  --pico-bg: #fff7ed;
+  --pico-border: #c2410c;
+  --pico-accent: #9a3412;
+
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--pico-border);
+  border-radius: 10px;
+  background: var(--pico-bg);
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .picos-incomuns {
+  --pico-bg: #2e1d14;
+  --pico-border: #fb923c;
+  --pico-accent: #fdba74;
+}
+
+.picos-incomuns-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.picos-incomuns-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--pico-accent);
+  font-size: 13px;
+}
+
+.picos-incomuns-titulo .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.picos-incomuns-limiar {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.picos-incomuns-lista {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picos-incomuns-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.picos-incomuns-anotacao {
+  color: var(--pico-accent);
+  font-weight: 650;
+}
+
+.picos-incomuns-detalhe {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   page,
@@ -21,6 +22,7 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
             latitude: -23.55,
             longitude: -46.63,
           },
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
         {
@@ -36,6 +38,7 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
             latitude: null,
             longitude: null,
           },
+          selo: '—',
           estadoAtual: 'INDISPONIVEL',
         },
       ]),
@@ -107,21 +110,195 @@ test('dashboard consulta o backend e exibe serviços e última coleta', async ({
   await expect(billing).toContainText('2,75 GB');
   await expect(billing).toContainText('15,00 GB');
   await expect(billing).toContainText('0,50 GB');
-  await expect(billing).toContainText('1,2346 kWh');
-  await expect(billing).toContainText('1,2346 kgCO₂e');
+  await expect(billing).toContainText('1,23 kWh');
+  await expect(billing).toContainText('1,23 kgCO₂e');
 
   const payment = cards.getByRole('article', { name: 'Payment API' });
   await expect(payment).toContainText('Indisponível');
   await expect(payment).toContainText('Irlanda · Leinster');
   await expect(payment).toContainText('Cidade não informada');
-  await expect(payment.getByText('—', { exact: true })).toHaveCount(6);
+  await expect(
+    payment.getByRole('img', {
+      name: 'Selo de eficiência —: Sem coleta válida no período',
+    }),
+  ).toBeVisible();
+  await expect(payment.getByText('—', { exact: true })).toHaveCount(7);
   const indicators = page.getByLabel('Indicadores gerais');
-  await expect(indicators).toContainText('3,7500');
-  await expect(indicators).toContainText('2,3450');
+  await expect(indicators).toContainText('3,75');
+  await expect(indicators).toContainText('2,35');
   await expect(indicators.getByText('Serviços ativos')).toBeVisible();
   await expect(indicators.getByText('Serviços indisponíveis')).toBeVisible();
   await expect(indicators.getByText('1', { exact: true })).toHaveCount(2);
   await expect(indicators).toContainText('1 sem métricas · 0 removidos');
+});
+
+test('lista conectada filtra e ordena serviços pelos dados retornados', async ({
+  page,
+}, testInfo) => {
+  const services = [
+    {
+      id: 21,
+      idExterno: 'beta',
+      nome: 'Beta API',
+      regiaoCodigo: 'br-sudeste',
+      selo: 'D',
+      estadoAtual: 'INDISPONIVEL',
+      energiaKwh: 4,
+      emissaoGCo2e: 1000,
+    },
+    {
+      id: 22,
+      idExterno: 'alpha',
+      nome: 'Alpha API',
+      regiaoCodigo: 'br-sudeste',
+      selo: 'E',
+      estadoAtual: 'DISPONIVEL',
+      energiaKwh: 2,
+      emissaoGCo2e: 2000,
+    },
+    {
+      id: 23,
+      idExterno: 'gamma',
+      nome: 'Gamma API',
+      regiaoCodigo: 'br-sudeste',
+      selo: '—',
+      estadoAtual: 'SEM_METRICAS',
+      energiaKwh: null,
+      emissaoGCo2e: null,
+    },
+    {
+      id: 24,
+      idExterno: 'delta',
+      nome: 'Delta API',
+      regiaoCodigo: 'br-sudeste',
+      selo: 'C',
+      estadoAtual: 'DISPONIVEL',
+      energiaKwh: 1,
+      emissaoGCo2e: 500,
+    },
+    {
+      id: 25,
+      idExterno: 'archive',
+      nome: 'Archive API',
+      regiaoCodigo: 'br-sudeste',
+      selo: 'B',
+      estadoAtual: 'REMOVIDO',
+      energiaKwh: 8,
+      emissaoGCo2e: 4000,
+    },
+  ];
+  await page.route('**/api/servicos', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(services),
+    }),
+  );
+  await page.route('**/api/coletas/servico/*/ultima-valida', (route) =>
+    route.fulfill({ status: 404 }),
+  );
+  await page.route('**/api/indicadores', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        energiaTotalKwh: 15,
+        emissaoTotalGCo2e: 7500,
+        servicos: {
+          disponiveis: 2,
+          indisponiveis: 1,
+          semMetricas: 1,
+          removidos: 1,
+        },
+      }),
+    }),
+  );
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ intervaloColetaSegundos: 60 }),
+    }),
+  );
+
+  await page.goto('/');
+  const cards = page.getByRole('list', {
+    name: 'Cards dos serviços monitorados',
+  });
+  const serviceNames = () => cards.locator('h3').allTextContents();
+  await expect(cards.getByRole('listitem')).toHaveCount(5);
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Beta API',
+      'Alpha API',
+      'Gamma API',
+      'Delta API',
+      'Archive API',
+    ]);
+
+  await page.getByLabel('Ordenar por').selectOption('emissions');
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Archive API',
+      'Alpha API',
+      'Beta API',
+      'Delta API',
+      'Gamma API',
+    ]);
+  await page.getByLabel('Ordenar por').selectOption('energy');
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Archive API',
+      'Beta API',
+      'Alpha API',
+      'Delta API',
+      'Gamma API',
+    ]);
+  await page.getByLabel('Ordenar por').selectOption('name');
+  await expect
+    .poll(serviceNames)
+    .toEqual([
+      'Alpha API',
+      'Archive API',
+      'Beta API',
+      'Delta API',
+      'Gamma API',
+    ]);
+
+  await page.getByLabel('Estado', { exact: true }).selectOption('active');
+  await expect.poll(serviceNames).toEqual(['Alpha API', 'Delta API']);
+  await page.getByLabel('Buscar por nome').fill('alpha');
+  await expect.poll(serviceNames).toEqual(['Alpha API']);
+  await expect(
+    page.getByRole('button', { name: 'Remover filtro de nome alpha' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Remover filtro de estado' }),
+  ).toBeVisible();
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+  if (testInfo.project.name === 'desktop') {
+    await page.screenshot({
+      path: testInfo.outputPath('p04-depois.png'),
+      fullPage: true,
+    });
+  }
+  await page
+    .getByRole('button', { name: 'Remover filtro de nome alpha' })
+    .click();
+  await expect.poll(serviceNames).toEqual(['Alpha API', 'Delta API']);
+  await page.getByRole('button', { name: 'Remover filtro de estado' }).click();
+  await expect(cards.getByRole('listitem')).toHaveCount(5);
+
+  await page.getByLabel('Estado', { exact: true }).selectOption('unavailable');
+  await expect.poll(serviceNames).toEqual(['Beta API']);
+  await page.getByLabel('Estado', { exact: true }).selectOption('noMetrics');
+  await expect.poll(serviceNames).toEqual(['Gamma API']);
 });
 
 test('falha nos indicadores não impede os cards e recuperação na atualização', async ({
@@ -156,6 +333,7 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
           idExterno: 'billing-api',
           nome: 'Billing API',
           regiaoCodigo: 'br-sudeste',
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
       ]),
@@ -164,11 +342,18 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
   await page.route('**/api/coletas/servico/12/ultima-valida', (route) =>
     route.fulfill({ status: 404 }),
   );
+  await page.route('**/api/configuracao', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ intervaloColetaSegundos: 60 }),
+    }),
+  );
   await page.goto('/');
 
   const indicators = page.getByLabel('Indicadores gerais');
   await expect(page.getByRole('alert')).toContainText(
-    'Não foi possível carregar os indicadores',
+    'Não foi possível atualizar os indicadores',
   );
   await expect(indicators.getByText('—', { exact: true })).toHaveCount(4);
   await expect(
@@ -177,16 +362,17 @@ test('falha nos indicadores não impede os cards e recuperação na atualizaçã
 
   indicatorsFail = false;
   await page.getByRole('button', { name: 'Atualizar agora' }).click();
-  await expect(indicators).toContainText('2,0000');
+  await expect(indicators).toContainText('2,00');
   await expect(indicators).toContainText('2 sem métricas · 3 removidos');
   await expect(page.getByRole('alert')).toHaveCount(0);
 
   indicatorsFail = true;
   await page.getByRole('button', { name: 'Atualizar agora' }).click();
   await expect(page.getByRole('alert')).toContainText(
-    'Não foi possível carregar os indicadores',
+    'Não foi possível atualizar os indicadores',
   );
-  await expect(indicators.getByText('—', { exact: true })).toHaveCount(4);
+  await expect(indicators).toContainText('2,00');
+  await expect(indicators).toContainText('Últimos dados válidos');
   await expect(page.getByText('Billing API')).toBeVisible();
 });
 
@@ -213,7 +399,7 @@ test('indicadores continuam disponíveis quando a consulta de serviços falha', 
     }),
   );
   await page.goto('/');
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('5,0000');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('5,00');
   await expect(page.getByLabel('Indicadores gerais')).toContainText(
     '0 sem métricas · 4 removidos',
   );
@@ -260,7 +446,7 @@ test('os cards não esperam a resposta lenta dos indicadores', async ({
   } finally {
     releaseIndicators();
   }
-  await expect(page.getByLabel('Indicadores gerais')).toContainText('0,0000');
+  await expect(page.getByLabel('Indicadores gerais')).toContainText('0 Wh');
 });
 
 test('resposta inválida dos indicadores é sinalizada sem ocultar os serviços', async ({
@@ -282,7 +468,7 @@ test('resposta inválida dos indicadores é sinalizada sem ocultar os serviços'
   );
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText(
-    'Não foi possível carregar os indicadores',
+    'Não foi possível atualizar os indicadores',
   );
   await expect(
     page.getByRole('heading', { name: 'Nenhum serviço encontrado' }),
@@ -306,6 +492,7 @@ test('serviço sem localização usa o código da região e não quebra o card',
           nome: 'Legacy API',
           regiaoCodigo: 'jp-east',
           localizacao: null,
+          selo: '—',
           estadoAtual: 'SEM_METRICAS',
         },
       ]),

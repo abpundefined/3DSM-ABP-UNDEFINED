@@ -43,6 +43,7 @@ Um item exclusivamente documental não exige inventar um teste de aplicação: r
 - [ ] Há feedback para carregamento, vazio, erro e indisponibilidade pertinentes.
 - [ ] Estados críticos têm texto/ícone, sem depender apenas de cor; unidades/datas são compreensíveis.
 - [ ] A interface foi verificada nos tamanhos de tela previstos; evidências foram registradas.
+- [ ] Toda página nova funciona com `?demo=1`, sem chamar o backend, com E2E que confirme a ausência de chamadas a `/api`.
 
 ### Git e revisão
 

@@ -11,6 +11,15 @@ jest.mock("./modules/configuracao/configuracao.service", () => ({
 jest.mock("./modules/indicadores/indicadores.service", () => ({
   IndicadoresService: class IndicadoresService {},
 }));
+jest.mock("./modules/indicadores/ranking.service", () => ({
+  RankingService: class RankingService {},
+}));
+jest.mock("./modules/mapa/mapa.service", () => ({
+  MapaService: class MapaService {},
+}));
+jest.mock("./modules/saude/saude.service", () => ({
+  SaudeService: class SaudeService {},
+}));
 jest.mock("./modules/servicos/servicos.service", () => ({
   ServicosService: class ServicosService {},
 }));
@@ -18,6 +27,7 @@ jest.mock("./modules/servicos/servicos.service", () => ({
 import { INestApplication } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { Server } from "node:http";
 import * as request from "supertest";
 import { AppController } from "./app.controller";
@@ -30,8 +40,17 @@ import { ConfiguracaoController } from "./modules/configuracao/configuracao.cont
 import { ConfiguracaoService } from "./modules/configuracao/configuracao.service";
 import { IndicadoresController } from "./modules/indicadores/indicadores.controller";
 import { IndicadoresService } from "./modules/indicadores/indicadores.service";
+import { IntensidadeController } from "./modules/indicadores/intensidade.controller";
+import { RankingController } from "./modules/indicadores/ranking.controller";
+import { RankingService } from "./modules/indicadores/ranking.service";
+import { MapaController } from "./modules/mapa/mapa.controller";
+import { MapaService } from "./modules/mapa/mapa.service";
+import { SaudeController } from "./modules/saude/saude.controller";
+import { SaudeService } from "./modules/saude/saude.service";
 import { ServicosController } from "./modules/servicos/servicos.controller";
 import { ServicosService } from "./modules/servicos/servicos.service";
+import { OPCOES_LIMITE_LOGIN } from "./modules/auth/limite-login";
+import { configurarSeguranca } from "./seguranca";
 import { configurarSwagger } from "./swagger";
 
 describe("Swagger", () => {
@@ -39,12 +58,17 @@ describe("Swagger", () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
+      imports: [ThrottlerModule.forRoot(OPCOES_LIMITE_LOGIN)],
       controllers: [
         AppController,
         AuthController,
         ColetasController,
         ConfiguracaoController,
         IndicadoresController,
+        IntensidadeController,
+        RankingController,
+        MapaController,
+        SaudeController,
         ServicosController,
       ],
       providers: [
@@ -53,11 +77,15 @@ describe("Swagger", () => {
         { provide: ColetasService, useValue: {} },
         { provide: ConfiguracaoService, useValue: {} },
         { provide: IndicadoresService, useValue: {} },
+        { provide: RankingService, useValue: {} },
+        { provide: MapaService, useValue: {} },
+        { provide: SaudeService, useValue: {} },
         { provide: ServicosService, useValue: {} },
         { provide: JwtService, useValue: {} },
       ],
     }).compile();
     app = module.createNestApplication();
+    configurarSeguranca(app, ["http://localhost:5173"]);
     configurarSwagger(app);
     await app.init();
   });
@@ -119,6 +147,10 @@ describe("Swagger", () => {
       ["/coletas/{id}", "get"],
       ["/coletas/servico/{servicoId}/ultima-valida", "get"],
       ["/indicadores", "get"],
+      ["/intensidade/horarios", "get"],
+      ["/ranking", "get"],
+      ["/mapa", "get"],
+      ["/saude", "get"],
       ["/configuracao", "get"],
       ["/configuracao", "put"],
     ]) {
@@ -126,10 +158,92 @@ describe("Swagger", () => {
     }
     expect(document.paths["/indicadores"].get.parameters).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: "dataInicio" }),
-        expect.objectContaining({ name: "dataFim" }),
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
       ]),
     );
+    expect(document.paths["/mapa"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+      ]),
+    );
+    expect(document.paths["/ranking"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+        expect.objectContaining({ name: "metrica" }),
+        expect.objectContaining({ name: "limite" }),
+      ]),
+    );
+    expect(document.paths["/intensidade/horarios"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "regiao" }),
+        expect.objectContaining({ name: "periodo" }),
+        expect.objectContaining({ name: "inicio" }),
+        expect.objectContaining({ name: "fim" }),
+      ]),
+    );
+    const intensidadeResponseSchema =
+      document.components.schemas.IntensidadeHorariosResponseDto;
+    expect(intensidadeResponseSchema.properties).toHaveProperty("fusoHorario");
+    expect(intensidadeResponseSchema.properties).toHaveProperty("matriz");
+    expect(intensidadeResponseSchema.properties).toHaveProperty("melhorJanela");
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "type",
+      "array",
+    );
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "items.type",
+      "array",
+    );
+    expect(intensidadeResponseSchema.properties.matriz).toHaveProperty(
+      "items.items.$ref",
+      "#/components/schemas/MatrizCelulaDto",
+    );
+    const intensidadeSchema =
+      document.paths["/intensidade/horarios"].get.responses["200"].content?.[
+        "application/json"
+      ].schema;
+    expect(intensidadeSchema).toEqual(
+      expect.objectContaining({
+        $ref: "#/components/schemas/IntensidadeHorariosResponseDto",
+      }),
+    );
+    const rankingSchema =
+      document.paths["/ranking"].get.responses["200"].content?.[
+        "application/json"
+      ].schema;
+    expect(rankingSchema).toHaveProperty("type", "object");
+    expect(rankingSchema).toHaveProperty("properties.periodo");
+    expect(rankingSchema).toHaveProperty("properties.metrica");
+    expect(rankingSchema).toHaveProperty("properties.itens");
+    expect(rankingSchema).toHaveProperty("properties.semDados");
+    expect(rankingSchema).toHaveProperty("properties.periodoAnterior");
+    expect(rankingSchema).toHaveProperty("properties.variacaoPercentual");
+    expect(rankingSchema).toHaveProperty("properties.variacaoPorServico");
+    expect(rankingSchema).toHaveProperty(
+      "properties.variacaoPorServico.items.properties.emissaoAtualGCo2e.nullable",
+      true,
+    );
+    expect(
+      document.components.schemas.IndicadoresRespostaDto.properties,
+    ).toHaveProperty("variacaoPercentual");
+    expect(
+      document.components.schemas.IndicadoresRespostaDto.properties,
+    ).toHaveProperty("periodoAnterior");
+    const indicadoresSchema =
+      document.paths["/indicadores"].get.responses["200"].content?.[
+        "application/json"
+      ].schema;
+    expect(indicadoresSchema).toHaveProperty(
+      "allOf.1.properties.variacao.properties.emissaoTotalGCo2e.properties.absoluta.nullable",
+      true,
+    );
+    expect(document.paths["/auth/login"].post.responses["429"]).toBeDefined();
     expect(document.components.schemas.LoginDto.required).toEqual(
       expect.arrayContaining(["email", "senha"]),
     );
@@ -156,6 +270,7 @@ describe("Swagger", () => {
     for (const [path, method] of [
       ["/coletas", "post"],
       ["/servicos/sync", "post"],
+      ["/saude", "get"],
     ]) {
       expect(document.paths[path][method].security).toEqual([{ bearer: [] }]);
       expect(document.paths[path][method].responses["401"]).toBeDefined();
@@ -175,6 +290,9 @@ describe("Swagger", () => {
         "application/json",
       ],
       ["/indicadores", "get", "200", "application/json"],
+      ["/ranking", "get", "200", "application/json"],
+      ["/mapa", "get", "200", "application/json"],
+      ["/saude", "get", "200", "application/json"],
       ["/configuracao", "get", "200", "application/json"],
       ["/configuracao", "put", "200", "application/json"],
     ]) {
@@ -188,9 +306,17 @@ describe("Swagger", () => {
         "application/json"
       ].schema,
     ).toEqual({
-      type: "array",
-      items: { $ref: "#/components/schemas/HistoricoColetaRespostaDto" },
+      $ref: "#/components/schemas/HistoricoColetasPaginadoRespostaDto",
     });
+    expect(
+      document.components.schemas.HistoricoColetasPaginadoRespostaDto.required,
+    ).toEqual(["itens", "pagina", "tamanho", "total", "totalPaginas"]);
+    expect(document.paths["/coletas"].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "pagina" }),
+        expect.objectContaining({ name: "tamanho" }),
+      ]),
+    );
     expect(
       document.paths["/servicos/sync"].post.responses["201"].content?.[
         "application/json"

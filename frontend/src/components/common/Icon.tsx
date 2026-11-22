@@ -32,6 +32,7 @@ const paths = {
   ),
   moon: <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z" />,
   arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
+  arrowUp: <path d="M12 19V5m-6 6 6-6 6 6" />,
   back: <path d="M20 12H4m6-6-6 6 6 6" />,
   lock: (
     <>
@@ -81,6 +82,45 @@ const paths = {
     <>
       <rect x="3" y="5" width="18" height="12" rx="2" />
       <path d="M6 17v3M10 17v3M14 17v3M18 17v3M7 9v4M12 9v4M17 9v4" />
+    </>
+  ),
+  bars: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  compare: <path d="M7 4v16M17 4v16M3 8l4-4 4 4M13 16l4 4 4-4" />,
+  map: (
+    <>
+      <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" />
+      <path d="M9 4v14M15 6v14" />
+    </>
+  ),
+  book: (
+    <>
+      <path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2Z" />
+      <path d="M4 21h16M9 8h7" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  printer: (
+    <>
+      <path d="M6 9V3h12v6" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <rect x="6" y="14" width="12" height="7" />
+    </>
+  ),
+  compass: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <polygon points="16.2 7.8 14.1 14.1 7.8 16.2 9.9 9.9 16.2 7.8" />
+    </>
+  ),
+  tv: (
+    <>
+      <rect x="2" y="4" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 18v3" />
     </>
   ),
 } satisfies Record<string, ReactNode>;

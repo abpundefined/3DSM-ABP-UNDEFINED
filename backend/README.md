@@ -11,11 +11,18 @@ src/
   config/
   database/                  PrismaService e verificação de schema
   common/filters/            filtro aplicado às rotas de coletas
-  common/utils/              normalização das respostas externas
+  common/regras/             regras puras de domínio (classificação, resumo, simulação e oportunidades)
+  common/utils/              normalização das respostas externas e intervalos de período
   modules/servicos/          descoberta e sincronização
   modules/monitoramento/     agendador e coleta automática
   modules/coletas/           controller, service, repository e DTOs
-  modules/indicadores/       agregados ambientais e contagem por estado
+  modules/indicadores/       agregados ambientais, meta mensal, ranking e matriz de horários
+  modules/mapa/              serviços no mapa com a série de emissão do período
+  modules/comparacao/        comparação alinhada de 2 a 5 serviços no mesmo período
+  modules/simulacao/         simulação da emissão do serviço em outra região
+  modules/oportunidades/     oportunidades estimadas de redução de emissão (migração, CPU e horário)
+  modules/eventos/           fluxo de eventos em tempo real via Server-Sent Events (GET /eventos)
+  modules/saude/             saúde das integrações externas e das coletas
 prisma/
   schema.prisma
   migrations/
@@ -47,12 +54,18 @@ Com o backend em execução, acesse o Swagger em [http://localhost:3000/docs](ht
 - `GET /servicos`: registros persistidos de serviços, incluindo estados removidos.
 - `POST /servicos/sync`: sincroniza a descoberta externa.
 - `POST /coletas`: registra uma coleta pelo DTO.
-- `GET /coletas`: histórico com filtros opcionais.
+- `GET /coletas`: histórico paginado com filtros opcionais; `pagina=1` e `tamanho=20` por padrão (máximo 100). Retorna `itens`, `pagina`, `tamanho`, `total` e `totalPaginas`.
 - `GET /coletas/:id`: detalhe de coleta.
 - `GET /coletas/servico/:servicoId/ultima-valida`: última coleta de sucesso, ou 404.
-- `GET /indicadores`: totais de coletas calculadas (24 horas por padrão) e serviços por estado; aceita `dataInicio` e `dataFim`.
+- `GET /indicadores`: totais de coletas calculadas e serviços por estado. Aceita `periodo` (`24h`, `7d`, `30d`, `mes-atual` ou `mes-anterior`) ou `inicio` e `fim` em ISO 8601 com fuso obrigatório; o intervalo customizado pode ter no máximo 90 dias. Sempre retorna `periodoAnterior` e `variacaoPercentual` de energia/emissão contra uma janela de mesma duração; sem base ou base zero, o percentual é `null`. O campo legado `variacao` de `mes-anterior` segue essa mesma janela.
+- `GET /ranking`: ranking limitado por energia/emissão, variação global antes do limite e `variacaoPorServico` de todos os serviços com dados em qualquer janela, incluindo removidos.
+- `GET /mapa`: serviços com coordenadas, totais e série de emissão por hora (até 48 horas) ou por dia, além da lista `semCoordenadas`. Aceita os mesmos parâmetros de período de `GET /indicadores`.
+- `GET /servicos/:id/simulacao-regiao`: emissão estimada do serviço em cada região monitorada (energia do período × intensidade média da região), com a diferença em g e em % e a região de menor emissão. Aceita os mesmos parâmetros de período; serviço inexistente retorna 404.
+- `GET /oportunidades`: avalia as três regras puras de redução de emissão (migrar de região com ganho `> 20%`, possível superdimensionamento com CPU média `< 15%` e energia acima da mediana, e mudar horário com janela de 3h `≥ 20%` abaixo da média regional), ordena pela maior economia estimada em `gCO₂e` e retorna `resumo`, `limiares`, `aviso` e `oportunidades`. Aceita os mesmos parâmetros do `PeriodoDto`.
+- `GET /eventos`: fluxo Server-Sent Events (`@Sse()`) que transmite em tempo real os eventos `coleta-registrada` (após cada coleta persistida) e `estado-alterado` (a cada atualização do estado de monitoramento de um serviço).
+- `GET /saude`: última consulta e resultado do agregador e da API de carbono, taxa de falha das coletas na última hora e serviços por estado. Requer JWT.
 
-Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas` e `POST /servicos/sync` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
+Não há prefixo global `/api`; esse prefixo é do proxy do frontend. `PUT /configuracao`, `POST /coletas`, `POST /servicos/sync` e `GET /saude` requerem JWT; `GET /` é a resposta inicial do Nest, e não um health check de banco.
 
 Leia [contratos, unidades e erros](../docs/api.md).
 
@@ -73,13 +86,32 @@ npm.cmd run lint
 ```
 
 - `npm test`: roda todos os testes unitários, sem medir cobertura. É o comando do dia a dia.
-- `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se algum arquivo de `src/modules/calculos/*.service.ts` ou de `src/common/regras/` ficar abaixo de 80% em linhas, ramificações, funções ou instruções (`coverageThreshold` no `package.json`). **É o comando executado no CI**: rode-o antes de abrir um PR, principalmente se alterar cálculo ou classificação de estados. O relatório fica em `backend/coverage/`, ignorado pelo Git.
+- `npm run test:cov`: roda os mesmos testes medindo a cobertura e **falha** se a cobertura global ou a cobertura de qualquer arquivo de negócio incluído ficar abaixo de 80% em linhas, funções, ramificações (branches) ou instruções (`coverageThreshold` no `package.json`). A medição inclui exclusivamente arquivos `*.service.ts` e `*.repository.ts`; exclui explicitamente `src/generated/prisma`, `src/main.ts`, `src/app.module.ts`, `src/app.service.ts`, demais módulos (`*.module.ts`) e arquivos de configuração (`*.config.ts`). **É o comando executado no CI**: rode-o antes de abrir um PR. O relatório fica em `coverage/`, ignorado pelo Git.
 - O `npm run lint` verifica problemas sem alterar arquivos; use `npm run lint:fix` para corrigir automaticamente.
 
-O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado. O `test:e2e` padrão do Nest não é a mesma suíte desse Compose isolado.
+### Testes E2E de API (`npm run test:e2e`)
 
-## Limitações em revisão
+Sobem a aplicação inteira (`AppModule`) contra um PostgreSQL real e chamam as rotas por HTTP com Supertest: login, `GET /configuracao` e `PUT /configuracao` (com e sem token), `POST /servicos/sync`, um ciclo do monitoramento, `GET /servicos`, a última coleta válida, `GET /indicadores`, `GET /ranking`, `GET /comparacao`, `GET /mapa` e `GET /saude` (com e sem token e com o agregador simulado fora do ar), incluindo os casos de 400, 401 e 404.
 
-- O `ServicosService` ainda acessa o Prisma diretamente; a extração para um repository está prevista para a Sprint 3.
+- O script confere o banco, aplica `prisma migrate deploy` e roda o Jest com `test/jest-e2e.json`.
+- O banco precisa ter o nome terminado em `_e2e`: os testes apagam todas as tabelas no início e no fim. Com outro nome, o script para antes de qualquer migração.
+- A API de descoberta, a de métricas e a de carbono são simuladas por um servidor local na porta 45999 (`test/e2e/apis-simuladas.ts`); nenhuma chamada sai para a internet.
+- As variáveis da aplicação (URLs externas, `JWT_SECRET` e administrador) são definidas pelos próprios testes em `test/e2e/ambiente.ts`, antes do `.env`; só `DATABASE_URL` vem de fora.
+- O agendamento automático do monitoramento fica desligado; o teste dispara um ciclo e espera ele terminar, para o resultado não depender de tempo.
+- O Jest usa `--experimental-vm-modules` porque o `@nestjs/config` é distribuído apenas como ESM.
+- No CI, o job `backend-e2e` roda a mesma suíte com o serviço `postgres:17`, partindo de um banco vazio.
 
-Esses pontos estão associados aos itens da [revisão da Sprint 1](../docs/sprints/revisao-sprint-1.md); não são funcionalidades declaradas como concluídas.
+Para rodar na máquina, com o PostgreSQL do Compose em execução e os valores de `DB_USER`, `DB_PASS` e `DB_PORT` do `.env` da raiz:
+
+```powershell
+docker compose exec postgres createdb -U <DB_USER> greener_e2e
+cd backend
+$env:DATABASE_URL="postgresql://<DB_USER>:<DB_PASS>@localhost:<DB_PORT>/greener_e2e?schema=public"
+npm.cmd run test:e2e
+Remove-Item Env:DATABASE_URL
+```
+
+O `createdb` só é necessário na primeira vez. No Git Bash, use `DATABASE_URL="..." npm run test:e2e` na mesma linha.
+
+O teste com PostgreSQL real tem [guia próprio](../docs/teste-integracao-problema1.md), com seis testes aprovados registrados em 18/10. Não foi reexecutado em 19/10 porque o Docker estava desligado.
+

@@ -2,10 +2,20 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router';
 import AppLayout from './components/layout/AppLayout';
 import FeedbackPanel from './components/common/FeedbackPanel';
+import RequireAuth from './components/common/RequireAuth';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Login = lazy(() => import('./pages/Login'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Ranking = lazy(() => import('./pages/Ranking'));
+const Comparacao = lazy(() => import('./pages/Comparacao'));
+const Mapa = lazy(() => import('./pages/Mapa'));
+const ServicoDetalhe = lazy(() => import('./pages/ServicoDetalhe'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Metodologia = lazy(() => import('./pages/Metodologia'));
+const Relatorio = lazy(() => import('./pages/Relatorio'));
+const QrCodeDemo = lazy(() => import('./pages/QrCodeDemo'));
+const Oportunidades = lazy(() => import('./pages/Oportunidades'));
 
 export default function App() {
   return (
@@ -29,6 +39,22 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Navigate to="/" replace />} />
           <Route path="login" element={<Login />} />
+          <Route path="ranking" element={<Ranking />} />
+          <Route path="comparar" element={<Comparacao />} />
+          <Route path="mapa" element={<Mapa />} />
+          <Route path="oportunidades" element={<Oportunidades />} />
+          <Route path="servicos/:id" element={<ServicoDetalhe />} />
+          <Route
+            path="admin"
+            element={
+              <RequireAuth>
+                <Admin />
+              </RequireAuth>
+            }
+          />
+          <Route path="metodologia" element={<Metodologia />} />
+          <Route path="relatorio" element={<Relatorio />} />
+          <Route path="qr-code" element={<QrCodeDemo />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import App from './App';
 import AuthProvider from './providers/AuthProvider';
+import ComparisonSelectionProvider from './providers/ComparisonSelectionProvider';
+import PeriodProvider from './providers/PeriodProvider';
 import './index.css';
 import './theme.css';
 
@@ -15,9 +17,13 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
-        <App />
+        <PeriodProvider>
+          <ComparisonSelectionProvider>
+            <App />
+          </ComparisonSelectionProvider>
+        </PeriodProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

@@ -1,12 +1,22 @@
 import { Module } from "@nestjs/common";
 import { DatabaseModule } from "../../database/database.module";
+import { CalculosModule } from "../calculos/calculos.module";
+import { ConfiguracaoModule } from "../configuracao/configuracao.module";
 import { IndicadoresController } from "./indicadores.controller";
+import { IntensidadeController } from "./intensidade.controller";
 import { IndicadoresRepository } from "./indicadores.repository";
 import { IndicadoresService } from "./indicadores.service";
+import { RankingController } from "./ranking.controller";
+import { RankingService } from "./ranking.service";
 
 @Module({
-  imports: [DatabaseModule],
-  controllers: [IndicadoresController],
-  providers: [IndicadoresService, IndicadoresRepository],
+  imports: [CalculosModule, DatabaseModule, ConfiguracaoModule],
+  controllers: [
+    IndicadoresController,
+    IntensidadeController,
+    RankingController,
+  ],
+  providers: [IndicadoresService, IndicadoresRepository, RankingService],
+  exports: [IndicadoresService],
 })
 export class IndicadoresModule {}

@@ -4,6 +4,14 @@ import {
   EstadoColetaEnum,
 } from "../../modules/coletas/estados-coleta.enum";
 
+export class ComponentesEnergiaRespostaDto {
+  @ApiProperty({ type: Number, example: 0.25 }) cpuW!: number;
+  @ApiProperty({ type: Number, example: 0.75 }) memoriaW!: number;
+  @ApiProperty({ type: Number, example: 0.1 }) discoW!: number;
+  @ApiProperty({ type: Number, example: 0.1 }) redeW!: number;
+  @ApiProperty({ type: Number, example: 1.2 }) totalW!: number;
+}
+
 export class ServicoRespostaDto {
   @ApiProperty() id!: number;
   @ApiProperty() idExterno!: string;
@@ -23,6 +31,10 @@ export class ServicoRespostaDto {
   @ApiProperty({ type: String, format: "date-time" }) descobertoEm!: Date;
   @ApiProperty({ type: String, format: "date-time" }) ultimaVezListadoEm!: Date;
   @ApiProperty({ type: String, format: "date-time" }) atualizadoEm!: Date;
+  @ApiProperty({ type: ComponentesEnergiaRespostaDto, nullable: true })
+  componentes!: ComponentesEnergiaRespostaDto | null;
+  @ApiProperty({ type: String, example: "A" })
+  selo!: string;
 }
 
 export class ServicoDescobertoRespostaDto {
@@ -89,6 +101,16 @@ export class HistoricoColetaRespostaDto extends ColetaRespostaDto {
   servico!: ServicoResumoRespostaDto;
 }
 
+export class HistoricoColetasPaginadoRespostaDto {
+  @ApiProperty({ type: [HistoricoColetaRespostaDto] })
+  itens!: HistoricoColetaRespostaDto[];
+  @ApiProperty({ type: Number, minimum: 1, example: 1 }) pagina!: number;
+  @ApiProperty({ type: Number, minimum: 1, maximum: 100, example: 20 })
+  tamanho!: number;
+  @ApiProperty({ type: Number, minimum: 0, example: 41 }) total!: number;
+  @ApiProperty({ type: Number, minimum: 0, example: 3 }) totalPaginas!: number;
+}
+
 export class DetalheColetaRespostaDto extends ColetaRespostaDto {
   @ApiProperty({ type: ServicoRespostaDto }) servico!: ServicoRespostaDto;
   @ApiProperty({ type: RegiaoRespostaDto, nullable: true })
@@ -104,6 +126,8 @@ export class UltimaColetaRespostaDto {
 export class ConfiguracaoRespostaDto {
   @ApiProperty() intervaloDescobertaSegundos!: number;
   @ApiProperty() intervaloColetaSegundos!: number;
+  @ApiProperty({ type: Number, nullable: true })
+  metaMensalKgCo2e!: number | null;
   @ApiProperty({ type: String, format: "date-time", nullable: true })
   atualizadaEm!: Date | null;
   @ApiProperty() padrao!: boolean;
@@ -123,7 +147,30 @@ export class ServicosIndicadoresRespostaDto {
   @ApiProperty() removidos!: number;
 }
 
+export class VariacaoPercentualRespostaDto {
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 12,
+    description:
+      "Variação da energia em %. Sem dados atuais ou anteriores, ou base zero: null.",
+  })
+  energiaKwh!: number | null;
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: -5,
+    description:
+      "Variação da emissão em %. Sem dados atuais ou anteriores, ou base zero: null.",
+  })
+  emissaoGCo2e!: number | null;
+}
+
 export class IndicadoresRespostaDto {
+  @ApiProperty({ type: PeriodoIndicadoresRespostaDto })
+  periodoAnterior!: PeriodoIndicadoresRespostaDto;
+  @ApiProperty({ type: VariacaoPercentualRespostaDto })
+  variacaoPercentual!: VariacaoPercentualRespostaDto;
   @ApiProperty({ type: PeriodoIndicadoresRespostaDto })
   periodo!: PeriodoIndicadoresRespostaDto;
   @ApiProperty({ description: "Energia total em kWh." })

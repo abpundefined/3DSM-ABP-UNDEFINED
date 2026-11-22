@@ -32,57 +32,57 @@ A tabela abaixo lista os 51 itens que compõem o escopo devedor da Sprint 3:
 
 | Issue | Item | SP | Responsável | Epic | Situação |
 | :---: | :--- | :---: | :--- | :--- | :---: |
-| [#79](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/79) | [TASK] Repository para ServicosService | 5 | Pedro Gomes | #37 | Backlog |
-| [#84](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/84) | [TASK] Periodização no backend (PeriodoDto) | 3 | Marcus Nascimento | #35 | Backlog |
-| [#85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) | [TASK] Navegação, rotas e biblioteca de gráficos | 2 | Nadla Ferreira | #35 | Backlog |
-| [#86](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/86) | [TASK] Seletor de período compartilhado (frontend) | 5 | Nadla Ferreira | #35 | Backlog |
-| [#88](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/88) | [TASK] Endpoint GET /ranking | 3 | Marcus Nascimento | #35 | Backlog |
-| [#91](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/91) | [TASK] Página de ranking | 6 | Nadla Ferreira | #35 | Backlog |
-| [#93](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/93) | [TASK] Endpoint GET /comparacao | 5 | Pedro Gomes | #35 | Backlog |
-| [#94](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/94) | [TASK] Página de comparação | 6 | Thales Cambraia | #35 | Backlog |
-| [#95](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/95) | [TASK] Endpoint GET /mapa | 5 | Israel Lemes | #35 | Backlog |
-| [#96](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/96) | [TASK] Mapa animado no frontend | 9 | Israel Lemes | #35 | Backlog |
-| [#98](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/98) | [TASK] Endpoint GET /servicos/:id/historico | 3 | Marcus Nascimento | #33 | Backlog |
-| [#99](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/99) | [TASK] Página de detalhe do serviço | 7 | Rainan Reis | #33 | Backlog |
-| [#80](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/80) | [TASK] Paginação do GET /coletas | 3 | Pedro Gomes | #33 | Backlog |
-| [#78](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/78) | [PBI] Página de administração dos intervalos (frontend) | 5 | Nadla Ferreira | #36 | Backlog |
-| [#81](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81) | [PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06) | 8 | Thales Cambraia | #37 | Backlog |
-| [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101) | [PBI-26] Melhorias de usabilidade (P01 a P08) | 8 | Thales Cambraia | #37 | Backlog |
-| [#103](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/103) | [TASK] Cobertura de 80% em todos os services e repositories | 3 | Marcus Nascimento | #37 | Backlog |
-| [#104](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/104) | [TASK] Testes E2E de API com PostgreSQL no CI | 5 | Israel Lemes | #37 | Backlog |
-| [#105](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/105) | [TASK] Testes de componentes do frontend | 5 | Pedro Gomes | #37 | Backlog |
-| [#106](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/106) | [TASK] CI completo | 5 | Marcus Nascimento | #32 | Backlog |
-| [#21](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/21) | [PBI-21] Documentação técnica | 5 | Rainan Reis | #37 | Backlog |
-| [#108](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/108) | [TASK] Planejamento e burndown da Sprint 3 | 2 | Rainan Reis | #37 | Backlog |
-| [#109](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/109) | [TASK] Roteiro e vídeo da apresentação da Sprint 3 | 3 | Rainan Reis | #37 | Backlog |
-| [#110](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/110) | [TASK] Endpoint GET /indicadores/serie | 2 | Marcus Nascimento | #34 | Backlog |
-| [#111](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/111) | [TASK] Tendência no dashboard | 4 | Nadla Ferreira | #34 | Backlog |
-| [#114](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/114) | [PBI-27] Variação em relação ao período anterior | 4 | Pedro Gomes | #35 | Backlog |
-| [#115](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/115) | [PBI-28] Simulador "e se mudasse de região?" | 3 | Israel Lemes | #35 | Backlog |
-| [#116](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/116) | [PBI-29] Equivalências do CO₂e | 1 | Rainan Reis | #34 | Backlog |
-| [#117](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/117) | [PBI-30] Página "Como calculamos" | 2 | Rainan Reis | #37 | Backlog |
-| [#118](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/118) | [PBI-31] Exportar relatório CSV do período | 2 | Marcus Nascimento | #35 | Backlog |
-| [#119](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/119) | [PBI-33] Oportunidades de redução de emissão | 5 | Pedro Gomes | #35 | Backlog |
-| [#120](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/120) | [PBI-34] Selo de eficiência A a F | 3 | Marcus Nascimento | #34 | Backlog |
-| [#122](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/122) | [TASK] Endpoint GET /intensidade/horarios | 2 | Marcus Nascimento | #35 | Backlog |
-| [#123](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/123) | [TASK] Mapa de calor do melhor horário | 3 | Israel Lemes | #35 | Backlog |
-| [#124](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/124) | [PBI-36] Linha do tempo de estado e disponibilidade | 3 | Rainan Reis | #33 | Backlog |
-| [#125](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/125) | [PBI-37] Corrida de barras do ranking | 3 | Nadla Ferreira | #35 | Backlog |
-| [#126](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/126) | [PBI-38] Treemap de participação nas emissões | 2 | Nadla Ferreira | #35 | Backlog |
-| [#127](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/127) | [PBI-39] Picos incomuns marcados nos gráficos | 3 | Thales Cambraia | #34 | Backlog |
-| [#129](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/129) | [TASK] Meta de carbono no backend | 2 | Marcus Nascimento | #36 | Backlog |
-| [#130](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/130) | [TASK] Projeção e meta no frontend | 3 | Pedro Gomes | #36 | Backlog |
-| [#131](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/131) | [PBI-41] Contadores animados e transições de ordem | 1 | Thales Cambraia | #34 | Backlog |
-| [#133](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/133) | [PBI-42] Relatório do período (imprimir ou salvar PDF) | 3 | Rainan Reis | #35 | Backlog |
-| [#135](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/135) | [PBI-43] Saúde das integrações (administração) | 3 | Israel Lemes | #36 | Backlog |
-| [#136](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/136) | [PBI-44] Modo TV para tela de monitoramento | 2 | Nadla Ferreira | #34 | Backlog |
-| [#139](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/139) | [TASK] Composição da energia no backend | 1 | Marcus Nascimento | #34 | Backlog |
-| [#140](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/140) | [TASK] Gráfico de composição da energia | 2 | Rainan Reis | #34 | Backlog |
-| [#141](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/141) | [PBI-47] Tour guiado | 2 | Thales Cambraia | #37 | Backlog |
-| [#142](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/142) | [TASK] Demonstração offline completa (?demo=1) | 2 | Israel Lemes | #37 | Backlog |
-| [#143](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/143) | [PBI-50] Contador ao vivo de CO₂e | 1 | Nadla Ferreira | #34 | Backlog |
-| [#145](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/145) | [TASK] Demonstração online e QR code | 2 | Rainan Reis | #32 | Backlog |
-| [#146](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/146) | [PBI-51] Transições entre telas e carregamento com brilho | 1 | Thales Cambraia | #34 | Backlog |
+| [#79](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/79) | [TASK] Repository para ServicosService | 5 | Pedro Gomes | #37 | Done |
+| [#84](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/84) | [TASK] Periodização no backend (PeriodoDto) | 3 | Marcus Nascimento | #35 | Done |
+| [#85](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/85) | [TASK] Navegação, rotas e biblioteca de gráficos | 2 | Nadla Ferreira | #35 | Done |
+| [#86](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/86) | [TASK] Seletor de período compartilhado (frontend) | 5 | Nadla Ferreira | #35 | Done |
+| [#88](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/88) | [TASK] Endpoint GET /ranking | 3 | Marcus Nascimento | #35 | Done |
+| [#91](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/91) | [TASK] Página de ranking | 6 | Nadla Ferreira | #35 | Done |
+| [#93](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/93) | [TASK] Endpoint GET /comparacao | 5 | Pedro Gomes | #35 | Done |
+| [#94](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/94) | [TASK] Página de comparação | 6 | Thales Cambraia | #35 | Done |
+| [#95](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/95) | [TASK] Endpoint GET /mapa | 5 | Israel Lemes | #35 | Done |
+| [#96](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/96) | [TASK] Mapa animado no frontend | 9 | Israel Lemes | #35 | Done |
+| [#98](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/98) | [TASK] Endpoint GET /servicos/:id/historico | 3 | Marcus Nascimento | #33 | Done |
+| [#99](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/99) | [TASK] Página de detalhe do serviço | 7 | Rainan Reis | #33 | Done |
+| [#80](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/80) | [TASK] Paginação do GET /coletas | 3 | Pedro Gomes | #33 | Done |
+| [#78](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/78) | [PBI] Página de administração dos intervalos (frontend) | 5 | Nadla Ferreira | #36 | Done |
+| [#81](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/81) | [PBI] Avaliação heurística e avaliação com usuários (IHC05/IHC06) | 8 | Thales Cambraia | #37 | Done |
+| [#101](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/101) | [PBI-26] Melhorias de usabilidade (P01 a P08) | 8 | Thales Cambraia | #37 | Done |
+| [#103](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/103) | [TASK] Cobertura de 80% em todos os services e repositories | 3 | Marcus Nascimento | #37 | Done |
+| [#104](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/104) | [TASK] Testes E2E de API com PostgreSQL no CI | 5 | Israel Lemes | #37 | Done |
+| [#105](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/105) | [TASK] Testes de componentes do frontend | 5 | Pedro Gomes | #37 | Done |
+| [#106](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/106) | [TASK] CI completo | 5 | Marcus Nascimento | #32 | Done |
+| [#21](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/21) | [PBI-21] Documentação técnica | 5 | Rainan Reis | #37 | Done |
+| [#108](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/108) | [TASK] Planejamento e burndown da Sprint 3 | 2 | Rainan Reis | #37 | Done |
+| [#109](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/109) | [TASK] Roteiro e vídeo da apresentação da Sprint 3 | 3 | Rainan Reis | #37 | Done |
+| [#110](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/110) | [TASK] Endpoint GET /indicadores/serie | 2 | Marcus Nascimento | #34 | Done |
+| [#111](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/111) | [TASK] Tendência no dashboard | 4 | Nadla Ferreira | #34 | Done |
+| [#114](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/114) | [PBI-27] Variação em relação ao período anterior | 4 | Pedro Gomes | #35 | Done |
+| [#115](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/115) | [PBI-28] Simulador "e se mudasse de região?" | 3 | Israel Lemes | #35 | Done |
+| [#116](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/116) | [PBI-29] Equivalências do CO₂e | 1 | Rainan Reis | #34 | Done |
+| [#117](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/117) | [PBI-30] Página "Como calculamos" | 2 | Rainan Reis | #37 | Done |
+| [#118](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/118) | [PBI-31] Exportar relatório CSV do período | 2 | Marcus Nascimento | #35 | Done |
+| [#119](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/119) | [PBI-33] Oportunidades de redução de emissão | 5 | Pedro Gomes | #35 | Done |
+| [#120](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/120) | [PBI-34] Selo de eficiência A a F | 3 | Marcus Nascimento | #34 | Done |
+| [#122](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/122) | [TASK] Endpoint GET /intensidade/horarios | 2 | Marcus Nascimento | #35 | Done |
+| [#123](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/123) | [TASK] Mapa de calor do melhor horário | 3 | Israel Lemes | #35 | Done |
+| [#124](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/124) | [PBI-36] Linha do tempo de estado e disponibilidade | 3 | Rainan Reis | #33 | Done |
+| [#125](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/125) | [PBI-37] Corrida de barras do ranking | 3 | Nadla Ferreira | #35 | Done |
+| [#126](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/126) | [PBI-38] Treemap de participação nas emissões | 2 | Nadla Ferreira | #35 | Done |
+| [#127](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/127) | [PBI-39] Picos incomuns marcados nos gráficos | 3 | Thales Cambraia | #34 | Done |
+| [#129](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/129) | [TASK] Meta de carbono no backend | 2 | Marcus Nascimento | #36 | Done |
+| [#130](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/130) | [TASK] Projeção e meta no frontend | 3 | Pedro Gomes | #36 | Done |
+| [#131](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/131) | [PBI-41] Contadores animados e transições de ordem | 1 | Thales Cambraia | #34 | Done |
+| [#133](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/133) | [PBI-42] Relatório do período (imprimir ou salvar PDF) | 3 | Rainan Reis | #35 | Done |
+| [#135](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/135) | [PBI-43] Saúde das integrações (administração) | 3 | Israel Lemes | #36 | Done |
+| [#136](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/136) | [PBI-44] Modo TV para tela de monitoramento | 2 | Nadla Ferreira | #34 | Done |
+| [#139](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/139) | [TASK] Composição da energia no backend | 1 | Marcus Nascimento | #34 | Done |
+| [#140](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/140) | [TASK] Gráfico de composição da energia | 2 | Rainan Reis | #34 | Done |
+| [#141](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/141) | [PBI-47] Tour guiado | 2 | Thales Cambraia | #37 | Done |
+| [#142](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/142) | [TASK] Demonstração offline completa (?demo=1) | 2 | Israel Lemes | #37 | Done |
+| [#143](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/143) | [PBI-50] Contador ao vivo de CO₂e | 1 | Nadla Ferreira | #34 | Done |
+| [#145](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/145) | [TASK] Demonstração online e QR code | 2 | Rainan Reis | #32 | Done |
+| [#146](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/146) | [PBI-51] Transições entre telas e carregamento com brilho | 1 | Thales Cambraia | #34 | Done |
 
 - **Total de Itens Comprometidos:** 51 itens
 - **Total de Story Points Comprometidos:** 178 SP
@@ -124,7 +124,7 @@ Itens com prioridade `could`, destinados a enriquecer o produto e a apresentaç�
 | [#154](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/154) | [PBI-53] Arrastar o serviço para outra região no mapa | 3 | could (reserva) | #35 |
 | [#155](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/155) | [PBI-54] Globo 3D no modo TV | 5 | could (reserva) | #35 |
 
-- **Total de Itens de Reserva:** 10 itens (29 SP)
+- **Total de Itens de Reserva:** 10 itens (29 SP) — 7 entregues até 22/11 (20 SP) e 3 encerrados como não planejados (9 SP).
 
 ---
 
@@ -137,4 +137,8 @@ O acompanhamento diário da queima de Story Points inicia-se em **11/11/2026** c
 ### Regras de Processo e Fechamento
 1. **Fluxo Contínuo de PRs:** submeter PRs pequenos e contínuos logo após a conclusão das tarefas, evitando acúmulo no final do ciclo;
 2. **Critérios de Qualidade (DoD):** todo PR deve conter testes unitários/E2E com cobertura, passar nos jobs de lint/typecheck/build no GitHub Actions e receber aprovação de ao menos um revisor;
-3. **Baixa de Pontos:** exclusivamente após o merge na `develop` e o fechamento da issue correspondente no GitHub.
+3. **TDD (a partir de 14/11):** Regras de negócio novas, a partir de 14/11, são desenvolvidas com TDD: o commit de teste precede o da implementação;
+4. **Baixa de Pontos:** exclusivamente após o merge na `develop` e o fechamento da issue correspondente no GitHub.
+
+### Alterações no Planejamento
+- **14/11:** adoção de TDD nos itens ainda não iniciados, conforme orientação do professor de TP.

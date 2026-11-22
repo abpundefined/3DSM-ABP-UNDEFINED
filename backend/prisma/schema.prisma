@@ -99,5 +99,6 @@ model ConfiguracaoMonitoramento {
   id                          Int      @id @default(autoincrement())
   intervaloDescobertaSegundos Int
   intervaloColetaSegundos     Int
+  metaMensalKgCo2e            Float?
   atualizadaEm                DateTime @updatedAt @db.Timestamptz(3)
 }
