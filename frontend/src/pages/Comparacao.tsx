@@ -29,6 +29,7 @@ import {
   formatComparisonPeriod,
   MAX_SERVICES_TO_COMPARE,
 } from '../utils/comparacao';
+import { dateForCsv, exportDataToCsv } from '../utils/csv-export.utils';
 import '../components/comparacao/comparacao.css';
 
 function getLocation(service: ServicoSelecionavel | undefined) {
@@ -264,6 +265,10 @@ export default function Comparacao() {
   const { servicesState, comparisonState, retryServices, retryComparison } =
     useComparisonData({ serviceIds, apiQuery, invalidSelection, isDemo });
   const [metric, setMetric] = useState<MetricaRanking>('energia');
+  const exportacaoDesabilitada =
+    servicesState.status === 'carregando' ||
+    comparisonState.status !== 'pronto' ||
+    comparisonState.dados.servicos.length === 0;
 
   const services = useMemo(
     () => (servicesState.status === 'pronto' ? servicesState.dados : []),
@@ -274,6 +279,29 @@ export default function Comparacao() {
     [services],
   );
 
+  const exportarComparacao = () => {
+    if (exportacaoDesabilitada || comparisonState.status !== 'pronto') {
+      return;
+    }
+
+    const dadosAchatados = comparisonState.dados.servicos.map((servico) => ({
+      servicoId: servico.servicoId,
+      nome: servico.nome,
+      energiaKwh: servico.totais.energiaKwh,
+      emissaoGCo2e: servico.totais.emissaoGCo2e,
+      cpuMedia: servico.totais.cpuMedia,
+      memoriaMediaMb: servico.totais.memoriaMediaMb,
+      coletasValidas: servico.totais.coletasValidas,
+    }));
+
+    exportDataToCsv(
+      dadosAchatados,
+      'greener-comparacao',
+      dateForCsv(comparisonState.dados.periodo.inicio),
+      dateForCsv(comparisonState.dados.periodo.fim),
+    );
+  };
+
   return (
     <div className="comparison-page">
       <div className="page-heading">
@@ -283,6 +311,16 @@ export default function Comparacao() {
           <p className="page-subtitle">
             Compare indicadores e evolução dos serviços no mesmo período.
           </p>
+        </div>
+        <div className="page-heading-actions">
+          <button
+            className="button button--secondary"
+            type="button"
+            disabled={exportacaoDesabilitada}
+            onClick={exportarComparacao}
+          >
+            Exportar CSV
+          </button>
         </div>
       </div>
       <section

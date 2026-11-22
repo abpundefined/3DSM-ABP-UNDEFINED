@@ -21,6 +21,7 @@ import type {
   MetricaRanking,
   RespostaRanking,
 } from '../types/ranking';
+import { dateForCsv, exportDataToCsv } from '../utils/csv-export.utils';
 import { ehModoDemo } from '../utils/modoDemo';
 import {
   AGRUPAMENTOS,
@@ -150,11 +151,29 @@ export default function Ranking() {
     : estado;
   const atualizando =
     modo === 'ranking' && exibido.status === 'pronto' && exibido.atualizando;
+  const dadosParaExportar = exibido.status === 'pronto' ? exibido.dados : null;
+  const exportacaoDesabilitada =
+    dadosParaExportar === null ||
+    atualizando ||
+    dadosParaExportar.itens.length === 0;
 
   const trocarMetrica = (proxima: MetricaRanking) =>
     setSearchParams((atuais) => escreverMetrica(atuais, proxima), {
       replace: true,
     });
+
+  const exportarRanking = () => {
+    if (exportacaoDesabilitada || dadosParaExportar === null) {
+      return;
+    }
+
+    exportDataToCsv(
+      dadosParaExportar.itens,
+      'greener-ranking',
+      dateForCsv(dadosParaExportar.periodo.inicio),
+      dateForCsv(dadosParaExportar.periodo.fim),
+    );
+  };
 
   const trocarAgrupamento = (proximo: AgrupamentoRanking) =>
     setSearchParams((atuais) => escreverAgrupamento(atuais, proximo), {
@@ -186,17 +205,27 @@ export default function Ranking() {
             emitem CO₂e no período. <MethodologyLink />
           </p>
         </div>
-        <Link
-          to={
-            isDemo
-              ? '/relatorio?demo=1'
-              : { pathname: '/relatorio', search: linkSearch }
-          }
-          className="button button--secondary"
-        >
-          <Icon name="printer" />
-          Relatório do período
-        </Link>
+        <div className="page-heading-actions">
+          <button
+            className="button button--secondary"
+            type="button"
+            disabled={exportacaoDesabilitada}
+            onClick={exportarRanking}
+          >
+            Exportar CSV
+          </button>
+          <Link
+            to={
+              isDemo
+                ? '/relatorio?demo=1'
+                : { pathname: '/relatorio', search: linkSearch }
+            }
+            className="button button--secondary"
+          >
+            <Icon name="printer" />
+            Relatório do período
+          </Link>
+        </div>
       </div>
       <ComparisonSelectionBar />
       <div className="ranking-controles-topo">
