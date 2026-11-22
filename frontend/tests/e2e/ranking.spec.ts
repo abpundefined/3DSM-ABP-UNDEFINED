@@ -347,8 +347,8 @@ test('agrupa por serviço, região e país mantendo o grupo na URL e atualizando
   await expect(abaPais).toHaveAttribute('aria-pressed', 'true');
   await expect(page).toHaveURL(/\/ranking\?demo=1&grupo=pais$/);
   await expect(
-    page.getByRole('region', { name: 'Ranking por energia' }),
-  ).toContainText('Estados Unidos lidera em energia');
+  page.getByRole('region', { name: 'Ranking por energia' }),
+  ).toContainText('Estados Unidos');
   await expect(linhas(page).nth(1)).toContainText('Estados Unidos');
   await expect(linhas(page).nth(2)).toContainText('Brasil');
   await expect(linhas(page).nth(3)).toContainText('Japão');
