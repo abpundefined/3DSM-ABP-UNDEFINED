@@ -2,12 +2,12 @@
   "sprint": 3,
   "baseline_sp": 178,
   "itens_planejados": 51,
-  "sp_entregues": 97,
-  "itens_entregues": 21,
+  "sp_entregues": 176,
+  "itens_entregues": 50,
   "inicio_real": "2026-11-11",
   "fim_previsto": "2026-11-23",
   "data_review": "2026-11-23T19:30:00-03:00",
   "fuso": "America/Sao_Paulo",
-  "taxa_entrega_percentual": 54.49,
-  "status": "Em andamento — 21 itens entregues (97 SP), 81 SP restantes em 19/11"
+  "taxa_entrega_percentual": 98.88,
+  "status": "Em andamento — 50 itens entregues (176 SP), 2 SP restantes em 22/11 (apenas #108 aguardando fechamento via PR); +7 itens de reserva entregues (20 SP)"
 }
