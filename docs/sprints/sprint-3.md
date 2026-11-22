@@ -53,7 +53,7 @@ A tabela abaixo lista os 51 itens que compõem o escopo devedor da Sprint 3:
 | [#105](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/105) | [TASK] Testes de componentes do frontend | 5 | Pedro Gomes | #37 | Done |
 | [#106](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/106) | [TASK] CI completo | 5 | Marcus Nascimento | #32 | Done |
 | [#21](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/21) | [PBI-21] Documentação técnica | 5 | Rainan Reis | #37 | Done |
-| [#108](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/108) | [TASK] Planejamento e burndown da Sprint 3 | 2 | Rainan Reis | #37 | Backlog |
+| [#108](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/108) | [TASK] Planejamento e burndown da Sprint 3 | 2 | Rainan Reis | #37 | Done |
 | [#109](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/109) | [TASK] Roteiro e vídeo da apresentação da Sprint 3 | 3 | Rainan Reis | #37 | Done |
 | [#110](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/110) | [TASK] Endpoint GET /indicadores/serie | 2 | Marcus Nascimento | #34 | Done |
 | [#111](https://github.com/abpundefined/3DSM-ABP-UNDEFINED/issues/111) | [TASK] Tendência no dashboard | 4 | Nadla Ferreira | #34 | Done |
