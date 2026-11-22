@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Link } from 'react-router';
 import usePeriod from '../../hooks/usePeriod';
 import type { ServicoSemDados } from '../../types/ranking';
+import SeloBadge from '../common/SeloBadge';
 
 export default function ListaSemDados({
   servicos,
@@ -19,9 +20,10 @@ export default function ListaSemDados({
         ranking.
       </p>
       <ul className="ranking-sem-dados">
-        {servicos.map(({ servicoId, nome }) => (
+        {servicos.map(({ servicoId, nome, selo }) => (
           <li key={servicoId}>
             <Link to={`/servicos/${servicoId}${linkSearch}`}>{nome}</Link>
+            <SeloBadge selo={selo} />
           </li>
         ))}
       </ul>

@@ -12,6 +12,7 @@ import {
 } from '../../utils/serviceDetail';
 import Icon from '../common/Icon';
 import MethodologyLink from '../common/MethodologyLink';
+import SeloBadge from '../common/SeloBadge';
 import MiniTendencia from '../tendencia/MiniTendencia';
 import AnelCpu from './AnelCpu';
 import type { LiveService } from './liveTypes';
@@ -92,6 +93,7 @@ export default function ServiceCard({
             <Icon name={status.icon} />
             {status.label}
           </span>
+          <SeloBadge selo={service.selo} />
           {onToggleComparison && (
             <button
               className="service-card-compare"

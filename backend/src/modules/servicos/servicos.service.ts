@@ -8,6 +8,7 @@ import {
   CalculosService,
   ComponentesPotencia,
 } from "../calculos/calculos.service";
+import { calcularSeloEficiencia } from "../indicadores/ranking.service";
 import { EventosService } from "../eventos/eventos.service";
 import { RegistroIntegracoesService } from "../saude/registro-integracoes.service";
 import { ServicosRepository } from "./servicos.repository";
@@ -26,6 +27,7 @@ export interface LocalizacaoServico {
 export type ServicoComLocalizacao = Servico & {
   localizacao: LocalizacaoServico;
   componentes: ComponentesPotencia | null;
+  selo: string;
 };
 
 @Injectable()
@@ -190,6 +192,14 @@ export class ServicosService {
             coleta.diskGb ?? 0,
             coleta.networkGb ?? 0,
           );
+      const emissaoMediaPorHora =
+        !coletaSemDadosValidos &&
+        coleta.estadoCalculo === "CONCLUIDO" &&
+        coleta.emissaoGCo2e != null &&
+        coleta.intervaloColetaSegundos != null &&
+        coleta.intervaloColetaSegundos > 0
+          ? (coleta.emissaoGCo2e / coleta.intervaloColetaSegundos) * 3600
+          : null;
 
       return {
         ...servico,
@@ -202,6 +212,7 @@ export class ServicosService {
           longitude: regiao.longitude,
         },
         componentes,
+        selo: calcularSeloEficiencia(emissaoMediaPorHora),
       };
     });
   }

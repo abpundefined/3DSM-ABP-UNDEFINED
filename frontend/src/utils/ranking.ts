@@ -10,6 +10,7 @@ import {
   ehPeriodoConsultado,
   ehVariacaoPercentual,
 } from './variacao.ts';
+import { isSelo } from './selo.ts';
 import {
   type Escala,
   escalaDeEmissao,
@@ -112,7 +113,8 @@ function ehServico(valor: unknown): valor is Record<string, unknown> {
   return (
     ehObjeto(valor) &&
     Number.isInteger(valor.servicoId) &&
-    typeof valor.nome === 'string'
+    typeof valor.nome === 'string' &&
+    isSelo(valor.selo)
   );
 }
 
@@ -304,6 +306,7 @@ export function agruparItensRanking(
       posicao: indice + 1,
       servicoId: indice + 1,
       nome: item.nome,
+      selo: '-',
       energiaKwh: item.energiaKwh,
       emissaoGCo2e: item.emissaoGCo2e,
       coletasValidas: item.coletasValidas,

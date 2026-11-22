@@ -38,6 +38,15 @@ test('página /metodologia apresenta fórmulas, API de carbono, SCI, EPA, crité
     'melhor janela de 3 horas seguidas',
   );
   await expect(page.locator('.methodology-page')).toContainText(
+    'Selo de eficiência',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
+    'Até 10 gCO₂e/h',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
+    'não significa emissão zero',
+  );
+  await expect(page.locator('.methodology-page')).toContainText(
     'time-shifting',
   );
   await expect(page.locator('.methodology-page')).toContainText(
@@ -110,6 +119,7 @@ test('link "Como calculamos?" aparece junto dos totais em /comparar e navega par
           nome: 'Billing API',
           regiaoCodigo: 'br-sudeste',
           localizacao: null,
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
         {
@@ -118,6 +128,7 @@ test('link "Como calculamos?" aparece junto dos totais em /comparar e navega par
           nome: 'Reports Engine',
           regiaoCodigo: 'ca-central',
           localizacao: null,
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
       ],

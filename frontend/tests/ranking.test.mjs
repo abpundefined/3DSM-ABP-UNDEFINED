@@ -27,6 +27,7 @@ const item = {
   energiaKwh: 0.034,
   emissaoGCo2e: 13.1,
   coletasValidas: 24,
+  selo: 'A',
 };
 
 const resposta = {
@@ -36,7 +37,7 @@ const resposta = {
   },
   metrica: 'energia',
   itens: [item],
-  semDados: [{ servicoId: 6, nome: 'Notification Worker' }],
+  semDados: [{ servicoId: 6, nome: 'Notification Worker', selo: '—' }],
 };
 
 test('aceita a resposta no formato do GET /ranking', () => {
@@ -71,6 +72,7 @@ test('valida os novos dados de comparação e permite percentuais negativos e ba
       {
         servicoId: 5,
         nome: 'Video Processor',
+        selo: 'A',
         emissaoAtualGCo2e: 95,
         emissaoAnteriorGCo2e: 100,
         diferencaGCo2e: -5,

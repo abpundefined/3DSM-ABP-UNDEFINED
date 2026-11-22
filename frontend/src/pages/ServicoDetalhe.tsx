@@ -6,6 +6,7 @@ import FeedbackPanel from '../components/common/FeedbackPanel';
 import Icon from '../components/common/Icon';
 import MethodologyLink from '../components/common/MethodologyLink';
 import PeriodSelector from '../components/common/PeriodSelector';
+import SeloBadge from '../components/common/SeloBadge';
 import ServiceHistoryChart from '../components/servico/ServiceHistoryChart';
 import LinhaDoTempoEstado from '../components/servico/LinhaDoTempoEstado';
 import MelhorHorarioDoServico from '../components/horarios/MelhorHorarioDoServico';
@@ -278,6 +279,10 @@ export default function ServicoDetalhe() {
               <div>
                 <dt>Estado atual</dt>
                 <dd>{status?.label}</dd>
+              </div>
+              <div>
+                <dt>Selo de eficiência</dt>
+                <dd>{service && <SeloBadge selo={service.selo} />}</dd>
               </div>
             </dl>
           </section>

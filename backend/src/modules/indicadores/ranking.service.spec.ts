@@ -4,7 +4,7 @@ jest.mock("../../database/prisma.service", () => ({
 
 import { MetricaRanking, RankingQueryDto } from "./dto/ranking-query.dto";
 import { IndicadoresRepository } from "./indicadores.repository";
-import { RankingService } from "./ranking.service";
+import { calcularSeloEficiencia, RankingService } from "./ranking.service";
 
 describe("RankingService", () => {
   const inicio = "2026-11-01T00:00:00.000Z";
@@ -56,6 +56,30 @@ describe("RankingService", () => {
     ]);
   });
 
+  describe("calcularSeloEficiencia", () => {
+    it.each([
+      { emissao: 10, selo: "A" },
+      { emissao: 10.01, selo: "B" },
+      { emissao: 20, selo: "B" },
+      { emissao: 20.01, selo: "C" },
+      { emissao: 30, selo: "C" },
+      { emissao: 30.01, selo: "D" },
+      { emissao: 40, selo: "D" },
+      { emissao: 40.01, selo: "E" },
+      { emissao: 50, selo: "E" },
+      { emissao: 50.01, selo: "F" },
+    ])("classifica emissão $emissao como selo $selo", ({ emissao, selo }) => {
+      expect(calcularSeloEficiencia(emissao)).toBe(selo);
+    });
+
+    it.each([null, undefined])(
+      "retorna travessão quando a emissão é %s",
+      (emissao) => {
+        expect(calcularSeloEficiencia(emissao)).toBe("—");
+      },
+    );
+  });
+
   it("retorna período, ambas as métricas, posição, desempate, limite e semDados", async () => {
     const query = Object.assign(new RankingQueryDto(), {
       inicio,
@@ -75,6 +99,7 @@ describe("RankingService", () => {
           energiaKwh: 4,
           emissaoGCo2e: 8,
           coletasValidas: 2,
+          selo: "A",
         },
         {
           posicao: 2,
@@ -83,6 +108,7 @@ describe("RankingService", () => {
           energiaKwh: 5,
           emissaoGCo2e: 8,
           coletasValidas: 4,
+          selo: "A",
         },
         {
           posicao: 3,
@@ -91,9 +117,10 @@ describe("RankingService", () => {
           energiaKwh: 1,
           emissaoGCo2e: 4,
           coletasValidas: 1,
+          selo: "A",
         },
       ],
-      semDados: [{ servicoId: 5, nome: "Sem coleta" }],
+      semDados: [{ servicoId: 5, nome: "Sem coleta", selo: "—" }],
     });
 
     expect(listarServicosParaRanking).toHaveBeenCalledTimes(1);
@@ -101,6 +128,36 @@ describe("RankingService", () => {
       new Date(inicio),
       new Date(fim),
     );
+  });
+
+  it("calcula o selo pela emissão média por hora do período e marca ausência", async () => {
+    listarServicosParaRanking.mockResolvedValue([
+      { id: 1, nome: "API", estadoAtual: "DISPONIVEL" },
+      { id: 2, nome: "Sem coleta", estadoAtual: "DISPONIVEL" },
+    ]);
+    somarImpactoPorServico
+      .mockResolvedValueOnce([
+        {
+          servicoId: 1,
+          energiaKwh: 1,
+          emissaoGCo2e: 40,
+          coletasValidas: 1,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const resultado = await service.obterRanking(
+      Object.assign(new RankingQueryDto(), {
+        inicio: "2026-11-01T10:00:00.000Z",
+        fim: "2026-11-01T11:00:00.000Z",
+      }),
+    );
+
+    expect(resultado.itens).toMatchObject([{ selo: "D" }]);
+    expect(resultado.variacaoPorServico).toMatchObject([{ selo: "D" }]);
+    expect(resultado.semDados).toEqual([
+      { servicoId: 2, nome: "Sem coleta", selo: "—" },
+    ]);
   });
 
   it("usa energia por padrão, desempata por id e omite removidos sem dados", async () => {
@@ -215,6 +272,7 @@ describe("RankingService", () => {
           emissaoAnteriorGCo2e: 100,
           diferencaGCo2e: -5,
           variacaoPercentual: -5,
+          selo: "A",
         },
         {
           servicoId: 3,
@@ -426,8 +484,9 @@ describe("RankingService", () => {
         emissaoGCo2e: 50,
         coletasValidas: 5,
         regiaoCodigo: "br-sudeste",
-        regiao: "Brasil · São Paulo",
+        regiao: "Brasil • São Paulo",
         pais: "Brasil",
+        selo: "A", // Adicionado selo
       },
       {
         posicao: 2,
@@ -437,8 +496,9 @@ describe("RankingService", () => {
         emissaoGCo2e: 40,
         coletasValidas: 4,
         regiaoCodigo: "eu-west",
-        regiao: "Irlanda · Leinster",
+        regiao: "Irlanda • Leinster",
         pais: "Irlanda",
+        selo: "A", // Adicionado selo
       },
       {
         posicao: 3,
@@ -450,6 +510,7 @@ describe("RankingService", () => {
         regiaoCodigo: "desconhecida",
         regiao: "Localização não informada",
         pais: "Localização não informada",
+        selo: "A", // Adicionado selo
       },
     ]);
   });

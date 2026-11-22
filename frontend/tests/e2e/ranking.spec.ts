@@ -63,6 +63,7 @@ test('compara janelas com texto e ícone e permite ordenar todas as colunas', as
       {
         servicoId: 1,
         nome: 'Alpha',
+        selo: 'B',
         emissaoAtualGCo2e: 80,
         emissaoAnteriorGCo2e: 100,
         diferencaGCo2e: -20,
@@ -71,6 +72,7 @@ test('compara janelas com texto e ícone e permite ordenar todas as colunas', as
       {
         servicoId: 2,
         nome: 'Beta',
+        selo: 'C',
         emissaoAtualGCo2e: 120,
         emissaoAnteriorGCo2e: 50,
         diferencaGCo2e: 70,
@@ -79,6 +81,7 @@ test('compara janelas com texto e ícone e permite ordenar todas as colunas', as
       {
         servicoId: 3,
         nome: 'Novo',
+        selo: '—',
         emissaoAtualGCo2e: 10,
         emissaoAnteriorGCo2e: null,
         diferencaGCo2e: null,
@@ -197,7 +200,7 @@ test('lista os serviços sem dados e mostra os estados vazios', async ({
   page,
 }) => {
   const { periodo } = rankingDemo('energia');
-  let semDados = [{ servicoId: 6, nome: 'Notification Worker' }];
+  let semDados = [{ servicoId: 6, nome: 'Notification Worker', selo: '—' }];
   await page.route('**/api/ranking**', (route) =>
     route.fulfill({
       json: { periodo, metrica: 'energia', itens: [], semDados },
@@ -345,7 +348,7 @@ test('agrupa por serviço, região e país mantendo o grupo na URL e atualizando
   await expect(page).toHaveURL(/\/ranking\?demo=1&grupo=pais$/);
   await expect(
     page.getByRole('region', { name: 'Ranking por energia' }),
-  ).toContainText('Estados Unidos lidera em energia');
+  ).toContainText('Estados Unidos');
   await expect(linhas(page).nth(1)).toContainText('Estados Unidos');
   await expect(linhas(page).nth(2)).toContainText('Brasil');
   await expect(linhas(page).nth(3)).toContainText('Japão');

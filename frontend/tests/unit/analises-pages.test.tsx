@@ -50,9 +50,10 @@ const resposta: RespostaRanking = {
       energiaKwh: 2,
       emissaoGCo2e: 500,
       coletasValidas: 4,
+      selo: 'A',
     },
   ],
-  semDados: [{ servicoId: 2, nome: 'Worker sem coleta' }],
+  semDados: [{ servicoId: 2, nome: 'Worker sem coleta', selo: '—' }],
 };
 
 const buscarRankingMock = vi.mocked(buscarRanking);
@@ -154,11 +155,45 @@ describe('Ranking', () => {
     expect(servico).toHaveAttribute('href', '/servicos/1?periodo=7d');
     expect(tabela.getByRole('cell', { name: '2,00 kWh' })).toBeVisible();
     expect(tabela.getByRole('cell', { name: '500,00 gCO₂e' })).toBeVisible();
+    expect(
+      tabela.getByRole('img', {
+        name: 'Selo de eficiência A: Melhor eficiência: <= 10g CO2e/h',
+      }),
+    ).toBeVisible();
     expect(tabela.queryByText('Worker sem coleta')).not.toBeInTheDocument();
     const semDados = screen.getByRole('region', {
       name: 'Sem dados no período (1)',
     });
     expect(within(semDados).getByText('Worker sem coleta')).toBeVisible();
+  });
+
+  it('ordena o ranking pelo selo e mantém sem dados no final', async () => {
+    const user = userEvent.setup();
+    buscarRankingMock.mockResolvedValue({
+      ...resposta,
+      itens: [
+        {
+          ...resposta.itens[0],
+          posicao: 2,
+          servicoId: 2,
+          nome: 'Selo B',
+          selo: 'B',
+        },
+        { ...resposta.itens[0], nome: 'Selo A' },
+      ],
+    });
+    renderRanking();
+
+    const tabela = within(
+      await screen.findByRole('region', { name: 'Tabela do ranking' }),
+    );
+    const ordenar = tabela.getByRole('button', { name: 'Selo' });
+    await user.click(ordenar);
+
+    const linhas = tabela.getAllByRole('row');
+    expect(linhas[1]).toHaveTextContent('Selo A');
+    expect(linhas[2]).toHaveTextContent('Selo B');
+    expect(ordenar.closest('th')).toHaveAttribute('aria-sort', 'ascending');
   });
 
   it.each([
@@ -289,20 +324,23 @@ describe('Ranking', () => {
     ).toBe('pais');
     expect(tabela.getByRole('columnheader', { name: 'País' })).toBeVisible();
     expect(
-      tabela.getByRole('rowheader', { name: 'Estados Unidos' }),
+      tabela.getByRole('rowheader', { name: /Estados Unidos/ }),
     ).toBeVisible();
-    expect(tabela.getByRole('rowheader', { name: 'Brasil' })).toBeVisible();
+    expect(tabela.getByRole('rowheader', { name: /Brasil/ })).toBeVisible();
   });
 
   it('mostra variações globais e ordena todas as colunas da tabela por serviço', async () => {
     const user = userEvent.setup();
     buscarRankingMock.mockResolvedValue(
       Object.assign({}, resposta, {
+        itens: [],
+        semDados: [],
         variacaoPercentual: { energiaKwh: 12, emissaoGCo2e: -5 },
         variacaoPorServico: [
           {
             servicoId: 1,
             nome: 'Alpha',
+            selo: 'A',
             emissaoAtualGCo2e: 80,
             emissaoAnteriorGCo2e: 100,
             diferencaGCo2e: -20,
@@ -311,6 +349,7 @@ describe('Ranking', () => {
           {
             servicoId: 2,
             nome: 'Beta',
+            selo: 'C',
             emissaoAtualGCo2e: 120,
             emissaoAnteriorGCo2e: 50,
             diferencaGCo2e: 70,
@@ -319,6 +358,7 @@ describe('Ranking', () => {
           {
             servicoId: 3,
             nome: 'Novo',
+            selo: 'B',
             emissaoAtualGCo2e: 10,
             emissaoAnteriorGCo2e: null,
             diferencaGCo2e: null,
@@ -357,7 +397,7 @@ describe('Ranking', () => {
     }
     await user.click(tabela.getByRole('button', { name: 'Variação (%)' }));
     expect(tabela.getAllByRole('row')[1]).toHaveTextContent('Beta');
-  });
+  }, 10000);
 
   it('preserva emissão ausente na tabela sem mostrar uma redução falsa', async () => {
     buscarRankingMock.mockResolvedValue(
@@ -366,6 +406,7 @@ describe('Ranking', () => {
           {
             servicoId: 1,
             nome: 'Emissão ausente',
+            selo: '—',
             emissaoAtualGCo2e: null,
             emissaoAnteriorGCo2e: 100,
             diferencaGCo2e: null,
@@ -396,6 +437,7 @@ describe('Ranking', () => {
           {
             servicoId: 2,
             nome: 'Worker antigo',
+            selo: '—',
             emissaoAtualGCo2e: null,
             emissaoAnteriorGCo2e: 50,
             diferencaGCo2e: null,

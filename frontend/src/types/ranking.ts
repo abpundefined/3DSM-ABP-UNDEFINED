@@ -11,6 +11,7 @@ export type ItemRanking = {
   energiaKwh: number;
   emissaoGCo2e: number;
   coletasValidas: number;
+  selo: string;
   regiaoCodigo?: string;
   regiao?: string;
   pais?: string;
@@ -20,6 +21,7 @@ export type ItemRanking = {
 export type ServicoSemDados = {
   servicoId: number;
   nome: string;
+  selo: string;
 };
 
 export type RespostaRanking = {

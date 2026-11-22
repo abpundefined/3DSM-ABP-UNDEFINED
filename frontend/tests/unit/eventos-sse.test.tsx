@@ -50,6 +50,7 @@ const servicoBase: LiveService = {
   id: 1,
   idExterno: 'payments-api',
   nome: 'API de Pagamentos',
+  selo: 'A',
   regiaoCodigo: 'br-sudeste',
   localizacao: {
     pais: 'Brasil',

@@ -21,6 +21,7 @@ async function mockDashboardWithServices(page: Page) {
             latitude: -23.55,
             longitude: -46.63,
           },
+          selo: 'A',
           estadoAtual: 'DISPONIVEL',
         },
         {
@@ -29,6 +30,7 @@ async function mockDashboardWithServices(page: Page) {
           nome: 'Payment API',
           regiaoCodigo: 'eu-west',
           localizacao: null,
+          selo: '—',
           estadoAtual: 'INDISPONIVEL',
         },
       ]),
@@ -97,6 +99,7 @@ async function mockDashboardWithServices(page: Page) {
           inicio: '2026-11-15T13:00:00.000Z',
           energiaKwh: 1.2,
           emissaoGCo2e: 1200,
+          selo: 'F',
         },
       ]),
     }),

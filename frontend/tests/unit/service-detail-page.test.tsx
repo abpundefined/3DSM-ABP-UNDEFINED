@@ -45,11 +45,13 @@ const history: ServiceDetailData['history'] = [
     inicio: '2026-11-10T03:00:00.000Z',
     energiaKwh: 1.25,
     emissaoGCo2e: 125,
+    selo: 'A',
   },
   {
     inicio: '2026-11-17T02:59:59.999Z',
     energiaKwh: 0.75,
     emissaoGCo2e: 75,
+    selo: 'A',
   },
 ];
 
@@ -61,6 +63,7 @@ const serviceDetail: ServiceDetailData = {
     regiaoCodigo: 'us-east',
     localizacao: null,
     estadoAtual: 'DISPONIVEL',
+    selo: 'A',
   },
   latestCollection: null,
   history,
